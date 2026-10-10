@@ -146,3 +146,21 @@ await walk(publicRoot, async (filePath) => {
     76 + 2 * Buffer.byteLength(name)
 })
 console.log(`Estimated compressed Pages archive: ${mib(estimatedZipBytes)} MiB`)
+
+// iGEM's upload limit is 5 MB. Leave 500 kB for the runner's ZIP metadata,
+// directory entries and differences from Node's compression implementation.
+const uploadLimitBytes = 5_000_000
+const safetyMarginBytes = 500_000
+const archiveBudgetBytes = uploadLimitBytes - safetyMarginBytes
+if (estimatedZipBytes > archiveBudgetBytes) {
+  console.error(
+    `Pages artifact is too large: estimated ${(estimatedZipBytes / 1_000_000).toFixed(2)} MB ` +
+    `exceeds the ${(archiveBudgetBytes / 1_000_000).toFixed(2)} MB safety budget ` +
+    `for iGEM's 5 MB upload limit. ` +
+    `Move large images, PDFs or datasets to the iGEM CDN and reference their URLs, ` +
+    `or reduce the generated output before deploying.`
+  )
+  process.exitCode = 1
+} else {
+  console.log("Pages artifact size check passed (4.50 MB safety budget; 5 MB upload limit).")
+}
