@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 import sharp from "sharp"
+import { deflateRawSync } from "node:zlib"
 
 const root = process.cwd()
 const publicRoot = path.join(root, "public")
@@ -134,3 +135,14 @@ console.log(
   `Pages artifact: ${beforeArtifact.files} files / ${mib(beforeArtifact.bytes)} MiB -> ` +
   `${afterArtifact.files} files / ${mib(afterArtifact.bytes)} MiB (uncompressed)`
 )
+
+// Estimate a level-9 ZIP including per-file headers. The runner's archive
+// implementation may differ slightly; this exposes upload size in CI logs.
+let estimatedZipBytes = 22
+await walk(publicRoot, async (filePath) => {
+  const content = await fs.readFile(filePath)
+  const name = path.relative(root, filePath).split(path.sep).join("/")
+  estimatedZipBytes += deflateRawSync(content, { level: 9 }).length +
+    76 + 2 * Buffer.byteLength(name)
+})
+console.log(`Estimated compressed Pages archive: ${mib(estimatedZipBytes)} MiB`)
