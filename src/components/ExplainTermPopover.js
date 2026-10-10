@@ -26,15 +26,46 @@ export const POPOVER_GAP_PX = 12
 const BOLT_TIP_X_FRAC = 0.4
 
 /**
- * Popover art layout (all three text boxes): the black box spans ~40%–80% of
- * the height; the character pokes out above it and the bolt tail hangs below.
- * Below the term the art is cropped from 41% down (keeps the tilted first
- * line of text whole); BELOW_EXTRA_GAP_PX keeps what's left of the
- * character's feet off the term.
+ * Popover art layout: a tilted black box, the character poking out above its
+ * top-right corner and the bolt tail hanging below. Per image (by file
+ * name), as shares of the image height at its left and right edges:
+ * `top` / `bottom` are the box's edges (where a drawn pointer meets it) and
+ * `clipBottom` the crop that drops the bolt, slanted with the box and just
+ * below the last line of text. `character` is the part of the character
+ * above the box [x0, y0, x1, y1] (shares of width / height), kept off the
+ * term when the popover opens below it. Measured from the images; other images get
+ * the straight crop in DEFAULT_BOX.
  */
-const BOX_TOP_FRAC = 0.41
+const BOX_EDGES = {
+  "mhetase-textbox.avif": {
+    character: [0.78, 0, 0.99, 0.3],
+    top: [0.508, 0.245],
+    bottom: [0.882, 0.675],
+    clipBottom: [0.894, 0.687],
+  },
+  "rnalab.avif": {
+    character: [0.76, 0, 0.98, 0.29],
+    top: [0.502, 0.232],
+    bottom: [0.883, 0.638],
+    clipBottom: [0.886, 0.641],
+  },
+  "text-box-3-1.avif": {
+    character: [0.76, 0, 0.98, 0.29],
+    top: [0.496, 0.22],
+    bottom: [0.885, 0.633],
+    clipBottom: [0.913, 0.661],
+  },
+}
+const DEFAULT_BOX = {
+  top: [0.41, 0.41],
+  bottom: [0.8, 0.8],
+  clipBottom: [0.8, 0.8],
+}
+const boxEdgesFor = (src) => BOX_EDGES[src.split("/").pop()] || DEFAULT_BOX
+/** Height share of a slanted edge [left, right] at `x` (share of the width). */
+const edgeAt = ([left, right], x) => left + (right - left) * x
+/** Keeps the character's feet off the term when the popover sits below it. */
 const BELOW_EXTRA_GAP_PX = 14
-const BOX_BOTTOM_FRAC = 0.8
 /** How far the painted bolt may miss the term (share of width) before a drawn pointer replaces it. */
 const BOLT_SLACK_FRAC = 0.06
 /** Drawn pointer size (px). */
@@ -75,6 +106,8 @@ function measureButton(el) {
   return {
     top: r.top,
     bottom: r.bottom,
+    left: r.left,
+    right: r.right,
     width: r.width,
     height: r.height,
     firstX: first.left + first.width / 2,
@@ -106,11 +139,16 @@ function topLimit() {
  * popover (down to POPOVER_MIN_WIDTH_PX) so it still fits above, and only if
  * even that won't fit, put it below. The painted bolt is kept when it lands on
  * the term; otherwise (popover nudged to stay on screen, or placed below) the
- * art is cropped to its box and a drawn pointer aims at the term instead.
+ * bolt is cropped off and a drawn pointer on the box aims at the term instead.
  *
- * Returns { left, top, width, place: "above" | "below", pointer: null | x-share }.
+ * Below the term, the character on the box's top-right corner is kept off
+ * it: the popover slides right until the character clears the term, or, with
+ * no room, drops until it does (the pointer then grows to reach the term).
+ *
+ * Returns { left, top, width, place: "above" | "below", pointer: null |
+ * x-share, pointerLen }.
  */
-function layoutFromButton(btn, aspect, maxW) {
+function layoutFromButton(btn, aspect, maxW, box) {
   const gap = POPOVER_GAP_PX
   const roomAbove = btn.top - gap - topLimit()
   let popW = Math.min(maxW, roomAbove / aspect)
@@ -119,26 +157,50 @@ function layoutFromButton(btn, aspect, maxW) {
   const popH = popW * aspect
   const targetX = place === "above" ? btn.firstX : btn.lastX
 
+  const maxLeft =
+    typeof window === "undefined"
+      ? Infinity
+      : Math.max(POPOVER_EDGE_PAD_PX, window.innerWidth - popW - POPOVER_EDGE_PAD_PX)
   let left = targetX - popW * BOLT_TIP_X_FRAC
-  if (typeof window !== "undefined") {
-    const maxLeft = Math.max(POPOVER_EDGE_PAD_PX, window.innerWidth - popW - POPOVER_EDGE_PAD_PX)
-    left = Math.min(Math.max(left, POPOVER_EDGE_PAD_PX), maxLeft)
-  }
-  const tip = (targetX - left) / popW
-  const boltLands = Math.abs(tip - BOLT_TIP_X_FRAC) <= BOLT_SLACK_FRAC
-  const pointer =
-    place === "above" && boltLands ? null : Math.min(0.94, Math.max(0.06, tip))
+  left = Math.min(Math.max(left, POPOVER_EDGE_PAD_PX), maxLeft)
+  const tipAt = (l) => (targetX - l) / popW
+  const boltLands = Math.abs(tipAt(left) - BOLT_TIP_X_FRAC) <= BOLT_SLACK_FRAC
+  const pointerAt = (l) => Math.min(0.94, Math.max(0.06, tipAt(l)))
+  let pointer = place === "above" && boltLands ? null : pointerAt(left)
 
   let top
+  let pointerLen = POINTER_H_PX
   if (place === "below") {
-    top = btn.bottom + POINTER_H_PX + BELOW_EXTRA_GAP_PX - popH * BOX_TOP_FRAC
+    const boxTopAt = (p) => popH * edgeAt(box.top, p)
+    top = btn.bottom + POINTER_H_PX + BELOW_EXTRA_GAP_PX - boxTopAt(pointer)
+    if (box.character) {
+      const [cx0, cy0, cx1, cy1] = box.character
+      const covers = (l, t) =>
+        l + cx0 * popW < btn.right + gap &&
+        l + cx1 * popW > btn.left - gap &&
+        t + cy0 * popH < btn.bottom + gap &&
+        t + cy1 * popH > btn.top - gap
+      if (covers(left, top)) {
+        // Slide right until the character is past the term's right end.
+        const slid = btn.right + gap - cx0 * popW
+        if (slid <= maxLeft && tipAt(slid) >= 0.06) {
+          left = slid
+          pointer = pointerAt(left)
+          top = btn.bottom + POINTER_H_PX + BELOW_EXTRA_GAP_PX - boxTopAt(pointer)
+        } else {
+          // No room: drop until the character is below the term.
+          top = btn.bottom + gap - cy0 * popH
+          pointerLen = Math.max(POINTER_H_PX, top + boxTopAt(pointer) - btn.bottom - 4)
+        }
+      }
+    }
   } else if (pointer == null) {
     top = btn.top - gap - popH
   } else {
-    top = btn.top - POINTER_H_PX - 4 - popH * BOX_BOTTOM_FRAC
+    top = btn.top - POINTER_H_PX - 4 - popH * edgeAt(box.bottom, pointer)
   }
 
-  return { left, top, width: popW, place, pointer }
+  return { left, top, width: popW, place, pointer, pointerLen }
 }
 
 /**
@@ -166,6 +228,8 @@ export function ExplainTerm({
     pinnedRef.current = pinned
   }, [pinned])
 
+  const box = boxEdgesFor(imageSrc)
+
   const updatePosition = useCallback(() => {
     const btn = buttonRef.current
     if (!btn) return
@@ -178,8 +242,8 @@ export function ExplainTerm({
         ? popEl.offsetHeight / popEl.offsetWidth
         : SHELL_ASPECT
 
-    setPos(layoutFromButton(m, aspect, computePopoverWidth()))
-  }, [])
+    setPos(layoutFromButton(m, aspect, computePopoverWidth(), box))
+  }, [box])
 
   const show = useCallback(() => setOpen(true), [])
   const dismiss = useCallback(() => {
@@ -320,22 +384,22 @@ export function ExplainTerm({
                 transformOrigin:
                   pos?.pointer == null
                     ? `${BOLT_TIP_X_FRAC * 100}% 100%`
-                    : `${pos.pointer * 100}% ${
-                        (pos.place === "below" ? BOX_TOP_FRAC : BOX_BOTTOM_FRAC) * 100
-                      }%`,
+                    : `${pos.pointer * 100}% ${pointerEdge(pos, box) * 100}%`,
               }}
             >
               {pos?.pointer != null && (
                 <Pointer
                   aria-hidden="true"
                   $below={pos.place === "below"}
-                  style={{ left: `${pos.pointer * 100}%` }}
+                  style={{
+                    left: `${pos.pointer * 100}%`,
+                    top: `${pointerEdge(pos, box) * 100}%`,
+                    // Below the term it may have to reach further (see layout).
+                    ...(pos.place === "below" && { borderBottomWidth: pos.pointerLen }),
+                  }}
                 />
               )}
-              <ShellWrap
-                $crop={pos?.pointer != null}
-                $below={pos?.place === "below"}
-              >
+              <ShellWrap style={{ clipPath: shellClip(pos, box) }}>
                 <ShellImg
                   src={imageSrc}
                   alt={imageAlt || explanation || term}
@@ -407,24 +471,31 @@ const PopoverInner = styled.div`
   }
 `
 
+/** Where the drawn pointer meets the box: its top edge below the term, else its bottom. */
+const pointerEdge = (pos, box) =>
+  edgeAt(pos.place === "below" ? box.top : box.bottom, pos.pointer)
+
 /**
- * With a drawn pointer, crop the art to its box: drop the bolt (it would point
- * elsewhere), and below the term also the character, so nothing covers the term.
+ * With a drawn pointer, the painted bolt would point elsewhere: crop it off
+ * along the box's slanted bottom edge (below the last line of text, so no
+ * copy is cut). The character stays.
  */
+function shellClip(pos, box) {
+  if (pos?.pointer == null) return "none"
+  const pct = (v) => `${(v * 100).toFixed(2)}%`
+  const [botL, botR] = box.clipBottom
+  return `polygon(0 0, 100% 0, 100% ${pct(botR)}, 0 ${pct(botL)})`
+}
+
 const ShellWrap = styled.div`
   position: relative;
   width: 100%;
-  clip-path: ${({ $crop, $below }) =>
-    !$crop
-      ? "none"
-      : `inset(${$below ? BOX_TOP_FRAC * 100 : 0}% 0 ${(1 - BOX_BOTTOM_FRAC) * 100}% 0)`};
 `
 
-/** Stands in for the painted bolt; `left` is set inline to aim at the term. */
+/** Stands in for the painted bolt; `left` / `top` are set inline to aim at the term. */
 const Pointer = styled.span`
   position: absolute;
   z-index: 1;
-  top: ${({ $below }) => ($below ? BOX_TOP_FRAC : BOX_BOTTOM_FRAC) * 100}%;
   width: 0;
   height: 0;
   border-left: 11px solid transparent;
