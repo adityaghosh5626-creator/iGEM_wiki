@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react"
 import styled from "styled-components"
 
 /**
- * Optional auto-scroll for the homepage: an "Auto-scroll" button (bottom
- * left) makes the page scroll itself at a reading pace. As each popup
+ * Optional auto-scroll for the homepage: a play button (bottom left; its
+ * "Auto-scroll" label slides out on hover) makes the page scroll itself at a reading pace. As each popup
  * reaches the middle of the screen it stops and opens it (the red underlined
  * terms, then each petamon's description at the ending), then carries on.
  * Any scroll, tap or key from the reader hands control back.
@@ -199,14 +199,18 @@ export function HomeAutoplay() {
           <path d="M5 2.5v11l9-5.5z" />
         )}
       </svg>
-      {playing ? "Pause" : "Auto-scroll"}
+      <Label>{playing ? "Pause" : "Auto-scroll"}</Label>
     </AutoplayButton>
   )
 }
 
 export default HomeAutoplay
 
-/** Matches the back-to-top button (bottom right), on the other side. */
+/**
+ * A circle like the back-to-top button (bottom right), on the other side,
+ * with just the play / pause icon; hovering or focusing it slides out what
+ * it does.
+ */
 const AutoplayButton = styled.button`
   position: fixed;
   left: max(1rem, env(safe-area-inset-left));
@@ -214,9 +218,10 @@ const AutoplayButton = styled.button`
   z-index: 105;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
   height: 3rem;
-  padding: 0 1.1rem 0 0.95rem;
+  min-width: 3rem;
+  /* Centres the icon in the circle while the label is tucked away. */
+  padding: 0 calc((3rem - 2px - 0.95rem) / 2);
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-bg);
@@ -231,6 +236,7 @@ const AutoplayButton = styled.button`
     background-color 0.2s ease;
 
   svg {
+    flex: none;
     width: 0.95rem;
     height: 0.95rem;
     fill: currentColor;
@@ -241,8 +247,32 @@ const AutoplayButton = styled.button`
     transform: translateY(-1px);
   }
 
+  &:hover > span,
+  &:focus-visible > span {
+    max-width: 8rem;
+    margin-left: 0.45rem;
+    opacity: 1;
+  }
+
   &:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+`
+
+/** Still read out by screen readers while tucked away. */
+const Label = styled.span`
+  max-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width 0.25s ease,
+    margin-left 0.25s ease,
+    opacity 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `
