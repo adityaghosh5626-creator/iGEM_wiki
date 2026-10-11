@@ -498,6 +498,8 @@ export const CONTRIBUTION_SCENE = {
     "--cal-team-venture-text": "#3a230e",
     "--cal-team-web": "#afbc90",
     "--cal-team-web-text": "#1f2914",
+    "--cal-team-all": "#2b3a30",
+    "--cal-team-all-text": "#fffdf7",
   },
 }
 

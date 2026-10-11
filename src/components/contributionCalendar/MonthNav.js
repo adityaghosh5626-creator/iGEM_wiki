@@ -64,7 +64,7 @@ export function MonthNav({ selectedKey, onSelect }) {
           aria-controls={listboxId}
         >
           {current.label}
-          <YearSpan>2026</YearSpan>
+          <YearSpan>{current.year}</YearSpan>
           <Chevron $open={open} aria-hidden>
             ▾
           </Chevron>
@@ -82,6 +82,7 @@ export function MonthNav({ selectedKey, onSelect }) {
                 onClick={() => pickMonth(m.key)}
               >
                 {m.label}
+                {m.year !== 2026 ? ` ${m.year}` : ""}
               </MonthOption>
             ))}
           </MonthDropdown>

@@ -7,7 +7,7 @@ import {
   weekIdForDate,
 } from "../../data/contributionCalendar/calendarUtils.js"
 import {
-  SUBTEAM_BY_ID,
+  MILESTONE_TRACK_BY_ID,
   trackColor,
   trackTextColor,
 } from "../../data/subteamTracks.js"
@@ -16,7 +16,7 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 function MilestoneLabel({ ms, lines }) {
   const [open, setOpen] = useState(false)
-  const track = SUBTEAM_BY_ID[ms.subteamId]
+  const track = MILESTONE_TRACK_BY_ID[ms.subteamId]
   const dateLabel = formatDayShort(ms.date)
   const aria = `${dateLabel}${track ? `, ${track.label}` : ""}: ${ms.label}`
 
