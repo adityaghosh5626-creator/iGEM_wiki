@@ -76,6 +76,8 @@ const css = `
   border-radius: 8px;
   background: var(--dd-bg);
   margin: 1rem 0;
+  max-width: 100%;
+  min-width: 0;
 }
 .dd-code pre {
   margin: 0; padding: 1rem; overflow-x: auto; max-height: 32rem; overflow-y: auto;
@@ -89,11 +91,13 @@ const css = `
 .dd-summary {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.6rem;
   padding: 0.7rem 0.9rem;
   cursor: pointer;
   list-style: none;
   font-weight: 600;
+  min-width: 0;
 }
 .dd-summary::-webkit-details-marker { display: none; }
 .dd-summary:focus-visible { outline: 2px solid var(--dd-accent); outline-offset: 2px; border-radius: 8px; }
@@ -104,7 +108,20 @@ const css = `
   transition: transform 0.15s ease;
 }
 .dd[open] > .dd-summary .dd-chevron { transform: rotate(45deg); }
-.dd-desc { margin-left: auto; font-weight: 400; opacity: 0.7; font-size: 0.9em; }
+.dd-title { min-width: 0; overflow-wrap: anywhere; }
+.dd-desc {
+  margin-left: auto;
+  max-width: 100%;
+  min-width: 0;
+  font-weight: 400;
+  opacity: 0.7;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .dd-desc { flex-basis: 100%; margin-left: 1.1rem; text-align: left; }
+}
 .dd-body { padding: 0.25rem 1rem 1rem; border-top: 1px solid var(--dd-border); }
 
 /* Code variant */

@@ -338,6 +338,7 @@ const Article = styled.article`
     color: var(--color-text);
     border-bottom: 1px solid var(--color-accent);
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
 
   a:not(.heading-anchor):hover {
