@@ -30,6 +30,14 @@ const RAIL_W = "2.5rem"
 const RAIL_GAP = "1rem"
 
 /**
+ * The section box starts sized to its list, capped at about half the window
+ * (the list scrolls inside) so the art beside it stays in view; its button
+ * opens it to the box's full painted height. A scene's `side.maxHeight`
+ * overrides the cap.
+ */
+const SIDE_COLLAPSED_MAX = "min(24rem, 52vh)"
+
+/**
  * Hover scuttle, same as the homepage crabs: sidestep left, then right on the
  * next hover, wobbling ±θ on the way. Distance is a share of the art width
  * (the homepage's 4.5% of its plate), converted to each crab's own width.
@@ -675,7 +683,11 @@ function sceneVars(scene, plate) {
     "--link-size": ax(scene.side.linkSize || 12.5),
     "--link-pad-y": ax(scene.side.linkPadY || 10),
     "--link-indent": ax(scene.side.linkIndent || 12),
-    "--side-max": scene.side.maxHeight || "100vh",
+    "--side-max": scene.side.maxHeight || SIDE_COLLAPSED_MAX,
+    // Under the list when the crab shows, so it never sits on the titles.
+    "--crab-room": scene.side.crab
+      ? pp(scene.side.box[3] - scene.side.crab.box[1] + 4)
+      : "0px",
     "--strip-color": scene.side.stripColor,
     "--grid-cols": [
       pct(side[0]),
@@ -712,6 +724,20 @@ export function SubpageScene({ scene, title, description, children }) {
   const [indicator, setIndicator] = useState(null)
   // The section menu shrunk to a rail, giving its width to the text.
   const [sideMin, setSideMin] = useState(false)
+  /** Section box opened to full height; and whether, shut, it hides sections. */
+  const [sideOpen, setSideOpen] = useState(false)
+  const [sideMore, setSideMore] = useState(false)
+  const sideToggle = sideOpen || sideMore
+  /**
+   * The box's crab sits under the list, so it's left off while the shut box
+   * is too short for every section; opening the box brings it back.
+   */
+  const crabShown = Boolean(side?.crab) && (sideOpen || !sideMore)
+
+  const measureNav = nav => {
+    updateNavFade(nav)
+    setSideMore(nav.scrollHeight > nav.clientHeight + 2)
+  }
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
@@ -904,14 +930,14 @@ export function SubpageScene({ scene, title, description, children }) {
         behavior: "smooth",
       })
     }
-    updateNavFade(nav)
+    measureNav(nav)
     const ro = new ResizeObserver(() => {
       place()
-      updateNavFade(nav)
+      measureNav(nav)
     })
     ro.observe(nav)
     return () => ro.disconnect()
-  }, [activeId, sections])
+  }, [activeId, sections, sideOpen])
 
   const goTo = (e, id) => {
     const el = document.getElementById(id)
@@ -1071,9 +1097,16 @@ export function SubpageScene({ scene, title, description, children }) {
             )}
             <SideBox
               $stripCss={stripCss}
-              $fit={side.fit}
               $min={sideMin}
-              style={sections.length ? undefined : { display: "none" }}
+              $fit={!sideOpen}
+              style={{
+                "--side-bottom": crabShown
+                  ? "var(--crab-room)"
+                  : sideToggle
+                    ? "0.3rem"
+                    : "var(--nav-top)",
+                ...(sections.length ? null : { display: "none" }),
+              }}
             >
               <SideMinimise
                 type="button"
@@ -1159,7 +1192,23 @@ export function SubpageScene({ scene, title, description, children }) {
                   </React.Fragment>
                 ))}
               </SideNav>
-              {side.crab && (
+              {sideToggle && (
+                <SideMore
+                  type="button"
+                  aria-expanded={sideOpen}
+                  aria-label={
+                    sideOpen ? "Show fewer sections" : "Show all sections"
+                  }
+                  title={sideOpen ? "Show fewer" : "Show all"}
+                  $open={sideOpen}
+                  onClick={() => setSideOpen(open => !open)}
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.5 3 8 7.5 12.5 3M3.5 8.5 8 13l4.5-4.5" />
+                  </svg>
+                </SideMore>
+              )}
+              {crabShown && (
                 <SideCrab
                   aria-hidden
                   style={{
@@ -1575,19 +1624,20 @@ const SideBox = styled.div`
   min-height: 14rem;
   display: flex;
   flex-direction: column;
+  /* Room under the list: the crab's, the button's, or the box's margin. */
+  padding-bottom: var(--side-bottom, 0px);
 
   /* Only as tall as its list (up to the window), so the art beside the
-     text stays in view. */
+     text stays in view. The cap is for the list; the room under it is extra. */
   ${({ $fit }) =>
     $fit &&
     css`
       height: auto;
-      max-height: min(
-        var(--side-max),
-        calc(100vh - var(--dl-header, 0px) - 2.5rem)
+      max-height: calc(
+        min(var(--side-max), calc(100vh - var(--dl-header, 0px) - 2.5rem)) +
+          var(--side-bottom, 0px)
       );
       min-height: 0;
-      padding-bottom: var(--nav-top);
     `}
 
   ${NARROW} {
@@ -1814,6 +1864,62 @@ const Indicator = styled.span`
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
+  }
+`
+
+/** Double chevron under the list: opens the box to full height, or shuts it. */
+const SideMore = styled.button`
+  position: relative;
+  z-index: 1;
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 1.8rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--link-color);
+  opacity: 0.9;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: rotate(${({ $open }) => ($open ? 180 : 0)}deg);
+    transition: transform 0.25s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+  }
+
+  ${NARROW} {
+    display: none;
   }
 `
 

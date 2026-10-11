@@ -142,6 +142,8 @@ export const DRY_LAB_SCENE = {
     caps: [60, 70],
     /** First item's distance below the box top (plate px). */
     navTop: 32,
+    /** A little taller than the other boxes shut, so the overview fits. */
+    maxHeight: "min(26rem, 56vh)",
     indicator: { name: "box-subsection-indicator", box: [88, 452, 241, 513] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#9c6e56",
@@ -212,12 +214,6 @@ export const VENTURE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    /**
-     * Sized to its list but capped at about half the window (the list
-     * scrolls inside), so the kangaroos on the left stay in view.
-     */
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
@@ -370,8 +366,6 @@ export const HP_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
@@ -432,8 +426,6 @@ export const HARDWARE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 458, 287, 517] },
