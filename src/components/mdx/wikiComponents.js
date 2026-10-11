@@ -16,6 +16,7 @@ import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
+import { CodeDropdown } from "../Dropdown.js"
 import Citation from "../Citation"
 import References from "../References"
 
@@ -86,6 +87,7 @@ export const mdxComponents = {
   PetAssayAnimation,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
+  CodeDropdown,
   Citation,
   References,
   ...embedComponents,

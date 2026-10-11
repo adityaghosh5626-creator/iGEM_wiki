@@ -96,6 +96,82 @@ Reusable subsystem validation protocols (temperature, pump, OD). Use these as li
 
 ![OD validation diagram](https://static.igem.wiki/teams/6187/wiki/hardware-notebook/experiments/doe-od-diagram.avif)
 
+</PageTab>
+
+<PageTab id="source-code" label="Source Code">
+
+Firmware and software files for the bioreactor, organized by subsystem. Expand a file to inspect its source code and use Copy to copy it.
+
+## Integration
+
+Shared firmware and integration tests for the AS7343 optical-density sensors and bioreactor hardware.
+
+<CodeDropdown
+  file="AS7343Soft.h"
+  description="AS7343 sensor / SoftWire header"
+/>
+
+<CodeDropdown
+  file="Integration_Aug11.ino"
+  description="Integration firmware — August 11"
+/>
+
+<CodeDropdown
+  file="Integration_Oct 5 (not tested).ino"
+  description="Integration firmware — October 5; untested"
+/>
+
+## Optical density (OD)
+
+OD sensing firmware and software-I²C implementations.
+
+{/* Add these after the corresponding files have been placed in hardware-code/OD. */}
+
+## Pumps
+
+Peristaltic pump control firmware.
+
+<CodeDropdown file="pump_code.ino" description="Pump code" />
+
+## Temperature control
+
+Temperature sensor reading, heater control, and PID experiments.
+
+<CodeDropdown
+  file="Read_DS18B20.ino"
+  description="DS18B20 temperature sensor"
+/>
+
+<CodeDropdown file="Temperature.ino" description="Temperature monitoring" />
+
+<CodeDropdown file="Custom_PID.ino" description="Custom PID controller" />
+
+<CodeDropdown file="Temperature_PID.txt" description="Temperature PID notes" />
+
+## Python UI and simulation
+
+Python-based interface, simulation, and data files for the bioreactor.
+
+<CodeDropdown file="main.py" description="Application entry point" />
+
+<CodeDropdown
+  file="demo_with_bioreactor.py"
+  description="Bioreactor UI demonstration"
+/>
+
+<CodeDropdown file="simulation.py" description="Bioreactor simulation" />
+
+<CodeDropdown file="requirements.txt" description="Python dependencies" />
+
+<CodeDropdown
+  file="simulation.jsonl"
+  description="Simulation data / event log"
+/>
+
+<CodeDropdown file="data.csv" description="Application data" />
+
+<CodeDropdown file="README.md" description="Python UI documentation" />
+
 ## V1
 
 ### What V1 set out to prove
@@ -104,13 +180,13 @@ V1 focused on a cheap, offline-friendly, multi-unit-friendly bioreactor using co
 
 ### Cost and power snapshot (HP inputs)
 
-| Item | Peak power (approx.) | Notes |
-| --- | --- | --- |
-| Heater | ~5 W | Often duty-cycled |
-| Arduino Nano | ~1 W | 5 V × ~0.2 A |
-| Peristaltic pumps (×3) | ~9 W peak | ~2.5–3 W each |
-| **Peak total** | **~15 W** | All continuously on |
-| **Duty-cycled estimate** | **~4.5 W** | Heater + pumps ~25% on |
+| Item                     | Peak power (approx.) | Notes                  |
+| ------------------------ | -------------------- | ---------------------- |
+| Heater                   | ~5 W                 | Often duty-cycled      |
+| Arduino Nano             | ~1 W                 | 5 V × ~0.2 A           |
+| Peristaltic pumps (×3)   | ~9 W peak            | ~2.5–3 W each          |
+| **Peak total**           | **~15 W**            | All continuously on    |
+| **Duty-cycled estimate** | **~4.5 W**           | Heater + pumps ~25% on |
 
 Assembly / cost goals under discussion: **&lt;100 minutes** to assemble and **&lt;$100** BOM targets (component list still iterating — heater, thermocouple, pumps, fan, Nano, breadboard, wiring).
 
@@ -120,12 +196,12 @@ Assembly / cost goals under discussion: **&lt;100 minutes** to assemble and **&l
 
 ![V1 subsystem reflection board](https://static.igem.wiki/teams/6187/wiki/hardware-notebook/v1/v1-postmortem-subsystems.avif)
 
-| Subsystem | Observations | Open questions | V2 direction |
-| --- | --- | --- | --- |
-| Heating / temperature | Slow heat-up; ~45 °C in ~30 min; aiming toward 80 °C with better TIM / insulation / contact area; control about ±0.6 °C | Probe accuracy vs kitchen reference; fan interaction with heater | Improve thermal interface and insulation; validate probe |
-| OD | Sensor returns readings | Needs calibration; cleaner wiring | Calibrate against spectrophotometer; SoftWire / dual-sensor addressing |
-| Pumping | Tube spacing on vial top is tight | In/out water tests; larger vial | Horizontal pump drawers; PWM map from DoE |
-| Integration / UI | Multi-device serial fragile when one port fails | Powered USB hubs (charge-only vs data); JSON command protocol | Tkinter / serial dashboard with blank/dark OD setup; error isolation per reactor |
+| Subsystem             | Observations                                                                                                            | Open questions                                                   | V2 direction                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Heating / temperature | Slow heat-up; ~45 °C in ~30 min; aiming toward 80 °C with better TIM / insulation / contact area; control about ±0.6 °C | Probe accuracy vs kitchen reference; fan interaction with heater | Improve thermal interface and insulation; validate probe                         |
+| OD                    | Sensor returns readings                                                                                                 | Needs calibration; cleaner wiring                                | Calibrate against spectrophotometer; SoftWire / dual-sensor addressing           |
+| Pumping               | Tube spacing on vial top is tight                                                                                       | In/out water tests; larger vial                                  | Horizontal pump drawers; PWM map from DoE                                        |
+| Integration / UI      | Multi-device serial fragile when one port fails                                                                         | Powered USB hubs (charge-only vs data); JSON command protocol    | Tkinter / serial dashboard with blank/dark OD setup; error isolation per reactor |
 
 ### V2 control intent (from late-summer notes)
 
