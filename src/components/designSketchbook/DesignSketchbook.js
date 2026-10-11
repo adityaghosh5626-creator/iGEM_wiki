@@ -21,9 +21,11 @@ const FLIP_SETTINGS = {
   width: 490,
   height: 950,
   size: "stretch",
-  minWidth: 300,
+  // Narrow enough that the book plus its tab rails fits a phone screen.
+  minWidth: 220,
   maxWidth: 800,
-  minHeight: 580,
+  // Low enough that the height cap on BookHost (not this) decides on short screens.
+  minHeight: 320,
   maxHeight: 1500,
   showCover: true,
   drawShadow: true,
@@ -86,9 +88,16 @@ function SketchPageContent({ page }) {
       <SketchPageInner $variant="notes">
         <SketchTitle>{page.title}</SketchTitle>
         {page.body && <SketchBody>{page.body}</SketchBody>}
-        <SketchPlaceholder aria-hidden={false}>
-          <SketchPlaceholderLabel>Notes / image slot</SketchPlaceholderLabel>
-        </SketchPlaceholder>
+        {page.imageSrc ? (
+          <SketchFigure>
+            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+            {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+          </SketchFigure>
+        ) : (
+          <SketchPlaceholder aria-hidden={false}>
+            <SketchPlaceholderLabel>Notes / image slot</SketchPlaceholderLabel>
+          </SketchPlaceholder>
+        )}
       </SketchPageInner>
     )
   }
@@ -488,6 +497,14 @@ export function DesignSketchbook() {
           const idx = flipInstance.getCurrentPageIndex()
           const last = flipInstance.getPageCount() - 1
           if (!isTouch && (idx === 0 || idx === last)) return
+          // Hover (not a drag) over the leaf beside a cover would preview that
+          // hard cover turning, which the static hardcover can't follow: the
+          // right half of the last spread and the left half of the first.
+          if (!isTouch && !flipInstance.isUserTouch) {
+            const rect = flipInstance.getBoundsRect?.()
+            const onRight = rect ? pos.x >= rect.left + rect.width / 2 : true
+            if ((onRight && idx >= last - 2) || (!onRight && idx <= 2)) return
+          }
           origUserMove(pos, isTouch)
         }
         setPageCount(flipInstance.getPageCount())
@@ -864,7 +881,8 @@ const TabRail = styled.div`
     ${({ $embedded, $side, $mode }) =>
       $embedded && $side === "right"
         ? `
-      width: ${$mode === "open" ? "6.5rem" : "5.25rem"};
+      /* Fits the stage's 4rem right padding plus the page gutter. */
+      width: 4.75rem;
     `
         : $embedded && $side === "left"
           ? `
@@ -955,6 +973,19 @@ const SectionTab = styled.button`
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
+
+  /* Narrow screens: name only (the progress line is hidden), up to two lines. */
+  ${({ $compact }) =>
+    $compact
+      ? ""
+      : `
+  @media (max-width: 720px) {
+    height: 2.6rem;
+    min-height: 2.6rem;
+    max-height: 2.6rem;
+    padding: 0.3rem 0.4rem;
+  }
+  `}
 `
 
 const SectionTabLabel = styled.span`
@@ -969,6 +1000,11 @@ const SectionTabLabel = styled.span`
 
 const SectionTabProgress = styled.span`
   display: -webkit-box;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
+
   font-family: var(--font-body);
   font-size: 0.58rem;
   line-height: 1.25;
@@ -1079,9 +1115,27 @@ const BookHost = styled.div`
   .stf__block {
     perspective: 8000px !important;
   }
+
+  /*
+   * Never taller than the screen. StPageFlip sizes the wrapper from its width
+   * (padding-bottom); here it gets the same shape but a capped height, leaving
+   * room for the covers and the Previous / Next buttons. The pages then shrink
+   * to that height, keeping their shape, and stay centered.
+   */
+  .stf__wrapper {
+    padding-bottom: 0 !important;
+    aspect-ratio: ${FLIP_SETTINGS.width * 2} / ${FLIP_SETTINGS.height};
+    max-height: max(20rem, calc(100svh - 10rem));
+  }
+
+  .stf__wrapper.--portrait {
+    aspect-ratio: ${FLIP_SETTINGS.width} / ${FLIP_SETTINGS.height};
+  }
 `
 
 const SketchPage = styled.div`
+  /* Page text and padding scale with the page (cqw), which shrinks on short screens. */
+  container-type: inline-size;
   background: ${({ $hard }) => ($hard ? COVER_BOARD : PAPER)};
   border: 1px solid
     ${({ $hard }) =>
@@ -1100,7 +1154,10 @@ const SketchPageInner = styled.div`
   text-align: ${({ $variant }) =>
     $variant === "cover" || $variant === "back" ? "center" : "left"};
   box-sizing: border-box;
-  padding: clamp(1.25rem, 4vw, 2rem);
+  padding: clamp(0.85rem, 7.4cqw, 2rem);
+  /* Last resort when a very small page can't fit its text. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   height: 100%;
   min-height: 100%;
   width: 100%;
@@ -1148,7 +1205,7 @@ const SketchCoverMark = styled.span`
 
 const SketchTitle = styled.h3`
   font-family: var(--font-display);
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-size: clamp(1.05rem, 6.5cqw, 1.75rem);
   font-weight: 700;
   color: var(--color-text);
   margin: 0 0 var(--space-sm);
@@ -1157,7 +1214,7 @@ const SketchTitle = styled.h3`
 
 const SketchSubtitle = styled.p`
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: clamp(0.7rem, 3cqw, 0.8rem);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted);
@@ -1166,7 +1223,7 @@ const SketchSubtitle = styled.p`
 
 const SketchBody = styled.p`
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: clamp(0.75rem, 3.5cqw, 0.95rem);
   line-height: 1.55;
   color: var(--color-muted);
   margin: 0;
@@ -1230,14 +1287,14 @@ const TocText = styled.span`
 
 const TocLabel = styled.span`
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: clamp(0.78rem, 3.3cqw, 0.9rem);
   font-weight: 700;
   color: var(--color-text);
 `
 
 const TocProgress = styled.span`
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
@@ -1271,29 +1328,59 @@ const SketchPlaceholderLabel = styled.span`
   color: var(--color-muted);
 `
 
+/** Takes the room left under the text; a tall image shrinks to fit the page. */
 const SketchFigure = styled.figure`
   margin: var(--space-md) 0 0;
   width: 100%;
   max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
 `
 
 const SketchImage = styled.img`
   display: block;
   width: 100%;
   height: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  object-fit: contain;
+  object-position: left top;
   border-radius: 4px;
-  border: 1px solid rgba(34, 34, 34, 0.12);
+  /* Follows the picture rather than its box, which is wider once it shrinks. */
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
 `
 
 const SketchCaption = styled.figcaption`
+  flex-shrink: 0;
   margin-top: 0.4rem;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
 
+/** Same side padding as BookStage, so the controls and notes below center on the book. */
+const underBook = `
+  box-sizing: border-box;
+  width: 100%;
+  padding-left: 3.25rem;
+  padding-right: 5.5rem;
+
+  /* Doubled class: beats the article's \`p { max-width: 48rem }\`. */
+  && {
+    max-width: none;
+  }
+
+  @media (max-width: 720px) {
+    padding-left: 2.25rem;
+    padding-right: 4rem;
+  }
+`
+
 const Controls = styled.div`
+  ${underBook}
   position: relative;
   z-index: 6;
   display: flex;
@@ -1342,6 +1429,7 @@ const PageIndicator = styled.p`
 `
 
 const Hint = styled.p`
+  ${underBook}
   position: relative;
   z-index: 6;
   font-size: 0.75rem;
@@ -1351,6 +1439,7 @@ const Hint = styled.p`
 `
 
 const Attribution = styled.p`
+  ${underBook}
   font-size: 0.7rem;
   color: var(--color-muted);
   text-align: center;

@@ -32,6 +32,51 @@ const DRY_LAB_PATROL = {
   ],
 }
 
+const NEEDLEMAN_BASE = "https://static.igem.wiki/teams/6187/wiki/drylab-page/needleman/"
+
+/**
+ * Needleman the cactus and Wunsch the tumbleweed (see NeedlemanCactus), drawn
+ * on their own 2580×1872 plate: `scale` and `at` (where the plate's top-left
+ * lands, in scene px) put them on the skyline where the old saguaro stood.
+ */
+const DRY_LAB_CACTUS = {
+  assetBase: NEEDLEMAN_BASE,
+  plate: [2580, 1872],
+  scale: 0.17,
+  at: [512, -8],
+  body: { name: "needleman", box: [1507, 472, 2016, 1713] },
+  /** Where he sways from: the bottom of his trunk. */
+  base: [1820, 1713],
+  /** Rests flipped down about the shoulder; flips up on hover. */
+  arm: { name: "needleman-arm", box: [1880, 559, 2176, 992], shoulderY: 940 },
+  /** `tail`: the tip it pops out from. */
+  bubble: { name: "text-box", box: [894, 87, 1616, 726], tail: [1520, 714] },
+  /**
+   * Wunsch and his scroll share one image; `clip` splits them along a line
+   * just left of the scroll's outline, so none of it rolls away with him.
+   */
+  friend: {
+    name: "wunch",
+    box: [1930, 1310, 2302, 1745],
+    clip: "polygon(0% 0%, 96.77% 0%, 96.24% 20.69%, 94.89% 25.29%, 94.09% 29.89%, 93.55% 34.48%, 92.47% 39.08%, 91.13% 43.68%, 90.05% 48.28%, 88.71% 52.87%, 87.9% 57.47%, 86.56% 62.07%, 85.75% 66.67%, 84.68% 71.26%, 83.06% 75.86%, 81.72% 80.46%, 79.84% 85.06%, 78.23% 89.66%, 77.69% 94.25%, 76.88% 100%, 0% 100%)",
+    /** Center of the ball he rolls on, and its radius (plate px). */
+    hub: [2100, 1600],
+    radius: 118,
+  },
+  prop: {
+    name: "wunch",
+    box: [2205, 1310, 2355, 1745],
+    clip: "polygon(56.67% 0%, 100% 0%, 100% 100%, 7.33% 100%, 9.33% 94.25%, 10.67% 89.66%, 14.67% 85.06%, 19.33% 80.46%, 22.67% 75.86%, 26.67% 71.26%, 29.33% 66.67%, 31.33% 62.07%, 34.67% 57.47%, 36.67% 52.87%, 40% 48.28%, 42.67% 43.68%, 46% 39.08%, 48.67% 34.48%, 50% 29.89%, 52% 25.29%, 55.33% 20.69%)",
+  },
+  /** The skyline Wunsch rolls along (scene px), with the painted cactus and tumbleweed smoothed out. */
+  floor: [
+    [0, 265], [40, 273], [80, 283], [120, 290], [160, 295], [200, 286],
+    [240, 275], [280, 266], [320, 263], [360, 258], [400, 255], [440, 253],
+    [480, 258], [520, 266], [560, 276], [600, 281], [640, 277], [680, 276],
+    [720, 275], [760, 274], [800, 274], [840, 278], [880, 281], [917, 262],
+  ],
+}
+
 export const DRY_LAB_SCENE = {
   header: "Dry Lab",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/drylab-page/",
@@ -47,6 +92,8 @@ export const DRY_LAB_SCENE = {
   layers: [
     // Ground layers (whole width).
     { name: "layer-1", box: [0, 0, 918, 4000] },
+    // Paints out layer-1's saguaro, where Needleman (`cactus`) now stands.
+    { name: "cactus-patch", src: `${NEEDLEMAN_BASE}cactus-patch.avif`, box: [760, 85, 918, 300] },
     { name: "layer-2", box: [0, 1305, 918, 3136] },
     { name: "layer-3", box: [0, 2567, 918, 4000] },
     // Holes and paths dug into the ground.
@@ -120,6 +167,7 @@ export const DRY_LAB_SCENE = {
    * decorative ending that scrolls with the page.
    */
   textEndY: 2960,
+  cactus: DRY_LAB_CACTUS,
 }
 
 export const VENTURE_SCENE = {

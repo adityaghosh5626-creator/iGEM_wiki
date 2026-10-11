@@ -1,7 +1,7 @@
 /**
  * Design outreach sketchbook — sections (colored tabs) + ordered pages.
  *
- * Optional per spread page:
+ * Optional per spread or notes page:
  * - imageSrc / imageAlt / caption — single hero image
  * - imagePlaceholder — label shown when imageSrc is missing
  * - sectionId — which tab this page belongs to
@@ -12,59 +12,66 @@
  * so two different section tabs never share one open spread.
  */
 
+/** Images uploaded from the team's Discord and Drive. */
+const NB_IMG = (name) =>
+  `https://static.igem.wiki/teams/6187/wiki/outreach/notebook/${name}.avif`
+
 export const DESIGN_SKETCHBOOK_SECTIONS = [
   {
     id: "web-design",
     label: "Web Design",
     color: "#3B82A0",
-    progress: "Section sketches in; homepage stitch + placeholder animations underway.",
+    progress: "Homepage painted and built; subpages follow.",
     startPageId: "web-design",
   },
   {
     id: "animation",
     label: "Animation",
     color: "#E07A3A",
-    progress: "Promo mid-section assets due Jul 27; internal deadline Aug 3.",
+    progress: "Promo animation drawn and delivered in July.",
     startPageId: "animation",
   },
   {
     id: "character-design",
     label: "Character Design",
     color: "#5A9E4B",
-    progress: "Trainer + PETamon briefs sketched; sheets awaiting upload.",
+    progress: "PETamon designed and printed as trading cards.",
     startPageId: "character-design",
   },
   {
     id: "social",
     label: "Social",
     color: "#C45B8C",
-    progress: "Project Intro shipped; RTJ paused until promo lands.",
+    progress: "Intro post, reels, newsletters and the promo.",
     startPageId: "social",
   },
   {
     id: "branding",
     label: "Branding",
     color: "#7B5EA7",
-    progress: "Logo competition closed; Cindy redesign + animation polish.",
+    progress: "Competition winner became the PetaBite logo.",
     startPageId: "branding",
   },
   {
     id: "other",
     label: "Other",
     color: "#8A8680",
-    progress: "Reserved for upcoming design notes and process dumps.",
+    progress: "Promo out; presentation video filming now.",
     startPageId: "other",
   },
 ]
 
-function sectionNotesPage(sectionId, title) {
+/** The right-hand page of a section's spread: one more image from the season. */
+function sectionSnapshotPage(sectionId, image, caption, alt) {
   return {
     id: `${sectionId}-notes`,
-    title: `${title} — notes`,
+    title: "Snapshots",
     sectionId,
-    body: "Space for sketches, links, and follow-ups. Paste CDN image URLs into designSketchbookPages.js when assets are ready.",
     density: "soft",
     variant: "notes",
+    imageSrc: NB_IMG(image),
+    imageAlt: alt,
+    caption,
   }
 }
 
@@ -73,7 +80,6 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     id: "cover",
     title: "Design Team Sketchbook",
     subtitle: "iGEM Toronto 2026",
-    body: "Web Design · Animation · Character Design · Social · Branding · Other",
     density: "hard",
     variant: "cover",
   },
@@ -98,73 +104,115 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     title: "Web Design",
     sectionId: "web-design",
     body:
-      "Homepage split into six sketched sections (Kathleen, Noorine, Cindy, Sara H) with Kathleen on final render/colour so the scroll story stays cohesive. DM Sans for UI type. Bottle lifecycle art (Noorine); keep the PETadex bottle from degrading too far before the battle beat. Section sketches targeted Jun 27; stitching and placeholder animations (conditions card, waterfall sink/rematch) followed in late June / July.",
+      "Web design started in March with landing-page concepts, then moved to a homepage that tells the project as a story you scroll through. Kathleen drafted the full composition in June; the homepage was split into six sketched sections, painted and stitched together over the summer, and the same hand-painted look carried into the Dry Lab, Entrepreneurship, Human Practices, Contribution and Attributions pages. In October the art was lightened for phones ahead of the wiki freeze.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: homepage section lineart / rendered composite",
+    imageSrc: NB_IMG("web-homepage-storyboard-jun11"),
+    imageAlt: "Pencil storyboard of the homepage scroll, with numbered sections and handwritten notes about PETamon, a world map and the bottle",
+    caption: "Kathleen's homepage storyboard (June 11).",
   },
-  sectionNotesPage("web-design", "Web Design"),
+  sectionSnapshotPage(
+    "web-design",
+    "web-landing-concept-mar30",
+    "An early landing-page concept from March.",
+    "Bold, collage-style landing page mockup reading Welcome to iGem TO, with a cartoon lab machine"
+  ),
   {
     id: "animation",
     title: "Animation",
     sectionId: "animation",
     body:
-      "Promo mid-section (shots 2.1–2.9, ~25–30s) plus flowchart shot 3.12: simple TED-Ed / charming style, textured brushes like the PetaBite site (no lineart). Pipeline — storyboard done → hand-drawn assets (due Jul 27) → Kathleen render/rig in After Effects. Owners: Angirmaa (net, bottle, fragments, anemone, microplastic, trout); Kathleen (hand/fork, eating human, stomach/heart + microplastic rigs); Sara P (lake + table BGs); Cindy (3.12 flowchart). Shot 2.1 splash transition waits on scene 1 film (Jul 25). Zooplankton cut Jul 23. Internal deadline Aug 3 midnight. Tools: Procreate, After Effects, OpenToonz.",
+      "Animation gave the promo video its educational middle: a short TED-Ed-style sequence on how microplastics travel from bottles and nets into fish and then into us, plus a flowchart beat. After a storyboard in July, the assets were drawn by hand with textured brushes like the wiki's, rigged and rendered in After Effects, and delivered at the end of July, ahead of the promo video's release on August 11.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: TED-Ed style frame, asset sheet, or shot 2.x still",
+    imageSrc: NB_IMG("animation-storyboard-jul21"),
+    imageAlt: "Storyboard sketches of a hand, a fish and figures eating, numbered shot by shot",
+    caption: "Storyboard frames for the microplastics sequence (July 21).",
   },
-  sectionNotesPage("animation", "Animation"),
+  sectionSnapshotPage(
+    "animation",
+    "animation-assets-jul23",
+    "A hand-drawn asset, split into layers for animating (July 23).",
+    "Painted hand holding a fork with a piece of fish"
+  ),
   {
     id: "character-design",
     title: "Character Design",
     sectionId: "character-design",
     body:
-      "Brief: break stereotypes (e.g. hardware not defaulting to a male lead). Two paths — PETase-linked mascots vs subteam-specific trainers — with each trainer owning a PETamon partner. Assignments sketched across dry lab, hardware, venture, HP, outreach/web, and wet lab. Rough sketches targeted Apr 5; Google Form collected subteam feature wishes.",
+      "The characters began as a brief for subteam trainers, each with a PETamon partner, drawn to break stereotypes (hardware doesn't default to a male lead). Over the summer the sketches became the PETamon that live across the wiki, and in August the idea grew into Pokémon-style trading cards: PETamon cards, pollution cards and plastic-removal item cards. The cards were formatted for print in September and printed the day before the UofT Microplastics Conference.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: trainer + PETamon character sheets",
+    imageSrc: NB_IMG("character-petamon-card-sep17"),
+    imageAlt: "Trading card for Reactoise, a turtle PETamon, with the moves Bite and Catalytic Reaction",
+    caption: "A PETamon card, formatted for print (September 17).",
   },
-  sectionNotesPage("character-design", "Character Design"),
+  sectionSnapshotPage(
+    "character-design",
+    "character-printed-cards-sep18",
+    "The printed cards (September 18).",
+    "A fanned-out row of printed PETamon trading cards"
+  ),
   {
     id: "social",
     title: "Social",
     sectionId: "social",
     body:
-      "Project Intro post shipped mid-May. Road to Jamboree weekly cadence (ideate Sunday → film mid-week → edit → post) with hardware reels filmed first; series paused until the promo video lands. Newsletter mirrors RTJ in a more formal monthly voice (Brevo; Mailchimp considered later). Interest / motivation / conference posts scheduled around speaker outreach.",
+      "Social launched in May with Project Intro, our first Instagram post (about 300 likes), in a pastel palette built around the axolotl PETamon. From June, Road to Jamboree reels followed the subteams at work, the newsletter went out roughly monthly from late May with a special edition for the conference, and the promo video premiered on Instagram in August. Posts through September promoted the UofT Microplastics Conference.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: Project Intro post screenshot or RTJ reel still",
+    imageSrc: NB_IMG("social-project-intro-may"),
+    imageAlt: "Instagram slide titled Plastic pollution on the rise, with an axolotl and facts about microplastics in the body",
+    caption: "The first slide of Project Intro (May).",
   },
-  sectionNotesPage("social", "Social"),
+  sectionSnapshotPage(
+    "social",
+    "social-petadex-post-may",
+    "Another Project Intro slide, introducing the PETadex.",
+    "Instagram slide titled Our project: the PETadex, with an axolotl holding a bottle"
+  ),
   {
     id: "branding",
     title: "Branding",
     sectionId: "branding",
     body:
-      "Season opened with earthy, personal branding (no AI art). Logo competition ran through spring (Chinmay early leader); Cindy led redesign and animation polish, including capitalization fixes. Grass / line-art feedback explored to stay closer to classic iGEM mark energy while keeping our own voice.",
+      "Branding kept the season hand-made: earthy colours, painted textures and no AI art. The logo design competition opened in March with a Pokémon × synthetic biology theme; after a team vote in May, Chinmay's design won and was reworked from PETadex into the PetaBite wordmark, its letters linked like a molecule. Cindy recoloured it for the merch in September.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: final logo still (+ animated frame if available)",
+    imageSrc: NB_IMG("branding-final-logo"),
+    imageAlt: "The PetaBite logo: the letters P, e, t, a, B, i, t, e set in a chain of molecule rings",
+    caption: "The final PetaBite logo, recoloured for merch (September 13).",
   },
-  sectionNotesPage("branding", "Branding"),
+  sectionSnapshotPage(
+    "branding",
+    "branding-competition-entry-mar",
+    "Chinmay's competition entry (March), before it became PetaBite.",
+    "Logo reading PETadex under a chemical structure, with circuit-board icons on each side"
+  ),
   {
     id: "other",
     title: "Other",
     sectionId: "other",
     body:
-      "A catch-all for design notes that don’t fit the main tabs yet — workshop dumps, tool experiments, and merch. Meet #15 (Jul 20) opened merch scouting for hoodies, tees, quarter-zips, and stickers (local sticker shop + Alibaba apparel options). Add pages here as they land.",
+      "Outreach also made the team's videos and merch. The promo video was scripted in June, filmed on campus, in the lab and on Centre Island in July, and released on August 11. Work on the 15-minute Grand Jamboree presentation video started in August, with filming from October 1. Merch went from designs in August to supplier mockups in September, and orders for hoodies, shirts and quarter-zips opened on October 5.",
     density: "soft",
     variant: "spread",
-    imagePlaceholder: "Awaiting upload: misc design process notes",
+    imageSrc: NB_IMG("other-promo-filming-jul26"),
+    imageAlt: "A team member in a red shirt fishing off Centre Island with the Toronto skyline behind",
+    caption: "Filming the promo video on Centre Island (July 26).",
   },
-  sectionNotesPage("other", "Other"),
+  sectionSnapshotPage(
+    "other",
+    "other-merch-mockup-sep25",
+    "The supplier's mockup of the PetaBite hoodies (September 25).",
+    "Mockup sheet of sage green PetaBite hoodies, front and back"
+  ),
   {
     id: "back",
-    title: "More pages soon",
+    title: "That's the season",
     subtitle: "Flip back or tap a tab",
     body:
-      "Drop CDN image URLs into designSketchbookPages.js as lineart, mockups, and character sheets are uploaded. Until then, spreads hold process notes from outreach and web-design meetings.",
+      "Each tab covers one part of outreach design from March to October 2026, with images from the team's Discord.",
     density: "hard",
     variant: "back",
   },
