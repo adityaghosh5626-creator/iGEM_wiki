@@ -42,6 +42,11 @@ export const GlobalStyle = createGlobalStyle`
   html {
     font-size: 16px;
     scroll-behavior: smooth;
+    /* No grey flash over tapped art (crabs, bottle pieces) on phones. */
+    -webkit-tap-highlight-color: transparent;
+    /* No double-tap zoom: iOS otherwise eats the second of two quick taps
+       (tap-to-preview, tap-again-to-open; play then pause). Pinch zoom stays. */
+    touch-action: manipulation;
     scroll-padding-top: 6rem;
     min-height: 100%;
   }

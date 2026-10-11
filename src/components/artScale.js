@@ -30,6 +30,20 @@ export const artFont = px =>
 
 export const phone = `@media (max-width: ${PHONE_MAX}px)`
 
+/**
+ * Phone layouts are placed against a screen this wide. On narrower windows
+ * the art keeps shrinking, so phone sizes shrink with it (phoneSize) and the
+ * copy stays on the patch of art it was placed on instead of spilling over.
+ */
+export const PHONE_REF_W = 390
+
+/** `rem` on a PHONE_REF_W screen or wider; that share of the art below it. */
+export const phoneSize = rem =>
+  `min(${rem}rem, calc(var(${ART_WIDTH_VAR}, 100vw) * ${+(
+    (rem * 16) /
+    PHONE_REF_W
+  ).toFixed(6)}))`
+
 /** Touch screens (no hover) or phone widths: wording that says "tap", not "hover". */
 export const touchUI = `@media (hover: none), (max-width: ${PHONE_MAX}px)`
 

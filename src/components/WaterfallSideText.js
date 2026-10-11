@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from "react"
 import styled, { css, keyframes } from "styled-components"
 import { ExplainTerm } from "./ExplainTermPopover.js"
-import { artFont, artPx, inputCopyCss, phone } from "./artScale.js"
+import { artFont, artPx, inputCopyCss, phone, phoneSize } from "./artScale.js"
 
 /** Used for popover accessibility; visible copy lives in the textbox image asset. */
 export const PETASE_EXPLANATION =
@@ -194,7 +194,8 @@ const TextMount = styled.div`
 
           /* Phones: fits the left bank, clear of the falls. */
           ${phone} {
-            width: 36%;
+            left: 4%;
+            width: 34%;
           }
         `
       : css`
@@ -226,7 +227,7 @@ const Body = styled.p`
   overflow: visible;
 
   ${phone} {
-    font-size: 0.7rem;
+    font-size: ${phoneSize(0.7)};
   }
 `
 
@@ -297,7 +298,7 @@ const HintText = styled.span`
   overflow-wrap: break-word;
 
   ${phone} {
-    font-size: 0.6rem;
+    font-size: ${phoneSize(0.6)};
   }
 
   ${inputCopyCss}

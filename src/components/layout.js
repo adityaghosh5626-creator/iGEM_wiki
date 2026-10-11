@@ -147,9 +147,12 @@ const ScrollTopButton = styled.button`
   cursor: pointer;
   transition: transform 0.15s ease, background-color 0.2s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    background: var(--color-surface);
+  /* A phone tap would leave it lifted (sticky hover). */
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      background: var(--color-surface);
+    }
   }
 
   &:focus-visible {

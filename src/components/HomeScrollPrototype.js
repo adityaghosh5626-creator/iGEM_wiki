@@ -13,7 +13,14 @@ import { SwipeInBox } from "./SwipeInBox.js"
 import { ExplainTerm } from "./ExplainTermPopover.js"
 import EndingPetamonBottle from "./EndingPetamonBottle.js"
 import { HomeAutoplay } from "./HomeAutoplay.js"
-import { ART_REF_W, ART_WIDTH_VAR, artFont, artPx, phone } from "./artScale.js"
+import {
+  ART_REF_W,
+  ART_WIDTH_VAR,
+  artFont,
+  artPx,
+  phone,
+  phoneSize,
+} from "./artScale.js"
 import { LOGO_BOX, LOGO_FRAMES, LOGO_PLATE, LogoFrame } from "./logoFrames.js"
 import { PlateImg } from "./PlateImg.js"
 import { SiteLoader } from "./SiteLoader.js"
@@ -991,6 +998,12 @@ const WALK_TRACK_VH = 120
  * the bird-steal beat before the forest unpins.
  */
 const WALK_HOLD_VH = 300
+/**
+ * Phones coast on after the finger lifts, and moving the scroll under that
+ * coast stutters it (or jumps, on iOS). On touch, the walk and the ending
+ * drop their played scroll length only once the page has been still this long.
+ */
+const TOUCH_SETTLE_MS = 200
 /** Keep the figure centroid at this viewport Y while the forest is frozen. */
 const HUMAN_PIN_VIEW_Y = 0.68
 /**
@@ -1476,6 +1489,18 @@ export function HomeScrollPrototype() {
   }, [])
 
   useLayoutEffect(() => {
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false
+    let touching = false
+    let lastScrollAt = 0
+    let settleTimer = 0
+    const settled = () =>
+      !coarse ||
+      (!touching && performance.now() - lastScrollAt > TOUCH_SETTLE_MS)
+    const tickWhenSettled = () => {
+      window.clearTimeout(settleTimer)
+      settleTimer = window.setTimeout(tick, TOUCH_SETTLE_MS + 30)
+    }
+
     const tick = () => {
       const stack = stackRef.current
       const bottleSpot = bottleTouchRef.current
@@ -1573,7 +1598,9 @@ export function HomeScrollPrototype() {
             birdStealPRef.current = stealProgress
             painting.style.left = "0px"
             painting.style.width = "100%"
-            if (walkLatchedRef.current && y > pinAt + freezePx) {
+            const walkPlayed = walkLatchedRef.current && y > pinAt + freezePx
+            if (walkPlayed && !settled()) tickWhenSettled()
+            if (walkPlayed && settled()) {
               walkReleasedRef.current = true
               savePlayedBeats({
                 walk: true,
@@ -2299,7 +2326,10 @@ export function HomeScrollPrototype() {
           reduce || released
             ? 1
             : clamp01((stickyTop - trackTop) / Math.max(1, holdPx))
-        if (!released && !reduce && trackTop < stickyTop - holdPx) {
+        const endingPlayed =
+          !released && !reduce && trackTop < stickyTop - holdPx
+        if (endingPlayed && !settled()) tickWhenSettled()
+        if (endingPlayed && settled()) {
           // Past the end of the hold: drop its scroll length and pull the
           // scroll back by the same amount so nothing on screen moves.
           endingReleasedRef.current = true
@@ -2320,9 +2350,22 @@ export function HomeScrollPrototype() {
       }
     }
 
+    const onScroll = () => {
+      lastScrollAt = performance.now()
+      tick()
+    }
+    const onTouch = event => {
+      touching = event.touches.length > 0
+      lastScrollAt = performance.now()
+      if (!touching) tickWhenSettled()
+    }
+
     tick()
-    window.addEventListener("scroll", tick, { passive: true })
+    window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", tick, { passive: true })
+    window.addEventListener("touchstart", onTouch, { passive: true })
+    window.addEventListener("touchend", onTouch, { passive: true })
+    window.addEventListener("touchcancel", onTouch, { passive: true })
     const paintingEl = compositionRef.current
     const section5El = section5RootRef.current
     const resizeObserver =
@@ -2332,8 +2375,12 @@ export function HomeScrollPrototype() {
     if (resizeObserver && paintingEl) resizeObserver.observe(paintingEl)
     if (resizeObserver && section5El) resizeObserver.observe(section5El)
     return () => {
-      window.removeEventListener("scroll", tick)
+      window.clearTimeout(settleTimer)
+      window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", tick)
+      window.removeEventListener("touchstart", onTouch)
+      window.removeEventListener("touchend", onTouch)
+      window.removeEventListener("touchcancel", onTouch)
       if (resizeObserver) resizeObserver.disconnect()
     }
   }, [
@@ -3571,6 +3618,9 @@ const EndingHoldTrack = styled.div`
   position: relative;
   width: 100%;
   min-width: 0;
+  /* Overlaps the lab's sand by a pixel: where the two plates meet on a half
+     pixel, both edges come out half see-through and leave a pale line. */
+  margin-top: -1px;
 `
 
 /**
@@ -4448,10 +4498,10 @@ const CrabMount = styled.div`
   top: 0;
   width: 100%;
   z-index: ${({ $z }) => $z || 0};
-  transform: translate3d(
+  /* 2D: a 3D translate would give every mount its own plate-sized layer. */
+  transform: translate(
     ${({ $xPct }) => $xPct || 0}%,
-    ${({ $yPct }) => $yPct || 0}%,
-    0
+    ${({ $yPct }) => $yPct || 0}%
   );
   pointer-events: none;
 `
@@ -4502,7 +4552,7 @@ const CrabScuttleShell = styled.div`
   position: relative;
   width: 100%;
   pointer-events: none;
-  transform: translate3d(${({ $homeX }) => $homeX}%, 0, 0);
+  transform: ${({ $homeX }) => ($homeX ? `translateX(${$homeX}%)` : "none")};
   transform-origin: ${({ $ox, $oy }) => `${$ox}% ${$oy}%`};
 `
 
@@ -4574,6 +4624,33 @@ const crabFlapB = keyframes`
   }
 `
 
+/**
+ * Two-frame flap on a PlateImg. The steps run on the drawn crop inside the
+ * plate-sized box (or on the image itself, for a plate without a crop):
+ * Safari gives each animated element a layer the size of its box, and a
+ * screen-sized layer per flapping frame is what made phones lag.
+ */
+const plateFlap = ({ $phase, $durationMs, $delayMs }, flapA, flapB, fallbackMs) => css`
+  &:is(img),
+  & > img {
+    opacity: ${$phase === "a" ? 1 : 0};
+    animation: ${$phase === "a" ? flapA : flapB}
+      ${$durationMs || fallbackMs}ms steps(1, end) ${$delayMs || 0}ms infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+`
+
+/** The flap at `share` of its usual length, while `parent` is hovered. */
+const plateFlapFaster = (parent, durationMs, share) => css`
+  ${parent}:hover &:is(img),
+  ${parent}:hover & > img {
+    animation-duration: ${Math.round(durationMs * share)}ms;
+  }
+`
+
 const CrabFrame = styled(PlateImg)`
   position: absolute;
   left: 0;
@@ -4584,29 +4661,14 @@ const CrabFrame = styled(PlateImg)`
   max-width: 100%;
   user-select: none;
   pointer-events: none;
-  opacity: ${({ $phase }) => ($phase === "a" ? 1 : 0)};
-  animation-name: ${({ $phase }) => ($phase === "a" ? crabFlapA : crabFlapB)};
-  animation-duration: ${({ $durationMs }) => `${$durationMs || 720}ms`};
-  animation-delay: ${({ $delayMs }) => `${$delayMs || 0}ms`};
-  animation-timing-function: steps(1, end);
-  animation-iteration-count: infinite;
+  ${props => plateFlap(props, crabFlapA, crabFlapB, 720)}
 
   &:first-child {
     position: relative;
   }
 
   ${({ $hoverFlap, $durationMs }) =>
-    $hoverFlap &&
-    css`
-      ${ForestAnimalsStack}:hover & {
-        animation-duration: ${Math.round(($durationMs || 720) * 0.72)}ms;
-      }
-    `}
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    opacity: ${({ $phase }) => ($phase === "a" ? 1 : 0)};
-  }
+    $hoverFlap && plateFlapFaster(ForestAnimalsStack, $durationMs || 720, 0.72)}
 `
 
 const StaticPlateImg = styled(PlateImg)`
@@ -4798,9 +4860,11 @@ const ShorePetaseMount = styled.div`
   pointer-events: auto;
   text-align: center;
 
-  /* Clear of the waterfall's right-hand column, which runs longer on phones. */
+  /* Clear of the waterfall's right-hand column, which runs longer on phones,
+     and nudged right so it stays on the water, off the rocks on the left bank. */
   ${phone} {
-    top: calc(-20% + 1.75rem);
+    top: calc(-20% + ${phoneSize(1.75)});
+    left: 56%;
     width: 86%;
   }
 `
@@ -4818,7 +4882,7 @@ const ShorePetaseBody = styled.p`
     0 0 14px rgba(0, 0, 0, 0.35);
 
   ${phone} {
-    font-size: 1rem;
+    font-size: ${phoneSize(0.95)};
   }
 `
 
@@ -5219,7 +5283,6 @@ const CardShine = styled.span`
   );
   background-size: 250% 100%;
   background-repeat: no-repeat;
-  mix-blend-mode: screen;
   mask: url(${({ $src }) => $src}) center / contain no-repeat;
   -webkit-mask: url(${({ $src }) => $src}) center / contain no-repeat;
 
@@ -5486,22 +5549,8 @@ const BirdFrame = styled(PlateImg)`
   max-width: 100%;
   user-select: none;
   pointer-events: none;
-  opacity: ${({ $phase }) => ($phase === "a" ? 1 : 0)};
-  animation-name: ${({ $phase }) => ($phase === "a" ? birdFlapA : birdFlapB)};
-  animation-duration: ${({ $durationMs }) => `${$durationMs || 520}ms`};
-  animation-delay: ${({ $delayMs }) => `${$delayMs || 0}ms`};
-  animation-timing-function: steps(1, end);
-  animation-iteration-count: infinite;
-
-  ${BirdsStack}:hover & {
-    animation-duration: ${({ $durationMs }) =>
-      `${Math.round(($durationMs || 520) * 0.72)}ms`};
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    opacity: ${({ $phase }) => ($phase === "a" ? 1 : 0)};
-  }
+  ${props => plateFlap(props, birdFlapA, birdFlapB, 520)}
+  ${({ $durationMs }) => plateFlapFaster(BirdsStack, $durationMs || 520, 0.72)}
 `
 
 const OverlayStack = styled.div`

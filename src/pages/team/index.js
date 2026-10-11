@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { graphql } from "gatsby"
 import styled, { css } from "styled-components"
 import WikiLayout from "../../components/layout.js"
@@ -28,6 +28,13 @@ const TEAM_FRAME = "#dde1f8"
 const LEAD_SECTIONS = new Set(["Presidents", "Team Leads"])
 
 const HEADING = "#6b7fe6"
+
+/**
+ * Waterfall painting (1110×4000) behind the page. It fills the window width
+ * and pans from the sky to the pool over the page's scroll, so the whole
+ * painting goes by however long the page is.
+ */
+const BG_SRC = "https://static.igem.wiki/teams/6187/wiki/team/bg.avif"
 
 const photoSrc = (m) => m.photo || m.imageSrc || ""
 
@@ -96,6 +103,34 @@ function MemberLinks({ m }) {
 const TeamPage = ({ data }) => {
   const sections = groupByTeam(data.allTeamCsv.nodes)
   const [flipped, setFlipped] = useState(() => new Set())
+  const backdropRef = useRef(null)
+
+  useEffect(() => {
+    const box = backdropRef.current
+    const img = box?.firstElementChild
+    if (!img) return undefined
+    let frame = 0
+    const pan = () => {
+      frame = 0
+      const range = document.documentElement.scrollHeight - window.innerHeight
+      const p = range > 0 ? Math.min(1, Math.max(0, window.scrollY / range)) : 0
+      const y = p * Math.min(0, box.clientHeight - img.offsetHeight)
+      img.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`
+    }
+    const queue = () => {
+      if (!frame) frame = requestAnimationFrame(pan)
+    }
+    pan()
+    img.addEventListener("load", queue)
+    window.addEventListener("scroll", queue, { passive: true })
+    window.addEventListener("resize", queue)
+    return () => {
+      cancelAnimationFrame(frame)
+      img.removeEventListener("load", queue)
+      window.removeEventListener("scroll", queue)
+      window.removeEventListener("resize", queue)
+    }
+  }, [])
 
   const toggle = useCallback((id) => {
     setFlipped((prev) => {
@@ -115,68 +150,74 @@ const TeamPage = ({ data }) => {
 
   return (
     <WikiLayout>
-      <Title>Meet the Team</Title>
+      <Backdrop ref={backdropRef} aria-hidden>
+        <img src={BG_SRC} alt="" />
+      </Backdrop>
 
-      {sections.map(([team, members]) => (
-        <Section key={team} aria-labelledby={`team-${team}`}>
-          <SectionTitle id={`team-${team}`}>{team}</SectionTitle>
-          <Cards>
-            {members.map((m) => {
-              const isFlipped = flipped.has(m.id)
-              const frame = LEAD_SECTIONS.has(team) ? LEAD_FRAME : TEAM_FRAME
-              return (
-                <Card key={m.id} style={{ "--frame": frame }}>
-                  <FlipInner $flipped={isFlipped}>
-                    <Front
-                      role="button"
-                      tabIndex={isFlipped ? -1 : 0}
-                      aria-hidden={isFlipped}
-                      aria-expanded={isFlipped}
-                      aria-label={`${m.Name}, ${m.role}. Show bio.`}
-                      onClick={() => toggle(m.id)}
-                      onKeyDown={keyToggle(m.id)}
-                    >
-                      <Photo>
-                        {photoSrc(m) ? (
-                          <img src={photoSrc(m)} alt="" loading="lazy" />
-                        ) : (
-                          <Initials aria-hidden>{initials(m.Name)}</Initials>
-                        )}
-                        <Caption>
-                          <Name>{m.Name}</Name>
-                          <Role>{m.role}</Role>
-                        </Caption>
-                        <MemberLinks m={m} />
-                      </Photo>
-                    </Front>
+      <Content>
+        <Title>Meet the Team</Title>
 
-                    <Back
-                      role="button"
-                      tabIndex={isFlipped ? 0 : -1}
-                      aria-hidden={!isFlipped}
-                      aria-expanded={isFlipped}
-                      aria-label={`${m.Name} bio. Click to flip back.`}
-                      onClick={() => toggle(m.id)}
-                      onKeyDown={keyToggle(m.id)}
-                    >
-                      <BackInner>
-                        <BackName>{m.Name}</BackName>
-                        <BackRole>{m.role}</BackRole>
-                        <Bio>{m.description}</Bio>
-                        {m.website && (
-                          <TextLink href={m.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                            Website
-                          </TextLink>
-                        )}
-                      </BackInner>
-                    </Back>
-                  </FlipInner>
-                </Card>
-              )
-            })}
-          </Cards>
-        </Section>
-      ))}
+        {sections.map(([team, members]) => (
+          <Section key={team} aria-labelledby={`team-${team}`}>
+            <SectionTitle id={`team-${team}`}>{team}</SectionTitle>
+            <Cards>
+              {members.map((m) => {
+                const isFlipped = flipped.has(m.id)
+                const frame = LEAD_SECTIONS.has(team) ? LEAD_FRAME : TEAM_FRAME
+                return (
+                  <Card key={m.id} style={{ "--frame": frame }}>
+                    <FlipInner $flipped={isFlipped}>
+                      <Front
+                        role="button"
+                        tabIndex={isFlipped ? -1 : 0}
+                        aria-hidden={isFlipped}
+                        aria-expanded={isFlipped}
+                        aria-label={`${m.Name}, ${m.role}. Show bio.`}
+                        onClick={() => toggle(m.id)}
+                        onKeyDown={keyToggle(m.id)}
+                      >
+                        <Photo>
+                          {photoSrc(m) ? (
+                            <img src={photoSrc(m)} alt="" loading="lazy" />
+                          ) : (
+                            <Initials aria-hidden>{initials(m.Name)}</Initials>
+                          )}
+                          <Caption>
+                            <Name>{m.Name}</Name>
+                            <Role>{m.role}</Role>
+                          </Caption>
+                          <MemberLinks m={m} />
+                        </Photo>
+                      </Front>
+
+                      <Back
+                        role="button"
+                        tabIndex={isFlipped ? 0 : -1}
+                        aria-hidden={!isFlipped}
+                        aria-expanded={isFlipped}
+                        aria-label={`${m.Name} bio. Click to flip back.`}
+                        onClick={() => toggle(m.id)}
+                        onKeyDown={keyToggle(m.id)}
+                      >
+                        <BackInner>
+                          <BackName>{m.Name}</BackName>
+                          <BackRole>{m.role}</BackRole>
+                          <Bio>{m.description}</Bio>
+                          {m.website && (
+                            <TextLink href={m.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                              Website
+                            </TextLink>
+                          )}
+                        </BackInner>
+                      </Back>
+                    </FlipInner>
+                  </Card>
+                )
+              })}
+            </Cards>
+          </Section>
+        ))}
+      </Content>
     </WikiLayout>
   )
 }
@@ -203,8 +244,45 @@ export const query = graphql`
 export default TeamPage
 export const Head = () => <title>Meet the Team — iGEM Toronto 2026</title>
 
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #cfe6e4;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 100%;
+    object-fit: cover;
+    will-change: transform;
+  }
+`
+
+const Content = styled.div`
+  position: relative;
+  z-index: 1;
+`
+
+/** Frosted label so the headings read over the water and cliffs alike. */
+const label = css`
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.12em 0.55em 0.18em;
+  border-radius: 0.45em;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 4px 18px rgba(30, 60, 70, 0.12);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+`
+
 const Title = styled.h1`
-  margin: clamp(2rem, 6vw, 4rem) 0 clamp(2.5rem, 7vw, 5rem);
+  ${label}
+  margin: clamp(2rem, 6vw, 4rem) auto clamp(2.5rem, 7vw, 5rem);
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
@@ -218,6 +296,7 @@ const Section = styled.section`
 `
 
 const SectionTitle = styled.h2`
+  ${label}
   margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
   color: ${HEADING};
   font-family: var(--font-display);
