@@ -3,8 +3,15 @@ import styled from "styled-components"
 import {
   HARDWARE_JOURNAL_ENTRIES,
   journalHashForDate,
-  parseJournalHash,
 } from "../../data/hardwareJournalEntries.js"
+
+/** Entry id from a `#journal-YYYY-MM-DD` hash, if it's one of `entries`. */
+function entryIdFromHash(hash, entries) {
+  const raw = (hash || "").replace(/^#/, "")
+  if (!raw.startsWith("journal-")) return null
+  const id = raw.slice("journal-".length)
+  return entries.some((entry) => entry.id === id) ? id : null
+}
 
 function formatEntryDate(ymd) {
   const parsed = new Date(`${ymd}T12:00:00`)
@@ -72,9 +79,14 @@ function JournalEntryPanel({ entry }) {
   )
 }
 
-export function HardwareJournal() {
+/**
+ * A dated notebook (newest first): a date list beside the entries, each with
+ * goal / work / result / next step, deliverables, figures and links. Used by
+ * the Hardware and Wet Lab notebooks, each with its own entries.
+ */
+export function NotebookJournal({ entries, intro }) {
   const readyRef = useRef(false)
-  const firstId = HARDWARE_JOURNAL_ENTRIES[0]?.id ?? null
+  const firstId = entries[0]?.id ?? null
   const [activeId, setActiveId] = useState(firstId)
 
   const scrollToEntry = useCallback((id, { updateHash = true, behavior = "smooth" } = {}) => {
@@ -94,7 +106,7 @@ export function HardwareJournal() {
     if (typeof window === "undefined") return undefined
 
     readyRef.current = false
-    const hashId = parseJournalHash(window.location.hash)
+    const hashId = entryIdFromHash(window.location.hash, entries)
     // Only a link to an entry scrolls here; otherwise the page opens at its
     // top (the journal is one section of the notebook page).
     const timer = window.setTimeout(() => {
@@ -107,7 +119,7 @@ export function HardwareJournal() {
     }, 50)
 
     const onHashChange = () => {
-      const id = parseJournalHash(window.location.hash)
+      const id = entryIdFromHash(window.location.hash, entries)
       if (id) {
         scrollToEntry(id, { updateHash: false })
       }
@@ -119,15 +131,17 @@ export function HardwareJournal() {
       window.removeEventListener("hashchange", onHashChange)
       readyRef.current = false
     }
-  }, [scrollToEntry])
+  }, [scrollToEntry, entries])
 
   useEffect(() => {
-    const entries = HARDWARE_JOURNAL_ENTRIES.map((entry) => ({
-      id: entry.id,
-      el: document.getElementById(journalHashForDate(entry.id)),
-    })).filter((item) => item.el)
+    const targets = entries
+      .map((entry) => ({
+        id: entry.id,
+        el: document.getElementById(journalHashForDate(entry.id)),
+      }))
+      .filter((item) => item.el)
 
-    if (entries.length === 0) return undefined
+    if (targets.length === 0) return undefined
 
     const observer = new IntersectionObserver(
       (observed) => {
@@ -139,25 +153,22 @@ export function HardwareJournal() {
 
         if (visible.length === 0) return
 
-        const topEntry = entries.find((item) => item.el === visible[0].target)
+        const topEntry = targets.find((item) => item.el === visible[0].target)
         if (topEntry) setActiveId(topEntry.id)
       },
       { rootMargin: "-20% 0px -55% 0px", threshold: 0 }
     )
 
-    entries.forEach(({ el }) => observer.observe(el))
+    targets.forEach(({ el }) => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }, [entries])
 
   return (
     <JournalRoot data-nav-skip>
-      <Intro>
-        Chronological hardware design notes from team meetings, newest first. Scroll through
-        each entry below, or use the date list to jump to a session.
-      </Intro>
+      <Intro>{intro}</Intro>
       <JournalLayout>
         <DateNav role="navigation" aria-label="Journal entries by date">
-          {HARDWARE_JOURNAL_ENTRIES.map((entry) => {
+          {entries.map((entry) => {
             const selected = entry.id === activeId
             return (
               <DateButton
@@ -173,7 +184,7 @@ export function HardwareJournal() {
           })}
         </DateNav>
         <EntryFeed>
-          {HARDWARE_JOURNAL_ENTRIES.map((entry, index) => (
+          {entries.map((entry, index) => (
             <EntryBlock key={entry.id}>
               {index > 0 && <EntryDivider aria-hidden />}
               <JournalEntryPanel entry={entry} />
@@ -182,6 +193,15 @@ export function HardwareJournal() {
         </EntryFeed>
       </JournalLayout>
     </JournalRoot>
+  )
+}
+
+export function HardwareJournal() {
+  return (
+    <NotebookJournal
+      entries={HARDWARE_JOURNAL_ENTRIES}
+      intro="Chronological hardware design notes from team meetings, newest first. Scroll through each entry below, or use the date list to jump to a session."
+    />
   )
 }
 

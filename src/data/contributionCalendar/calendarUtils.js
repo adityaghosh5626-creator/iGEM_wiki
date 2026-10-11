@@ -1,6 +1,10 @@
 /** @typedef {import('../subteamTracks.js').SubteamId} SubteamId */
 
 export const CONTRIBUTION_MONTHS = [
+  { key: "2025-12", label: "December", year: 2025, monthIndex: 11 },
+  { key: "2026-01", label: "January", year: 2026, monthIndex: 0 },
+  { key: "2026-02", label: "February", year: 2026, monthIndex: 1 },
+  { key: "2026-03", label: "March", year: 2026, monthIndex: 2 },
   { key: "2026-04", label: "April", year: 2026, monthIndex: 3 },
   { key: "2026-05", label: "May", year: 2026, monthIndex: 4 },
   { key: "2026-06", label: "June", year: 2026, monthIndex: 5 },
@@ -10,7 +14,7 @@ export const CONTRIBUTION_MONTHS = [
   { key: "2026-10", label: "October", year: 2026, monthIndex: 9 },
 ]
 
-const RANGE_START = "2026-04-01"
+const RANGE_START = "2025-12-01"
 const RANGE_END = "2026-10-31"
 
 export function parseYMD(ymd) {
@@ -47,7 +51,7 @@ export function sundayOfWeek(date) {
   return d
 }
 
-/** Sunday–Saturday weeks intersecting Apr 1 – Oct 31 2026. Week id = `week-` + Sunday YMD. */
+/** Sunday–Saturday weeks intersecting Dec 1 2025 – Oct 31 2026. Week id = `week-` + Sunday YMD. */
 export function buildWeekSkeleton() {
   const rangeStart = parseYMD(RANGE_START)
   const rangeEnd = parseYMD(RANGE_END)

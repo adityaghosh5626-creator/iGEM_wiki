@@ -6,6 +6,7 @@ import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
 import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
 import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
+import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
 import { HardwareNotebookSandbox } from "../hardwareNotebook/HardwareNotebookSandbox.js"
 import { HardwareArchitectureDiagram } from "../hardwareArchitecture/HardwareArchitectureDiagram.js"
 import { PageTab, PageTabs } from "../PageTabs.js"
@@ -78,6 +79,7 @@ export const mdxComponents = {
   DesignSketchbook,
   HardwareNotebookSandbox,
   HardwareJournal,
+  WetLabJournal,
   BioreactorRequirements,
   BioreactorSimulator,
   HardwareArchitectureDiagram,

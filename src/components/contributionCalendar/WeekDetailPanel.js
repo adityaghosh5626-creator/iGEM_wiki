@@ -2,7 +2,7 @@ import React from "react"
 import { Link } from "gatsby"
 import styled from "styled-components"
 import {
-  SUBTEAM_BY_ID,
+  MILESTONE_TRACK_BY_ID,
   SUBTEAM_TRACKS,
   trackColor,
 } from "../../data/subteamTracks.js"
@@ -32,7 +32,7 @@ export function WeekDetailPanel({ week, activeIds }) {
             {[...week.milestones]
               .sort((a, b) => a.date.localeCompare(b.date))
               .map((ms) => {
-              const track = SUBTEAM_BY_ID[ms.subteamId]
+              const track = MILESTONE_TRACK_BY_ID[ms.subteamId]
               return (
                 <MilestoneItem key={`${ms.date}-${ms.label}`}>
                   <MilestoneDot

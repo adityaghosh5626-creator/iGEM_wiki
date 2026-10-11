@@ -71,6 +71,20 @@ export const SUBTEAM_IDS = SUBTEAM_TRACKS.map((t) => t.id)
 /** @type {Record<SubteamId, SubteamTrack>} */
 export const SUBTEAM_BY_ID = Object.fromEntries(SUBTEAM_TRACKS.map((t) => [t.id, t]))
 
+/** @typedef {SubteamId | 'all'} MilestoneTrackId */
+
+/** Whole-team milestones: a calendar colour only, not a filter. */
+export const WHOLE_TEAM_TRACK = {
+  id: "all",
+  label: "Whole team",
+  color: "#F6C945",
+  textColor: "#06202B",
+  href: "/contribution/",
+}
+
+/** Tracks a milestone can belong to: every subteam plus the whole team. */
+export const MILESTONE_TRACK_BY_ID = { ...SUBTEAM_BY_ID, all: WHOLE_TEAM_TRACK }
+
 /** A track's colour, which a page can override with `--cal-team-<id>`. */
 export const trackColor = (track) => `var(--cal-team-${track.id}, ${track.color})`
 

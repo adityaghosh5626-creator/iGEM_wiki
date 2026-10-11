@@ -12,6 +12,7 @@ import { WaterfallSideText, PETASE_EXPLANATION } from "./WaterfallSideText.js"
 import { SwipeInBox } from "./SwipeInBox.js"
 import { ExplainTerm } from "./ExplainTermPopover.js"
 import EndingPetamonBottle from "./EndingPetamonBottle.js"
+import { HomeAutoplay } from "./HomeAutoplay.js"
 import { ART_REF_W, ART_WIDTH_VAR, artFont, artPx, phone } from "./artScale.js"
 import { LOGO_BOX, LOGO_FRAMES, LOGO_PLATE, LogoFrame } from "./logoFrames.js"
 import { PlateImg } from "./PlateImg.js"
@@ -615,8 +616,36 @@ const RNALAB_EXPLANATION =
 /** Delay + slide duration; the RNAlab term is not hoverable until this elapses. */
 const RNALAB_REVEAL_MS = 740
 
-/** Jump to the top on mount / HMR. Turn back on before shipping. */
+/**
+ * Jump to the top on mount / HMR. Keep off: back/forward and reloads return
+ * the reader to where they were (see readPlayedBeats).
+ */
 const RESET_SCROLL_ON_MOUNT = false
+
+/**
+ * The forest walk and the ending hold give up their scroll length once
+ * played, which moves everything below them up. Remembered per history
+ * entry, so going back (or reloading) rebuilds the page as it was and the
+ * restored scroll position lands where the reader left off.
+ */
+const playedBeatsKey = () =>
+  `home-played|${window.history.state?.key ?? "initial"}`
+
+function readPlayedBeats() {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(playedBeatsKey())) || {}
+  } catch {
+    return {}
+  }
+}
+
+function savePlayedBeats(beats) {
+  try {
+    window.sessionStorage.setItem(playedBeatsKey(), JSON.stringify(beats))
+  } catch {
+    // No storage (e.g. blocked): back just lands before the beats instead.
+  }
+}
 
 /** Overlays inside a band (text above bottle). */
 const Z = {
@@ -1195,6 +1224,15 @@ export function HomeScrollPrototype() {
   const walkArrivedRef = useRef(false)
   const walkLatchedRef = useRef(false)
   const walkReleasedRef = useRef(false)
+  // Before any scroll effect runs: the beats this visit already played.
+  useLayoutEffect(() => {
+    const played = readPlayedBeats()
+    if (played.walk) {
+      walkReleasedRef.current = true
+      birdStealPRef.current = played.steal ?? 1
+    }
+    if (played.ending) endingReleasedRef.current = true
+  }, [])
   const shoreBottlePlayedRef = useRef(false)
   const shoreBottleMountRef = useRef(null)
   const shoreBottleProgressRef = useRef(0)
@@ -1537,6 +1575,11 @@ export function HomeScrollPrototype() {
             painting.style.width = "100%"
             if (walkLatchedRef.current && y > pinAt + freezePx) {
               walkReleasedRef.current = true
+              savePlayedBeats({
+                walk: true,
+                steal: stealProgress,
+                ending: endingReleasedRef.current,
+              })
               window.scrollTo({
                 top: y - freezePx,
                 left: 0,
@@ -2260,6 +2303,11 @@ export function HomeScrollPrototype() {
           // Past the end of the hold: drop its scroll length and pull the
           // scroll back by the same amount so nothing on screen moves.
           endingReleasedRef.current = true
+          savePlayedBeats({
+            walk: walkReleasedRef.current,
+            steal: birdStealPRef.current,
+            ending: true,
+          })
           holdSpacer.style.height = "0px"
           window.scrollTo({ top: y - holdPx, left: 0, behavior: "instant" })
           endingBottle?.update({ assemble: 1, burst: 1 })
@@ -2798,7 +2846,7 @@ export function HomeScrollPrototype() {
       <SiteLoader handoff={logoHandoff} always />
       <ScrollStack ref={stackRef}>
         <WalkTrack ref={walkTrackRef}>
-          <CompositionRoot ref={compositionRef}>
+          <CompositionRoot ref={compositionRef} data-autoplay-forest="">
             <BackScene>
               <BackClip>
                 <ParallaxBack ref={parallaxBackRef}>
@@ -3482,6 +3530,7 @@ export function HomeScrollPrototype() {
           <WikiTopBar />
         </HomeNavMount>
       </ScrollStack>
+      <HomeAutoplay />
     </WikiFrontRoot>
   )
 }

@@ -34,7 +34,6 @@ export const wikiNav = [
   { to: "/entrepreneurship/", label: "Entrepreneurship" },
   { label: "Team", children: [
     { to: "/contribution/", label: "Contribution" },
-    { to: "/education/", label: "Education Toolkit" },
     { to: "/team/", label: "Meet the Team" },
     { to: "/team/attributions/", label: "Attributions" },
   ]},

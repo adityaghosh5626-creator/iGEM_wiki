@@ -815,7 +815,7 @@ export function SubpageScene({ scene, title, description, children }) {
       window.removeEventListener("scroll", schedule)
       window.removeEventListener("resize", schedule)
     }
-  }, [headerH, sections])
+  }, [headerH, sections, side])
 
   // Slide the highlight onto the active item.
   useLayoutEffect(() => {
@@ -1740,6 +1740,9 @@ const SideCrab = styled.span`
 const TextBox = styled.div`
   pointer-events: auto;
   position: relative;
+  /* Its own layer group: things inside that stack themselves high (the
+     draggable sticky notes) stay under the section menu and site header. */
+  isolation: isolate;
   grid-column: ${({ $solo }) => ($solo ? 2 : 4)};
   min-height: var(--text-min-h);
   margin-top: var(--text-offset);
