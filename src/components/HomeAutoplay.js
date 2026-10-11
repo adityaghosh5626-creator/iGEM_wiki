@@ -24,6 +24,12 @@ const PETAMON_HOLD_MS = 2600
 const STOP_AT_VIEW_Y = 0.55
 /** Faster while the forest walk holds the page (it's long to sit through). */
 const FOREST_SPEED_X = 2
+/**
+ * The art scales with the window width, so a wider window makes a longer
+ * page. Past this width the pace scales up with the width, so a run takes
+ * about as long as it does here (~2.5 min of scrolling) instead of growing.
+ */
+const STEADY_WIDTH = 1000
 
 /** The red underlined terms (ExplainTermPopover): they open on hover. */
 const TERM_SELECTOR = 'span[role="button"][aria-expanded]'
@@ -150,9 +156,10 @@ export function HomeAutoplay() {
         forest && getComputedStyle(forest).position === "fixed"
           ? SPEED_VH_PER_S * FOREST_SPEED_X
           : SPEED_VH_PER_S
+      const widthX = Math.max(1, window.innerWidth / STEADY_WIDTH)
       pos = Math.min(
         maxScroll(),
-        pos + (speed * window.innerHeight * dt) / 1000,
+        pos + (speed * widthX * window.innerHeight * dt) / 1000,
       )
       window.scrollTo({ top: pos, left: 0, behavior: "instant" })
       if (pos >= maxScroll() - 1) {

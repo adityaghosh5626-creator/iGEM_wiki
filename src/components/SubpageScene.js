@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
 import styled, { css, keyframes } from "styled-components"
+import { NeedlemanCactus } from "./NeedlemanCactus.js"
 
 /**
  * Parallax subpage (Dry Lab, Venture, …): a tall painted plate scrolls behind
@@ -965,6 +966,7 @@ export function SubpageScene({ scene, title, description, children }) {
                   </CropWindow>
                 )
               })}
+            {scene.cactus && <NeedlemanCactus plate={plate} cfg={scene.cactus} />}
           </Art>
         </BgFrame>
       </BgTrack>
