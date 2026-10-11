@@ -81,6 +81,18 @@ function plateOf(scene) {
   }
 }
 
+/** Background showing `crop` of an image painted on its own `size` canvas. */
+function canvasBg(url, { size: [W, H], crop: [x0, y0, x1, y1] }) {
+  const w = x1 - x0
+  const h = y1 - y0
+  return {
+    backgroundImage: `url(${url})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${(W / w) * 100}% ${(H / h) * 100}%`,
+    backgroundPosition: `${(x0 / (W - w)) * 100}% ${(y0 / (H - h)) * 100}%`,
+  }
+}
+
 function patrolFloorY(floor, cx) {
   if (cx <= floor[0][0]) return floor[0][1]
   for (let i = 1; i < floor.length; i++) {
@@ -1097,7 +1109,9 @@ export function SubpageScene({ scene, title, description, children }) {
                     {icon && (
                       <IndicatorIcon
                         style={{
-                          ...plate.bg(icon.name, icon.box),
+                          ...(icon.canvas
+                            ? canvasBg(plate.asset(icon.name), icon.canvas)
+                            : plate.bg(icon.name, icon.box)),
                           left: `${((icon.box[0] - ix0) / (ix1 - ix0)) * 100}%`,
                           width: `${((icon.box[2] - icon.box[0]) / (ix1 - ix0)) * 100}%`,
                           aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
@@ -1581,6 +1595,8 @@ const SideBox = styled.div`
     top: auto;
     height: auto;
     min-height: 0;
+    /* The fitted box's room under the list is for the painted box only. */
+    padding-bottom: 0;
     border-radius: 0.6rem;
     background-color: var(--strip-color);
     box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);

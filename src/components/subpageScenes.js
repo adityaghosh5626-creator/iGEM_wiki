@@ -145,6 +145,15 @@ export const DRY_LAB_SCENE = {
     indicator: { name: "box-subsection-indicator", box: [88, 452, 241, 513] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#9c6e56",
+    /**
+     * Fossil riding on the left end of the highlight. Its own image rather
+     * than a plate layer; `crop` is the painted part of its `size` canvas.
+     */
+    indicatorIcon: {
+      name: "https://static.igem.wiki/teams/6187/wiki/drylab-page/icon-dry-lab-small.avif",
+      box: [63, 467, 96, 498],
+      canvas: { size: [360, 342], crop: [0, 0, 360, 342] },
+    },
     /** Crab sitting on the box's bottom edge. */
     crab: { name: "box-crab", box: [144, 804, 195, 860] },
     linkColor: "#fbf3ea",
