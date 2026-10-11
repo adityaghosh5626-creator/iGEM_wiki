@@ -130,6 +130,21 @@ export const GlobalStyle = createGlobalStyle`
     background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   }
 
+  .references .csl-entry:has(.csl-left-margin) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75em;
+  }
+
+  .references .csl-left-margin {
+    flex: 0 0 2.5em;
+  }
+
+  .references .csl-right-inline {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--color-bg); }
