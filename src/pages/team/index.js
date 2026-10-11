@@ -22,12 +22,16 @@ const SECTION_ORDER = [
   "Advisors",
 ]
 
-/** Card frame colours: leads in pink, everyone else in lavender. */
-const LEAD_FRAME = "#f3dde9"
-const TEAM_FRAME = "#dde1f8"
+/**
+ * Colours from the waterfall behind the page: card frames in its sand (leads)
+ * and spray (everyone else), headings in the deep teal of its pool.
+ */
+const LEAD_FRAME = "#eadfc8"
+const TEAM_FRAME = "#cdeae8"
 const LEAD_SECTIONS = new Set(["Presidents", "Team Leads"])
 
-const HEADING = "#6b7fe6"
+const HEADING = "#1f6e69"
+const MUTED = "#4d6d69"
 
 /**
  * Waterfall painting (1110×4000) behind the page. It fills the window width
@@ -365,7 +369,7 @@ const Photo = styled.div`
   height: 100%;
   overflow: hidden;
   border-radius: 4px;
-  background: linear-gradient(160deg, #c9cde6, #8d94b8);
+  background: linear-gradient(160deg, #a7dedf, #4f9f99);
 
   img {
     width: 100%;
@@ -466,7 +470,7 @@ const BackName = styled.div`
 `
 
 const BackRole = styled.div`
-  color: var(--color-muted);
+  color: ${MUTED};
   font-size: 0.72rem;
   margin-bottom: 0.4rem;
 `
@@ -475,11 +479,13 @@ const Bio = styled.p`
   flex: 1;
   margin: 0 0 0.4rem;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-size: 0.72rem;
   line-height: 1.45;
 `
 
 const TextLink = styled.a`
+  color: ${HEADING};
   font-size: 0.72rem;
   text-decoration: underline;
   text-underline-offset: 2px;

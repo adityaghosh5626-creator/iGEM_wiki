@@ -1,27 +1,28 @@
 import styled, { css, keyframes } from "styled-components"
 import { PlateImg } from "./PlateImg.js"
 
-/** Nine-frame PETABITE logo loop (same slot + idle float as the old static logo). */
-const LOGO_FRAME_COUNT = 9
-/** Base hold for frames 1–7. */
-const LOGO_FRAME_MS = 170
-/** Longer hold for frame 8. */
-const LOGO_PENULTIMATE_FRAME_MS = 650
-/** Longest hold for the completed PETABITE title (frame 9). */
-const LOGO_LAST_FRAME_MS = 1300
+/**
+ * Thirteen-frame PETABITE logo loop (same slot + idle float as the old static
+ * logo), timed like the animated logo GIF: 330ms a frame, except the cut
+ * (the "i" swinging into the bond until the pieces fly off) runs faster.
+ */
+const LOGO_FRAME_COUNT = 13
+const LOGO_FRAME_MS = 330
+/** First and last frame (1-based) of the cut, and its hold per frame. */
+const LOGO_CUT_FRAMES = [2, 9]
+const LOGO_CUT_FRAME_MS = 165
 export const LOGO_FRAMES = Array.from(
   { length: LOGO_FRAME_COUNT },
   (_, i) =>
     `https://static.igem.wiki/teams/6187/wiki/homepage-components/logo-animation-files/untitled-artwork-${i + 1}.avif`,
 )
 
-/** Per-frame visibility windows so the last two frames linger, last longest. */
+/** Each frame's visibility window, as a share of the loop. */
 export const LOGO_FRAME_TIMING = (() => {
-  const durations = Array.from({ length: LOGO_FRAME_COUNT }, (_, i) => {
-    if (i === LOGO_FRAME_COUNT - 1) return LOGO_LAST_FRAME_MS
-    if (i === LOGO_FRAME_COUNT - 2) return LOGO_PENULTIMATE_FRAME_MS
-    return LOGO_FRAME_MS
-  })
+  const [cutFrom, cutTo] = LOGO_CUT_FRAMES
+  const durations = LOGO_FRAMES.map((_, i) =>
+    i + 1 >= cutFrom && i + 1 <= cutTo ? LOGO_CUT_FRAME_MS : LOGO_FRAME_MS,
+  )
   const cycleMs = durations.reduce((sum, ms) => sum + ms, 0)
   let acc = 0
   const windows = durations.map(ms => {
