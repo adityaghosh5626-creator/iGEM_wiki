@@ -1318,20 +1318,31 @@ export function SubpageScene({ scene, title, description, children }) {
       (activeSubId &&
         nav.querySelector(`[href="#${CSS.escape(activeSubId)}"]`)) ||
       item
-    if (nav.scrollWidth > nav.clientWidth) {
-      nav.scrollTo({
-        left: focus.offsetLeft - nav.clientWidth / 2 + focus.offsetWidth / 2,
-        behavior: "smooth",
-      })
-    } else if (nav.scrollHeight > nav.clientHeight) {
-      nav.scrollTo({
-        top: focus.offsetTop - nav.clientHeight / 2 + focus.offsetHeight / 2,
-        behavior: "smooth",
-      })
+    const follow = () => {
+      // Measured on screen: a subsection's offsets are from its own list.
+      const f = focus.getBoundingClientRect()
+      const n = nav.getBoundingClientRect()
+      if (nav.scrollWidth > nav.clientWidth) {
+        nav.scrollTo({
+          left:
+            nav.scrollLeft + f.left - n.left - nav.clientWidth / 2 + f.width / 2,
+          behavior: "smooth",
+        })
+      } else if (nav.scrollHeight > nav.clientHeight) {
+        nav.scrollTo({
+          top:
+            nav.scrollTop + f.top - n.top - nav.clientHeight / 2 + f.height / 2,
+          behavior: "smooth",
+        })
+      }
     }
+    follow()
     measureNav(nav)
+    // The list resizing (opened, shut, or the button showing up after it
+    // shuts) moves where the item sits, so it's followed again.
     const ro = new ResizeObserver(() => {
       place()
+      follow()
       measureNav(nav)
     })
     ro.observe(nav)
