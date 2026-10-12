@@ -1604,12 +1604,17 @@ export function SubpageScene({ scene, title, description, children }) {
                         style={{
                           ...(icon.canvas
                             ? canvasBg(plate.asset(icon.name), icon.canvas)
-                            : plate.bg(icon.name, icon.box)),
+                            : // `from`: painted elsewhere on its plate than `box`.
+                              plate.bg(icon.name, icon.from || icon.box)),
                           left: `${((icon.box[0] - ix0) / (ix1 - ix0)) * 100}%`,
                           width: `${((icon.box[2] - icon.box[0]) / (ix1 - ix0)) * 100}%`,
                           aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
                           filter: icon.glow
                             ? `drop-shadow(0 0 calc(var(--px) * 5) ${icon.glow})`
+                            : undefined,
+                          // `rotate` (deg): turned from how it's painted.
+                          transform: icon.rotate
+                            ? `translateY(-50%) rotate(${icon.rotate}deg)`
                             : undefined,
                           // Centre offset from the highlight's, as drawn.
                           marginTop: pp(

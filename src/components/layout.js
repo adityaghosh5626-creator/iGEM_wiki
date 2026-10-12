@@ -106,6 +106,18 @@ const WikiLayout = ({
                 <MetaLink href="https://gitlab.igem.org/2026/toronto" target="_blank" rel="noopener noreferrer">
                   Source on GitLab
                 </MetaLink>
+                <MetaSep aria-hidden>·</MetaSep>
+                {/* Third-party assets are credited with their licence. */}
+                <span>
+                  Set in{" "}
+                  <MetaLink href="https://github.com/googlefonts/dm-fonts" target="_blank" rel="noopener noreferrer">
+                    DM Sans
+                  </MetaLink>{" "}
+                  by The DM Sans Project Authors,{" "}
+                  <MetaLink href="https://openfontlicense.org/" target="_blank" rel="noopener noreferrer">
+                    SIL Open Font License 1.1
+                  </MetaLink>
+                </span>
               </FooterMeta>
             </FooterInner>
         </Footer>

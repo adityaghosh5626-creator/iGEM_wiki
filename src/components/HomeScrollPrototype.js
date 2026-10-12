@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { withPrefix } from "gatsby"
 import styled, { css, keyframes } from "styled-components"
 import { WikiTopBar, WIKI_TOP_BAR_Z_INDEX } from "./WikiTopBar.js"
 import { WaterfallSideText, PETASE_EXPLANATION } from "./WaterfallSideText.js"
@@ -75,7 +74,7 @@ const ASSETS = {
   /** Waterfall / sky section bottle (current homepage stage). */
   bottle: BOTTLE_STAGES.sky,
   /** Opaque puddle lip — sits over the bottle so it can tuck behind the water. */
-  water: withPrefix("/wiki-mockup/wiki-front-water.png"),
+  water: "https://static.igem.wiki/teams/6187/wiki/homepage-components/wiki-front-water.avif",
 }
 
 /**
@@ -760,7 +759,7 @@ const BOTTLE_SHORE_FADE_END_VH = 0.73
 /** Splash anchor on the first (waterfall) art band — puddle / river start. */
 const WATERFALL_SPLASH_TOP_PCT = 92 - LANDMARK_NUDGE_UP * 100 - 6
 const WATERFALL_SPLASH_LEFT_PCT = 50
-/** Opaque blob top in wiki-front-water.png (px 2235 / 2440). Shift so it sits on the splash lip. */
+/** Opaque blob top in wiki-front-water (px 2235 / 2440). Shift so it sits on the splash lip. */
 const PUDDLE_ART_TOP_FRAC = 2235 / 2440
 const PUDDLE_SHIFT_Y_PCT =
   (PUDDLE_ART_TOP_FRAC - WATERFALL_SPLASH_TOP_PCT / 100) * -100

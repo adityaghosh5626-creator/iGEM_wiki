@@ -317,7 +317,7 @@ SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within 
 Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide: 77.47% SP, 14.74% LIPO, 6.52% TAT, 1.27% TATLIPO, and 0.0005% PILIN, corresponding to 92.21% Sec and 7.79% Tat routing. Modal signal lengths were 28, 22, 52, 63, and 8 aa, respectively. Signal type was highly conserved at 90% identity, but became less homogeneous in large 30%-identity clusters, consistent with secretion strategy diverging across broader protein families. Secretion frequency also varied strongly by catalytic fold, from 45.9% in cupredoxins to 1.2% in L-amino peptidases. Alpha/Beta Hydrolases had a below-average secretion rate of 10.6%, but nevertheless contributed 44% of all predicted secreted ORFs.
 
 <Figure
-  src="/images/drylab/signalp_composite.svg"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/signalp-composite.avif"
   alt="Three panels: (A) log-scale bar chart of PETadex ORFs per signal peptide class, dominated by Sec/SPI; (B) secretion rate by catalytic fold family, from 45.9% in cupredoxins to 1.2% in L-amino peptidases against a 13.85% database average; (C) share of clusters with at least 90% one signal type, falling with cluster size most steeply at 30% identity."
 />
 
@@ -346,7 +346,7 @@ Six sequence-derived properties were calculated using Biopython Proparam for all
 For secreted peptides, signal-peptide removal decreased GRAVY in 96.6% and pI in 86.6%, with strong  GRAVY decrease for Sec-associated SP and LIPO classes and minimal decrease for Tat classes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). GRAVY showed the largest separation among catalytic families, spanning −0.485 to +0.085. L-amino peptidases were distinctive as the most hydrophobic, most stable, least aromatic, and least frequently secreted family (1.2%).
 
 <Figure
-  src="/images/drylab/biochem_composite.svg"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/biochem-composite.avif"
   alt="(A) Box plots of sequence length, molecular weight, isoelectric point, GRAVY, instability index and aromaticity for ten catalytic fold families; (B) density plots of GRAVY against instability index for all ORFs and for mature secreted ORFs."
 />
 
@@ -416,7 +416,7 @@ Results
 Current trends and results within the data are shown.
 
 <Figure
-  src="/images/drylab/human scraping composite figure.svg"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/human-scraping-composite.avif"
   alt="Figure showing human scarping results"
 />
 
@@ -486,14 +486,14 @@ Using the ESMC-XXXM Protein Language Model (PLM), we generated embeddings for X 
 
 
 <Figure
-  src="/images/drylab/umap_cath.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-cath.avif"
   alt="UMAPed enzymes, coloured by CATH domain"
 />
 
 Noticing apparent clusters by CATH domains in the UMAP (See Figure 1), we ran further analysis to characterize these clusters, and investigate outliers. Silhouette scores found that most CATH domains were indeed highly clustered, minus Alpha/Beta Hydrolases, but since these make up ~⅔ of the PETadex, we would not expect them to be as tightly clustered. The distribution of silhouette scores per CATH domain is shown in Figure 2.
 
 <Figure
-  src="/images/drylab/silhouette.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/silhouette.avif"
   alt="Silhouette scores per CATH domain"
 />
 
@@ -508,7 +508,7 @@ Generate positive / real-world controls (random UniProt proteins, real-sequence 
 Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in Figure 3. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
 
 <Figure
-  src="/images/drylab/umap_controls.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-controls.avif"
   alt="UMAP of PETadex enzymes against controls"
 />
 

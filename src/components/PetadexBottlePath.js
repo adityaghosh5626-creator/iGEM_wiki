@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import { withPrefix } from "gatsby"
 import styled from "styled-components"
 
-const BATTLE_IMG = withPrefix("/images/petadex-battle-button-bg.png")
+const BATTLE_IMG = "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-battle-button-bg.avif"
 
 const PetadexBottlePath = ({ petadexRef, onBattle, children }) => {
   const wrapperRef = useRef(null)

@@ -218,8 +218,17 @@ export const VENTURE_SCENE = {
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#f2b574",
-    /** Coin that rides on the left end of the highlight. */
-    indicatorIcon: { name: "navbar-icon", box: [100, 460, 160, 515] },
+    /**
+     * Coin that rides on the left end of the highlight; turned so its $
+     * stands upright, and drawn 5px left of where it's painted so it clears
+     * the item's text.
+     */
+    indicatorIcon: {
+      name: "navbar-icon",
+      from: [100, 460, 160, 515],
+      box: [95, 460, 155, 515],
+      rotate: -30,
+    },
     linkColor: "#5b3a1a",
     /** Narrower column than Dry Lab's, so slightly smaller section names. */
     linkSize: 11.5,
