@@ -831,7 +831,7 @@ export function DesignSketchbook() {
 
   if (reducedMotion) {
     return (
-      <SketchbookRoot ref={sketchRootRef}>
+      <SketchbookRoot ref={sketchRootRef} data-nav-skip="">
         {renderRightTabs("open")}
         <ReducedMotionList aria-label="Design sketchbook pages">
           {DESIGN_SKETCHBOOK_PAGES.map((page) => (
@@ -850,7 +850,7 @@ export function DesignSketchbook() {
   }
 
   return (
-    <SketchbookRoot ref={sketchRootRef}>
+    <SketchbookRoot ref={sketchRootRef} data-nav-skip="">
       <BookStage
         ref={bookStageRef}
         style={{

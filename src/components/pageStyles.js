@@ -8,13 +8,22 @@ export const Layout = styled.div`
   padding: 0 24px;
 `
 
+/**
+ * The plain pages' contents list, down the left. Wide windows have room for
+ * it in the margin (it takes the margin's width, up to 14rem); narrower
+ * ones give it a column (WikiLayout's `withToc`). Phones leave it off.
+ */
 export const TOCWrapper = styled.div`
   position: fixed;
-  top: 230px;
-  width: 200px;
-  left: 24px;
+  top: 14rem;
+  left: 1.5rem;
+  width: min(14rem, calc((100vw - var(--max-width)) / 2 + 1rem));
 
-  @media (max-width: 1420px) {
+  @media (max-width: 1423px) {
+    width: 11rem;
+  }
+
+  @media (max-width: 859px) {
     display: none;
   }
 `

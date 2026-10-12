@@ -123,6 +123,7 @@ const WikiMdxTemplate = ({ data, children }) => {
       pageTitle={wideSideTabs ? null : frontmatter.title}
       sectionLabel={wideSideTabs ? null : frontmatter.section}
       wideSideTabs={wideSideTabs}
+      withToc={!frontmatter.hideToc && !wideSideTabs}
     >
       <ScrollProgress />
       {!frontmatter.hideToc && (

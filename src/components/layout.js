@@ -20,6 +20,8 @@ const WikiLayout = ({
    * it matches the page's own menu highlight. The site accent otherwise.
    */
   footerButton = null,
+  /** The page shows a contents list down the left (see TOCWrapper). */
+  withToc = false,
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false)
 
@@ -48,7 +50,7 @@ const WikiLayout = ({
         {hideSiteChrome || fullBleed ? (
           <MainFullBleed>{children}</MainFullBleed>
         ) : (
-          <Main $wideSideTabs={wideSideTabs}>
+          <Main $wideSideTabs={wideSideTabs} $withToc={withToc}>
             {pageTitle && (
               <PageHeader>
                 {sectionLabel && <SectionLabel>{sectionLabel}</SectionLabel>}
@@ -189,6 +191,16 @@ const Main = styled.main`
     `
     max-width: none;
     width: 100%;
+  `}
+
+  /* Too narrow for the contents list to sit in the margin: the page moves
+     over to leave it a column. */
+  ${({ $withToc }) =>
+    $withToc &&
+    `
+    @media (min-width: 860px) and (max-width: 1423px) {
+      padding-left: 14rem;
+    }
   `}
 `
 

@@ -5,6 +5,15 @@ import "@fontsource/dm-sans/500.css"
 import "@fontsource/dm-sans/600.css"
 import "@fontsource/dm-sans/700.css"
 import "@fontsource/dm-sans/800.css"
+import { endRouteWait, startRouteWait } from "./src/components/SiteLoader.js"
+
+/*
+ * A page that takes over a second to arrive puts the logo loader up (in
+ * place of Gatsby's "Preparing requested page" notice, which
+ * scripts/run-develop.cjs turns off).
+ */
+export const onRouteUpdateDelayed = () => startRouteWait()
+export const onRouteUpdate = () => endRouteWait()
 
 /*
  * Scroll restoration: back/forward (and reloads) return to where you were

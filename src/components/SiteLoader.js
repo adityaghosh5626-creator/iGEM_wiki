@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react"
-import styled from "styled-components"
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
+import styled, { css, keyframes } from "styled-components"
 import {
   LOGO_BOX,
   LOGO_FRAMES,
@@ -18,8 +18,35 @@ const SPRING_MS = 760
 /** Overshoots a little, then settles — the "spring" into the hero slot. */
 const SPRING_EASING = "cubic-bezier(0.34, 1.32, 0.52, 1)"
 
-/** Set once any loader has finished, so tab-to-tab navigation skips it. */
+/** Set once any loader has finished: later pages show it only while they load. */
 let siteLoadedOnce = false
+
+/**
+ * A page change still being fetched after a second (gatsby-browser's
+ * onRouteUpdateDelayed; it stands in for Gatsby's own "Preparing requested
+ * page" notice). The page being left puts the loader up, and the page
+ * arriving keeps it up until its images are in.
+ */
+let routeWaiting = false
+const ROUTE_WAIT_EVENT = "wiki:route-wait"
+const ROUTE_DONE_EVENT = "wiki:route-done"
+
+export function startRouteWait() {
+  routeWaiting = true
+  window.dispatchEvent(new Event(ROUTE_WAIT_EVENT))
+}
+
+export function endRouteWait() {
+  routeWaiting = false
+  window.dispatchEvent(new Event(ROUTE_DONE_EVENT))
+}
+
+const useIsoLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect
+
+/** Images the loader waits on: deferred ones may not load until scrolled to. */
+const eagerImages = () =>
+  [...document.images].filter(img => img.loading !== "lazy")
 
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -53,8 +80,10 @@ function LogoFrames() {
  * `always`: show even after the first page load (client-side navigation).
  */
 export function SiteLoader({ handoff, always = false }) {
+  // "check": a page reached from another; the loader only shows (before
+  // the first paint) if its images still have to load.
   const [state, setState] = useState(() =>
-    always || !siteLoadedOnce ? "loading" : "done"
+    always || !siteLoadedOnce || routeWaiting ? "loading" : "check"
   )
   const [progress, setProgress] = useState(0)
   const overlayRef = useRef(null)
@@ -70,10 +99,42 @@ export function SiteLoader({ handoff, always = false }) {
     []
   )
 
-  // Deferred images may not load until scrolling; only gate on eager images.
+  useIsoLayoutEffect(() => {
+    if (state !== "check") return
+    setState(eagerImages().some(img => !img.complete) ? "loading" : "done")
+  }, [state])
+
+  // A slow page change: cover this page until the next one takes over.
+  useEffect(() => {
+    const wait = () => {
+      setProgress(0)
+      setState(s => (s === "done" || s === "check" ? "waiting" : s))
+    }
+    // Still here once it has arrived (the same page): show it's ready.
+    const done = () => setState(s => (s === "waiting" ? "loading" : s))
+    window.addEventListener(ROUTE_WAIT_EVENT, wait)
+    window.addEventListener(ROUTE_DONE_EVENT, done)
+    return () => {
+      window.removeEventListener(ROUTE_WAIT_EVENT, wait)
+      window.removeEventListener(ROUTE_DONE_EVENT, done)
+    }
+  }, [])
+
+  // One logo loop for every loader (the timeline's), so the leaving page's
+  // loader hands over to the arriving page's without the logo jumping.
+  const shown = state !== "done" && state !== "check"
+  useIsoLayoutEffect(() => {
+    if (!shown) return
+    logoRef.current?.querySelectorAll("[data-logo-frame]").forEach(el =>
+      el.getAnimations?.().forEach(anim => {
+        anim.startTime = 0
+      })
+    )
+  }, [shown])
+
   useEffect(() => {
     if (state !== "loading") return undefined
-    const imgs = [...document.images].filter(img => img.loading !== "lazy")
+    const imgs = eagerImages()
     const total = imgs.length
     let loaded = imgs.filter(img => img.complete).length
     setProgress(total === 0 ? 1 : loaded / total)
@@ -168,18 +229,19 @@ export function SiteLoader({ handoff, always = false }) {
     return () => window.clearTimeout(timer)
   }, [state, progress])
 
-  if (state === "done") return null
+  if (!shown) return null
 
   return (
     <Overlay
       ref={overlayRef}
-      aria-hidden={state !== "loading"}
+      aria-hidden={state === "leaving"}
       role="progressbar"
       aria-label="Loading"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(progress * 100)}
       $leaving={state === "leaving"}
+      $fadeIn={state === "waiting"}
     >
       <Backdrop ref={backdropRef} />
       <Logo ref={logoRef}>
@@ -196,6 +258,12 @@ export function SiteLoader({ handoff, always = false }) {
 
 export default SiteLoader
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+`
+
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -204,6 +272,16 @@ const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   pointer-events: ${({ $leaving }) => ($leaving ? "none" : "auto")};
+  /* Over the page being left, it fades in rather than cutting. */
+  ${({ $fadeIn }) =>
+    $fadeIn &&
+    css`
+      animation: ${fadeIn} 0.25s ease both;
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `
 
 /** Same off-white as the navbar; fades separately so the logo can fly out. */
