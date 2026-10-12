@@ -1,10 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import styled from "styled-components"
 import {
   DESIGN_SKETCHBOOK_PAGES,
   DESIGN_SKETCHBOOK_SECTIONS,
   PAGE_FLIP_ATTRIBUTION,
-  getSectionStartIndex,
+  buildSketchbookPages,
   getTocSections,
 } from "../../data/designSketchbookPages.js"
 
@@ -36,6 +43,17 @@ const FLIP_SETTINGS = {
 }
 
 const FLIP_WAIT_MS = FLIP_SETTINGS.flippingTime + 80
+
+/**
+ * A section's photo moves to its own page when, beside the text, it would be
+ * shrunk below this share of the page's height (or its own size, if smaller).
+ */
+const MIN_PHOTO_SHARE = 0.4
+/** The page's padding and text get remeasured this long after a resize. */
+const RESIZE_SETTLE_MS = 200
+
+/** The pages whose text can crowd out their photo: each section's first page. */
+const SPREAD_PAGES = DESIGN_SKETCHBOOK_PAGES.filter((p) => p.variant === "spread")
 
 function prefersReducedMotion() {
   if (typeof window === "undefined" || !window.matchMedia) return false
@@ -83,10 +101,28 @@ function SketchPageContent({ page }) {
     )
   }
 
+  // A section's extra pages are labelled small in its tab colour, so they
+  // don't read as a new section.
+  const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === page.sectionId)
+  const label = section && (
+    <SketchLabel style={{ "--label-color": section.color }}>
+      {section.label} / {page.title}
+    </SketchLabel>
+  )
+
+  if (page.variant === "aside") {
+    return (
+      <SketchPageInner $variant="aside">
+        {label}
+        {page.body && <SketchBody>{page.body}</SketchBody>}
+      </SketchPageInner>
+    )
+  }
+
   if (page.variant === "notes") {
     return (
       <SketchPageInner $variant="notes">
-        <SketchTitle>{page.title}</SketchTitle>
+        {label}
         {page.body && <SketchBody>{page.body}</SketchBody>}
         {page.imageSrc ? (
           <SketchFigure>
@@ -98,6 +134,17 @@ function SketchPageContent({ page }) {
             <SketchPlaceholderLabel>Notes / image slot</SketchPlaceholderLabel>
           </SketchPlaceholder>
         )}
+      </SketchPageInner>
+    )
+  }
+
+  if (page.variant === "image") {
+    return (
+      <SketchPageInner $variant="image">
+        <SketchFigure $alone>
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+        </SketchFigure>
       </SketchPageInner>
     )
   }
@@ -131,6 +178,23 @@ export function DesignSketchbook() {
   const pageFlipRef = useRef(null)
   const flipRunIdRef = useRef(0)
   const [ready, setReady] = useState(false)
+  /** Sections whose photo has its own page, and whether two pages show at once. */
+  const [splitIds, setSplitIds] = useState([])
+  const [landscape, setLandscape] = useState(true)
+  /** One page's size in px, to measure the pages against. */
+  const [pageBox, setPageBox] = useState(null)
+  /** Height / width of each section's photo, as they load. */
+  const [photoRatios, setPhotoRatios] = useState({})
+  const pages = useMemo(
+    () => buildSketchbookPages({ split: splitIds, pairs: landscape }),
+    [splitIds, landscape]
+  )
+  const pagesRef = useRef(pages)
+  pagesRef.current = pages
+  const layoutKey = `${landscape ? "pairs" : "single"}:${splitIds.join(",")}`
+  /** Page to reopen at when the book is rebuilt with a new layout. */
+  const resumePageIdRef = useRef(null)
+  const measureRef = useRef(null)
   const [pageIndex, setPageIndex] = useState(0)
   const [spreadIndex, setSpreadIndex] = useState(0)
   const [pageCount, setPageCount] = useState(DESIGN_SKETCHBOOK_PAGES.length)
@@ -277,17 +341,29 @@ export function DesignSketchbook() {
 
   const activeSectionId = useMemo(() => {
     if (selectedSectionId) return selectedSectionId
-    return DESIGN_SKETCHBOOK_PAGES[pageIndex]?.sectionId || null
-  }, [pageIndex, selectedSectionId])
+    return pages[pageIndex]?.sectionId || null
+  }, [pageIndex, pages, selectedSectionId])
 
-  /** Landscape spread index for a section start page (cover=0, toc=1, sections from 2…). */
-  const getSectionSpreadIndex = useCallback((sectionId) => {
-    const start = getSectionStartIndex(sectionId)
-    if (start < 0) return -1
-    // With showCover: spread 0 = [0], then pairs [1,2], [3,4], …
-    if (start === 0) return 0
-    return Math.floor((start - 1) / 2) + 1
-  }, [])
+  const getSectionStartIndex = useCallback(
+    (sectionId) => {
+      const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === sectionId)
+      return section ? pages.findIndex((p) => p.id === section.startPageId) : -1
+    },
+    [pages]
+  )
+
+  /** Spread index of a section's first page (one page per spread when single). */
+  const getSectionSpreadIndex = useCallback(
+    (sectionId) => {
+      const start = getSectionStartIndex(sectionId)
+      if (start < 0) return -1
+      if (!landscape) return start
+      // With showCover: spread 0 = [0], then pairs [1,2], [3,4], …
+      if (start === 0) return 0
+      return Math.floor((start - 1) / 2) + 1
+    },
+    [getSectionStartIndex, landscape]
+  )
 
   const { rightSections, leftSections } = useMemo(() => {
     if (pageIndex === 0) {
@@ -404,8 +480,64 @@ export function DesignSketchbook() {
       setSelectedSectionId(sectionId)
       flipToPageAnimated(index)
     },
-    [flipToPageAnimated]
+    [flipToPageAnimated, getSectionStartIndex]
   )
+
+  /** One page's size and whether two show at once, as page-flip laid them out. */
+  const readPageBox = useCallback((flip) => {
+    const rect = flip?.getBoundsRect?.()
+    if (!rect?.pageWidth || !rect?.height) return
+    const w = Math.round(rect.pageWidth)
+    const h = Math.round(rect.height)
+    setPageBox((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }))
+    setLandscape(flip.getOrientation?.() !== "portrait")
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    SPREAD_PAGES.forEach((page) => {
+      if (!page.imageSrc) return
+      const img = new Image()
+      img.onload = () => {
+        if (cancelled || !img.naturalWidth) return
+        const ratio = img.naturalHeight / img.naturalWidth
+        setPhotoRatios((prev) => ({ ...prev, [page.sectionId]: ratio }))
+      }
+      img.src = page.imageSrc
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Lay each section's first page out at the current page size (off screen,
+  // text and caption only) and give its photo its own page if the room left
+  // would shrink the photo too far.
+  useLayoutEffect(() => {
+    const layer = measureRef.current
+    if (!layer || !pageBox) return
+    const next = []
+    layer.querySelectorAll("[data-measure-section]").forEach((clone) => {
+      const sectionId = clone.getAttribute("data-measure-section")
+      const inner = clone.firstElementChild
+      const parts = inner ? [...inner.children] : []
+      if (!parts.length) return
+      const style = window.getComputedStyle(inner)
+      const padTop = parseFloat(style.paddingTop) || 0
+      const padBottom = parseFloat(style.paddingBottom) || 0
+      const padSides = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+      const roomH = inner.clientHeight - padTop - padBottom
+      const used =
+        parts[parts.length - 1].getBoundingClientRect().bottom -
+        parts[0].getBoundingClientRect().top
+      const left = roomH - used
+      const photoW = Math.min(inner.clientWidth - padSides, 28 * 16)
+      const photoH = photoW * (photoRatios[sectionId] ?? 1)
+      if (left < Math.min(photoH, MIN_PHOTO_SHARE * roomH)) next.push(sectionId)
+    })
+    next.sort()
+    setSplitIds((prev) => (prev.join(",") === next.join(",") ? prev : next))
+  }, [pageBox, photoRatios])
 
   const sketchRootRef = useRef(null)
   const goToSectionRef = useRef(goToSection)
@@ -435,13 +567,21 @@ export function DesignSketchbook() {
 
     let cancelled = false
     let flipInstance = null
+    // The pages this book is built from (the layout can change under it).
+    const instancePages = pagesRef.current
+    let resizeTimer = 0
+    const onResize = () => {
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(() => readPageBox(flipInstance), RESIZE_SETTLE_MS)
+    }
+    window.addEventListener("resize", onResize)
 
     const init = async () => {
       const host = bookHostRef.current
       if (!host) return
 
-      const pages = host.querySelectorAll("[data-sketch-page]")
-      if (!pages.length) return
+      const pageEls = host.querySelectorAll("[data-sketch-page]")
+      if (!pageEls.length) return
 
       try {
         const { PageFlip } = await import("page-flip")
@@ -457,7 +597,7 @@ export function DesignSketchbook() {
           const collection = flipInstance.getPageCollection?.()
           if (collection) setSpreadIndex(collection.getCurrentSpreadIndex())
           if (navigatingRef.current) return
-          setSelectedSectionId(DESIGN_SKETCHBOOK_PAGES[nextIndex]?.sectionId || null)
+          setSelectedSectionId(instancePages[nextIndex]?.sectionId || null)
         })
 
         flipInstance.on("changeState", (e) => {
@@ -490,7 +630,7 @@ export function DesignSketchbook() {
           }
         })
 
-        flipInstance.loadFromHTML(pages)
+        flipInstance.loadFromHTML(pageEls)
         // Hover-fold on hard covers leaves a board drawn across the empty half.
         const origUserMove = flipInstance.userMove.bind(flipInstance)
         flipInstance.userMove = (pos, isTouch) => {
@@ -508,7 +648,22 @@ export function DesignSketchbook() {
           origUserMove(pos, isTouch)
         }
         setPageCount(flipInstance.getPageCount())
+        // Rebuilt for a new layout: reopen where the reader was (a page that's
+        // gone, like a photo moved back beside its text, means its section).
+        const resumeId = resumePageIdRef.current
+        resumePageIdRef.current = null
+        if (resumeId) {
+          let resumeAt = instancePages.findIndex((p) => p.id === resumeId)
+          if (resumeAt < 0) {
+            const sectionId = DESIGN_SKETCHBOOK_SECTIONS.find((s) =>
+              resumeId.startsWith(s.id)
+            )?.id
+            resumeAt = instancePages.findIndex((p) => p.id === sectionId)
+          }
+          if (resumeAt > 0) flipInstance.turnToPage(resumeAt)
+        }
         syncIndicesFromFlip(flipInstance)
+        readPageBox(flipInstance)
         const hardTop = flipInstance.getBoundsRect?.()?.top
         if (typeof hardTop === "number") {
           host.style.setProperty("--sketch-hard-top", `${Math.max(0, hardTop)}px`)
@@ -523,6 +678,12 @@ export function DesignSketchbook() {
 
     return () => {
       cancelled = true
+      window.removeEventListener("resize", onResize)
+      window.clearTimeout(resizeTimer)
+      if (pageFlipRef.current) {
+        resumePageIdRef.current =
+          instancePages[pageFlipRef.current.getCurrentPageIndex()]?.id ?? null
+      }
       flipRunIdRef.current += 1
       navigatingRef.current = false
       window.clearTimeout(timer)
@@ -537,7 +698,7 @@ export function DesignSketchbook() {
       setFlipState("read")
       setFlipDirection(null)
     }
-  }, [reducedMotion])
+  }, [reducedMotion, layoutKey, readPageBox])
 
   const goPrev = (event) => {
     event?.preventDefault()
@@ -600,7 +761,7 @@ export function DesignSketchbook() {
     !flippingBackCover
   // Back cover: treat like a closed board so left stubs tuck under the brown.
   const onBackCover =
-    DESIGN_SKETCHBOOK_PAGES[pageIndex]?.variant === "back" ||
+    pages[pageIndex]?.variant === "back" ||
     (pageIndex > 0 && pageIndex >= lastPage)
 
   const renderRightTabs = (mode, { embedded = false } = {}) => (
@@ -700,7 +861,7 @@ export function DesignSketchbook() {
           "--sketch-face-top": `${tabAnchor.faceTop}px`,
           "--sketch-face-height": `${tabAnchor.faceHeight}px`,
         }}
-        aria-label="Design team sketchbook — drag corners or use controls to flip pages"
+        aria-label="Design team sketchbook. Drag a corner or use the buttons to turn pages."
       >
         {renderLeftStubs()}
         {renderRightTabs(bookOpen ? "open" : "closed", { embedded: true })}
@@ -712,11 +873,12 @@ export function DesignSketchbook() {
         />
         {onBackCover && showHardcoverCase && <BackCoverEdgeMask aria-hidden />}
         <BookHost
+          key={layoutKey}
           ref={bookHostRef}
           className="stf__parent"
           $closed={!bookOpen || onBackCover}
         >
-          {DESIGN_SKETCHBOOK_PAGES.map((page) => (
+          {pages.map((page) => (
             <SketchPage
               key={page.id}
               data-sketch-page
@@ -729,6 +891,26 @@ export function DesignSketchbook() {
           ))}
         </BookHost>
       </BookStage>
+
+      {pageBox && (
+        <MeasureLayer ref={measureRef} aria-hidden>
+          {SPREAD_PAGES.map((page) => (
+            <SketchPage
+              key={page.id}
+              data-measure-section={page.sectionId}
+              style={{ width: pageBox.w, height: pageBox.h }}
+            >
+              <SketchPageInner $variant="spread">
+                <SketchTitle>{page.title}</SketchTitle>
+                {page.body && <SketchBody>{page.body}</SketchBody>}
+                <SketchFigure>
+                  {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                </SketchFigure>
+              </SketchPageInner>
+            </SketchPage>
+          ))}
+        </MeasureLayer>
+      )}
 
       <Controls>
         <ControlButton
@@ -758,7 +940,7 @@ export function DesignSketchbook() {
 
       <Hint>
         Named tabs sit on the right. After you pass a section, its tab moves to the left as a
-        color stub — tap to flip back. Open the cover for the table of contents.
+        color stub; tap it to flip back. Open the cover for the table of contents.
       </Hint>
 
       <AttributionFooter />
@@ -774,7 +956,7 @@ function AttributionFooter() {
       <a href={url} target="_blank" rel="noopener noreferrer">
         {name}
       </a>{" "}
-      ({license}) — {author}, via{" "}
+      ({license}) by {author}, via{" "}
       <a
         href="https://www.npmjs.com/package/page-flip"
         target="_blank"
@@ -1148,7 +1330,9 @@ const SketchPageInner = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: ${({ $variant }) =>
-    $variant === "cover" || $variant === "back" ? "center" : "flex-start"};
+    $variant === "cover" || $variant === "back" || $variant === "image"
+      ? "center"
+      : "flex-start"};
   align-items: ${({ $variant }) =>
     $variant === "cover" || $variant === "back" ? "center" : "flex-start"};
   text-align: ${({ $variant }) =>
@@ -1203,31 +1387,53 @@ const SketchCoverMark = styled.span`
   opacity: 0.45;
 `
 
+/**
+ * Doubled class (&&): the article's own h3 / p rules (a 4rem top margin, a
+ * fixed size) would otherwise reach into the pages and push them down.
+ */
 const SketchTitle = styled.h3`
-  font-family: var(--font-display);
-  font-size: clamp(1.05rem, 6.5cqw, 1.75rem);
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 var(--space-sm);
-  line-height: 1.2;
+  && {
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 6.5cqw, 1.75rem);
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--space-sm);
+    line-height: 1.2;
+  }
+`
+
+const SketchLabel = styled.p`
+  && {
+    margin: 0 0 var(--space-sm);
+    color: var(--label-color);
+    font-family: var(--font-body);
+    font-size: clamp(0.68rem, 3.1cqw, 0.82rem);
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
 `
 
 const SketchSubtitle = styled.p`
-  font-family: var(--font-body);
-  font-size: clamp(0.7rem, 3cqw, 0.8rem);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-  margin: 0 0 var(--space-md);
+  && {
+    font-family: var(--font-body);
+    font-size: clamp(0.7rem, 3cqw, 0.8rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin: 0 0 var(--space-md);
+  }
 `
 
 const SketchBody = styled.p`
-  font-family: var(--font-body);
-  font-size: clamp(0.75rem, 3.5cqw, 0.95rem);
-  line-height: 1.55;
-  color: var(--color-muted);
-  margin: 0;
-  max-width: 36rem;
+  && {
+    font-family: var(--font-body);
+    font-size: clamp(0.75rem, 3.5cqw, 0.95rem);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 36rem;
+  }
 `
 
 const TocList = styled.ul`
@@ -1330,7 +1536,7 @@ const SketchPlaceholderLabel = styled.span`
 
 /** Takes the room left under the text; a tall image shrinks to fit the page. */
 const SketchFigure = styled.figure`
-  margin: var(--space-md) 0 0;
+  margin: ${({ $alone }) => ($alone ? "0" : "var(--space-md) 0 0")};
   width: 100%;
   max-width: 28rem;
   display: flex;
@@ -1359,6 +1565,24 @@ const SketchCaption = styled.figcaption`
   font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
   line-height: 1.4;
   color: var(--color-muted);
+`
+
+/** Off-screen copies of the pages, laid out only to be measured. */
+const MeasureLayer = styled.div`
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+
+  > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
 `
 
 /** Same side padding as BookStage, so the controls and notes below center on the book. */

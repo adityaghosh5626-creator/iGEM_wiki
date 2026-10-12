@@ -10,4 +10,4 @@ const HomePage = () => (
 
 export default HomePage
 
-export const Head = () => <title>Home — iGEM Toronto 2026</title>
+export const Head = () => <title>Home | iGEM Toronto 2026</title>

@@ -7,7 +7,8 @@ export function WetLabJournal() {
   return (
     <NotebookJournal
       entries={WET_LAB_JOURNAL_ENTRIES}
-      intro="Chronological wet lab notes from meetings, lab shifts and the team's lab notes, newest first. Scroll through each entry below, or use the date list to jump to a day."
+      sideNav
+      intro="Chronological wet lab notes from meetings, lab shifts and the team's lab notes, newest first. Scroll through each entry below, or pick a date under Journal in the side menu to jump to a day."
     />
   )
 }

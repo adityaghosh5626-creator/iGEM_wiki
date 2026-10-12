@@ -246,7 +246,7 @@ export const query = graphql`
 `
 
 export default TeamPage
-export const Head = () => <title>Meet the Team — iGEM Toronto 2026</title>
+export const Head = () => <title>Meet the Team | iGEM Toronto 2026</title>
 
 const Backdrop = styled.div`
   position: fixed;

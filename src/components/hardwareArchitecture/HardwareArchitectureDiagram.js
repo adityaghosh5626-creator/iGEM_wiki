@@ -478,7 +478,7 @@ export function HardwareArchitectureDiagram() {
       <DiagramColumn>
         <DiagramHint>
           Click a subsystem header to collapse its components. Select one or more legend
-          items to highlight related parts — click again to deselect.
+          items to highlight related parts. Click again to deselect.
         </DiagramHint>
 
         <Canvas

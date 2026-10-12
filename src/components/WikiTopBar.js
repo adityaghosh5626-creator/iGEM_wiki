@@ -84,7 +84,7 @@ export function WikiTopBar({ sticky = false }) {
   return (
     <TopBar $sticky={sticky}>
       <NavInner>
-        <LogoLink to="/" aria-label="PetaBite, iGEM Toronto 2026 — Home" onClick={closeMenu}>
+        <LogoLink to="/" aria-label="PetaBite, iGEM Toronto 2026 home page" onClick={closeMenu}>
           <LogoImg src={LOGO_SRC} alt="" />
         </LogoLink>
 

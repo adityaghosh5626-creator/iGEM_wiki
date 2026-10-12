@@ -618,7 +618,7 @@ const RNALAB_TEXTBOX_IMG =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/text-boxes/rnalab.avif"
 
 const RNALAB_EXPLANATION =
-  "RNAlab is our advisory lab partner that helped uncover 215.7 million high-quality plastic-degrading enzymes."
+  "RNAlab is our advisory lab partner that helped uncover 300M unique proteins."
 
 /** Delay + slide duration; the RNAlab term is not hoverable until this elapses. */
 const RNALAB_REVEAL_MS = 740
@@ -2899,7 +2899,7 @@ export function HomeScrollPrototype() {
                 <ParallaxBack ref={parallaxBackRef}>
                   <RailImg
                     src={ASSETS.back}
-                    alt="Wiki front — background scenery"
+                    alt="Homepage background scenery"
                   />
                 </ParallaxBack>
               </BackClip>
@@ -3338,8 +3338,8 @@ export function HomeScrollPrototype() {
                     imageSrc={RNALAB_TEXTBOX_IMG}
                     imageAlt="RNAlab"
                   />
-                  , our advisory lab, our team uncovered 215.7 million
-                  high-quality plastic‑degrading enzymes.
+                  , our advisory lab, our team uncovered 300M unique
+                  proteins.
                 </ForestDatasetBody>
               </ForestRnalabMount>
             </ArtBand>

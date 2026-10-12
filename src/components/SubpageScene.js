@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import styled, { css, keyframes } from "styled-components"
 import { NeedlemanCactus } from "./NeedlemanCactus.js"
 
@@ -435,6 +441,389 @@ function ZapLayer({ plate, layer, children }) {
   )
 }
 
+/** On touch, a tapped critter stays hidden this long before popping back out. */
+const PEEK_TOUCH_MS = 2500
+
+/**
+ * A swimmer that hides (the Wet Lab axolotls): hovered (tapped on touch), it
+ * lights up (the layer itself is its glow, over `layer.peek.plain`) and slides
+ * `layer.peek.dx` plate px behind the text box, leaving a little peeking out;
+ * when the pointer leaves it pops back out and the glow fades. The hover area
+ * stays where it started, so it doesn't chase the pointer. With `from`, it's
+ * drawn from there on its plates into `box`.
+ */
+function PeekLayer({ plate, layer, children }) {
+  const [hidden, setHidden] = useState(false)
+  const timer = useRef(0)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+  const [x0, , x1] = layer.box
+  const hide = state => {
+    window.clearTimeout(timer.current)
+    setHidden(state)
+  }
+  return (
+    <>
+      <PeekWindow
+        data-layer={layer.name}
+        $hidden={hidden}
+        style={{
+          ...plate.windowStyle(layer.box),
+          "--peek-x": `${((layer.peek.dx / (x1 - x0)) * 100).toFixed(2)}%`,
+        }}
+      >
+        <CropImg
+          src={plate.asset(layer.peek.plain)}
+          alt=""
+          decoding="async"
+          draggable={false}
+          style={plate.imgStyle(layer.from || layer.box)}
+        />
+        <PeekGlow $hidden={hidden}>{children}</PeekGlow>
+      </PeekWindow>
+      <PeekHit
+        style={plate.windowStyle(layer.peek.hit || layer.box)}
+        onMouseEnter={() => hide(true)}
+        onMouseLeave={() => hide(false)}
+        onPointerDown={event => {
+          if (event.pointerType === "mouse") return
+          hide(true)
+          timer.current = window.setTimeout(() => setHidden(false), PEEK_TOUCH_MS)
+        }}
+      />
+    </>
+  )
+}
+
+/** Ducking (ms): the hop back over the edge, and the sink behind it. */
+const DUCK_HOP_MS = 200
+const DUCK_SINK_MS = 550
+const DUCK_RISE_MS = 380
+const DUCK_LAND_MS = 200
+/** Room (plate px) round a ducking critter for its glow. */
+const DUCK_GLOW_PAD = 30
+
+/**
+ * A critter standing in front of an edge it can hide behind (the
+ * Contribution axolotl, before the water): hovered (tapped on touch), it
+ * glows, hops back over the edge and sinks behind it, leaving `duck.show`
+ * plate px of its head peeking over; when the pointer leaves it rises and
+ * hops back down. `duck.edge` is two plate points on the edge (it can slope);
+ * while the critter's behind it, everything below that line is cut off.
+ */
+function DuckLayer({ plate, layer, children }) {
+  const winRef = useRef(null)
+  const [glow, setGlow] = useState(false)
+  const [clipped, setClipped] = useState(false)
+  const timers = useRef([])
+  const touch = useRef(0)
+  const anim = useRef(null)
+  useEffect(
+    () => () => {
+      timers.current.forEach(window.clearTimeout)
+      window.clearTimeout(touch.current)
+    },
+    [],
+  )
+  const [x0, y0, x1, y1] = layer.box
+  const { edge, show, hop } = layer.duck
+  const [[ex0, ey0], [ex1, ey1]] = edge
+  const edgeAt = x => ey0 + ((ey1 - ey0) * (x - ex0)) / (ex1 - ex0)
+  const clip = [
+    x0 - DUCK_GLOW_PAD,
+    y0 - DUCK_GLOW_PAD,
+    x1 + DUCK_GLOW_PAD,
+    y1 + DUCK_GLOW_PAD,
+  ]
+  const h = clip[3] - clip[1]
+  // Shifts as a share of the critter's own height.
+  const y = px => `${((px / (y1 - y0)) * 100).toFixed(2)}%`
+  // Sinks until `show` px of it is above the edge, measured at its middle.
+  const sink = edgeAt((x0 + x1) / 2) - show - y0
+  const cutAt = x => (((edgeAt(x) - clip[1]) / h) * 100).toFixed(2)
+  const later = (fn, ms) => timers.current.push(window.setTimeout(fn, ms))
+  const reduce = () =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  const move = (frames, ms) => {
+    anim.current?.commitStyles?.()
+    anim.current?.cancel()
+    anim.current = winRef.current?.animate(frames, {
+      duration: ms,
+      fill: "forwards",
+    })
+  }
+  const duck = () => {
+    timers.current.forEach(window.clearTimeout)
+    timers.current = []
+    setGlow(true)
+    if (reduce()) return
+    move(
+      [
+        { transform: "translate3d(0, 0, 0)", easing: "ease-out" },
+        { transform: `translate3d(0, ${y(-hop)}, 0)`, offset: DUCK_HOP_MS / (DUCK_HOP_MS + DUCK_SINK_MS), easing: "cubic-bezier(0.45, 0, 0.3, 1)" },
+        { transform: `translate3d(0, ${y(sink)}, 0)` },
+      ],
+      DUCK_HOP_MS + DUCK_SINK_MS,
+    )
+    // Its feet are over the edge by now: cut off what goes behind it.
+    later(() => setClipped(true), DUCK_HOP_MS)
+  }
+  const rise = () => {
+    timers.current.forEach(window.clearTimeout)
+    timers.current = []
+    if (reduce()) {
+      setGlow(false)
+      return
+    }
+    move(
+      [
+        { transform: `translate3d(0, ${y(sink)}, 0)`, easing: "cubic-bezier(0.3, 0, 0.4, 1)" },
+        { transform: `translate3d(0, ${y(-hop)}, 0)`, offset: DUCK_RISE_MS / (DUCK_RISE_MS + DUCK_LAND_MS), easing: "ease-in" },
+        { transform: "translate3d(0, 0, 0)" },
+      ],
+      DUCK_RISE_MS + DUCK_LAND_MS,
+    )
+    later(() => setClipped(false), DUCK_RISE_MS)
+    later(() => setGlow(false), DUCK_RISE_MS + DUCK_LAND_MS)
+  }
+  return (
+    <>
+      <DuckClip
+        style={{
+          ...plate.windowStyle(clip),
+          clipPath: clipped
+            ? `polygon(0 0, 100% 0, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
+            : "none",
+        }}
+      >
+        <DuckWindow
+          ref={winRef}
+          data-layer={layer.name}
+          $glow={glow}
+          style={{
+            left: `${(DUCK_GLOW_PAD / (clip[2] - clip[0])) * 100}%`,
+            top: `${(DUCK_GLOW_PAD / h) * 100}%`,
+            width: `${((x1 - x0) / (clip[2] - clip[0])) * 100}%`,
+            height: `${((y1 - y0) / h) * 100}%`,
+          }}
+        >
+          {children}
+        </DuckWindow>
+      </DuckClip>
+      <PeekHit
+        style={plate.windowStyle(layer.duck.hit || layer.box)}
+        onMouseEnter={duck}
+        onMouseLeave={rise}
+        onPointerDown={event => {
+          if (event.pointerType === "mouse") return
+          window.clearTimeout(touch.current)
+          duck()
+          touch.current = window.setTimeout(rise, PEEK_TOUCH_MS)
+        }}
+      />
+    </>
+  )
+}
+
+/** Legs of a lap (ms): out the left edge, in at the right to peek, a pause, home. */
+const LAP_OUT_MS = 1000
+const LAP_IN_MS = 700
+const LAP_PAUSE_MS = 1000
+const LAP_HOME_MS = 2600
+
+/**
+ * A swimmer that does a lap (the Wet Lab's open-water axolotl): hovered
+ * (tapped on touch), it lights up, swims out the left edge of the page,
+ * comes back in at the right edge just far enough to peek, then swims on
+ * left behind the text box to where it started. `layer.lap` gives the
+ * shifts in plate px: `out` (off the left), `enter` (off the right) and
+ * `peek`. The hover area stays put.
+ */
+function LapLayer({ plate, layer, children }) {
+  const winRef = useRef(null)
+  const glowRef = useRef(null)
+  const busy = useRef(false)
+  const [x0, , x1] = layer.box
+  const pct = dx => `${((dx / (x1 - x0)) * 100).toFixed(2)}%`
+  const go = () => {
+    if (busy.current) return
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
+    const { out, enter, peek } = layer.lap
+    const total = LAP_OUT_MS + LAP_IN_MS + LAP_PAUSE_MS + LAP_HOME_MS
+    const at = ms => ms / total
+    const x = dx => ({ transform: `translate3d(${pct(dx)}, 0, 0)` })
+    const t1 = at(LAP_OUT_MS)
+    const t2 = at(LAP_OUT_MS + LAP_IN_MS)
+    const t3 = at(LAP_OUT_MS + LAP_IN_MS + LAP_PAUSE_MS)
+    busy.current = true
+    const swim = winRef.current?.animate(
+      [
+        { ...x(0), offset: 0, easing: "cubic-bezier(0.5, 0, 0.9, 0.6)" },
+        { ...x(out), offset: t1 },
+        // Off the left edge, then straight round to off the right edge.
+        { ...x(enter), offset: t1, easing: "cubic-bezier(0.2, 0.6, 0.4, 1)" },
+        { ...x(peek), offset: t2 },
+        { ...x(peek), offset: t3, easing: "cubic-bezier(0.45, 0, 0.35, 1)" },
+        { ...x(0), offset: 1 },
+      ],
+      { duration: total },
+    )
+    glowRef.current?.animate(
+      [
+        { opacity: 0 },
+        { opacity: 1, offset: 0.06 },
+        { opacity: 1, offset: 0.88 },
+        { opacity: 0 },
+      ],
+      { duration: total },
+    )
+    const done = () => {
+      busy.current = false
+    }
+    if (swim) swim.onfinish = swim.oncancel = done
+    else done()
+  }
+  return (
+    <>
+      <LapWindow
+        ref={winRef}
+        data-layer={layer.name}
+        style={plate.windowStyle(layer.box)}
+      >
+        <CropImg
+          src={plate.asset(layer.lap.plain)}
+          alt=""
+          decoding="async"
+          draggable={false}
+          style={plate.imgStyle(layer.from || layer.box)}
+        />
+        <LapGlow ref={glowRef}>{children}</LapGlow>
+      </LapWindow>
+      <PeekHit
+        style={plate.windowStyle(layer.lap.hit || layer.box)}
+        onMouseEnter={go}
+        onPointerDown={event => {
+          if (event.pointerType !== "mouse") go()
+        }}
+      />
+    </>
+  )
+}
+
+/**
+ * A school that keeps swimming (like the homepage fish): it holds a while,
+ * swims off one edge, comes round from the other and back to its spot,
+ * bobbing all the way (harder when hovered). `layer.swim.ms` is one loop;
+ * `layer.swim.dir` is the way it faces (1 right, -1 left; left by default).
+ */
+function SwimLayer({ plate, layer, children }) {
+  const [x0, , x1] = layer.box
+  // Far enough to clear the page both ways: 115% of the plate, in the
+  // window's own widths.
+  const swim = ((1.15 * plate.W) / (x1 - x0)) * 100
+  const dir = layer.swim.dir === 1 ? 1 : -1
+  return (
+    <SwimWindow
+      data-layer={layer.name}
+      style={{
+        ...plate.windowStyle(layer.box),
+        "--swim-out": `${dir * swim}%`,
+        "--swim-in": `${-dir * swim}%`,
+        "--swim-ms": `${layer.swim.ms}ms`,
+        "--swim-delay": `${layer.swim.delayMs || 0}ms`,
+      }}
+    >
+      <SwimBob>{children}</SwimBob>
+    </SwimWindow>
+  )
+}
+
+/** Sizes (plate px, on the homepage's 946px plate) of the homepage bubble sprites. */
+const BUBBLE_SPRITES = {
+  1: [29, 34],
+  3: [68, 61],
+  5: [27, 30],
+  7: [43, 42],
+  8: [35, 30],
+  9: [21, 28],
+  10: [50, 51],
+  13: [45, 42],
+}
+const BUBBLE_SRC = id =>
+  `https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble${id}.avif`
+
+/** Same numbers every render (and on the server): a small seeded generator. */
+function seeded(seed) {
+  let s = seed
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296
+    return s / 4294967296
+  }
+}
+
+/**
+ * The homepage's bubbles as a constant stream rising through the water.
+ * `layer.bubbles`: `lanes` ([x0, x1] plate-px bands they rise in, with a
+ * share of the bubbles each), `from` / `to` (plate y they rise between),
+ * `count`, and `seconds` ([min, max] for one rise).
+ */
+function BubbleStream({ plate, layer }) {
+  const cfg = layer.bubbles
+  const bubbles = useMemo(() => {
+    const rand = seeded(cfg.seed || 11)
+    const ids = Object.keys(BUBBLE_SPRITES)
+    const list = []
+    cfg.lanes.forEach(({ x: [a, b], count }) => {
+      for (let i = 0; i < count; i++) {
+        const id = ids[Math.floor(rand() * ids.length)]
+        const [w, h] = BUBBLE_SPRITES[id]
+        const scale = (plate.W / 946) * (0.55 + rand() * 0.6)
+        const seconds = cfg.seconds[0] + rand() * (cfg.seconds[1] - cfg.seconds[0])
+        const from = cfg.from - rand() * 220
+        list.push({
+          key: `${a}-${i}`,
+          id,
+          x: a + rand() * (b - a),
+          y: from,
+          w: w * scale,
+          h: h * scale,
+          rise: from - cfg.to,
+          seconds,
+          delay: -rand() * seconds,
+          wobble: (rand() < 0.5 ? -1 : 1) * (8 + rand() * 18),
+          wobbleS: 2.6 + rand() * 2,
+        })
+      }
+    })
+    return list
+  }, [cfg, plate.W])
+  return (
+    <BubbleLayer aria-hidden>
+      {bubbles.map(b => (
+        <BubbleRise
+          key={b.key}
+          style={{
+            left: `${(b.x / plate.W) * 100}%`,
+            top: `${(b.y / plate.H) * 100}%`,
+            width: `${(b.w / plate.W) * 100}%`,
+            "--rise": `calc(var(--px) * ${-b.rise.toFixed(0)})`,
+            "--rise-s": `${b.seconds.toFixed(2)}s`,
+            "--rise-delay": `${b.delay.toFixed(2)}s`,
+          }}
+        >
+          <BubbleWobble
+            style={{
+              "--wobble": `calc(var(--px) * ${b.wobble.toFixed(1)})`,
+              "--wobble-s": `${b.wobbleS.toFixed(2)}s`,
+            }}
+          >
+            <img src={BUBBLE_SRC(b.id)} alt="" decoding="async" draggable={false} />
+          </BubbleWobble>
+        </BubbleRise>
+      ))}
+    </BubbleLayer>
+  )
+}
+
 /** Marks which ends of a scrollable list have more beyond them (for the fade). */
 function updateNavFade(nav) {
   if (!nav) return
@@ -747,7 +1136,11 @@ export function SubpageScene({ scene, title, description, children }) {
     const list = []
     heads.forEach((el, i) => {
       if (!el.id) el.id = `section-${i + 1}`
-      const item = { id: el.id, label: el.textContent.trim() }
+      // A heading can name itself shorter for the menu (journal dates).
+      const item = {
+        id: el.id,
+        label: (el.dataset.navLabel || el.textContent).trim(),
+      }
       if (el.tagName === "H2") list.push({ ...item, subs: [] })
       else list[list.length - 1]?.subs.push(item)
     })
@@ -984,6 +1377,12 @@ export function SubpageScene({ scene, title, description, children }) {
             {scene.layers
               .filter(l => !l.hidden)
               .map(layer => {
+                // Not a cropped image (no box): its own bubbles.
+                if (layer.bubbles) {
+                  return (
+                    <BubbleStream key={layer.name} plate={plate} layer={layer} />
+                  )
+                }
                 const img = (
                   <CropImg
                     src={plate.asset(layer.src || layer.name)}
@@ -1003,6 +1402,34 @@ export function SubpageScene({ scene, title, description, children }) {
                     <LoopLayer key={layer.name} plate={plate} layer={layer}>
                       {img}
                     </LoopLayer>
+                  )
+                }
+                if (layer.lap) {
+                  return (
+                    <LapLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </LapLayer>
+                  )
+                }
+                if (layer.swim) {
+                  return (
+                    <SwimLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </SwimLayer>
+                  )
+                }
+                if (layer.duck) {
+                  return (
+                    <DuckLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </DuckLayer>
+                  )
+                }
+                if (layer.peek) {
+                  return (
+                    <PeekLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </PeekLayer>
                   )
                 }
                 if (layer.zap) {
@@ -1050,7 +1477,11 @@ export function SubpageScene({ scene, title, description, children }) {
                   <CropWindow
                     key={layer.name}
                     data-layer={layer.name}
-                    style={plate.windowStyle(layer.box)}
+                    style={{
+                      ...plate.windowStyle(layer.box),
+                      // `flip`: mirrored, to face the other way.
+                      transform: layer.flip ? "scaleX(-1)" : undefined,
+                    }}
                   >
                     {img}
                   </CropWindow>
@@ -1133,7 +1564,12 @@ export function SubpageScene({ scene, title, description, children }) {
                   <Indicator
                     aria-hidden
                     style={{
-                      ...plate.bg(side.indicator.name, side.indicator.box),
+                      ...(side.indicator.fill
+                        ? {
+                            background: side.indicator.fill,
+                            borderRadius: "0.3em",
+                          }
+                        : plate.bg(side.indicator.name, side.indicator.box)),
                       transform: `translate(${indicator.left}px, ${indicator.top}px)`,
                       width: indicator.width,
                       height: indicator.height,
@@ -1416,6 +1852,184 @@ const CoinTrigger = styled.div`
   overflow: hidden;
   pointer-events: auto;
   cursor: pointer;
+`
+
+/**
+ * Hiding: the glow comes up first, then the swimmer slides back. Coming out:
+ * it pops out (a slight overshoot) and the glow fades once it's back.
+ */
+const PeekWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(${({ $hidden }) => ($hidden ? "var(--peek-x)" : "0")}, 0, 0);
+  transition: ${({ $hidden }) =>
+    $hidden
+      ? "transform 650ms cubic-bezier(0.45, 0, 0.3, 1) 220ms"
+      : "transform 480ms cubic-bezier(0.3, 1.45, 0.5, 1)"};
+
+  @media (prefers-reduced-motion: reduce) {
+    transform: none;
+    transition: none;
+  }
+`
+
+/** Still window round a ducking critter; cut off at the edge while it's behind. */
+const DuckClip = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+/** Light round the outline while it's hiding (it has no painted glow). */
+const DuckWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  filter: ${({ $glow }) =>
+    $glow
+      ? "drop-shadow(0 0 calc(var(--px) * 8) rgba(255, 244, 150, 0.95)) drop-shadow(0 0 calc(var(--px) * 20) rgba(255, 226, 90, 0.6))"
+      : "none"};
+  transition: filter 300ms ease;
+`
+
+const PeekGlow = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: ${({ $hidden }) => ($hidden ? 1 : 0)};
+  transition: ${({ $hidden }) =>
+    $hidden ? "opacity 220ms ease-out" : "opacity 420ms ease-in 420ms"};
+`
+
+const PeekHit = styled.div`
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+`
+
+const LapWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
+const LapGlow = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+`
+
+/** Same swim as the homepage fish (fishSwimAcross): out one edge, in the other. */
+const swimAcross = keyframes`
+  0%,
+  18% {
+    transform: translate3d(0, 0, 0);
+  }
+  72% {
+    transform: translate3d(var(--swim-out), 0, 0);
+  }
+  72.01% {
+    transform: translate3d(var(--swim-in), 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+`
+
+const swimBob = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+`
+
+const swimBobStrong = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+`
+
+const SwimWindow = styled.div`
+  position: absolute;
+  pointer-events: auto;
+  animation: ${swimAcross} var(--swim-ms) linear var(--swim-delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/** Bobs, and crops the plate-sized image to the window (moving with it). */
+const SwimBob = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  animation: ${swimBob} 4.8s ease-in-out infinite;
+
+  ${SwimWindow}:hover & {
+    animation-name: ${swimBobStrong};
+    animation-duration: 3.2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const BubbleLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+`
+
+/** Fades in off the seafloor; stays until the surface, then fades there. */
+const bubbleRise = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  4%,
+  97% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, var(--rise), 0);
+    opacity: 0;
+  }
+`
+
+const bubbleWobble = keyframes`
+  from {
+    transform: translate3d(calc(var(--wobble) * -1), 0, 0);
+  }
+  to {
+    transform: translate3d(var(--wobble), 0, 0);
+  }
+`
+
+/** One bubble rising from its start to the surface, over and over. */
+const BubbleRise = styled.div`
+  position: absolute;
+  animation: ${bubbleRise} var(--rise-s) linear var(--rise-delay) infinite;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+`
+
+const BubbleWobble = styled.div`
+  animation: ${bubbleWobble} var(--wobble-s) ease-in-out infinite alternate;
 `
 
 const ZapBody = styled.div`

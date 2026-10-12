@@ -14,6 +14,7 @@ import {
   ATTRIBUTIONS_SCENE,
   CONTRIBUTION_SCENE,
   DRY_LAB_SCENE,
+  WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
   VENTURE_SCENE,
@@ -34,6 +35,7 @@ const formatDate = (date) => {
 const sceneFor = frontmatter => {
   if (frontmatter.section === "Dry Lab") return DRY_LAB_SCENE
   if (frontmatter.section === "Hardware") return HARDWARE_SCENE
+  if (frontmatter.section === "Wet Lab") return WET_LAB_SCENE
   if (frontmatter.path === "/beyond-the-bench/entrepreneurship/")
     return VENTURE_SCENE
   if (frontmatter.path === "/beyond-the-bench/human-practices/")

@@ -38,7 +38,9 @@ function JournalEntryPanel({ entry }) {
 
   return (
     <EntryArticle id={journalHashForDate(entry.id)} aria-labelledby={`journal-heading-${entry.id}`}>
-      <EntryHeading id={`journal-heading-${entry.id}`}>{formatEntryDate(entry.date)}</EntryHeading>
+      <EntryHeading id={`journal-heading-${entry.id}`} data-nav-label={entry.label}>
+        {formatEntryDate(entry.date)}
+      </EntryHeading>
       <FieldBlock label="Goal">{entry.goal}</FieldBlock>
       <FieldBlock label="Work completed">{entry.workCompleted}</FieldBlock>
       <FieldBlock label="Result">{entry.result}</FieldBlock>
@@ -82,9 +84,11 @@ function JournalEntryPanel({ entry }) {
 /**
  * A dated notebook (newest first): a date list beside the entries, each with
  * goal / work / result / next step, deliverables, figures and links. Used by
- * the Hardware and Wet Lab notebooks, each with its own entries.
+ * the Hardware and Wet Lab notebooks, each with its own entries. With
+ * `sideNav`, the page's own section menu lists the dates (each heading's
+ * `data-nav-label`) instead of the date list here.
  */
-export function NotebookJournal({ entries, intro }) {
+export function NotebookJournal({ entries, intro, sideNav = false }) {
   const readyRef = useRef(false)
   const firstId = entries[0]?.id ?? null
   const [activeId, setActiveId] = useState(firstId)
@@ -164,25 +168,27 @@ export function NotebookJournal({ entries, intro }) {
   }, [entries])
 
   return (
-    <JournalRoot data-nav-skip>
+    <JournalRoot data-nav-skip={sideNav ? undefined : ""}>
       <Intro>{intro}</Intro>
-      <JournalLayout>
-        <DateNav role="navigation" aria-label="Journal entries by date">
-          {entries.map((entry) => {
-            const selected = entry.id === activeId
-            return (
-              <DateButton
-                key={entry.id}
-                type="button"
-                $selected={selected}
-                aria-current={selected ? "true" : undefined}
-                onClick={() => scrollToEntry(entry.id)}
-              >
-                {entry.label}
-              </DateButton>
-            )
-          })}
-        </DateNav>
+      <JournalLayout $single={sideNav}>
+        {!sideNav && (
+          <DateNav role="navigation" aria-label="Journal entries by date">
+            {entries.map((entry) => {
+              const selected = entry.id === activeId
+              return (
+                <DateButton
+                  key={entry.id}
+                  type="button"
+                  $selected={selected}
+                  aria-current={selected ? "true" : undefined}
+                  onClick={() => scrollToEntry(entry.id)}
+                >
+                  {entry.label}
+                </DateButton>
+              )
+            })}
+          </DateNav>
+        )}
         <EntryFeed>
           {entries.map((entry, index) => (
             <EntryBlock key={entry.id}>
@@ -226,7 +232,8 @@ const JournalLayout = styled.div`
   align-items: start;
 
   @media (min-width: 721px) {
-    grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
+    grid-template-columns: ${({ $single }) =>
+      $single ? "minmax(0, 1fr)" : "minmax(9rem, 11rem) minmax(0, 1fr)"};
   }
 `
 

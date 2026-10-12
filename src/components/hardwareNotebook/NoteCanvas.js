@@ -12,7 +12,7 @@ export function NoteCanvas({
   noteRefs,
 }) {
   return (
-    <CanvasRoot ref={canvasRef} aria-label="Hardware ideas board — drag notes anywhere">
+    <CanvasRoot ref={canvasRef} aria-label="Hardware ideas board. Drag notes anywhere.">
       {notes.map((note) => {
         const state = noteStates[note.id]
         const isDragging = draggingId === note.id

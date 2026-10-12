@@ -49,7 +49,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     workCompleted:
       "Reflected on first pioreactor build: screws, pumps, CPU-fan stirring, Raspberry Pi, photosensor OD, aeration, and heating. Reviewed stakeholder feedback (dry lab, wet lab, pioreactor expert login).",
     result:
-      "Identified pain points — difficult screws, unclear instructions, hat-PCB limits one MCU per reactor, and material choices affecting accessibility.",
+      "Identified pain points: difficult screws, unclear instructions, hat-PCB limits one MCU per reactor, and material choices affecting accessibility.",
     nextStep:
       "Divide and conquer: software for bioreactor plus build of a second pioreactor; explore custom hat PCB or shared MCU options.",
   },
@@ -119,9 +119,9 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     nextStep:
       "Prototype OD calibration setup; investigate pin connections and libraries; complete testing procedure for Spencer.",
     deliverables: [
-      "OD research — Aayush, Daisy, Claire",
-      "Testing procedure / Spencer education — Soham, Aayush, Claire",
-      "MCU wiring & library research — James, Soham (CH32)",
+      "OD research: Aayush, Daisy, Claire",
+      "Testing procedure / Spencer education: Soham, Aayush, Claire",
+      "MCU wiring & library research: James, Soham (CH32)",
     ],
   },
   {
@@ -147,11 +147,11 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     nextStep:
       "OD trio meeting May 27; James on thermal interface materials; Lia on cloud integration; Lindsay on pump + sensor integration; Claire on cap-holder CAD.",
     deliverables: [
-      "OD meeting — Daisy, Claire, Aayush (May 27)",
-      "Thermal insulation research — James",
-      "Systems integration — Lia",
-      "Pump + sensor integration — Lindsay",
-      "Cap-holder CAD — Claire",
+      "OD meeting: Daisy, Claire, Aayush (May 27)",
+      "Thermal insulation research: James",
+      "Systems integration: Lia",
+      "Pump + sensor integration: Lindsay",
+      "Cap-holder CAD: Claire",
     ],
   },
   {
@@ -177,8 +177,8 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
       "Order two OD components; James to model heat-up time and resistor layout; everyone design subsystem validation experiments for next week.",
     deliverables: [
       "Order combined photodiode + TIA (×2)",
-      "Power management research — Lindsay, Lia, James",
-      "Subsystem validation experiments — all members",
+      "Power management research: Lindsay, Lia, James",
+      "Subsystem validation experiments: all members",
     ],
     links: [
       {
@@ -278,7 +278,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
       {
         src: HW_IMG("journal/claire-od-cad-jul9-a.avif"),
         alt: "OD vial holder CAD iteration A",
-        caption: "OD vial holder CAD — Jul 9 iteration.",
+        caption: "OD vial holder CAD, Jul 9 iteration.",
       },
       {
         src: HW_IMG("journal/claire-od-cad-jul9-b.avif"),
@@ -352,7 +352,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     label: "Jul 20",
     goal: "Run two AS7343 sensors and debug pump transistor drive.",
     workCompleted:
-      "Claire: dual-sensor SoftWire path in progress. Lindsay: peristaltic pump drive via S8050 transistor — direct PSU-to-pump worked; base drive from Arduino failed; recalculated base resistor (~330 Ω) after datasheet math; also hit avrdude sync / upload failures.",
+      "Claire: dual-sensor SoftWire path in progress. Lindsay: peristaltic pump drive via S8050 transistor: direct PSU-to-pump worked; base drive from Arduino failed; recalculated base resistor (~330 Ω) after datasheet math; also hit avrdude sync / upload failures.",
     result:
       "Dual OD addressing moving forward; pump circuit suspect (base resistor / transistor current headroom vs 500 mA pump).",
     nextStep: "Retry pump with ~330 Ω base resistor; confirm Nano upload path; keep SoftWire dual OD work.",
@@ -365,7 +365,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
       {
         src: HW_IMG("journal/lindsay-pump-transistor-jul21-a.avif"),
         alt: "Pump transistor bench photo A",
-        caption: "Pump / transistor bench — Jul 20–21.",
+        caption: "Pump / transistor bench, Jul 20–21.",
       },
       {
         src: HW_IMG("journal/lindsay-pump-transistor-jul21-b.avif"),
@@ -437,7 +437,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     label: "Jul 30",
     goal: "Characterize Sunon fan tach / RPM floor for stirring.",
     workCompleted:
-      "Arya wired Sunon fan tach and confirmed RPM readout; lowest stable speed ~1800 RPM — too high for culture safety concerns.",
+      "Arya wired Sunon fan tach and confirmed RPM readout; lowest stable speed ~1800 RPM, too high for culture safety concerns.",
     result: "Fan usable for tach testing but minimum RPM likely unsuitable for bacteria; need geared / PWM alternative or different impeller drive.",
     nextStep: "Evaluate lower-RPM stirring options; document MicroSD autonomy notes from Jun 27 research.",
   },
@@ -447,7 +447,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     label: "Aug 4",
     goal: "Stabilize multi-reactor Tkinter dashboard behavior.",
     workCompleted:
-      "Lia: Tkinter dashboard testing — a bad input from one bioreactor disrupted telemetry for all units.",
+      "Lia: in Tkinter dashboard testing, a bad input from one bioreactor disrupted telemetry for all units.",
     result: "Need per-reactor isolation / better validation so one fault does not take down the board.",
     nextStep: "Add input validation and isolate serial readers per port.",
   },
@@ -457,7 +457,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     label: "Aug 11",
     goal: "Answer HP sustainability power questions and fix USB hub data path.",
     workCompleted:
-      "Lia: HP power liaison; tested USB hubs — powered hubs often charge-only; non-powered transfer data. Researched powered hubs that still pass data. Continued code error-handling and GitHub workflow fixes. Claire: ongoing CAD/OD integration rewrite (dates fuzzy Aug 11–18).",
+      "Lia: HP power liaison; tested USB hubs (powered hubs are often charge-only; non-powered ones transfer data). Researched powered hubs that still pass data. Continued code error-handling and GitHub workflow fixes. Claire: ongoing CAD/OD integration rewrite (dates fuzzy Aug 11–18).",
     result: "Clearer hub purchasing criteria; HP V1 power figures drafted for wiki.",
     nextStep: "Order data-capable powered hub; continue OD class rewrite + CAD drawers.",
   },
@@ -467,7 +467,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
     label: "Aug 18",
     goal: "Document V1 wiki structure, CAD assembly, and OD integration code.",
     workCompleted:
-      "Lia: received Human Practices Info V1; reviewed award-winning hardware wikis for patterns (context → requirements → subsystems → experiments → results → reflection). Specified Tkinter setup (dark/blank OD), pump stop + PWM slider, JSON targets/commands, multi-Arduino power notes. Claire: CAD iterations — OD wiring space, vial holder cutouts, horizontal peristaltic pump drawers (vs vertical), breadboard slot; continued SoftWire OD classes (divide-by-zero expected on dummy values).",
+      "Lia: received Human Practices Info V1; reviewed award-winning hardware wikis for patterns (context → requirements → subsystems → experiments → results → reflection). Specified Tkinter setup (dark/blank OD), pump stop + PWM slider, JSON targets/commands, multi-Arduino power notes. Claire: CAD iterations for OD wiring space, vial holder cutouts, horizontal peristaltic pump drawers (vs vertical), breadboard slot; continued SoftWire OD classes (divide-by-zero expected on dummy values).",
     result:
       "V1 documentation outline and control UI requirements captured; mechanical layout shifted to horizontal pump drawers for shorter vial height.",
     nextStep: "Fill wiki V1 / Experiments tabs; finish OD setup/calibration code path; keep dashboard JSON protocol.",
@@ -475,7 +475,7 @@ const HARDWARE_JOURNAL_ENTRIES_RAW = [
       {
         src: HW_IMG("journal/claire-cad-assembly-aug.avif"),
         alt: "August CAD assembly",
-        caption: "CAD assembly / OD integration space — mid August.",
+        caption: "CAD assembly / OD integration space, mid August.",
       },
       {
         src: HW_IMG("journal/claire-cad-pump-drawer-aug.avif"),

@@ -705,11 +705,11 @@ const EndingPetamonBottle = forwardRef(function EndingPetamonBottle(_, ref) {
             <Hint aria-hidden={!ready}>
               <HintBang src={HINT_BANG_SRC} alt="" />
               <span className="hover-copy">
-                Hover over a piece to meet its petamon — click to visit their
+                Hover over a piece to meet its petamon, then click to visit their
                 page.
               </span>
               <span className="touch-copy">
-                Tap a piece to meet its petamon — tap again to visit their
+                Tap a piece to meet its petamon, then tap again to visit their
                 page.
               </span>
             </Hint>
