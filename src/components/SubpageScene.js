@@ -1106,6 +1106,7 @@ export function SubpageScene({ scene, title, description, children }) {
   const textBoxRef = useRef(null)
   const bodyRef = useRef(null)
   const navRef = useRef(null)
+  const sideColumnRef = useRef(null)
   const headerH = useHeaderHeight()
   const [sections, setSections] = useState([])
   const [activeId, setActiveId] = useState(null)
@@ -1310,16 +1311,21 @@ export function SubpageScene({ scene, title, description, children }) {
         height: item.offsetHeight,
       })
     place()
-    // Keep the active item in view when the list scrolls: sideways in the
-    // narrow strip, up/down when there are more sections than fit.
+    // Keep the item being read in view when the list scrolls (the open
+    // subsection, if any): sideways in the narrow strip, up/down when there
+    // are more sections than fit.
+    const focus =
+      (activeSubId &&
+        nav.querySelector(`[href="#${CSS.escape(activeSubId)}"]`)) ||
+      item
     if (nav.scrollWidth > nav.clientWidth) {
       nav.scrollTo({
-        left: item.offsetLeft - nav.clientWidth / 2 + item.offsetWidth / 2,
+        left: focus.offsetLeft - nav.clientWidth / 2 + focus.offsetWidth / 2,
         behavior: "smooth",
       })
     } else if (nav.scrollHeight > nav.clientHeight) {
       nav.scrollTo({
-        top: item.offsetTop - nav.clientHeight / 2 + item.offsetHeight / 2,
+        top: focus.offsetTop - nav.clientHeight / 2 + focus.offsetHeight / 2,
         behavior: "smooth",
       })
     }
@@ -1330,21 +1336,39 @@ export function SubpageScene({ scene, title, description, children }) {
     })
     ro.observe(nav)
     return () => ro.disconnect()
-  }, [activeId, sections, sideOpen])
+  }, [activeId, activeSubId, sections, sideOpen])
 
   const goTo = (e, id) => {
     const el = document.getElementById(id)
     if (!el) return
     e.preventDefault()
-    const reduce = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches
-    // A heading can ask for more room above it (e.g. under a pinned figure).
-    const margin =
-      parseFloat(getComputedStyle(el).scrollMarginTop) || headerH + 24
-    const top = el.getBoundingClientRect().top + window.scrollY - margin
-    window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" })
+    const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth"
+    // On narrow screens the section strip is stuck under the header too.
+    const strip = window.matchMedia?.("(max-width: 860px)").matches
+      ? sideColumnRef.current?.offsetHeight || 0
+      : 0
+    // Respect heading-specific spacing for pinned figures as well as the mobile menu.
+    const offset = () => {
+      const margin = Math.max(
+        parseFloat(getComputedStyle(el).scrollMarginTop) || 0,
+        headerH + strip + 24,
+      )
+      return el.getBoundingClientRect().top - margin
+    }
+    window.scrollTo({ top: window.scrollY + offset(), behavior })
     window.history.replaceState(null, "", `#${id}`)
+    // Images loading on the way (lazy ones above it) push the heading down
+    // mid-scroll: once it stops, scroll the rest of the way.
+    let tries = 0
+    const settle = () => {
+      if (Math.abs(offset()) <= 4 || tries++ >= 4) return
+      window.scrollTo({ top: window.scrollY + offset(), behavior })
+      window.setTimeout(settle, 700)
+    }
+    window.setTimeout(settle, 900)
   }
 
   const [ix0, iy0, ix1, iy1] = side?.indicator.box ?? []
@@ -1500,7 +1524,7 @@ export function SubpageScene({ scene, title, description, children }) {
 
       <Content>
         {side && (
-          <SideColumn data-scene-strip>
+          <SideColumn ref={sideColumnRef} data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
             {sideMin && sections.length > 0 && (
               <SideRail aria-label="Sections on this page">
@@ -1584,6 +1608,9 @@ export function SubpageScene({ scene, title, description, children }) {
                           left: `${((icon.box[0] - ix0) / (ix1 - ix0)) * 100}%`,
                           width: `${((icon.box[2] - icon.box[0]) / (ix1 - ix0)) * 100}%`,
                           aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
+                          filter: icon.glow
+                            ? `drop-shadow(0 0 calc(var(--px) * 5) ${icon.glow})`
+                            : undefined,
                           // Centre offset from the highlight's, as drawn.
                           marginTop: pp(
                             (icon.box[1] + icon.box[3]) / 2 - (iy0 + iy1) / 2,
@@ -2614,8 +2641,9 @@ const SubList = styled.div`
     animation: none;
   }
 
+  /* The narrow strip: the open section's subsections sit in the row after it. */
   ${NARROW} {
-    display: none;
+    display: contents;
   }
 `
 
@@ -2664,6 +2692,12 @@ const SubLink = styled.a`
     outline: 2px solid var(--link-color);
     outline-offset: -2px;
     border-radius: 4px;
+  }
+
+  ${NARROW} {
+    flex: none;
+    white-space: nowrap;
+    padding: 0.35rem 0.5rem 0.35rem 0.7rem;
   }
 `
 

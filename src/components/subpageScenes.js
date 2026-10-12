@@ -503,10 +503,14 @@ export const WET_LAB_SCENE = {
     },
     // These two (`box` covers their glow) slide `dx` plate px behind the text
     // box (333–982) when hovered, leaving their heads peeking out.
+    // Its painting stops flat where the box covers it: rest it 30px further
+    // in than painted, so the pop back out (which overshoots) never shows that
+    // edge.
     {
       name: "15-pop-out-glow",
-      box: [36, 1357, 429, 1788],
-      peek: { plain: "14-pop-out", dx: 161 },
+      from: [36, 1357, 429, 1788],
+      box: [66, 1357, 459, 1788],
+      peek: { plain: "14-pop-out", dx: 131 },
     },
     // Painted beside the other two; drawn up near the top of the text box
     // instead, above the fish, so the three spread down the page.
@@ -536,6 +540,16 @@ export const WET_LAB_SCENE = {
     /** No highlight is painted for this page: a flat one in the axolotls' yellow. */
     indicator: { fill: "#f7e36b", box: [135, 456, 289, 517] },
     highlightColor: "#f7e36b",
+    /**
+     * A homepage bubble rides on its left end, standing in until one is
+     * drawn; a soft glow keeps it from getting lost against the water.
+     */
+    indicatorIcon: {
+      name: "https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble3.avif",
+      box: [92, 461, 144, 508],
+      canvas: { size: [68, 61], crop: [0, 0, 68, 61] },
+      glow: "rgba(255, 255, 255, 0.9)",
+    },
     linkColor: "#0b4a57",
     activeLinkColor: "#0b4a57",
     stripColor: "#e6f6f8",
