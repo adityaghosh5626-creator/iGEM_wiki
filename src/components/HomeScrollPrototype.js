@@ -4112,7 +4112,7 @@ const Section5Lead = styled.p`
 
   ${phone} {
     width: 90%;
-    font-size: 1.05rem;
+    font-size: ${phoneSize(1.05)};
   }
 `
 
@@ -4135,7 +4135,7 @@ const section5AppLineBase = `
 
   ${phone} {
     width: 60%;
-    font-size: 0.85rem;
+    font-size: ${phoneSize(0.85)};
   }
 `
 
@@ -4197,7 +4197,7 @@ const Section5Cta = styled.p`
 
   ${phone} {
     width: 90%;
-    font-size: 1.2rem;
+    font-size: ${phoneSize(1.2)};
   }
 `
 
@@ -4912,7 +4912,7 @@ const ShoreBody = styled.p`
   overflow-wrap: break-word;
 
   ${phone} {
-    font-size: 0.95rem;
+    font-size: ${phoneSize(0.95)};
   }
 `
 
@@ -4947,7 +4947,7 @@ const ShoreMidBody = styled.p`
     0 0 14px rgba(0, 0, 0, 0.35);
 
   ${phone} {
-    font-size: 0.95rem;
+    font-size: ${phoneSize(0.95)};
   }
 `
 
@@ -4974,11 +4974,11 @@ const ShoreCardsMount = styled.div`
   ${phone} {
     & > div > div {
       width: 94%;
-      padding: 0.5rem 0.6rem;
+      padding: ${phoneSize(0.5)} ${phoneSize(0.6)};
     }
 
     & h3 {
-      font-size: 1rem;
+      font-size: ${phoneSize(1)};
     }
   }
 `
@@ -5012,7 +5012,7 @@ const ShoreLoganBody = styled.p`
   overflow-wrap: break-word;
 
   ${phone} {
-    font-size: 0.8rem;
+    font-size: ${phoneSize(0.8)};
   }
 `
 
@@ -5057,7 +5057,7 @@ const ForestDatasetBody = styled.p`
   pointer-events: none;
 
   ${phone} {
-    font-size: 0.8rem;
+    font-size: ${phoneSize(0.8)};
   }
 `
 
@@ -5144,7 +5144,7 @@ const Section4Body = styled.p`
   overflow-wrap: break-word;
 
   ${phone} {
-    font-size: 0.9rem;
+    font-size: ${phoneSize(0.9)};
   }
 `
 
@@ -5225,8 +5225,8 @@ const ConditionImageRow = styled.div`
 
   /* Keep all 3 cards visible together (no swipe) on phones too. */
   ${phone} {
-    gap: 0.4rem;
-    margin-top: 0.5rem;
+    gap: ${phoneSize(0.4)};
+    margin-top: ${phoneSize(0.5)};
   }
 `
 
@@ -5239,7 +5239,7 @@ const ConditionFigure = styled.figure`
   min-width: 0;
 
   ${phone} {
-    gap: 0.3rem;
+    gap: ${phoneSize(0.3)};
   }
 `
 
@@ -5332,7 +5332,7 @@ const ConditionCaption = styled.figcaption`
     0 0 12px rgba(0, 0, 0, 0.35);
 
   ${phone} {
-    font-size: 0.75rem;
+    font-size: ${phoneSize(0.75)};
   }
 `
 

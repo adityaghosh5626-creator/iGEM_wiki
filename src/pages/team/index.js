@@ -271,22 +271,8 @@ const Content = styled.div`
   z-index: 1;
 `
 
-/** Frosted label so the headings read over the water and cliffs alike. */
-const label = css`
-  width: fit-content;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 0.12em 0.55em 0.18em;
-  border-radius: 0.45em;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 4px 18px rgba(30, 60, 70, 0.12);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-`
-
 const Title = styled.h1`
-  ${label}
-  margin: clamp(2rem, 6vw, 4rem) auto clamp(2.5rem, 7vw, 5rem);
+  margin: clamp(2rem, 6vw, 4rem) 0 clamp(2.5rem, 7vw, 5rem);
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
@@ -300,7 +286,6 @@ const Section = styled.section`
 `
 
 const SectionTitle = styled.h2`
-  ${label}
   margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
   color: ${HEADING};
   font-family: var(--font-display);
