@@ -716,3 +716,57 @@ export const ATTRIBUTIONS_SCENE = {
   },
   textEndY: 3400,
 }
+
+/** Finance: one painting of snowy peaks with a mine cart of gold coins. */
+export const FINANCE_SCENE = {
+  header: "Finance",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/finance/",
+  plate: [1216, 4000],
+  background: "#c0d8db",
+  skyBottom: 400,
+  headerColor: "#2f3b52",
+  accent: "#94651a",
+  layers: [{ name: "img-3638", box: [0, 0, 1216, 4000] }],
+  side: null,
+  /** No menu highlight to match: the valley's navy. */
+  footerButton: { bg: "#3a4760", text: "#ffffff" },
+  /** Not painted: a flat, cool white box, right of the mine cart. */
+  text: {
+    fill: "#f8fafb",
+    box: [400, 412, 1140, 3400],
+    minH: 2000,
+  },
+  textEndY: 3400,
+}
+
+/** Safety and Security: a murky swamp, caution tape strung through the trees. */
+export const SAFETY_SCENE = {
+  header: "Safety",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/safety/",
+  plate: [1110, 4000],
+  background: "#578b7d",
+  skyBottom: 400,
+  /** The tape's cream, lifted off the teal with a dark shadow. */
+  headerColor: "#f4e6a8",
+  headerShadow:
+    "0 0.06em 0 rgba(16, 32, 48, 0.55), 0 0.1em 0.4em rgba(0, 0, 0, 0.35)",
+  accent: "#a8483a",
+  layers: [
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // Strung either side of the box (the right-hand strands run behind it).
+    { name: "caution-tape", box: [0, 1664, 1072, 3712] },
+  ],
+  side: null,
+  /** No menu highlight to match: the caution tape. */
+  footerButton: { bg: "#e9d684", text: "#102030" },
+  text: {
+    name: "text-space",
+    box: [135, 413, 979, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the painted box; the pond below is the ending. */
+  textEndY: 3691,
+}

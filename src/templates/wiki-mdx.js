@@ -14,9 +14,11 @@ import {
   ATTRIBUTIONS_SCENE,
   CONTRIBUTION_SCENE,
   DRY_LAB_SCENE,
+  FINANCE_SCENE,
   WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
+  SAFETY_SCENE,
   VENTURE_SCENE,
 } from "../components/subpageScenes.js"
 
@@ -41,6 +43,9 @@ const sceneFor = frontmatter => {
   if (frontmatter.path === "/beyond-the-bench/human-practices/")
     return HP_SCENE
   if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
+  if (frontmatter.path === "/finance/") return FINANCE_SCENE
+  // Served at the standard /safety-and-security/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/safety/") return SAFETY_SCENE
   if (
     frontmatter.path === "/team/attributions/" ||
     frontmatter.path === "/attributions/"
