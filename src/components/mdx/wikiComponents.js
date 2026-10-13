@@ -14,6 +14,10 @@ import AtlasMap from "../AtlasMap.js"
 import PetadexGame from "../PetadexGame.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
+import {
+  DatasetFlowchart,
+  DatasetFlowchartFigure,
+} from "./interactive/DatasetFlowchart.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
@@ -87,6 +91,8 @@ export const mdxComponents = {
   PageTab,
   InteractiveGizmo,
   PetAssayAnimation,
+  DatasetFlowchart,
+  DatasetFlowchartFigure,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,

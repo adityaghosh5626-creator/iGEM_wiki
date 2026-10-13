@@ -102,26 +102,113 @@ From each family we search outward, first into the NCBI protein database and the
 
 </Placeholder>
 
-<Figure
+<DatasetFlowchartFigure
   src="https://static.igem.wiki/teams/6187/wiki/drylab-page/needleman/g25.avif"
   alt="Flowchart of how the PETadex corpus is built: 609 PETadex-PAZy proteins are clustered at 90% identity into 411 nr query centroids; a DIAMOND blastp search of NCBI nr gives 7,825,535 non-redundant raw hits, which HMMsearch filters to 6,857,582 PETadex-nr proteins; these are clustered into 2,740,458 Logan query centroids, searched against Logan with DIAMOND blastx and filtered with HMMsearch into PETadex-Logan. Bars beside each step sketch catalytic domains, off-target, partial and complete hits."
 />
+
+<DatasetFlowchart />
 
 ### Plasticome Reference Curation
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~120 words of the Dataset Generation budget.
+  Notebooks 76, 70. Page Tree §1.1 [M].
+
+  This is the "495 known enzymes" the whole corpus grows from, so it has to
+  establish that the seed set is trustworthy before anything downstream can
+  be. Lead with that, not with the tooling.
+
+  - Why curate at all: no single database is complete, and PAZy and PlasticDB
+    disagree on both membership and sequence
+  - PAZy pulled through its API; PlasticDB reconciled against it
+  - Identity resolved by MD5 matching cascades, since accessions alone miss
+    the same sequence deposited twice
+  - Union with Plasticome v1.1, every entry tagged with its source
+  - The Erickson hand-curation, and DOI backfill for entries that arrived
+    without a citation
+  - Close on what came out: the reference set, and what "reference" means
+    here (reported activity, not activity we measured)
+
+  Numbers owed: seed count. Narrative §4 flags the baseline as contested —
+  brain dump says both ~2,000 known and PAZy ~495, and the narrative uses
+  ~500. The flowchart above says 609 PETadex-PAZy proteins, which is a third
+  figure again. RESOLVE before writing: these cannot all be the same
+  quantity, and this section is where a judge will notice.
+*/}
+
 Placeholder: PAZy pull, PlasticDB reconciliation, MD5 cascades, DOI backfill.
+
+### CATH Assignment
+
+*Owner: TBD*
+
+Placeholder: CATH fold assignment of the 609 reference proteins by Foldseek, Gene3D and Pfam; 606 of 609 annotated.
 
 ### Component Assignment
 
 *Owner: Dennis*
+
+{/*
+  OUTLINE — not rendered. ~120 words.
+  Notebooks 47/47/47/48. Page Tree §1.2 [M].
+
+  Why this exists: the model searches outward from families, not from
+  individual enzymes, so how the seed set is partitioned decides what gets
+  searched for. Say that in the first line to keep the section tied to the
+  model.
+
+  - USEARCH all-pairs global alignment, threshold ≥30% aaid and e < 1e-5
+  - Connected-component recomputation rather than best-hit assignment, and
+    why: best-hit fragments families that are genuinely continuous
+  - Output: 412 centroids forming 46 components
+    [Page Tree §1.2. Verify the 46; the 412 is settled — see below]
+
+  411 vs 412 IS RESOLVED (2026-10-13). Both numbers are right and they
+  count different things, so write 412 here without hedging:
+    - 412 centroids came out of component assignment, and all 412 were
+      submitted to the DIAMOND nr search
+    - one of them recovered nothing that another centroid did not also
+      recover at a higher score, so only 411 have uniquely attributed hits
+    - 411 is therefore a result of the nr search under best-hit
+      attribution, NOT an output of this section
+  Keep this section at 412 and let NCBI-nr Homology Expansion below own
+  the 412 -> 411 sentence. Do not describe the dropped centroid as having
+  "no hits": it had hits, they were all claimed by a better-scoring query.
+  - The USEARCH/DIAMOND 2x2 factorial: what was varied, and what it showed
+    about how sensitive the partition is to the aligner choice. This is the
+    part worth writing properly — it is a check on the method, not a step
+
+  Numbers owed: centroid and component counts, 2x2 outcome.
+*/}
 
 Placeholder: USEARCH all-pairs, ≥30% aaid, connected components, USEARCH/DIAMOND 2×2.
 
 ### NCBI-nr Homology Expansion
 
 *Owner: Thomas*
+
+{/*
+  NOTE, not a full outline — this section still needs one from its owner.
+
+  This section owns the 412 -> 411 drop (resolved 2026-10-13). All 412
+  centroids from Component Assignment above were searched against nr; one
+  recovered no sequence that another centroid did not also recover at a
+  higher score, leaving 411 centroids with uniquely attributed hits.
+
+  Two things to get right:
+    - do not write that the dropped centroid "returned no hits". It
+      returned hits; every one of them was claimed by a better-scoring
+      query under best-hit attribution
+    - Component Assignment above says 412 and stays at 412. 411 belongs
+      here, as a property of the search, not of the clustering
+
+  The corpus flowchart labels its node "411 nr query centroids", which
+  reads as though 411 were the queries. 412 were. Fix the label when the
+  figure is next revised.
+*/}
 
 Placeholder: DIAMOND, 7.83M sequences at E ≤ 1e-5.
 
@@ -140,6 +227,29 @@ Placeholder: HMMs against Logan, the PETadex-Logan corpus.
 ### Clustering and Corpus Structure
 
 *Owner: Dennis / Thomas*
+
+{/*
+  OUTLINE — not rendered. ~100 words.
+  Notebooks 51, 107. Page Tree §1.6 [S].
+
+  Framing: this is what makes the corpus usable rather than merely large.
+  Every downstream section depends on it — embedding runs on centroids,
+  sampling is stratified over clusters, the Atlas plots them — so this
+  section is load-bearing for the page even though it is marked [S].
+
+  - Clustering at 30 / 60 / 90% identity, and what each level is for:
+    90% for redundancy removal, 30% for family-level structure
+  - Cluster quantification (51): size distribution, how much of the corpus
+    sits in a few large clusters
+  - Sample density distribution (107)
+  - One line forward: the 30% centroids are what Embedding Controls below
+    actually plots, and the 90% catalytic centroids are what PlasticESM was
+    trained on. Say it here so the two sections do not read as disconnected
+
+  Numbers owed: centroid counts per level, largest-cluster share.
+  Note 64,730 family centroids appears in Page Tree §4.4 for the Atlas —
+  check whether that is the same set as the 30% centroids named here.
+*/}
 
 Placeholder: 30/60/90% centroids, cluster quantification, sample density.
 
@@ -172,6 +282,31 @@ Placeholder: temperature, pH, environment, organism, habitat, salinity.
 ### Biosample Metadata Profiles
 
 *Owner: Dennis*
+
+{/*
+  OUTLINE — not rendered. ~100 words.
+  Page Tree §2.2 [S]. Sits directly after §2.1 and depends on it.
+
+  The honest point of this section: metadata coverage is not the same thing
+  as metadata signal. A BioSample can carry fields that are only the
+  submission form's template, and counting those as annotation overstates
+  what the model can see. That distinction is the section.
+
+  - Profile universe: BioSamples with real signal out of the full set
+    [Page Tree §2.2: 2,744,599 of 6,796,722 — unverified. Note the
+    flowchart above uses 2,740,458 for Logan query centroids, a different
+    quantity with a confusingly similar value. Do not let these collide
+    in the prose]
+  - Form-template-only samples excluded, and how they were identified
+  - What the profiles are then used for: stratifying sampling, so the
+    sequences we look at are not all from one kind of environment
+  - Tie to the model in one line: this is why the metadata feature block in
+    Activity Prediction has the coverage it has
+
+  Cross-reference, do not repeat: §2.1 above owns the BacDive temperature
+  and pH propagation and the unweighted-means caveat. This section owns
+  only the profile universe and the sampling use.
+*/}
 
 Placeholder: 2.74M of 6.80M with real signal, stratified sampling.
 
@@ -295,6 +430,26 @@ Finally when checking 26 LLM extracted papers against 26 double-human verified p
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~80 words. Keep it short.
+
+  Page Tree §5.4 [S]. Source file plastic_kinetics_published_full.csv.
+
+  WORD BUDGET WARNING: Activity Data Extraction has a 400-word target and
+  the three written subsections above it already run to roughly 1,460
+  (MVP Build Plan §0 follow-ups). This section should be the shortest on the
+  page, and the trimming owed is on those three, not here.
+
+  - What it is: published kinetics assembled as a labelled table, separate
+    from the paper-extraction pipeline above
+    [Page Tree §5.4: 464 rows x 18 columns — unverified]
+  - The polymer library it is encoded against [20 entries, unverified]
+  - Class vs Substrate encoding, and why both are kept: the model can learn
+    at polymer-class level where per-substrate data is too thin
+  - One line on its role: this is the quantitative label set, where the
+    extraction pipeline above supplies the binary one
+*/}
+
 Placeholder: 464 records, 20-polymer library.
 
 <Placeholder label="Placeholder figure">
@@ -367,11 +522,74 @@ Placeholder: PlasticESM, ESMC-300M, 18.17M catalytic centroids.
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~150 words.
+  Notebooks 13, 32. Page Tree §3.2 [M].
+
+  Careful with the framing here. MVP Build Plan §2 is explicit that scale is
+  not impressive on its own, which is why Embedding Controls leads the
+  section. So this subsection should read as "how the representation was
+  computed at this scale", not as a boast about the number of sequences.
+  The controls above have already earned the reader's trust; do not spend it.
+
+  - ESM-2 embeddings across the corpus, computed on Narval
+    [Page Tree §3.2: ~300M sequences — but Narrative §4 lists this as the
+    single most contested number on the project: 215.7M, 216.7M, 300M and
+    ~307M ORFs all appear in different sources. The Overview already
+    published "over 300 million". RESOLVE and cite Numbers.md. This is the
+    headline figure of the whole project and it must match everywhere]
+  - ESM-C 600M per-residue embeddings, and what per-residue buys over
+    per-sequence
+  - The embedding landscape (13, 32)
+  - Practical cost: why this needed an HPC allocation, briefly. One sentence
+  - Relationship to Clustering above: what was embedded in full and what was
+    embedded at centroid level only. Be exact, since the controls section
+    plots centroids and a reader may conflate the two
+*/}
+
 Placeholder: ESM-2 across ~300M sequences, ESM-C per-residue.
 
 ### Activity Prediction
 
 *Owner: Dennis / Purav*
+
+{/*
+  OUTLINE — not rendered. ~250 words, the longest of the ML subsections.
+  Notebook 61. Page Tree §3.4 [S] — but see the note below: this is marked
+  [S] in the tree and is nonetheless the section ballot Q2 depends on.
+
+  THIS SECTION CARRIES THE PRIZE. MVP Build Plan §2 puts the Q2 answer as
+  "PETai's ranking became the library wet lab ordered". §2 of the page
+  states it up front; this is where it is substantiated. If anything on the
+  page gets written properly, it is this and Embedding Controls.
+
+  Order to write in:
+
+  1. What PETai is: a binary activity classifier on PlasticESM embeddings
+  2. The sequence-alone baseline FIRST, then what each added feature block
+     does to it — metadata, structural, annotation blocks probed as
+     additions. Report the ablation honestly, including blocks that did not
+     help. A feature block that added nothing is a result
+  3. Multiple label definitions run in parallel, and why: "active" is not
+     one thing across papers with different assays and substrates
+  4. Where the inactives came from (pulled from the labelled pool) and that
+     they are thin — Limitations below already commits to saying so, so
+     flag it here and let Limitations carry the weight
+  5. Variant generation (61)
+  6. Close the loop: ranking -> wet lab library -> results as new labels.
+     This is the DBTL figure slot in §2, so refer to it rather than
+     redrawing the loop in prose
+
+  Numbers owed: label counts per definition, baseline and per-block
+  performance, how many candidates the ranking handed to wet lab.
+
+  Open question for the owners: does the page claim the wet lab round
+  validated PETai, or only that PETai chose the library? Narrative §3 left
+  "discovering and validating" vs "discovering and prioritizing" unresolved
+  and defaulted to prioritizing. Keep this section consistent with whatever
+  that resolves to — and note the 2-of-161 FAST-PETase screen was a RANDOM
+  screen, so it is not PETai validation and must not be presented as such.
+*/}
 
 Placeholder: PETai classifier, feature-block ablation, parallel label definitions.
 

@@ -24,6 +24,10 @@ const ax = px => `calc(var(--art-w, 100vw) * ${+(px / TYPE_REF_W).toFixed(6)})`
 const pp = px => `calc(var(--px) * ${px})`
 
 const NARROW = "@media (max-width: 860px)"
+const WIDE = "@media (min-width: 861px)"
+// The minimised section menu: its width and the gap to the text box.
+const RAIL_W = "2.5rem"
+const RAIL_GAP = "1rem"
 
 /**
  * Hover scuttle, same as the homepage crabs: sidestep left, then right on the
@@ -580,6 +584,21 @@ function useHeaderHeight() {
   return h
 }
 
+/** The grid with the section menu as a rail: the text box takes its width. */
+function railCols(scene, plate) {
+  const pct = n => `${((n / plate.W) * 100).toFixed(4)}%`
+  const [side, text] = [scene.side.box, scene.text.box]
+  return {
+    "--grid-cols": [
+      pct(side[0]),
+      RAIL_W,
+      RAIL_GAP,
+      `calc(${pct(text[2] - side[0])} - ${RAIL_W} - ${RAIL_GAP})`,
+      "1fr",
+    ].join(" "),
+  }
+}
+
 /** Scene-specific sizes as CSS variables on the scene root. */
 function sceneVars(scene, plate) {
   const { W, H } = plate
@@ -655,6 +674,8 @@ export function SubpageScene({ scene, title, description, children }) {
   const [activeId, setActiveId] = useState(null)
   const [activeSubId, setActiveSubId] = useState(null)
   const [indicator, setIndicator] = useState(null)
+  // The section menu shrunk to a rail, giving its width to the text.
+  const [sideMin, setSideMin] = useState(false)
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
@@ -863,7 +884,10 @@ export function SubpageScene({ scene, title, description, children }) {
     const reduce = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches
-    const top = el.getBoundingClientRect().top + window.scrollY - headerH - 24
+    // A heading can ask for more room above it (e.g. under a pinned figure).
+    const margin =
+      parseFloat(getComputedStyle(el).scrollMarginTop) || headerH + 24
+    const top = el.getBoundingClientRect().top + window.scrollY - margin
     window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" })
     window.history.replaceState(null, "", `#${id}`)
   }
@@ -886,7 +910,11 @@ export function SubpageScene({ scene, title, description, children }) {
   return (
     <Scene
       ref={sceneRef}
-      style={{ "--dl-header": `${headerH}px`, ...sceneVars(scene, plate) }}
+      style={{
+        "--dl-header": `${headerH}px`,
+        ...sceneVars(scene, plate),
+        ...(side && sideMin ? railCols(scene, plate) : null),
+      }}
     >
       <BgTrack aria-hidden>
         <BgFrame ref={frameRef}>
@@ -979,13 +1007,48 @@ export function SubpageScene({ scene, title, description, children }) {
 
       <Content>
         {side && (
-          <SideColumn>
+          <SideColumn data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
+            {sideMin && sections.length > 0 && (
+              <SideRail aria-label="Sections on this page">
+                <SideToggle
+                  type="button"
+                  aria-label="Expand the section menu"
+                  title="Expand the section menu"
+                  onClick={() => setSideMin(false)}
+                >
+                  <Chevron aria-hidden viewBox="0 0 16 16">
+                    <path d="M6 3l5 5-5 5" />
+                  </Chevron>
+                </SideToggle>
+                {sections.map(s => (
+                  <RailDot
+                    key={s.id}
+                    href={`#${s.id}`}
+                    aria-label={s.label}
+                    title={s.label}
+                    aria-current={s.id === activeId ? "location" : undefined}
+                    onClick={e => goTo(e, s.id)}
+                  />
+                ))}
+              </SideRail>
+            )}
             <SideBox
               $stripCss={stripCss}
               $fit={side.fit}
+              $min={sideMin}
               style={sections.length ? undefined : { display: "none" }}
             >
+              <SideMinimise
+                type="button"
+                aria-label="Minimise the section menu"
+                title="Minimise the section menu"
+                onClick={() => setSideMin(true)}
+              >
+                <Chevron aria-hidden viewBox="0 0 16 16">
+                  <path d="M10 3L5 8l5 5" />
+                </Chevron>
+              </SideMinimise>
               <SideBoxArt
                 plate={plate}
                 name={side.name}
@@ -1498,6 +1561,120 @@ const SideBox = styled.div`
     background-color: var(--strip-color);
     box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);
     ${({ $stripCss }) => $stripCss}
+  }
+
+  /* Minimised, the rail stands in for it (the narrow strip is unaffected). */
+  ${({ $min }) =>
+    $min &&
+    css`
+      ${WIDE} {
+        display: none;
+      }
+    `}
+`
+
+const Chevron = styled.svg`
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+`
+
+const SideToggle = styled.button`
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--link-color);
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: -2px;
+  }
+`
+
+/** Sits in the menu's top corner; the narrow strip has no use for it. */
+const SideMinimise = styled(SideToggle)`
+  position: absolute;
+  z-index: 2;
+  top: 0.4rem;
+  right: 0.4rem;
+  /* Its corner can lie outside the painted box, over the sky or sand, so it
+     carries the menu's colour itself. */
+  background-color: var(--strip-color);
+  box-shadow: 0 1px 6px rgba(30, 30, 40, 0.3);
+  opacity: 1;
+
+  ${NARROW} {
+    display: none;
+  }
+`
+
+/** The minimised menu: a dot per section under the button that restores it. */
+const SideRail = styled.nav`
+  pointer-events: auto;
+  position: sticky;
+  top: calc(var(--dl-header, 0px) + 1.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0 0.6rem;
+  border-radius: 1.25rem;
+  background-color: var(--strip-color);
+  box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);
+
+  ${NARROW} {
+    display: none;
+  }
+`
+
+const RailDot = styled.a`
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.5rem;
+
+  &::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--link-color);
+    opacity: 0.45;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  &:hover::before,
+  &[aria-current]::before {
+    opacity: 1;
+  }
+
+  &[aria-current]::before {
+    background: var(--link-active);
+    transform: scale(1.5);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: -2px;
+    border-radius: 4px;
   }
 `
 
