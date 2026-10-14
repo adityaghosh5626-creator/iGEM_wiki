@@ -126,7 +126,7 @@ export default function EnzymeBattle({ isOpen, onClose }) {
     setPlasticHp(nextPlasticHp)
     setLog((l) => [
       ...l,
-      `${enzyme.name} attacks for ${enzymeDmg} damage${enzymeHasAdvantage ? " — super effective!" : ""}`,
+      `${enzyme.name} attacks for ${enzymeDmg} damage${enzymeHasAdvantage ? ". Super effective!" : ""}`,
     ])
 
     if (nextPlasticHp <= 0) {
@@ -146,7 +146,7 @@ export default function EnzymeBattle({ isOpen, onClose }) {
       setLog((l) => [
         ...l,
         `${plastic.name} strikes back for ${plasticDmg} damage${
-          enzymeHasAdvantage ? " — resisted!" : ""
+          enzymeHasAdvantage ? ". Resisted!" : ""
         }`,
       ])
 

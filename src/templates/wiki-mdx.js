@@ -14,8 +14,11 @@ import {
   ATTRIBUTIONS_SCENE,
   CONTRIBUTION_SCENE,
   DRY_LAB_SCENE,
+  FINANCE_SCENE,
+  WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
+  SAFETY_SCENE,
   VENTURE_SCENE,
 } from "../components/subpageScenes.js"
 
@@ -34,11 +37,15 @@ const formatDate = (date) => {
 const sceneFor = frontmatter => {
   if (frontmatter.section === "Dry Lab") return DRY_LAB_SCENE
   if (frontmatter.section === "Hardware") return HARDWARE_SCENE
+  if (frontmatter.section === "Wet Lab") return WET_LAB_SCENE
   if (frontmatter.path === "/beyond-the-bench/entrepreneurship/")
     return VENTURE_SCENE
   if (frontmatter.path === "/beyond-the-bench/human-practices/")
     return HP_SCENE
   if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
+  if (frontmatter.path === "/finance/") return FINANCE_SCENE
+  // Served at the standard /safety-and-security/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/safety/") return SAFETY_SCENE
   if (
     frontmatter.path === "/team/attributions/" ||
     frontmatter.path === "/attributions/"
@@ -121,6 +128,7 @@ const WikiMdxTemplate = ({ data, children }) => {
       pageTitle={wideSideTabs ? null : frontmatter.title}
       sectionLabel={wideSideTabs ? null : frontmatter.section}
       wideSideTabs={wideSideTabs}
+      withToc={!frontmatter.hideToc && !wideSideTabs}
     >
       <ScrollProgress />
       {!frontmatter.hideToc && (
@@ -338,6 +346,7 @@ const Article = styled.article`
     color: var(--color-text);
     border-bottom: 1px solid var(--color-accent);
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
 
   a:not(.heading-anchor):hover {

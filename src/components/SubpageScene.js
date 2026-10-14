@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import styled, { css, keyframes } from "styled-components"
 import { NeedlemanCactus } from "./NeedlemanCactus.js"
 
@@ -28,6 +34,14 @@ const WIDE = "@media (min-width: 861px)"
 // The minimised section menu: its width and the gap to the text box.
 const RAIL_W = "2.5rem"
 const RAIL_GAP = "1rem"
+
+/**
+ * The section box starts sized to its list, capped at about half the window
+ * (the list scrolls inside) so the art beside it stays in view; its button
+ * opens it to the box's full painted height. A scene's `side.maxHeight`
+ * overrides the cap.
+ */
+const SIDE_COLLAPSED_MAX = "min(24rem, 52vh)"
 
 /**
  * Hover scuttle, same as the homepage crabs: sidestep left, then right on the
@@ -78,6 +92,18 @@ function plateOf(scene) {
         backgroundPosition: `${(x0 / (W - w)) * 100}% ${(y0 / (H - h)) * 100}%`,
       }
     },
+  }
+}
+
+/** Background showing `crop` of an image painted on its own `size` canvas. */
+function canvasBg(url, { size: [W, H], crop: [x0, y0, x1, y1] }) {
+  const w = x1 - x0
+  const h = y1 - y0
+  return {
+    backgroundImage: `url(${url})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${(W / w) * 100}% ${(H / h) * 100}%`,
+    backgroundPosition: `${(x0 / (W - w)) * 100}% ${(y0 / (H - h)) * 100}%`,
   }
 }
 
@@ -415,6 +441,389 @@ function ZapLayer({ plate, layer, children }) {
   )
 }
 
+/** On touch, a tapped critter stays hidden this long before popping back out. */
+const PEEK_TOUCH_MS = 2500
+
+/**
+ * A swimmer that hides (the Wet Lab axolotls): hovered (tapped on touch), it
+ * lights up (the layer itself is its glow, over `layer.peek.plain`) and slides
+ * `layer.peek.dx` plate px behind the text box, leaving a little peeking out;
+ * when the pointer leaves it pops back out and the glow fades. The hover area
+ * stays where it started, so it doesn't chase the pointer. With `from`, it's
+ * drawn from there on its plates into `box`.
+ */
+function PeekLayer({ plate, layer, children }) {
+  const [hidden, setHidden] = useState(false)
+  const timer = useRef(0)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+  const [x0, , x1] = layer.box
+  const hide = state => {
+    window.clearTimeout(timer.current)
+    setHidden(state)
+  }
+  return (
+    <>
+      <PeekWindow
+        data-layer={layer.name}
+        $hidden={hidden}
+        style={{
+          ...plate.windowStyle(layer.box),
+          "--peek-x": `${((layer.peek.dx / (x1 - x0)) * 100).toFixed(2)}%`,
+        }}
+      >
+        <CropImg
+          src={plate.asset(layer.peek.plain)}
+          alt=""
+          decoding="async"
+          draggable={false}
+          style={plate.imgStyle(layer.from || layer.box)}
+        />
+        <PeekGlow $hidden={hidden}>{children}</PeekGlow>
+      </PeekWindow>
+      <PeekHit
+        style={plate.windowStyle(layer.peek.hit || layer.box)}
+        onMouseEnter={() => hide(true)}
+        onMouseLeave={() => hide(false)}
+        onPointerDown={event => {
+          if (event.pointerType === "mouse") return
+          hide(true)
+          timer.current = window.setTimeout(() => setHidden(false), PEEK_TOUCH_MS)
+        }}
+      />
+    </>
+  )
+}
+
+/** Ducking (ms): the hop back over the edge, and the sink behind it. */
+const DUCK_HOP_MS = 200
+const DUCK_SINK_MS = 550
+const DUCK_RISE_MS = 380
+const DUCK_LAND_MS = 200
+/** Room (plate px) round a ducking critter for its glow. */
+const DUCK_GLOW_PAD = 30
+
+/**
+ * A critter standing in front of an edge it can hide behind (the
+ * Contribution axolotl, before the water): hovered (tapped on touch), it
+ * glows, hops back over the edge and sinks behind it, leaving `duck.show`
+ * plate px of its head peeking over; when the pointer leaves it rises and
+ * hops back down. `duck.edge` is two plate points on the edge (it can slope);
+ * while the critter's behind it, everything below that line is cut off.
+ */
+function DuckLayer({ plate, layer, children }) {
+  const winRef = useRef(null)
+  const [glow, setGlow] = useState(false)
+  const [clipped, setClipped] = useState(false)
+  const timers = useRef([])
+  const touch = useRef(0)
+  const anim = useRef(null)
+  useEffect(
+    () => () => {
+      timers.current.forEach(window.clearTimeout)
+      window.clearTimeout(touch.current)
+    },
+    [],
+  )
+  const [x0, y0, x1, y1] = layer.box
+  const { edge, show, hop } = layer.duck
+  const [[ex0, ey0], [ex1, ey1]] = edge
+  const edgeAt = x => ey0 + ((ey1 - ey0) * (x - ex0)) / (ex1 - ex0)
+  const clip = [
+    x0 - DUCK_GLOW_PAD,
+    y0 - DUCK_GLOW_PAD,
+    x1 + DUCK_GLOW_PAD,
+    y1 + DUCK_GLOW_PAD,
+  ]
+  const h = clip[3] - clip[1]
+  // Shifts as a share of the critter's own height.
+  const y = px => `${((px / (y1 - y0)) * 100).toFixed(2)}%`
+  // Sinks until `show` px of it is above the edge, measured at its middle.
+  const sink = edgeAt((x0 + x1) / 2) - show - y0
+  const cutAt = x => (((edgeAt(x) - clip[1]) / h) * 100).toFixed(2)
+  const later = (fn, ms) => timers.current.push(window.setTimeout(fn, ms))
+  const reduce = () =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  const move = (frames, ms) => {
+    anim.current?.commitStyles?.()
+    anim.current?.cancel()
+    anim.current = winRef.current?.animate(frames, {
+      duration: ms,
+      fill: "forwards",
+    })
+  }
+  const duck = () => {
+    timers.current.forEach(window.clearTimeout)
+    timers.current = []
+    setGlow(true)
+    if (reduce()) return
+    move(
+      [
+        { transform: "translate3d(0, 0, 0)", easing: "ease-out" },
+        { transform: `translate3d(0, ${y(-hop)}, 0)`, offset: DUCK_HOP_MS / (DUCK_HOP_MS + DUCK_SINK_MS), easing: "cubic-bezier(0.45, 0, 0.3, 1)" },
+        { transform: `translate3d(0, ${y(sink)}, 0)` },
+      ],
+      DUCK_HOP_MS + DUCK_SINK_MS,
+    )
+    // Its feet are over the edge by now: cut off what goes behind it.
+    later(() => setClipped(true), DUCK_HOP_MS)
+  }
+  const rise = () => {
+    timers.current.forEach(window.clearTimeout)
+    timers.current = []
+    if (reduce()) {
+      setGlow(false)
+      return
+    }
+    move(
+      [
+        { transform: `translate3d(0, ${y(sink)}, 0)`, easing: "cubic-bezier(0.3, 0, 0.4, 1)" },
+        { transform: `translate3d(0, ${y(-hop)}, 0)`, offset: DUCK_RISE_MS / (DUCK_RISE_MS + DUCK_LAND_MS), easing: "ease-in" },
+        { transform: "translate3d(0, 0, 0)" },
+      ],
+      DUCK_RISE_MS + DUCK_LAND_MS,
+    )
+    later(() => setClipped(false), DUCK_RISE_MS)
+    later(() => setGlow(false), DUCK_RISE_MS + DUCK_LAND_MS)
+  }
+  return (
+    <>
+      <DuckClip
+        style={{
+          ...plate.windowStyle(clip),
+          clipPath: clipped
+            ? `polygon(0 0, 100% 0, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
+            : "none",
+        }}
+      >
+        <DuckWindow
+          ref={winRef}
+          data-layer={layer.name}
+          $glow={glow}
+          style={{
+            left: `${(DUCK_GLOW_PAD / (clip[2] - clip[0])) * 100}%`,
+            top: `${(DUCK_GLOW_PAD / h) * 100}%`,
+            width: `${((x1 - x0) / (clip[2] - clip[0])) * 100}%`,
+            height: `${((y1 - y0) / h) * 100}%`,
+          }}
+        >
+          {children}
+        </DuckWindow>
+      </DuckClip>
+      <PeekHit
+        style={plate.windowStyle(layer.duck.hit || layer.box)}
+        onMouseEnter={duck}
+        onMouseLeave={rise}
+        onPointerDown={event => {
+          if (event.pointerType === "mouse") return
+          window.clearTimeout(touch.current)
+          duck()
+          touch.current = window.setTimeout(rise, PEEK_TOUCH_MS)
+        }}
+      />
+    </>
+  )
+}
+
+/** Legs of a lap (ms): out the left edge, in at the right to peek, a pause, home. */
+const LAP_OUT_MS = 1000
+const LAP_IN_MS = 700
+const LAP_PAUSE_MS = 1000
+const LAP_HOME_MS = 2600
+
+/**
+ * A swimmer that does a lap (the Wet Lab's open-water axolotl): hovered
+ * (tapped on touch), it lights up, swims out the left edge of the page,
+ * comes back in at the right edge just far enough to peek, then swims on
+ * left behind the text box to where it started. `layer.lap` gives the
+ * shifts in plate px: `out` (off the left), `enter` (off the right) and
+ * `peek`. The hover area stays put.
+ */
+function LapLayer({ plate, layer, children }) {
+  const winRef = useRef(null)
+  const glowRef = useRef(null)
+  const busy = useRef(false)
+  const [x0, , x1] = layer.box
+  const pct = dx => `${((dx / (x1 - x0)) * 100).toFixed(2)}%`
+  const go = () => {
+    if (busy.current) return
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
+    const { out, enter, peek } = layer.lap
+    const total = LAP_OUT_MS + LAP_IN_MS + LAP_PAUSE_MS + LAP_HOME_MS
+    const at = ms => ms / total
+    const x = dx => ({ transform: `translate3d(${pct(dx)}, 0, 0)` })
+    const t1 = at(LAP_OUT_MS)
+    const t2 = at(LAP_OUT_MS + LAP_IN_MS)
+    const t3 = at(LAP_OUT_MS + LAP_IN_MS + LAP_PAUSE_MS)
+    busy.current = true
+    const swim = winRef.current?.animate(
+      [
+        { ...x(0), offset: 0, easing: "cubic-bezier(0.5, 0, 0.9, 0.6)" },
+        { ...x(out), offset: t1 },
+        // Off the left edge, then straight round to off the right edge.
+        { ...x(enter), offset: t1, easing: "cubic-bezier(0.2, 0.6, 0.4, 1)" },
+        { ...x(peek), offset: t2 },
+        { ...x(peek), offset: t3, easing: "cubic-bezier(0.45, 0, 0.35, 1)" },
+        { ...x(0), offset: 1 },
+      ],
+      { duration: total },
+    )
+    glowRef.current?.animate(
+      [
+        { opacity: 0 },
+        { opacity: 1, offset: 0.06 },
+        { opacity: 1, offset: 0.88 },
+        { opacity: 0 },
+      ],
+      { duration: total },
+    )
+    const done = () => {
+      busy.current = false
+    }
+    if (swim) swim.onfinish = swim.oncancel = done
+    else done()
+  }
+  return (
+    <>
+      <LapWindow
+        ref={winRef}
+        data-layer={layer.name}
+        style={plate.windowStyle(layer.box)}
+      >
+        <CropImg
+          src={plate.asset(layer.lap.plain)}
+          alt=""
+          decoding="async"
+          draggable={false}
+          style={plate.imgStyle(layer.from || layer.box)}
+        />
+        <LapGlow ref={glowRef}>{children}</LapGlow>
+      </LapWindow>
+      <PeekHit
+        style={plate.windowStyle(layer.lap.hit || layer.box)}
+        onMouseEnter={go}
+        onPointerDown={event => {
+          if (event.pointerType !== "mouse") go()
+        }}
+      />
+    </>
+  )
+}
+
+/**
+ * A school that keeps swimming (like the homepage fish): it holds a while,
+ * swims off one edge, comes round from the other and back to its spot,
+ * bobbing all the way (harder when hovered). `layer.swim.ms` is one loop;
+ * `layer.swim.dir` is the way it faces (1 right, -1 left; left by default).
+ */
+function SwimLayer({ plate, layer, children }) {
+  const [x0, , x1] = layer.box
+  // Far enough to clear the page both ways: 115% of the plate, in the
+  // window's own widths.
+  const swim = ((1.15 * plate.W) / (x1 - x0)) * 100
+  const dir = layer.swim.dir === 1 ? 1 : -1
+  return (
+    <SwimWindow
+      data-layer={layer.name}
+      style={{
+        ...plate.windowStyle(layer.box),
+        "--swim-out": `${dir * swim}%`,
+        "--swim-in": `${-dir * swim}%`,
+        "--swim-ms": `${layer.swim.ms}ms`,
+        "--swim-delay": `${layer.swim.delayMs || 0}ms`,
+      }}
+    >
+      <SwimBob>{children}</SwimBob>
+    </SwimWindow>
+  )
+}
+
+/** Sizes (plate px, on the homepage's 946px plate) of the homepage bubble sprites. */
+const BUBBLE_SPRITES = {
+  1: [29, 34],
+  3: [68, 61],
+  5: [27, 30],
+  7: [43, 42],
+  8: [35, 30],
+  9: [21, 28],
+  10: [50, 51],
+  13: [45, 42],
+}
+const BUBBLE_SRC = id =>
+  `https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble${id}.avif`
+
+/** Same numbers every render (and on the server): a small seeded generator. */
+function seeded(seed) {
+  let s = seed
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296
+    return s / 4294967296
+  }
+}
+
+/**
+ * The homepage's bubbles as a constant stream rising through the water.
+ * `layer.bubbles`: `lanes` ([x0, x1] plate-px bands they rise in, with a
+ * share of the bubbles each), `from` / `to` (plate y they rise between),
+ * `count`, and `seconds` ([min, max] for one rise).
+ */
+function BubbleStream({ plate, layer }) {
+  const cfg = layer.bubbles
+  const bubbles = useMemo(() => {
+    const rand = seeded(cfg.seed || 11)
+    const ids = Object.keys(BUBBLE_SPRITES)
+    const list = []
+    cfg.lanes.forEach(({ x: [a, b], count }) => {
+      for (let i = 0; i < count; i++) {
+        const id = ids[Math.floor(rand() * ids.length)]
+        const [w, h] = BUBBLE_SPRITES[id]
+        const scale = (plate.W / 946) * (0.55 + rand() * 0.6)
+        const seconds = cfg.seconds[0] + rand() * (cfg.seconds[1] - cfg.seconds[0])
+        const from = cfg.from - rand() * 220
+        list.push({
+          key: `${a}-${i}`,
+          id,
+          x: a + rand() * (b - a),
+          y: from,
+          w: w * scale,
+          h: h * scale,
+          rise: from - cfg.to,
+          seconds,
+          delay: -rand() * seconds,
+          wobble: (rand() < 0.5 ? -1 : 1) * (8 + rand() * 18),
+          wobbleS: 2.6 + rand() * 2,
+        })
+      }
+    })
+    return list
+  }, [cfg, plate.W])
+  return (
+    <BubbleLayer aria-hidden>
+      {bubbles.map(b => (
+        <BubbleRise
+          key={b.key}
+          style={{
+            left: `${(b.x / plate.W) * 100}%`,
+            top: `${(b.y / plate.H) * 100}%`,
+            width: `${(b.w / plate.W) * 100}%`,
+            "--rise": `calc(var(--px) * ${-b.rise.toFixed(0)})`,
+            "--rise-s": `${b.seconds.toFixed(2)}s`,
+            "--rise-delay": `${b.delay.toFixed(2)}s`,
+          }}
+        >
+          <BubbleWobble
+            style={{
+              "--wobble": `calc(var(--px) * ${b.wobble.toFixed(1)})`,
+              "--wobble-s": `${b.wobbleS.toFixed(2)}s`,
+            }}
+          >
+            <img src={BUBBLE_SRC(b.id)} alt="" decoding="async" draggable={false} />
+          </BubbleWobble>
+        </BubbleRise>
+      ))}
+    </BubbleLayer>
+  )
+}
+
 /** Marks which ends of a scrollable list have more beyond them (for the fade). */
 function updateNavFade(nav) {
   if (!nav) return
@@ -663,7 +1072,11 @@ function sceneVars(scene, plate) {
     "--link-size": ax(scene.side.linkSize || 12.5),
     "--link-pad-y": ax(scene.side.linkPadY || 10),
     "--link-indent": ax(scene.side.linkIndent || 12),
-    "--side-max": scene.side.maxHeight || "100vh",
+    "--side-max": scene.side.maxHeight || SIDE_COLLAPSED_MAX,
+    // Under the list when the crab shows, so it never sits on the titles.
+    "--crab-room": scene.side.crab
+      ? pp(scene.side.box[3] - scene.side.crab.box[1] + 4)
+      : "0px",
     "--strip-color": scene.side.stripColor,
     "--grid-cols": [
       pct(side[0]),
@@ -693,6 +1106,7 @@ export function SubpageScene({ scene, title, description, children }) {
   const textBoxRef = useRef(null)
   const bodyRef = useRef(null)
   const navRef = useRef(null)
+  const sideColumnRef = useRef(null)
   const headerH = useHeaderHeight()
   const [sections, setSections] = useState([])
   const [activeId, setActiveId] = useState(null)
@@ -700,6 +1114,20 @@ export function SubpageScene({ scene, title, description, children }) {
   const [indicator, setIndicator] = useState(null)
   // The section menu shrunk to a rail, giving its width to the text.
   const [sideMin, setSideMin] = useState(false)
+  /** Section box opened to full height; and whether, shut, it hides sections. */
+  const [sideOpen, setSideOpen] = useState(false)
+  const [sideMore, setSideMore] = useState(false)
+  const sideToggle = sideOpen || sideMore
+  /**
+   * The box's crab sits under the list, so it's left off while the shut box
+   * is too short for every section; opening the box brings it back.
+   */
+  const crabShown = Boolean(side?.crab) && (sideOpen || !sideMore)
+
+  const measureNav = nav => {
+    updateNavFade(nav)
+    setSideMore(nav.scrollHeight > nav.clientHeight + 2)
+  }
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
@@ -709,7 +1137,11 @@ export function SubpageScene({ scene, title, description, children }) {
     const list = []
     heads.forEach((el, i) => {
       if (!el.id) el.id = `section-${i + 1}`
-      const item = { id: el.id, label: el.textContent.trim() }
+      // A heading can name itself shorter for the menu (journal dates).
+      const item = {
+        id: el.id,
+        label: (el.dataset.navLabel || el.textContent).trim(),
+      }
       if (el.tagName === "H2") list.push({ ...item, subs: [] })
       else list[list.length - 1]?.subs.push(item)
     })
@@ -879,41 +1311,75 @@ export function SubpageScene({ scene, title, description, children }) {
         height: item.offsetHeight,
       })
     place()
-    // Keep the active item in view when the list scrolls: sideways in the
-    // narrow strip, up/down when there are more sections than fit.
-    if (nav.scrollWidth > nav.clientWidth) {
-      nav.scrollTo({
-        left: item.offsetLeft - nav.clientWidth / 2 + item.offsetWidth / 2,
-        behavior: "smooth",
-      })
-    } else if (nav.scrollHeight > nav.clientHeight) {
-      nav.scrollTo({
-        top: item.offsetTop - nav.clientHeight / 2 + item.offsetHeight / 2,
-        behavior: "smooth",
-      })
+    // Keep the item being read in view when the list scrolls (the open
+    // subsection, if any): sideways in the narrow strip, up/down when there
+    // are more sections than fit.
+    const focus =
+      (activeSubId &&
+        nav.querySelector(`[href="#${CSS.escape(activeSubId)}"]`)) ||
+      item
+    const follow = () => {
+      // Measured on screen: a subsection's offsets are from its own list.
+      const f = focus.getBoundingClientRect()
+      const n = nav.getBoundingClientRect()
+      if (nav.scrollWidth > nav.clientWidth) {
+        nav.scrollTo({
+          left:
+            nav.scrollLeft + f.left - n.left - nav.clientWidth / 2 + f.width / 2,
+          behavior: "smooth",
+        })
+      } else if (nav.scrollHeight > nav.clientHeight) {
+        nav.scrollTo({
+          top:
+            nav.scrollTop + f.top - n.top - nav.clientHeight / 2 + f.height / 2,
+          behavior: "smooth",
+        })
+      }
     }
-    updateNavFade(nav)
+    follow()
+    measureNav(nav)
+    // The list resizing (opened, shut, or the button showing up after it
+    // shuts) moves where the item sits, so it's followed again.
     const ro = new ResizeObserver(() => {
       place()
-      updateNavFade(nav)
+      follow()
+      measureNav(nav)
     })
     ro.observe(nav)
     return () => ro.disconnect()
-  }, [activeId, sections])
+  }, [activeId, activeSubId, sections, sideOpen])
 
   const goTo = (e, id) => {
     const el = document.getElementById(id)
     if (!el) return
     e.preventDefault()
-    const reduce = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches
-    // A heading can ask for more room above it (e.g. under a pinned figure).
-    const margin =
-      parseFloat(getComputedStyle(el).scrollMarginTop) || headerH + 24
-    const top = el.getBoundingClientRect().top + window.scrollY - margin
-    window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" })
+    const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth"
+    // On narrow screens the section strip is stuck under the header too.
+    const strip = window.matchMedia?.("(max-width: 860px)").matches
+      ? sideColumnRef.current?.offsetHeight || 0
+      : 0
+    // Respect heading-specific spacing for pinned figures as well as the mobile menu.
+    const offset = () => {
+      const margin = Math.max(
+        parseFloat(getComputedStyle(el).scrollMarginTop) || 0,
+        headerH + strip + 24,
+      )
+      return el.getBoundingClientRect().top - margin
+    }
+    window.scrollTo({ top: window.scrollY + offset(), behavior })
     window.history.replaceState(null, "", `#${id}`)
+    // Images loading on the way (lazy ones above it) push the heading down
+    // mid-scroll: once it stops, scroll the rest of the way.
+    let tries = 0
+    const settle = () => {
+      if (Math.abs(offset()) <= 4 || tries++ >= 4) return
+      window.scrollTo({ top: window.scrollY + offset(), behavior })
+      window.setTimeout(settle, 700)
+    }
+    window.setTimeout(settle, 900)
   }
 
   const [ix0, iy0, ix1, iy1] = side?.indicator.box ?? []
@@ -946,6 +1412,12 @@ export function SubpageScene({ scene, title, description, children }) {
             {scene.layers
               .filter(l => !l.hidden)
               .map(layer => {
+                // Not a cropped image (no box): its own bubbles.
+                if (layer.bubbles) {
+                  return (
+                    <BubbleStream key={layer.name} plate={plate} layer={layer} />
+                  )
+                }
                 const img = (
                   <CropImg
                     src={plate.asset(layer.src || layer.name)}
@@ -965,6 +1437,34 @@ export function SubpageScene({ scene, title, description, children }) {
                     <LoopLayer key={layer.name} plate={plate} layer={layer}>
                       {img}
                     </LoopLayer>
+                  )
+                }
+                if (layer.lap) {
+                  return (
+                    <LapLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </LapLayer>
+                  )
+                }
+                if (layer.swim) {
+                  return (
+                    <SwimLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </SwimLayer>
+                  )
+                }
+                if (layer.duck) {
+                  return (
+                    <DuckLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </DuckLayer>
+                  )
+                }
+                if (layer.peek) {
+                  return (
+                    <PeekLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </PeekLayer>
                   )
                 }
                 if (layer.zap) {
@@ -1012,7 +1512,11 @@ export function SubpageScene({ scene, title, description, children }) {
                   <CropWindow
                     key={layer.name}
                     data-layer={layer.name}
-                    style={plate.windowStyle(layer.box)}
+                    style={{
+                      ...plate.windowStyle(layer.box),
+                      // `flip`: mirrored, to face the other way.
+                      transform: layer.flip ? "scaleX(-1)" : undefined,
+                    }}
                   >
                     {img}
                   </CropWindow>
@@ -1031,7 +1535,7 @@ export function SubpageScene({ scene, title, description, children }) {
 
       <Content>
         {side && (
-          <SideColumn data-scene-strip>
+          <SideColumn ref={sideColumnRef} data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
             {sideMin && sections.length > 0 && (
               <SideRail aria-label="Sections on this page">
@@ -1059,9 +1563,16 @@ export function SubpageScene({ scene, title, description, children }) {
             )}
             <SideBox
               $stripCss={stripCss}
-              $fit={side.fit}
               $min={sideMin}
-              style={sections.length ? undefined : { display: "none" }}
+              $fit={!sideOpen}
+              style={{
+                "--side-bottom": crabShown
+                  ? "var(--crab-room)"
+                  : sideToggle
+                    ? "0.3rem"
+                    : "var(--nav-top)",
+                ...(sections.length ? null : { display: "none" }),
+              }}
             >
               <SideMinimise
                 type="button"
@@ -1088,7 +1599,12 @@ export function SubpageScene({ scene, title, description, children }) {
                   <Indicator
                     aria-hidden
                     style={{
-                      ...plate.bg(side.indicator.name, side.indicator.box),
+                      ...(side.indicator.fill
+                        ? {
+                            background: side.indicator.fill,
+                            borderRadius: "0.3em",
+                          }
+                        : plate.bg(side.indicator.name, side.indicator.box)),
                       transform: `translate(${indicator.left}px, ${indicator.top}px)`,
                       width: indicator.width,
                       height: indicator.height,
@@ -1097,10 +1613,20 @@ export function SubpageScene({ scene, title, description, children }) {
                     {icon && (
                       <IndicatorIcon
                         style={{
-                          ...plate.bg(icon.name, icon.box),
+                          ...(icon.canvas
+                            ? canvasBg(plate.asset(icon.name), icon.canvas)
+                            : // `from`: painted elsewhere on its plate than `box`.
+                              plate.bg(icon.name, icon.from || icon.box)),
                           left: `${((icon.box[0] - ix0) / (ix1 - ix0)) * 100}%`,
                           width: `${((icon.box[2] - icon.box[0]) / (ix1 - ix0)) * 100}%`,
                           aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
+                          filter: icon.glow
+                            ? `drop-shadow(0 0 calc(var(--px) * 5) ${icon.glow})`
+                            : undefined,
+                          // `rotate` (deg): turned from how it's painted.
+                          transform: icon.rotate
+                            ? `translateY(-50%) rotate(${icon.rotate}deg)`
+                            : undefined,
                           // Centre offset from the highlight's, as drawn.
                           marginTop: pp(
                             (icon.box[1] + icon.box[3]) / 2 - (iy0 + iy1) / 2,
@@ -1145,7 +1671,23 @@ export function SubpageScene({ scene, title, description, children }) {
                   </React.Fragment>
                 ))}
               </SideNav>
-              {side.crab && (
+              {sideToggle && (
+                <SideMore
+                  type="button"
+                  aria-expanded={sideOpen}
+                  aria-label={
+                    sideOpen ? "Show fewer sections" : "Show all sections"
+                  }
+                  title={sideOpen ? "Show fewer" : "Show all"}
+                  $open={sideOpen}
+                  onClick={() => setSideOpen(open => !open)}
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.5 3 8 7.5 12.5 3M3.5 8.5 8 13l4.5-4.5" />
+                  </svg>
+                </SideMore>
+              )}
+              {crabShown && (
                 <SideCrab
                   aria-hidden
                   style={{
@@ -1355,6 +1897,184 @@ const CoinTrigger = styled.div`
   cursor: pointer;
 `
 
+/**
+ * Hiding: the glow comes up first, then the swimmer slides back. Coming out:
+ * it pops out (a slight overshoot) and the glow fades once it's back.
+ */
+const PeekWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(${({ $hidden }) => ($hidden ? "var(--peek-x)" : "0")}, 0, 0);
+  transition: ${({ $hidden }) =>
+    $hidden
+      ? "transform 650ms cubic-bezier(0.45, 0, 0.3, 1) 220ms"
+      : "transform 480ms cubic-bezier(0.3, 1.45, 0.5, 1)"};
+
+  @media (prefers-reduced-motion: reduce) {
+    transform: none;
+    transition: none;
+  }
+`
+
+/** Still window round a ducking critter; cut off at the edge while it's behind. */
+const DuckClip = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+/** Light round the outline while it's hiding (it has no painted glow). */
+const DuckWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  filter: ${({ $glow }) =>
+    $glow
+      ? "drop-shadow(0 0 calc(var(--px) * 8) rgba(255, 244, 150, 0.95)) drop-shadow(0 0 calc(var(--px) * 20) rgba(255, 226, 90, 0.6))"
+      : "none"};
+  transition: filter 300ms ease;
+`
+
+const PeekGlow = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: ${({ $hidden }) => ($hidden ? 1 : 0)};
+  transition: ${({ $hidden }) =>
+    $hidden ? "opacity 220ms ease-out" : "opacity 420ms ease-in 420ms"};
+`
+
+const PeekHit = styled.div`
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+`
+
+const LapWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
+const LapGlow = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+`
+
+/** Same swim as the homepage fish (fishSwimAcross): out one edge, in the other. */
+const swimAcross = keyframes`
+  0%,
+  18% {
+    transform: translate3d(0, 0, 0);
+  }
+  72% {
+    transform: translate3d(var(--swim-out), 0, 0);
+  }
+  72.01% {
+    transform: translate3d(var(--swim-in), 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+`
+
+const swimBob = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+`
+
+const swimBobStrong = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+`
+
+const SwimWindow = styled.div`
+  position: absolute;
+  pointer-events: auto;
+  animation: ${swimAcross} var(--swim-ms) linear var(--swim-delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/** Bobs, and crops the plate-sized image to the window (moving with it). */
+const SwimBob = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  animation: ${swimBob} 4.8s ease-in-out infinite;
+
+  ${SwimWindow}:hover & {
+    animation-name: ${swimBobStrong};
+    animation-duration: 3.2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const BubbleLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+`
+
+/** Fades in off the seafloor; stays until the surface, then fades there. */
+const bubbleRise = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  4%,
+  97% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, var(--rise), 0);
+    opacity: 0;
+  }
+`
+
+const bubbleWobble = keyframes`
+  from {
+    transform: translate3d(calc(var(--wobble) * -1), 0, 0);
+  }
+  to {
+    transform: translate3d(var(--wobble), 0, 0);
+  }
+`
+
+/** One bubble rising from its start to the surface, over and over. */
+const BubbleRise = styled.div`
+  position: absolute;
+  animation: ${bubbleRise} var(--rise-s) linear var(--rise-delay) infinite;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+`
+
+const BubbleWobble = styled.div`
+  animation: ${bubbleWobble} var(--wobble-s) ease-in-out infinite alternate;
+`
+
 const ZapBody = styled.div`
   position: absolute;
   overflow: hidden;
@@ -1561,19 +2281,20 @@ const SideBox = styled.div`
   min-height: 14rem;
   display: flex;
   flex-direction: column;
+  /* Room under the list: the crab's, the button's, or the box's margin. */
+  padding-bottom: var(--side-bottom, 0px);
 
   /* Only as tall as its list (up to the window), so the art beside the
-     text stays in view. */
+     text stays in view. The cap is for the list; the room under it is extra. */
   ${({ $fit }) =>
     $fit &&
     css`
       height: auto;
-      max-height: min(
-        var(--side-max),
-        calc(100vh - var(--dl-header, 0px) - 2.5rem)
+      max-height: calc(
+        min(var(--side-max), calc(100vh - var(--dl-header, 0px) - 2.5rem)) +
+          var(--side-bottom, 0px)
       );
       min-height: 0;
-      padding-bottom: var(--nav-top);
     `}
 
   ${NARROW} {
@@ -1581,6 +2302,8 @@ const SideBox = styled.div`
     top: auto;
     height: auto;
     min-height: 0;
+    /* The fitted box's room under the list is for the painted box only. */
+    padding-bottom: 0;
     border-radius: 0.6rem;
     background-color: var(--strip-color);
     box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);
@@ -1801,6 +2524,62 @@ const Indicator = styled.span`
   }
 `
 
+/** Double chevron under the list: opens the box to full height, or shuts it. */
+const SideMore = styled.button`
+  position: relative;
+  z-index: 1;
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 1.8rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--link-color);
+  opacity: 0.9;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: rotate(${({ $open }) => ($open ? 180 : 0)}deg);
+    transition: transform 0.25s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+  }
+
+  ${NARROW} {
+    display: none;
+  }
+`
+
 /** Rides on the highlight's left end (the Venture coin). */
 const IndicatorIcon = styled.span`
   position: absolute;
@@ -1878,8 +2657,9 @@ const SubList = styled.div`
     animation: none;
   }
 
+  /* The narrow strip: the open section's subsections sit in the row after it. */
   ${NARROW} {
-    display: none;
+    display: contents;
   }
 `
 
@@ -1928,6 +2708,12 @@ const SubLink = styled.a`
     outline: 2px solid var(--link-color);
     outline-offset: -2px;
     border-radius: 4px;
+  }
+
+  ${NARROW} {
+    flex: none;
+    white-space: nowrap;
+    padding: 0.35rem 0.5rem 0.35rem 0.7rem;
   }
 `
 

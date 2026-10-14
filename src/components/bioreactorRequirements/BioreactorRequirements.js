@@ -86,7 +86,7 @@ function renderItem(item) {
 }
 
 function CellList({ items }) {
-  if (!items || items.length === 0) return <Muted>—</Muted>
+  if (!items || items.length === 0) return <Muted>None</Muted>
   if (items.length === 1) return <span>{renderItem(items[0])}</span>
   return (
     <CellUl>
@@ -141,7 +141,7 @@ export function BioreactorRequirements() {
         <SliderLabelRow>
           <span>Version history</span>
           {singleVersion ? (
-            <SliderHint>Only one version so far — slider activates as the doc evolves.</SliderHint>
+            <SliderHint>Only one version so far. The slider activates as the doc evolves.</SliderHint>
           ) : (
             <SliderHint>Slide to view requirements as they were on each date.</SliderHint>
           )}

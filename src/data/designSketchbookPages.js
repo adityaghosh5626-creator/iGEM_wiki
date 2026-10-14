@@ -218,6 +218,48 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   },
 ]
 
+/**
+ * The pages as the book shows them. A section in `split` has its text and its
+ * photo on separate pages (the page is too small for both without shrinking
+ * the photo). With `pairs` (two pages open at once) a split section also gets
+ * a closing notes page, so every section still starts on a left page.
+ */
+export function buildSketchbookPages({ split = [], pairs = false } = {}) {
+  const pages = []
+  for (const page of DESIGN_SKETCHBOOK_PAGES) {
+    const isSplit = page.variant === "spread" && split.includes(page.sectionId)
+    if (!isSplit) {
+      pages.push(page)
+    } else {
+      const { imageSrc, imageAlt, caption, ...text } = page
+      pages.push({ ...text, variant: "text" })
+      pages.push({
+        id: `${page.id}-image`,
+        sectionId: page.sectionId,
+        density: "soft",
+        variant: "image",
+        imageSrc,
+        imageAlt,
+        caption,
+      })
+    }
+    const section = DESIGN_SKETCHBOOK_SECTIONS.find(
+      (s) => page.variant === "notes" && s.id === page.sectionId
+    )
+    if (section && pairs && split.includes(section.id)) {
+      pages.push({
+        id: `${section.id}-progress`,
+        title: "Where it stands",
+        body: section.progress,
+        sectionId: section.id,
+        density: "soft",
+        variant: "aside",
+      })
+    }
+  }
+  return pages
+}
+
 /** Map section id → first page index in DESIGN_SKETCHBOOK_PAGES. */
 export function getSectionStartIndex(sectionId) {
   const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === sectionId)

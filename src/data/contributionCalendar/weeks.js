@@ -386,7 +386,7 @@ const WEEK_CONTENT_OVERRIDES = {
       hardware: {
         summary: "Kit vendor debrief and parts-list kickoff.",
         detail:
-          "• Met with the Pioreactor CEO; chose cheaper microcontrollers over Raspberry Pi for sensing boards.\n• Assigned owners for the bill of materials (parts list) — pumps, optical density (growth) sensors, pH, temperature, fan, glassware — and reviewed written requirements.",
+          "• Met with the Pioreactor CEO; chose cheaper microcontrollers over Raspberry Pi for sensing boards.\n• Assigned owners for the bill of materials (parts list: pumps, optical density (growth) sensors, pH, temperature, fan, glassware) and reviewed written requirements.",
         link: HW("2026-04-15"),
       },
       venture: {
@@ -539,7 +539,7 @@ const WEEK_CONTENT_OVERRIDES = {
       hardware: {
         summary: "Pump and growth-sensor bench tests.",
         detail:
-          "• Ran a peristaltic pump test with dyed water; plumbing looked good.\n• Optical density (growth) readings were noisy — calibration continues; real-time pH sensing deprioritized after wet-lab discussion.",
+          "• Ran a peristaltic pump test with dyed water; plumbing looked good.\n• Optical density (growth) readings were noisy, so calibration continues; real-time pH sensing deprioritized after wet-lab discussion.",
         link: HW("2026-05-19"),
       },
       venture: {
@@ -1379,7 +1379,7 @@ const OUTREACH_WEEK_PATCHES = {
     outreach: {
       summary: "Continuing branding and social prep.",
       detail:
-        "Quiet documentation week — character and logo work continues, plus planning photo/video coverage for the May 9 team social.",
+        "Quiet documentation week: character and logo work continues, plus planning photo/video coverage for the May 9 team social.",
       link: OUTREACH,
     },
   },
@@ -1395,7 +1395,7 @@ const OUTREACH_WEEK_PATCHES = {
     outreach: {
       summary: "May 9 social filming and photo capture.",
       detail:
-        "Outreach covered the team social for Instagram and the wiki — photos go in the shared Drive folder after the event. Logo voting opened May 8.",
+        "Outreach covered the team social for Instagram and the wiki; photos go in the shared Drive folder after the event. Logo voting opened May 8.",
       link: OUTREACH,
     },
   },
@@ -1493,9 +1493,9 @@ const OUTREACH_WEEK_PATCHES = {
   },
   "week-2026-07-19": {
     outreach: {
-      summary: "Meet #15 — promo filming ramp + animation plan; Aug 3 animation deadline.",
+      summary: "Meet #15: promo filming ramp + animation plan; Aug 3 animation deadline.",
       detail:
-        "Jul 20 Meet #15: ~15 of 35 promo filming shots done (8 more from Islands); CapCut + DaVinci Resolve editing; animation meeting 1 done with style refs. Shoot windows — hardware Tue 5:30–7:30, wet lab Fri, Victoria Park wastewater B-roll, VC interviews (Clara done; Anthony Wed, Sania Thu); animations due Aug 3. Jul 19 animation meeting locked TED-Ed mid-section shots 2.1–2.9 + flowchart 3.12; VO Jul 22; zooplankton cut Jul 23; scene 1 film Jul 25. Presentation video (15 min, Oct) staffed separately; July newsletter draft targeted for Jul 30 / Aug 1; merch (hoodies, tees, quarter-zips, stickers) exploration started; RTJ still on hold.",
+        "Jul 20 Meet #15: ~15 of 35 promo filming shots done (8 more from Islands); CapCut + DaVinci Resolve editing; animation meeting 1 done with style refs. Shoot windows: hardware Tue 5:30–7:30, wet lab Fri, Victoria Park wastewater B-roll, VC interviews (Clara done; Anthony Wed, Sania Thu); animations due Aug 3. Jul 19 animation meeting locked TED-Ed mid-section shots 2.1–2.9 + flowchart 3.12; VO Jul 22; zooplankton cut Jul 23; scene 1 film Jul 25. Presentation video (15 min, Oct) staffed separately; July newsletter draft targeted for Jul 30 / Aug 1; merch (hoodies, tees, quarter-zips, stickers) exploration started; RTJ still on hold.",
       link: OUTREACH,
     },
   },
@@ -1612,7 +1612,7 @@ const HUMAN_PRACTICES_WEEK_PATCHES = {
     humanPractices: {
       summary: "March kickoff: what human practices is, winner case studies, stakeholder map.",
       detail:
-        "Early meetings covered how human practices differs from outreach, award criteria, and assigned readings. Members presented past winning projects and began country stakeholder lists (India, Nigeria, Indonesia, China, Indigenous communities of Canada). Plastic-degrading enzyme (PETase) goals framed for HP — wastewater contacts and government/agency outreach.",
+        "Early meetings covered how human practices differs from outreach, award criteria, and assigned readings. Members presented past winning projects and began country stakeholder lists (India, Nigeria, Indonesia, China, Indigenous communities of Canada). Plastic-degrading enzyme (PETase) goals framed for HP: wastewater contacts and government/agency outreach.",
       link: HP,
     },
   },
@@ -1636,7 +1636,7 @@ const HUMAN_PRACTICES_WEEK_PATCHES = {
     humanPractices: {
       summary: "Stakeholder prep and subteam sync.",
       detail:
-        "Quiet documentation week — expanding the contact sheet and liaison notes that feed May email templates and interview guides.",
+        "Quiet documentation week: expanding the contact sheet and liaison notes that feed May email templates and interview guides.",
       link: HP,
     },
   },
@@ -1668,7 +1668,7 @@ const HUMAN_PRACTICES_WEEK_PATCHES = {
     humanPractices: {
       summary: "Interview guide ready; three season reports defined.",
       detail:
-        "Interview workflow locked May 21: background research → tailored questions → follow-up. Season deliverables set — a regulatory framework report, a sustainability report, and a socioeconomic report — toward a global deployment framing. Conference venue search (on- and off-campus). Wet/dry/hardware liaison updates continue.",
+        "Interview workflow locked May 21: background research → tailored questions → follow-up. Season deliverables set (a regulatory framework report, a sustainability report, and a socioeconomic report) toward a global deployment framing. Conference venue search (on- and off-campus). Wet/dry/hardware liaison updates continue.",
       link: HP,
     },
   },
@@ -1714,7 +1714,7 @@ const HUMAN_PRACTICES_WEEK_PATCHES = {
     humanPractices: {
       summary: "Annotated sources for reports; Bioethics Symposium announced.",
       detail:
-        "Add 2–3 reference links per outline point. A data-consortium approach invites other labs to share data on petadex.net. Virtual Bioethics Symposium Jul 12 (2–4pm EST) — a 10–15 minute ethics presentation plus Q&A.",
+        "Add 2–3 reference links per outline point. A data-consortium approach invites other labs to share data on petadex.net. Virtual Bioethics Symposium Jul 12 (2–4pm EST): a 10–15 minute ethics presentation plus Q&A.",
       link: HP,
     },
   },
@@ -1739,7 +1739,7 @@ const HUMAN_PRACTICES_WEEK_PATCHES = {
       { date: "2026-07-12", label: "Bioethics Symposium (virtual)", subteamId: "humanPractices" },
     ],
     humanPractices: {
-      summary: "Bioethics Symposium — present project ethics.",
+      summary: "Bioethics Symposium: present project ethics.",
       detail:
         "Virtual symposium Jul 12: team presents ethical principles behind enzymatic microplastic cleanup and discusses fair access, scale-up, and industry design changes.",
       link: HP,
@@ -1841,7 +1841,7 @@ function quietPlaceholderFor(subteamId) {
   const label = track?.label || "team"
   return {
     summary: "Slow week",
-    detail: `Quiet week for ${label} — continuing work from previous sessions.`,
+    detail: `Quiet week for ${label}, continuing work from previous sessions.`,
     link: track?.href || "/",
   }
 }

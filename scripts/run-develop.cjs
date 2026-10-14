@@ -13,7 +13,8 @@ const extraArgs = process.argv.slice(2).filter(a => a.length > 0)
 const child = spawn(process.execPath, [cli, 'develop', ...extraArgs], {
   cwd: root,
   stdio: 'inherit',
-  env: process.env,
+  // The site's own loader covers slow page changes (gatsby-browser.js).
+  env: { GATSBY_QUERY_ON_DEMAND_LOADING_INDICATOR: 'false', ...process.env },
 })
 
 child.on('error', err => {

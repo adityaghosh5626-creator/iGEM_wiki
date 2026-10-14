@@ -29,7 +29,7 @@ export const GlobalStyle = createGlobalStyle`
     --space-2xl: 8rem;
 
     /* Layout */
-    --max-width: 1200px;
+    --max-width: 75rem;
     --page-padding: clamp(1rem, 5vw, 4rem);
   }
 
@@ -40,8 +40,16 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   html {
-    font-size: 16px;
+    /* Up to a 1920px-wide window, 16px. Wider, the text grows with the
+       window, as the art (and everything drawn to its scale) does, so pages
+       look the same on a 1440p or 4K monitor as on a 1080p one. */
+    font-size: max(16px, calc(100vw / 120));
     scroll-behavior: smooth;
+    /* No grey flash over tapped art (crabs, bottle pieces) on phones. */
+    -webkit-tap-highlight-color: transparent;
+    /* No double-tap zoom: iOS otherwise eats the second of two quick taps
+       (tap-to-preview, tap-again-to-open; play then pause). Pinch zoom stays. */
+    touch-action: manipulation;
     scroll-padding-top: 6rem;
     min-height: 100%;
   }

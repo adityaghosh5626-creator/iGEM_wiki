@@ -142,9 +142,20 @@ export const DRY_LAB_SCENE = {
     caps: [60, 70],
     /** First item's distance below the box top (plate px). */
     navTop: 32,
+    /** A little taller than the other boxes shut, so the overview fits. */
+    maxHeight: "min(26rem, 56vh)",
     indicator: { name: "box-subsection-indicator", box: [88, 452, 241, 513] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#9c6e56",
+    /**
+     * Fossil riding on the left end of the highlight. Its own image rather
+     * than a plate layer; `crop` is the painted part of its `size` canvas.
+     */
+    indicatorIcon: {
+      name: "https://static.igem.wiki/teams/6187/wiki/drylab-page/icon-dry-lab-small.avif",
+      box: [63, 467, 96, 498],
+      canvas: { size: [360, 342], crop: [0, 0, 360, 342] },
+    },
     /** Crab sitting on the box's bottom edge. */
     crab: { name: "box-crab", box: [144, 804, 195, 860] },
     linkColor: "#fbf3ea",
@@ -203,18 +214,21 @@ export const VENTURE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    /**
-     * Sized to its list but capped at about half the window (the list
-     * scrolls inside), so the kangaroos on the left stay in view.
-     */
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#f2b574",
-    /** Coin that rides on the left end of the highlight. */
-    indicatorIcon: { name: "navbar-icon", box: [100, 460, 160, 515] },
+    /**
+     * Coin that rides on the left end of the highlight; turned so its $
+     * stands upright, and drawn 5px left of where it's painted so it clears
+     * the item's text.
+     */
+    indicatorIcon: {
+      name: "navbar-icon",
+      from: [100, 460, 160, 515],
+      box: [95, 460, 155, 515],
+      rotate: -30,
+    },
     linkColor: "#5b3a1a",
     /** Narrower column than Dry Lab's, so slightly smaller section names. */
     linkSize: 11.5,
@@ -361,8 +375,6 @@ export const HP_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
@@ -423,8 +435,6 @@ export const HARDWARE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 458, 287, 517] },
@@ -449,6 +459,123 @@ export const HARDWARE_SCENE = {
 }
 
 /**
+ * Every Wet Lab page: a sunset sea. Bubbles keep rising, the school of fish
+ * keeps swimming laps, and the three axolotls light up when hovered (tapped
+ * on touch): two hide behind the text box, peeking out, until the pointer
+ * leaves; the one in open water swims a lap round the page.
+ */
+export const WET_LAB_SCENE = {
+  header: "Wet Lab",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/wetlab/",
+  plate: [1110, 4000],
+  background: "#0b8fa6",
+  skyBottom: 400,
+  /** Deep sea blue: reads on the pink and gold of the sunset. */
+  headerColor: "#123540",
+  accent: "#0b6f80",
+  layers: [
+    { name: "1-background", box: [0, 266, 1110, 4000] },
+    // Rising from the seafloor to the surface, in the open water either side
+    // of the text box, behind everything else in the sea.
+    {
+      name: "bubbles",
+      bubbles: {
+        lanes: [
+          { x: [15, 315], count: 16 },
+          { x: [990, 1095], count: 9 },
+        ],
+        from: 3480,
+        /** The water's surface, under the waves' edge: they fade out there. */
+        to: 385,
+        seconds: [26, 40],
+      },
+    },
+    { name: "2-sky", box: [0, 0, 1110, 358] },
+    { name: "3-sunset-clouds", box: [0, 0, 1110, 353] },
+    { name: "4-waves", box: [0, 152, 1110, 396] },
+    // Painted on the left; drawn on the right of the text box instead,
+    // mirrored so it still dives out towards the page's edge.
+    {
+      name: "8-shark",
+      from: [69, 2411, 261, 2631],
+      box: [918, 2411, 1110, 2631],
+      flip: true,
+    },
+    { name: "6-seabed", box: [0, 3349, 1110, 4000] },
+    { name: "9-seaweeds", box: [0, 1696, 1110, 4000] },
+    { name: "5-kelp", box: [56, 2960, 257, 3475] },
+    // The school faces right: off the right edge, back in from the left.
+    {
+      name: "7-fishies",
+      box: [947, 1022, 1093, 1111],
+      swim: { ms: 52000, delayMs: 1200, dir: 1 },
+    },
+    // These two (`box` covers their glow) slide `dx` plate px behind the text
+    // box (333–982) when hovered, leaving their heads peeking out.
+    // Its painting stops flat where the box covers it: rest it 30px further
+    // in than painted, so the pop back out (which overshoots) never shows that
+    // edge.
+    {
+      name: "15-pop-out-glow",
+      from: [36, 1357, 429, 1788],
+      box: [66, 1357, 459, 1788],
+      peek: { plain: "14-pop-out", dx: 131 },
+    },
+    // Painted beside the other two; drawn up near the top of the text box
+    // instead, above the fish, so the three spread down the page.
+    {
+      name: "11-swimming-right-glow",
+      from: [829, 1480, 1110, 1720],
+      box: [829, 640, 1110, 880],
+      peek: { plain: "10-swimming-right", dx: -58 },
+    },
+    // This one swims a lap: out the left edge, back in at the right edge to
+    // peek, then left again behind the text box to its spot. Drawn lower
+    // than it's painted: just above the seabed, in front of the kelp.
+    {
+      name: "13-swimming-left-glow",
+      from: [21, 1934, 331, 2171],
+      box: [21, 3080, 331, 3317],
+      lap: { plain: "12-swimming-left", out: -340, enter: 1100, peek: 965 },
+    },
+  ],
+  side: {
+    name: "17-side-box",
+    box: [135, 413, 289, 1224],
+    caps: [4, 4],
+    navTop: 40,
+    linkPadY: 7,
+    linkSize: 11.5,
+    /** No highlight is painted for this page: a flat one in the axolotls' yellow. */
+    indicator: { fill: "#f7e36b", box: [135, 456, 289, 517] },
+    highlightColor: "#f7e36b",
+    /**
+     * A homepage bubble rides on its left end, standing in until one is
+     * drawn; a soft glow keeps it from getting lost against the water.
+     */
+    indicatorIcon: {
+      name: "https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble3.avif",
+      box: [92, 461, 144, 508],
+      canvas: { size: [68, 61], crop: [0, 0, 68, 61] },
+      glow: "rgba(255, 255, 255, 0.9)",
+    },
+    linkColor: "#0b4a57",
+    activeLinkColor: "#0b4a57",
+    stripColor: "#e6f6f8",
+  },
+  text: {
+    // The box's solid edges: its painted top and bottom rows are see-through,
+    // and stretched on a long page they'd show as a fade.
+    name: "16-main-body-box",
+    box: [340, 413, 980, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the mockup's text box; the seabed below is the ending. */
+  textEndY: 3691,
+}
+
+/**
  * Project › Contribution: a greenhouse. The page is one big season calendar,
  * so there's no section list and the text box is wide, ending just above the
  * petamons on the steps (they and the pool below are the ending).
@@ -467,16 +594,24 @@ export const CONTRIBUTION_SCENE = {
     // Seedlings in the planter, behind the Dry Lab bug.
     { name: "sprouts", box: [70, 2997, 290, 3090] },
     // Each subteam's petamon on the steps, one file each so they can move
-    // on their own. Four do what their subteam's critters do on hover (tap
+    // on their own. Five do what their subteam's critters do on hover (tap
     // on touch): the kangaroo throws Venture's coins, the bird loops like
-    // the Human Practices birds, the crab scuttles like Dry Lab's, and the
-    // turtle gets Hardware's lightning.
+    // the Human Practices birds, the crab scuttles like Dry Lab's, the
+    // turtle gets Hardware's lightning and the axolotl hides like Wet Lab's.
     { name: "venpetamon", coinBurst: true, box: [0, 2800, 196, 3362] },
     // Faces us; looping "rightward" rolls it counterclockwise.
     { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
     { name: "orpetamon", box: [222, 2806, 396, 3005] },
     { name: "webpetamon", box: [371, 2755, 644, 3004] },
-    { name: "wlpetamon", box: [604, 2783, 805, 2910] },
+    // The axolotl hides like the Wet Lab ones: it lights up, hops back over
+    // the floor's back edge (where the water starts) and sinks behind it,
+    // peeking over, until the pointer leaves.
+    {
+      name: "wlpetamon",
+      box: [604, 2783, 805, 2910],
+      // The floor's back edge slopes down to the right under it.
+      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 36 },
+    },
     { name: "dlpetamon", crab: true, box: [161, 3046, 290, 3148] },
     {
       name: "hwpetamon",
@@ -580,4 +715,58 @@ export const ATTRIBUTIONS_SCENE = {
     minH: 2000,
   },
   textEndY: 3400,
+}
+
+/** Finance: one painting of snowy peaks with a mine cart of gold coins. */
+export const FINANCE_SCENE = {
+  header: "Finance",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/finance/",
+  plate: [1216, 4000],
+  background: "#c0d8db",
+  skyBottom: 400,
+  headerColor: "#2f3b52",
+  accent: "#94651a",
+  layers: [{ name: "img-3638", box: [0, 0, 1216, 4000] }],
+  side: null,
+  /** No menu highlight to match: the valley's navy. */
+  footerButton: { bg: "#3a4760", text: "#ffffff" },
+  /** Not painted: a flat, cool white box, right of the mine cart. */
+  text: {
+    fill: "#f8fafb",
+    box: [400, 412, 1140, 3400],
+    minH: 2000,
+  },
+  textEndY: 3400,
+}
+
+/** Safety and Security: a murky swamp, caution tape strung through the trees. */
+export const SAFETY_SCENE = {
+  header: "Safety",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/safety/",
+  plate: [1110, 4000],
+  background: "#578b7d",
+  skyBottom: 400,
+  /** The tape's cream, lifted off the teal with a dark shadow. */
+  headerColor: "#f4e6a8",
+  headerShadow:
+    "0 0.06em 0 rgba(16, 32, 48, 0.55), 0 0.1em 0.4em rgba(0, 0, 0, 0.35)",
+  accent: "#a8483a",
+  layers: [
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // Strung either side of the box (the right-hand strands run behind it).
+    { name: "caution-tape", box: [0, 1664, 1072, 3712] },
+  ],
+  side: null,
+  /** No menu highlight to match: the caution tape. */
+  footerButton: { bg: "#e9d684", text: "#102030" },
+  text: {
+    name: "text-space",
+    box: [135, 413, 979, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the painted box; the pond below is the ending. */
+  textEndY: 3691,
 }

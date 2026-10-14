@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react"
-import styled from "styled-components"
+import styled, { keyframes } from "styled-components"
 
 /**
  * Optional auto-scroll for the homepage: a play button (bottom left; its
- * "Auto-scroll" label slides out on hover) makes the page scroll itself at a reading pace. As each popup
+ * "Auto-scroll" label slides out on hover, where there is one) makes the page scroll itself at a reading pace. As each popup
  * reaches the middle of the screen it stops and opens it (the red underlined
  * terms, then each petamon's description at the ending), then carries on.
  * Any scroll, tap or key from the reader hands control back.
@@ -30,6 +30,18 @@ const FOREST_SPEED_X = 2
  * about as long as it does here (~2.5 min of scrolling) instead of growing.
  */
 const STEADY_WIDTH = 1000
+
+/**
+ * First landing (once per visit): after the loader is gone the button sweeps
+ * a shine and a soft ring this many times, with its label out, so it gets
+ * noticed. Clicking it ends that early.
+ */
+const HINT_SWEEPS = 3
+const HINT_SWEEP_MS = 2600
+const HINT_DELAY_MS = 700
+const HINT_SEEN_KEY = "petabite-autoplay-hinted"
+/** SiteLoader's overlay, there until the homepage has handed off from it. */
+const LOADER_SELECTOR = '[role="progressbar"][aria-label="Loading"]'
 
 /** The red underlined terms (ExplainTermPopover): they open on hover. */
 const TERM_SELECTOR = 'span[role="button"][aria-expanded]'
@@ -70,7 +82,33 @@ function hover(el, over) {
 
 export function HomeAutoplay() {
   const [playing, setPlaying] = useState(false)
+  const [hint, setHint] = useState(false)
   const buttonRef = useRef(null)
+
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(HINT_SEEN_KEY)) return undefined
+    } catch {}
+    let timer = 0
+    const start = () => {
+      if (document.querySelector(LOADER_SELECTOR)) {
+        timer = window.setTimeout(start, 250)
+        return
+      }
+      timer = window.setTimeout(() => {
+        setHint(true)
+        try {
+          window.sessionStorage.setItem(HINT_SEEN_KEY, "1")
+        } catch {}
+        timer = window.setTimeout(
+          () => setHint(false),
+          HINT_SWEEPS * HINT_SWEEP_MS,
+        )
+      }, HINT_DELAY_MS)
+    }
+    start()
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (!playing) return undefined
@@ -197,7 +235,11 @@ export function HomeAutoplay() {
           ? "Pause (or just scroll)"
           : "Let the page scroll itself; popups open on their own"
       }
-      onClick={() => setPlaying(p => !p)}
+      data-hint={hint || undefined}
+      onClick={() => {
+        setHint(false)
+        setPlaying(p => !p)
+      }}
     >
       <svg viewBox="0 0 16 16" aria-hidden="true">
         {playing ? (
@@ -212,6 +254,20 @@ export function HomeAutoplay() {
 }
 
 export default HomeAutoplay
+
+/** A pastel band (the logo's pink and blue) crossing the button. */
+const shine = keyframes`
+  0% { transform: translateX(-110%) skewX(-20deg); }
+  45%, 100% { transform: translateX(320%) skewX(-20deg); }
+`
+
+const BUTTON_SHADOW = "0 4px 14px rgba(6, 32, 43, 0.18)"
+
+/** A soft ring spreading out from the button. */
+const halo = keyframes`
+  0% { box-shadow: ${BUTTON_SHADOW}, 0 0 0 0 rgba(107, 127, 230, 0.5); }
+  60%, 100% { box-shadow: ${BUTTON_SHADOW}, 0 0 0 0.9rem rgba(107, 127, 230, 0); }
+`
 
 /**
  * A circle like the back-to-top button (bottom right), on the other side,
@@ -231,9 +287,10 @@ const AutoplayButton = styled.button`
   padding: 0 calc((3rem - 2px - 0.95rem) / 2);
   border: 1px solid var(--color-border);
   border-radius: 999px;
+  overflow: hidden;
   background: var(--color-bg);
   color: var(--color-text);
-  box-shadow: 0 4px 14px rgba(6, 32, 43, 0.18);
+  box-shadow: ${BUTTON_SHADOW};
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 700;
@@ -249,12 +306,56 @@ const AutoplayButton = styled.button`
     fill: currentColor;
   }
 
-  &:hover {
-    background: var(--color-surface);
-    transform: translateY(-1px);
+  /* Only a real hover slides the label out: on a phone a tap would show it
+     instead of pressing the button. */
+  @media (hover: hover) {
+    &:hover {
+      background: var(--color-surface);
+      transform: translateY(-1px);
+    }
+
+    &:hover > span {
+      max-width: 8rem;
+      margin-left: 0.45rem;
+      opacity: 1;
+    }
   }
 
-  &:hover > span,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(247, 178, 212, 0.75) 30%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(158, 196, 255, 0.75) 70%,
+      transparent
+    );
+    transform: translateX(-110%) skewX(-20deg);
+  }
+
+  &[data-hint] {
+    animation: ${halo} ${HINT_SWEEP_MS}ms ease-out ${HINT_SWEEPS};
+  }
+
+  &[data-hint]::after {
+    animation: ${shine} ${HINT_SWEEP_MS}ms ease-in-out ${HINT_SWEEPS};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-hint],
+    &[data-hint]::after {
+      animation: none;
+    }
+  }
+
+  &[data-hint] > span,
   &:focus-visible > span {
     max-width: 8rem;
     margin-left: 0.45rem;
