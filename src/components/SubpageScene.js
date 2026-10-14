@@ -584,6 +584,30 @@ function useHeaderHeight() {
   return h
 }
 
+/**
+ * The line a heading crosses to count as the one being read: 35% down the
+ * view, or just under a figure pinned at the top of the text (marked
+ * `data-reading-pin`), since what sits above that is covered. The pinned
+ * figure's own height counts, so the line follows it as it opens and closes.
+ */
+export function readingLine(root, headerH) {
+  const normal = headerH + (window.innerHeight - headerH) * 0.35
+  const pin = root?.querySelector("[data-reading-pin]")
+  if (!pin) return normal
+  const style = getComputedStyle(pin)
+  const box = pin.getBoundingClientRect()
+  if (style.visibility === "hidden" || box.height === 0) return normal
+  // Room for a heading's own top margin, so the first one under the figure
+  // is already the one being read.
+  const under = box.bottom + 48
+  if (Math.abs(box.top - parseFloat(style.top)) < 2) return under
+  // Still scrolling up to where it pins: the line rises with it, so nothing
+  // below the figure is read early and then handed back.
+  return box.bottom > 0 && box.top < window.innerHeight
+    ? Math.min(normal, under)
+    : normal
+}
+
 /** The grid with the section menu as a rail: the text box takes its width. */
 function railCols(scene, plate) {
   const pct = n => `${((n / plate.W) * 100).toFixed(4)}%`
@@ -793,7 +817,7 @@ export function SubpageScene({ scene, title, description, children }) {
       const heads = Array.from(
         bodyRef.current?.querySelectorAll("h2, h3") || [],
       ).filter(el => !el.closest("details, [data-nav-skip]"))
-      const line = headerH + view * 0.35
+      const line = readingLine(bodyRef.current, headerH)
       let current = heads.find(h => h.tagName === "H2")?.id ?? null
       let currentSub = null
       for (const h of heads) {

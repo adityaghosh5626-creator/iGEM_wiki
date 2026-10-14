@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import styled from "styled-components"
+import { readingLine } from "../../SubpageScene.js"
 import { FLOWCHART_SVG } from "./datasetFlowchartSvg.js"
 
 /**
@@ -125,7 +126,9 @@ export const DatasetFlowchart = () => {
         h.style.scrollMarginTop = margin
       })
 
-      const line = headerH + (window.innerHeight - headerH) * 0.35
+      // Shared with the section menu: just under this strip while it is
+      // pinned, whether open or collapsed.
+      const line = readingLine(document, headerH)
       let current = null
       for (const h of heads) {
         if (h.getBoundingClientRect().top > line) break
@@ -184,7 +187,7 @@ export const DatasetFlowchart = () => {
   const activeTitle = FLOWCHART_SECTIONS.find(s => s.id === activeId)?.title
 
   return (
-    <Strip ref={rootRef} $tracking={!!activeId} $past={past}>
+    <Strip ref={rootRef} data-reading-pin $tracking={!!activeId} $past={past}>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the stages are links; this only smooths their jump */}
       <Scroller
         id="dataset-flowchart"
