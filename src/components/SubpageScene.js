@@ -1566,6 +1566,7 @@ export function SubpageScene({ scene, title, description, children }) {
               $min={sideMin}
               $fit={!sideOpen}
               style={{
+                backgroundColor: side.fill,
                 "--side-bottom": crabShown
                   ? "var(--crab-room)"
                   : sideToggle
@@ -1584,12 +1585,12 @@ export function SubpageScene({ scene, title, description, children }) {
                   <path d="M10 3L5 8l5 5" />
                 </Chevron>
               </SideMinimise>
-              <SideBoxArt
+              {side.name && <SideBoxArt
                 plate={plate}
                 name={side.name}
                 box={side.box}
                 caps={side.caps}
-              />
+              />}
               <SideNav
                 ref={navRef}
                 aria-label="Sections on this page"
@@ -1718,11 +1719,13 @@ export function SubpageScene({ scene, title, description, children }) {
               caps={text.caps}
             />
           )}
-          <TextInner ref={bodyRef}>
+          <TextInner ref={bodyRef} $hideIntro={scene.hideIntro}>
+            {!scene.hideIntro && (
             <TitleBlock>
               <Title>{scene.boxTitle || title}</Title>
               {description && <Lede>{description}</Lede>}
             </TitleBlock>
+            )}
             {children}
           </TextInner>
         </TextBox>
@@ -2762,6 +2765,14 @@ const TextInner = styled.div`
     margin-top: var(--space-xl);
     font-size: clamp(1.9rem, 2.8vw, 2.6rem);
   }
+
+  ${({ $hideIntro }) => $hideIntro && css`
+    && h2:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+  `}
 
   && h3 {
     margin-top: 2.5rem;

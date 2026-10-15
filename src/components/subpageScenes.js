@@ -720,7 +720,7 @@ export const ATTRIBUTIONS_SCENE = {
 /** Finance: one painting of snowy peaks with a mine cart of gold coins. */
 export const FINANCE_SCENE = {
   header: "Finance",
-  boxTitle: "Overview",
+  hideIntro: true,
   assetBase: "https://static.igem.wiki/teams/6187/wiki/finance/",
   plate: [1216, 4000],
   background: "#c0d8db",
@@ -728,7 +728,18 @@ export const FINANCE_SCENE = {
   headerColor: "#2f3b52",
   accent: "#94651a",
   layers: [{ name: "img-3638", box: [0, 0, 1216, 4000] }],
-  side: null,
+  side: {
+    fill: "#f8fafb",
+    box: [70, 412, 365, 1100],
+    navTop: 24,
+    linkColor: "#2f3b52",
+    activeLinkColor: "#ffffff",
+    linkSize: 15,
+    linkIndent: 18,
+    stripColor: "#f8fafb",
+    highlightColor: "#94651a",
+    indicator: { fill: "#94651a", box: [80, 442, 355, 492] },
+  },
   /** No menu highlight to match: the valley's navy. */
   footerButton: { bg: "#3a4760", text: "#ffffff" },
   /** Not painted: a flat, cool white box, right of the mine cart. */
