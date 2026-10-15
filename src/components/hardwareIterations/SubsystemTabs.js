@@ -7,7 +7,6 @@ export function SubsystemTabs({ iteration, selected, onSelect }) {
   const id = useId()
   const buttons = useRef([])
   const Content = SUBSYSTEM_CONTENT[iteration.id][selected]
-  const label = HARDWARE_SUBSYSTEMS.find(item => item.id === selected).label
   const onKeyDown = (event, index) => {
     const last = HARDWARE_SUBSYSTEMS.length - 1
     const next = { ArrowRight: (index + 1) % (last + 1), ArrowLeft: (index + last) % (last + 1), Home: 0, End: last }[event.key]
@@ -33,7 +32,6 @@ export function SubsystemTabs({ iteration, selected, onSelect }) {
         <Panel key={item.id} role="tabpanel" id={`${id}-panel-${item.id}`}
           aria-labelledby={`${id}-tab-${item.id}`} hidden={selected !== item.id} tabIndex={0}>
           {selected === item.id && <>
-            <h3>{iteration.label} · {label}</h3>
             <Content />
           </>}
         </Panel>
