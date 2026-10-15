@@ -1,3 +1,4 @@
+import { HardwareIterations } from "../hardwareIterations/HardwareIterations.js"
 import React from "react"
 import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
@@ -73,6 +74,7 @@ export const ContributionCalendar = ({ title, caption }) => (
 )
 
 export const mdxComponents = {
+  HardwareIterations,
   Callout,
   Placeholder,
   Figure,
