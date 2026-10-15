@@ -82,6 +82,10 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     subtitle: "iGEM Toronto 2026",
     density: "hard",
     variant: "cover",
+    coverImage: "https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/front-cover.avif",
+    coverAlt: "Design Team Sketchbook front cover",
+    coverCanvas: [2360, 1640],
+    coverCrop: [993, 428, 1594, 1542],
   },
   {
     id: "toc-left",
@@ -215,6 +219,10 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       "Each tab covers one part of outreach design from March to October 2026, with images from the team's Discord.",
     density: "hard",
     variant: "back",
+    coverImage: "https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/back-cover.avif",
+    coverAlt: "Design Team Sketchbook back cover",
+    coverCanvas: [2360, 1640],
+    coverCrop: [386, 420, 998, 1574],
   },
 ]
 

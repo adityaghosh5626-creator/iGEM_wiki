@@ -62,6 +62,16 @@ function prefersReducedMotion() {
 
 function SketchPageContent({ page }) {
   if (page.variant === "cover" || page.variant === "back") {
+    if (page.coverImage) {
+      const [width, height] = page.coverCanvas || [1, 1]
+      const [x0, y0, x1, y1] = page.coverCrop || [0, 0, width, height]
+      return <CoverArtwork role="img" aria-label={page.coverAlt || page.title}
+        style={{
+          backgroundImage: `url("${page.coverImage}")`,
+          backgroundSize: `${width / (x1 - x0) * 100}% ${height / (y1 - y0) * 100}%`,
+          backgroundPosition: `${width === x1 - x0 ? 0 : x0 / (width - (x1 - x0)) * 100}% ${height === y1 - y0 ? 0 : y0 / (height - (y1 - y0)) * 100}%`,
+        }} />
+    }
     return (
       <SketchPageInner $variant={page.variant}>
         <CoverPlate>
@@ -755,6 +765,7 @@ export function DesignSketchbook() {
     (pageIndex >= lastPage ||
       (pageIndex >= lastPage - 2 && pageIndex < lastPage && flipDirection === 0))
   const showHardcoverCase =
+    !pages.some(page => page.coverImage) &&
     tabAnchor.bookWidth > 0 &&
     tabAnchor.faceHeight > 0 &&
     !flippingFrontCover &&
@@ -884,6 +895,7 @@ export function DesignSketchbook() {
               data-sketch-page
               data-density={page.density}
               $hard={page.density === "hard"}
+              $artwork={Boolean(page.coverImage)}
               className="design-sketchbook-page"
             >
               <SketchPageContent page={page} />
@@ -1318,8 +1330,8 @@ const BookHost = styled.div`
 const SketchPage = styled.div`
   /* Page text and padding scale with the page (cqw), which shrinks on short screens. */
   container-type: inline-size;
-  background: ${({ $hard }) => ($hard ? COVER_BOARD : PAPER)};
-  border: 1px solid
+  background: ${({ $hard, $artwork }) => ($artwork ? "transparent" : $hard ? COVER_BOARD : PAPER)};
+  border: ${({ $artwork }) => $artwork ? "0" : "1px"} solid
     ${({ $hard }) =>
       $hard ? "rgba(34, 34, 34, 0.22)" : "rgba(34, 34, 34, 0.08)"};
   box-sizing: border-box;
@@ -1364,6 +1376,14 @@ const SketchPageInner = styled.div`
       linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent 55%),
       ${PAPER};
   `}
+`
+
+const CoverArtwork = styled.div`
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  user-select: none;
 `
 
 const CoverPlate = styled.div`
@@ -1684,7 +1704,9 @@ const ReducedMotionList = styled.div`
 `
 
 const ReducedMotionPage = styled.div`
+  ${({ $variant }) => ($variant === "cover" || $variant === "back") && `aspect-ratio: ${FLIP_SETTINGS.width} / ${FLIP_SETTINGS.height};`}
   border: 1px solid var(--color-border);
+  ${({ $variant }) => ($variant === "cover" || $variant === "back") && "border: 0; border-radius: 0;"}
   border-radius: 6px;
   overflow: hidden;
   min-height: 10rem;
