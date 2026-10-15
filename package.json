@@ -16,7 +16,7 @@
     "payload:import-mdx": "npm --prefix cms/payload-app run import:mdx",
     "payload:import-media": "npm --prefix cms/payload-app run import:media",
     "payload:sync": "node scripts/payload-sync.mjs",
-    "build:demo": "npm run payload:sync && npm run build:gatsby",
+    "build:demo": "npm run payload:sync && npm run build",
     "test:payload-blocks": "node scripts/test-payload-mdx-blocks.mjs",
     "export:logan-map": "node scripts/export-logan-map-locations.mjs"
   },
