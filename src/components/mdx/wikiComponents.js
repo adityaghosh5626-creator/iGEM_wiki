@@ -43,8 +43,8 @@ export const Placeholder = ({ label = "Placeholder text", children }) => (
 
 // Root-relative srcs point into static/; withPrefix adds the /toronto path
 // prefix the iGEM build is served under.
-export const Figure = ({ src, alt = "", caption, credit, children }) => (
-  <FigureWrap>
+export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
+  <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
     {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
     {(caption || credit) && (
@@ -163,11 +163,13 @@ const PlaceholderLabel = styled.p`
 `
 
 const FigureWrap = styled.figure`
-  max-width: 54rem;
-  margin: var(--space-lg) 0;
+  width: 100%;
+  max-width: ${({ $width }) => $width};
+  margin: var(--space-lg) auto;
 
   img {
     width: 100%;
+    height: auto;
     border: 1px solid var(--color-border);
     background: rgba(255, 255, 255, 0.28);
   }
@@ -198,7 +200,7 @@ const GridWrap = styled.div`
   margin: var(--space-lg) 0;
 
   figure {
-    margin: 0;
+    margin: 0 auto;
   }
 `
 

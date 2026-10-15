@@ -66,21 +66,50 @@ chosen because:
 
 Physically, the system is designed to be compact and modular, as illustrated by the following images.
 
-## ADD Images
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-1.avif"
+    alt="Physical design diagram"
+    caption=" "
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-2.avif"
+    alt="Physical design photo"
+    caption=" "
+  />
+</ImageGrid>
 
 The heater is placed below the vial and provides heat through a layer of thermal interface material. It is mounted above the fan (which drives the stir bar), on top of a stand made from heat resistant Onyx material. The stand both protects the fan from the high temperature of the heater and acts as an insulator to reduce heat loss from the underside of the heater.
 
-The thermocouple is mounted on the cap of the vial, with the probe section submerged in liquid to measure temperature. For the prototype, this is achieved through the use of a rubber band, but in later versions a custom cap will be created to mount the sensor.
+<br />
+The thermocouple is mounted on the cap of the vial, with the probe section
+submerged in liquid to measure temperature. For the prototype, this is achieved
+through the use of a rubber band, but in later versions a custom cap will be
+created to mount the sensor.
 
-## ADD Images
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-3.avif"
+  alt="Thermocouple in vail"
+  caption=" "
+  width={200}
+/>
 
 To reduce heat loss, the shell outside the vial is printed with low infill (5%) to help act as an insulator. It is also lined on the inside with a layer of aluminum foil to further reduce radiative heat loss.
 
-## ADD Images
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-4.avif"
+  alt="Reduce heat lost"
+  caption=" "
+  width={200}
+/>
 
 #### Electrical design
 
-## ADD Images
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-5.avif"
+  alt="Circuit diagram"
+  caption=" "
+/>
 
 This circuit reads data from the temperature probe and controls the heater via a relay. The heater and temperature probe draws power directly from the USB-C power supply.
 
@@ -217,7 +246,11 @@ Note #1: Since some experiments were started when the water was above 21°C, the
 Note #2: The parameter c represents the theoretical maximum temperature
 attainable at infinite time.
 
-## ADD Images
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-6.avif"
+  alt="Heating test graph"
+  caption="x: time (min), y: temperature (°C); red: 10mL, blue: 20mL, green: 30mL"
+/>
 
 #### Control Loop Testing
 
