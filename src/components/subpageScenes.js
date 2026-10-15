@@ -700,7 +700,7 @@ export const ATTRIBUTIONS_SCENE = {
   headerColor: "#4f4159",
   accent: "#8a4f60",
   layers: [
-    { name: "bg", box: [0, 0, 1110, 4000] },
+    { name: "bg1", box: [0, 0, 1110, 4000] },
     // Loop-the-loop on hover (tap on touch), counterclockwise like the
     // Contribution bird.
     { name: "birds", loop: { facing: 1 }, box: [1020, 3388, 1108, 3484] },
