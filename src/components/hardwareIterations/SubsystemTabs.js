@@ -1,6 +1,6 @@
 import React, { useId, useRef } from "react"
 import styled from "styled-components"
-import { SUBSYSTEM_CONTENT } from "./subsystemContent.js"
+import { SUBSYSTEM_CONTENT } from "./subsystemRegistry.js"
 import { HARDWARE_SUBSYSTEMS } from "../../data/hardwareIterations.js"
 
 export function SubsystemTabs({ iteration, selected, onSelect }) {

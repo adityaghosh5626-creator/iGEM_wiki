@@ -38,4 +38,4 @@ More text here.
 Replace the example URL with your real upload. Use `Figure` for local images
 when you need deployment-prefix handling. Version labels and the overview
 above the tabs remain in `src/data/hardwareIterations.js`. Component imports
-are wired in `subsystemContent.js`.
+are wired in `subsystemRegistry.js`.
