@@ -25,7 +25,7 @@ export const wikiNav = [
   ]},
   { label: "Hardware", children: [
     { to: "/hardware/", label: "Overview" },
-    { to: "/hardware/parts/", label: "Parts" },
+    { to: "/hardware/motivation/", label: "Motivation" },
     { to: "/hardware/notebook/", label: "Notebook" },
     { to: "/hardware/results/", label: "Results" },
   ]},
