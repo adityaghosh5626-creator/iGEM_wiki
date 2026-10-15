@@ -1,11 +1,147 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Power management design used in Version 1.
+<br />
+What does the subsystem component do? What most important requirements did you
+keep in mind?
 
-#### Design decisions and changes
+<br />
+This subsystem provides power to all bioreactor components, including high-power
+ones like the 5W heater and the 2.5W pumps. The power requirement was calculated
+from the power budget, tabulated below the requirements table.
+<br />
 
-Placeholder: explain the initial Power management design choices.
+| Requirement                                                                                                                                                                       | Priority | Why?                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Provide power to the bioreactor** <br /><br /> Metrics & Criteria: Wattage in continuous 5V power<br /><br />Constraints: Must be able to deliver 15W of continuous power at 5V | High     | The power management system must be able to provide 5V 15W power to ensure functioning of the components (15W only supports operation of one pump at a time). <br /><br />Ideally, 20W of power should be supplied for simultaneous operation of all components, although more power headroom is always better. |
+| **Fault protection**<br /><br /> Metrics & Criteria: Should be able to shut off in the event of a short circuit                                                                   | Medium   | This is required for safety, but should already be a feature integrated into commercial power supplies. As such, its priority in the bioreactor’s design is relatively low.                                                                                                                                     |
 
-#### Testing and lessons
+#### Power budget
 
-Placeholder: add Version 1 test results, limitations, and lessons for Power management.
+<DataTable caption="Bioreactor component power budget">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Component</th>
+        <th scope="col">Purpose</th>
+        <th scope="col">Current (mA)</th>
+        <th scope="col">Power (mW)</th>
+        <th scope="col">Safety factor</th>
+        <th scope="col">Total Power (W)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Arduino Nano</td>
+        <td>Microcontroller</td>
+        <td>500*</td>
+        <td>2500</td>
+        <td
+          rowSpan={7}
+          style={{ verticalAlign: "middle", textAlign: "center" }}
+        >
+          1.2
+        </td>
+        <td
+          rowSpan={7}
+          style={{ verticalAlign: "middle", textAlign: "center" }}
+        >
+          19.16
+        </td>
+      </tr>
+      <tr>
+        <td>600nm LED</td>
+        <td>OD light source</td>
+        <td>21</td>
+        <td>105</td>
+      </tr>
+      <tr>
+        <td>AS7341</td>
+        <td>OD sensor</td>
+        <td>0.3**</td>
+        <td>1.5</td>
+      </tr>
+      <tr>
+        <td>DFR0198</td>
+        <td>Temperature sensor</td>
+        <td>1.5**</td>
+        <td>7.5</td>
+      </tr>
+      <tr>
+        <td>FIT0845</td>
+        <td>Heater</td>
+        <td>1000</td>
+        <td>5000</td>
+      </tr>
+      <tr>
+        <td>CFM-4010B-065-251-22</td>
+        <td>Fan for stirring</td>
+        <td>170</td>
+        <td>850</td>
+      </tr>
+      <tr>
+        <td>Adafruit 3910 (x3)</td>
+        <td>Peristaltic pump</td>
+        <td>500 per</td>
+        <td>2500</td>
+      </tr>
+    </tbody>
+  </table>
+</DataTable>
+\* Power draw based on max. power draw when powered by USB
+
+\*\* Current or power draw not listed in datasheet. Current draw estimated from the core component on the breakout board.
+
+### BoM
+
+| Component                       | Purpose                                          | Cost (USD)                 | Sourcing Link                                    |
+| ------------------------------- | ------------------------------------------------ | -------------------------- | ------------------------------------------------ |
+| USB-C PD/USB-A QC trigger board | Provide 5V power from power brick                | 1.98                       | Add sourcing URL                                 |
+| 8-port 200W multi-charger       | Adapts wall socket power to USB-C PD or USB-A QC | 21.7 (2.71 per bioreactor) | Add sourcing URL                                 |
+| USB A-C or C-C cable            | Connect trigger board to multi-charger           | 1.82 (A-C)<br />1.26 (C-C) | A-C: add sourcing URL<br />C-C: add sourcing URL |
+
+### Component Selection Process
+
+Several alternatives were considered before we decided on the USB-based power supply system, including:
+
+<br />
+**One 150W power supply unit (PSU) for 8 bioreactors**
+
+Rejected because of risk of operating in spill-prone wet lab environments, as these PSUs typically don’t
+have closed housings and require additional high-voltage wire connections to
+wall outlets. Also, the cost is higher compared to USB-based systems.
+
+## Add image with caption One barrel-plug power adapter for each reactor
+
+Rejected because of higher cost compared to USB-based systems. Also, barrel plug adapters that deliver 5V 20W+ are rare, and barrel plugs may be less intuitive than USB-C for users.
+
+## Add image
+
+### Build, Assembly, Code
+
+The QC/PD trigger board was soldered onto a power breakout board. Its 5V power rail was kept separate from the Arduino Nano 5V rail so that high-power components are powered by the trigger board only.
+
+## Add image
+
+### Design of Experiments (DoE)
+
+#### Power supply testing
+
+A USB-C multimeter was purchased and used to monitor the current, voltage, and power drawn by the trigger board. These values will be monitored when high-power components (heater, pumps) are turned on simultaneously to measure the stability of the power supply.
+
+    1. Set up the bioreactor and install the USB-C multimeter.
+    2. Turn on the heater and 3 pumps.
+    3. Monitor the voltage, current, and power readings for 30 minutes, and record the readings every minute.
+    4. Turn off the heater and 3 pumps.
+
+### Metrics and Experimental Data
+
+#### Power supply testing
+
+Test to be done
+
+### Next Steps
+
+For V2, the power supply will be optimized for voltage stability when powering
+the Arduino Nano (or the Nano will be put on a different supply). For versions
+beyond V2, a power monitoring system may be added to alert users of unusual
+behaviour in the system.
