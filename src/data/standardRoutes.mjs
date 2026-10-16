@@ -1,5 +1,6 @@
 export const STANDARD_ROUTE_ALIASES = {
   "/contribution/": "/project/contribution/",
+  "/description/": "/project/description/",
   "/engineering/": "/project/engineering/",
   "/human-practices/": "/beyond-the-bench/human-practices/",
   "/education/": "/beyond-the-bench/education-toolkit/",

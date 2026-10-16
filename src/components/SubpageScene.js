@@ -494,6 +494,725 @@ function PeekLayer({ plate, layer, children }) {
   )
 }
 
+/** Fireworks: sparks per ring, rings per burst, and timings (ms). */
+const FIREWORK_SPARKS = 24
+const FIREWORK_RINGS = [
+  { delay: 0, reach: [170, 270] },
+  { delay: 280, reach: [90, 160] },
+]
+const FIREWORK_MS = [1100, 1600]
+/** Lit up in each burst's own colour, with gold and white. */
+const FIREWORK_COLOURS = ["#ffd36b", "#fff6dc"]
+/** The rocket's finale: every colour, and how long it all takes (ms). */
+const GRAND_COLOURS = [
+  "#ff6ad5",
+  "#ffd36b",
+  "#fff6dc",
+  "#ff8a3d",
+  "#7dffc4",
+]
+const GRAND_RINGS = [
+  { n: 40, reach: [270, 400], delay: 0 },
+  { n: 28, reach: [150, 240], delay: 120 },
+]
+const GRAND_CRACKLES = 4
+const SHOW_MAX_MS = { burst: 2200, grand: 3600 }
+
+/** A ring of `n` sparks thrown out from `[ox, oy]` (plate px). */
+function sparkRing(n, reach, ring, extra) {
+  return Array.from({ length: n }, (_, i) => {
+    const angle =
+      ((i + (ring % 2) * 0.5) / n) * Math.PI * 2 + rand(-0.06, 0.06)
+    const dist = rand(...reach)
+    return {
+      ox: 0,
+      oy: 0,
+      dx: Math.cos(angle) * dist,
+      dy: Math.sin(angle) * dist,
+      angle,
+      ...extra(i),
+    }
+  })
+}
+
+/** A comet's burst: rings of round sparks, drooping as they fade. */
+function makeBurst(colour) {
+  const colours = [colour, colour, ...FIREWORK_COLOURS]
+  const sparks = FIREWORK_RINGS.flatMap(({ delay, reach }, ring) =>
+    sparkRing(FIREWORK_SPARKS, reach, ring, i => ({
+      droop: rand(30, 60),
+      size: rand(8, 14),
+      colour: colours[(i + ring) % colours.length],
+      ms: rand(...FIREWORK_MS),
+      delay: delay + rand(0, 60),
+    })),
+  )
+  return { sparks, flashes: [] }
+}
+
+/**
+ * The rocket's grand finale: a white flash and a shockwave, a big burst of
+ * long streaks in every colour, then smaller bursts crackling around it,
+ * each its own colour, twinkling out.
+ */
+function makeGrandShow(colour) {
+  const colours = [colour, ...GRAND_COLOURS]
+  const flashes = [
+    { ox: 0, oy: 0, size: 280, delay: 0 },
+    { ox: 0, oy: 0, size: 220, delay: 40, ring: true },
+  ]
+  const sparks = GRAND_RINGS.flatMap(({ n, reach, delay }, ring) =>
+    sparkRing(n, reach, ring, i => ({
+      droop: rand(50, 90),
+      size: rand(7, 11),
+      streak: true,
+      glitter: i % 3 === 0,
+      colour: colours[(i + ring) % colours.length],
+      ms: rand(1300, 1900),
+      delay: delay + rand(0, 50),
+    })),
+  )
+  for (let k = 0; k < GRAND_CRACKLES; k++) {
+    const ox = rand(-240, 240)
+    const oy = rand(-230, 110)
+    const delay = 380 + k * 190 + rand(0, 80)
+    const crackle = GRAND_COLOURS[k % GRAND_COLOURS.length]
+    flashes.push({ ox, oy, size: 130, delay })
+    sparks.push(
+      ...sparkRing(16, [70, 130], k, () => ({
+        droop: rand(20, 40),
+        size: rand(6, 9),
+        glitter: true,
+        colour: crackle,
+        ms: rand(800, 1200),
+        delay: delay + rand(0, 40),
+      })).map(sp => ({ ...sp, ox, oy })),
+    )
+  }
+  return { sparks, flashes }
+}
+
+const prefersReducedMotion = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+
+/**
+ * Fireworks over the whole plate: `burst(x, y, colour, grand)` sets one off
+ * at a point on screen (client px), the rocket's finale when `grand`; render
+ * `stage` among the layers.
+ */
+function useFireworks() {
+  const stageRef = useRef(null)
+  const [shows, setShows] = useState([])
+  const nextId = useRef(0)
+  const timers = useRef([])
+  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+  const burst = (x, y, colour, grand = false) => {
+    const stage = stageRef.current?.getBoundingClientRect()
+    if (!stage) return
+    const id = nextId.current++
+    setShows(list => [
+      ...list,
+      {
+        id,
+        x: ((x - stage.left) / stage.width) * 100,
+        y: ((y - stage.top) / stage.height) * 100,
+        ...(grand ? makeGrandShow(colour) : makeBurst(colour)),
+      },
+    ])
+    timers.current.push(
+      setTimeout(
+        () => setShows(list => list.filter(b => b.id !== id)),
+        SHOW_MAX_MS[grand ? "grand" : "burst"],
+      ),
+    )
+  }
+  const at = b => ({ left: `${b.x.toFixed(3)}%`, top: `${b.y.toFixed(3)}%` })
+  const stage = (
+    <FireworkStage ref={stageRef} aria-hidden>
+      {shows.map(b => (
+        <React.Fragment key={b.id}>
+          {b.flashes.map((f, i) => (
+            <Flash
+              key={`f${i}`}
+              $ring={f.ring}
+              style={{
+                ...at(b),
+                width: pp(f.size),
+                height: pp(f.size),
+                "--ox": pp(f.ox),
+                "--oy": pp(f.oy),
+                "--delay": `${f.delay.toFixed(0)}ms`,
+              }}
+            />
+          ))}
+          {b.sparks.map((k, i) => (
+            <Spark
+              key={i}
+              $glitter={k.glitter}
+              style={{
+                ...at(b),
+                // A streak is long and thin, bright end leading.
+                width: pp(k.streak ? k.size * 3.4 : k.size),
+                height: pp(k.streak ? k.size * 0.8 : k.size),
+                background: k.streak
+                  ? `linear-gradient(90deg, transparent, ${k.colour})`
+                  : k.colour,
+                boxShadow: `0 0 ${pp(k.size)} ${k.colour}`,
+                "--rot": k.streak ? `${k.angle.toFixed(3)}rad` : "0rad",
+                "--ox": pp(k.ox),
+                "--oy": pp(k.oy),
+                "--dx": pp(k.dx),
+                "--dy": pp(k.dy),
+                "--droop": pp(k.droop),
+                "--ms": `${k.ms.toFixed(0)}ms`,
+                "--delay": `${k.delay.toFixed(0)}ms`,
+              }}
+            />
+          ))}
+        </React.Fragment>
+      ))}
+    </FireworkStage>
+  )
+  return { burst, stage }
+}
+
+/** Where plate point `[px, py]` is on screen, given a window over `box`. */
+function screenPoint(el, [x0, y0, x1, y1], [px, py]) {
+  const r = el.getBoundingClientRect()
+  return [
+    r.left + ((px - x0) / (x1 - x0)) * r.width,
+    r.top + ((py - y0) / (y1 - y0)) * r.height,
+  ]
+}
+
+/**
+ * Something flying across the sky (the Project comets): head first along
+ * `fly.slope` (plate px down per px left), it comes in past the plate's right
+ * edge, crosses through where it's painted and out past the left edge, then
+ * waits out of sight. `fly.ms` per pass; `fly.delayMs` offsets the start.
+ * Clicked (tapped), it bursts into fireworks at its head (`fly.head`, plate
+ * px, in `fly.colour`) and is gone until its next pass.
+ */
+function FlyLayer({ plate, layer, children }) {
+  const [x0, , x1] = layer.box
+  const { slope = 0, ms = 14000, delayMs = 0, head, colour } = layer.fly
+  const inX = plate.W - x0
+  const winRef = useRef(null)
+  const [gone, setGone] = useState(false)
+  const { burst, stage } = useFireworks()
+
+  const explode = () => {
+    if (gone || !head || prefersReducedMotion()) return
+    burst(...screenPoint(winRef.current, layer.box, head), colour)
+    setGone(true)
+  }
+
+  return (
+    <>
+      <FlyWindow
+        ref={winRef}
+        data-layer={layer.name}
+        $gone={gone}
+        $clickable={Boolean(head)}
+        // Back for its next pass.
+        onAnimationIteration={() => setGone(false)}
+        onClick={explode}
+        style={{
+          ...plate.windowStyle(layer.box),
+          "--fly-in-x": pp(inX),
+          "--fly-in-y": pp(-inX * slope),
+          "--fly-out-x": pp(-x1),
+          "--fly-out-y": pp(x1 * slope),
+          "--fly-ms": `${ms}ms`,
+          "--fly-delay": `${-delayMs}ms`,
+        }}
+      >
+        {children}
+      </FlyWindow>
+      {stage}
+    </>
+  )
+}
+
+/** Hovering: each rise or dip (ms), and how far it rises (plate px). */
+const ROCKET_HOVER_MS = 2200
+const ROCKET_HOVER_RISE = 14
+/** After bursting, how long until the rocket is back (ms). */
+const ROCKET_BACK_MS = 3200
+
+/**
+ * A rocket on its smoke trail (the Project CN Tower): it hovers, bobbing on
+ * its trail (`rocket.trail`, a layer name, painted in `rocket.trailBox`),
+ * which stretches from the ground to keep up. Hovered, it rattles like it's
+ * about to go off; clicked (tapped), it bursts into fireworks from
+ * `rocket.head` (plate px, in `rocket.colour`), trail and all, and is back a
+ * few seconds later.
+ */
+function RocketLayer({ plate, layer, children }) {
+  const rocketRef = useRef(null)
+  const [rattle, setRattle] = useState(false)
+  const [gone, setGone] = useState(false)
+  const timer = useRef(0)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+  const { burst, stage } = useFireworks()
+  const { trail, trailBox, hit, head, colour } = layer.rocket
+  const [, ty0, , ty1] = trailBox
+
+  const explode = () => {
+    if (gone || prefersReducedMotion()) return
+    burst(...screenPoint(rocketRef.current, layer.box, head), colour, true)
+    setGone(true)
+    setRattle(false)
+    timer.current = window.setTimeout(() => setGone(false), ROCKET_BACK_MS)
+  }
+
+  return (
+    <>
+      <HoverBob
+        $trail
+        $gone={gone}
+        aria-hidden
+        style={{
+          ...plate.windowStyle(trailBox),
+          transformOrigin: "50% 100%",
+          "--hover-stretch": (
+            (ty1 - ty0 + ROCKET_HOVER_RISE) /
+            (ty1 - ty0)
+          ).toFixed(4),
+        }}
+      >
+        <CropImg
+          src={plate.asset(trail)}
+          alt=""
+          decoding="async"
+          draggable={false}
+          style={plate.imgStyle(trailBox)}
+        />
+      </HoverBob>
+      <HoverBob
+        $gone={gone}
+        style={{
+          ...plate.windowStyle(layer.box),
+          "--hover-rise": -ROCKET_HOVER_RISE,
+        }}
+      >
+        <RocketRattle
+          ref={rocketRef}
+          data-layer={layer.name}
+          $rattle={rattle && !gone}
+        >
+          {children}
+        </RocketRattle>
+      </HoverBob>
+      {stage}
+      <PeekHit
+        style={plate.windowStyle(hit || layer.box)}
+        onMouseEnter={() => setRattle(true)}
+        onMouseLeave={() => setRattle(false)}
+        onClick={explode}
+      />
+    </>
+  )
+}
+
+/** A dragon catching fire (ms): hovered until fully alight, and going out. */
+const DRAGON_SPREAD_MS = 2600
+const DRAGON_FADE_MS = 900
+/** Moving between a dragon's hover areas doesn't put it out. */
+const DRAGON_LEAVE_MS = 200
+
+/**
+ * A dragon's hover areas: a mouse lights it while over them; on touch, a
+ * tap lights it and another puts it out. Pointer (not mouse) events, so the
+ * mouse events a tap also fires don't undo it.
+ */
+const dragonHover = light => ({
+  onPointerEnter: event => {
+    if (event.pointerType === "mouse") light(true)
+  },
+  onPointerLeave: event => {
+    if (event.pointerType === "mouse") light(false, DRAGON_LEAVE_MS)
+  },
+  onPointerDown: event => {
+    if (event.pointerType !== "mouse") light("toggle")
+  },
+})
+/** The fire's spread is solid out to this share of its edge, then feathers. */
+const DRAGON_FIRE_SOLID = 0.75
+
+/**
+ * A dragon that catches fire (the Wiki dragons). Hovered (tapped on and off
+ * on touch) it glows (`dragon.glow`, behind it), fire (`dragon.fire`) spreads across
+ * it from `dragon.from` the longer it's hovered until all of it within
+ * `dragon.reach` plate px is burning, and its markings light up
+ * (`dragon.highlights`, each `{ name, box }`, faded in over it all); let go,
+ * it dies down. `dragon.tail` is drawn over the dragon; `dragon.hits` are its
+ * hover areas (where it shows round the boxes). It trembles while it burns.
+ *
+ * A dragon painted as one picture (the Contribution one) gives `heat` in
+ * place of the glow and fire art: a fiery glow spreads out from behind it,
+ * from its head, and `eyes` (plate px) glow in and out.
+ */
+function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
+  const d = layer.dragon
+  const [lit, setLit] = useState(false)
+  const timer = useRef(0)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+  useEffect(() => onLit?.(lit), [lit])
+  // Part of it drawn over the text box (text.front): here, only the rest.
+  const keep = (box, part) =>
+    split ? (
+      <ZoneSide
+        style={{
+          ...plate.windowStyle(box),
+          ...zoneMask(box, split.above, split.feather),
+        }}
+      >
+        {part({ inset: 0 })}
+      </ZoneSide>
+    ) : (
+      part(plate.windowStyle(box))
+    )
+  // `on`: true, false, or "toggle" (a tap).
+  const light = (on, ms = 0) => {
+    window.clearTimeout(timer.current)
+    const set = () => setLit(was => (on === "toggle" ? !was : on))
+    if (ms) timer.current = window.setTimeout(set, ms)
+    else set()
+  }
+  // Its front part (text.front) lights it from its own hover areas.
+  if (lightRef) lightRef.current = light
+  const crop = (name, box) => (
+    <CropImg
+      src={plate.asset(name)}
+      alt=""
+      decoding="async"
+      draggable={false}
+      style={plate.imgStyle(box)}
+    />
+  )
+  // The fire shows through a soft circle on the head, grown to cover it.
+  const fireBox = d.fireBox || layer.box
+  const [cx, cy] = [d.from[0] - fireBox[0], d.from[1] - fireBox[1]]
+  const size = lit ? (d.reach * 2) / DRAGON_FIRE_SOLID : 0
+  const spread = {
+    "--fire-size": pp(size),
+    "--fire-x": pp(cx - size / 2),
+    "--fire-y": pp(cy - size / 2),
+  }
+  // A one-picture dragon's glow: its own picture glowing, behind it, in a
+  // box with room round it for the glow.
+  const heatPad = d.heat ? d.heat.pad || 40 : 0
+  const [lx0, ly0, lx1, ly1] = layer.box
+  const haloBox = [lx0 - heatPad, ly0 - heatPad, lx1 + heatPad, ly1 + heatPad]
+  const haloSize = lit ? (d.reach * 2) / DRAGON_FIRE_SOLID : 0
+  const haloSpread = {
+    "--fire-size": pp(haloSize),
+    "--fire-x": pp(d.from[0] - haloBox[0] - haloSize / 2),
+    "--fire-y": pp(d.from[1] - haloBox[1] - haloSize / 2),
+  }
+  // `heat.fade`: [x from, x to] plate px over which the glow fades in from
+  // the left, past a hard edge in the picture's painted haze.
+  const haloFade = (() => {
+    if (!d.heat?.fade) return undefined
+    const w = haloBox[2] - haloBox[0]
+    const at = x => `${(((x - haloBox[0]) / w) * 100).toFixed(2)}%`
+    const m = `linear-gradient(to right, transparent ${at(d.heat.fade[0])}, #000 ${at(d.heat.fade[1])})`
+    return { maskImage: m, WebkitMaskImage: m }
+  })()
+  const inHalo = ([x0, y0, x1, y1]) => {
+    const w = haloBox[2] - haloBox[0]
+    const h = haloBox[3] - haloBox[1]
+    return {
+      left: `${(((x0 - haloBox[0]) / w) * 100).toFixed(3)}%`,
+      top: `${(((y0 - haloBox[1]) / h) * 100).toFixed(3)}%`,
+      width: `${(((x1 - x0) / w) * 100).toFixed(3)}%`,
+      height: `${(((y1 - y0) / h) * 100).toFixed(3)}%`,
+    }
+  }
+  return (
+    <>
+      {d.glow &&
+        keep(d.glowBox, style => (
+          <DragonGlow $lit={lit} style={style}>
+            {crop(d.glow, d.glowBox)}
+          </DragonGlow>
+        ))}
+      {d.fire &&
+        keep(fireBox, style => (
+          <DragonFire $lit={lit} style={{ ...style, ...spread }}>
+            {crop(d.fire, fireBox)}
+          </DragonFire>
+        ))}
+      {d.heat && (
+        <DragonFire
+          aria-hidden
+          $lit={lit}
+          style={{ ...plate.windowStyle(haloBox), ...haloSpread }}
+        >
+          <HaloFade style={haloFade}>
+            <HeatHalo $lit={lit} style={inHalo(layer.box)}>
+              {crop(layer.src || layer.name, layer.box)}
+            </HeatHalo>
+          </HaloFade>
+        </DragonFire>
+      )}
+      <DragonPart
+        data-layer={layer.name}
+        $lit={lit}
+        style={plate.windowStyle(layer.box)}
+      >
+        {children}
+      </DragonPart>
+      {(d.eyes || []).map(([x, y]) => (
+        <DragonEye
+          key={`${x},${y}`}
+          aria-hidden
+          $lit={lit}
+          style={{
+            left: `${((x / plate.W) * 100).toFixed(3)}%`,
+            top: `${((y / plate.H) * 100).toFixed(3)}%`,
+            width: pp(d.eyeSize || 16),
+            height: pp(d.eyeSize || 16),
+          }}
+        />
+      ))}
+      {d.tail && (
+        <DragonPart
+          $lit={lit}
+          $narrowOnly={d.tailNarrowOnly}
+          style={plate.windowStyle(d.tailBox)}
+        >
+          {crop(d.tail, d.tailBox)}
+        </DragonPart>
+      )}
+      {d.swirls && (
+        <DragonHighlight aria-hidden $lit={lit} style={plate.windowStyle(layer.box)}>
+          <SwirlSvg
+            viewBox={`${layer.box[0]} ${layer.box[1]} ${layer.box[2] - layer.box[0]} ${layer.box[3] - layer.box[1]}`}
+            preserveAspectRatio="none"
+          >
+            {d.swirls.map(sw => (
+              <path key={sw.at.join()} d={swirlPath(sw)} />
+            ))}
+          </SwirlSvg>
+        </DragonHighlight>
+      )}
+      {(d.highlights || []).map(h => (
+        <React.Fragment key={`${h.name}${h.box.join()}`}>
+          {keep(h.box, style => (
+            <DragonHighlight aria-hidden $lit={lit} style={style}>
+              {crop(h.name, h.box)}
+            </DragonHighlight>
+          ))}
+        </React.Fragment>
+      ))}
+      {d.hits.map(hit => (
+        <PeekHit
+          key={hit.join()}
+          style={plate.windowStyle(hit)}
+          {...dragonHover(light)}
+        />
+      ))}
+      {/* The tail's, here only where it isn't drawn over the box. */}
+      {(d.tailHits || []).map(hit => (
+        <TailHit
+          key={hit.join()}
+          $narrowOnly={Boolean(split)}
+          style={plate.windowStyle(hit)}
+          {...dragonHover(light)}
+        />
+      ))}
+    </>
+  )
+}
+
+/**
+ * A mask over `box` (plate px) showing only the plate-px `polygon`, its edge
+ * feathered by `feather` plate px.
+ */
+function zoneMask([x0, y0, x1, y1], polygon, feather) {
+  const pts = polygon.map(([x, y]) => `${x},${y}`).join(" ")
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${y0} ${x1 - x0} ${y1 - y0}" preserveAspectRatio="none"><filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${feather}"/></filter><polygon points="${pts}" fill="#000" filter="url(#f)"/></svg>`
+  const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+  return { "--zone-mask": url }
+}
+
+/**
+ * The two sides of a line across the plate (`[[x0, y0], [x1, y1]]`, left to
+ * right): `above` and `below`, as polygons reaching well past the plate.
+ */
+function splitPlate([[ax, ay], [bx, by]], { W, H }) {
+  const far = Math.max(W, H)
+  // The line carried on past both ends at its own slope.
+  const yAt = x => ay + ((by - ay) * (x - ax)) / (bx - ax)
+  const [lx, rx] = [ax - far, bx + far]
+  return {
+    above: [[lx, -far], [rx, -far], [rx, yAt(rx)], [lx, yAt(lx)]],
+    below: [[lx, yAt(lx)], [rx, yAt(rx)], [rx, H + far], [lx, H + far]],
+  }
+}
+
+/** A dragon's part masked to one side of its split (wide screens only). */
+const ZoneSide = styled.div`
+  position: absolute;
+  pointer-events: none;
+
+  @media (min-width: 861px) {
+    -webkit-mask-image: var(--zone-mask);
+    mask-image: var(--zone-mask);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+`
+
+/** A dragon's front part (see `text.front`), positioned off the box's bottom. */
+function TextFrontArt({ plate, text, d, split, lit, light }) {
+  const dy = text.front.dy || 0
+  const at = ([x0, y0, x1, y1]) => ({
+    left: pp(x0 - text.box[0]),
+    top: `calc(100% + ${pp(y0 + dy - text.box[3])})`,
+    width: pp(x1 - x0),
+    height: pp(y1 - y0),
+  })
+  const crop = (name, box) => (
+    <CropImg
+      src={plate.asset(name)}
+      alt=""
+      decoding="async"
+      draggable={false}
+      style={plate.imgStyle(box)}
+    />
+  )
+  const below = (box, part) => (
+    <ZoneSide style={{ ...at(box), ...zoneMask(box, split.below, split.feather) }}>
+      {part}
+    </ZoneSide>
+  )
+  // The fire spreads from the head, which the front part is lowered with.
+  const fireBox = d.fireBox
+  const size = lit ? (d.reach * 2) / DRAGON_FIRE_SOLID : 0
+  const spread = {
+    "--fire-size": pp(size),
+    "--fire-x": pp(d.from[0] - fireBox[0] - size / 2),
+    "--fire-y": pp(d.from[1] - fireBox[1] - size / 2),
+  }
+  return (
+    <TextFront aria-hidden>
+      {d.glow &&
+        below(
+          d.glowBox,
+          <DragonGlow $lit={lit} style={{ inset: 0 }}>
+            {crop(d.glow, d.glowBox)}
+          </DragonGlow>,
+        )}
+      {d.fire &&
+        below(
+          fireBox,
+          <DragonFire $lit={lit} style={{ inset: 0, ...spread }}>
+            {crop(d.fire, fireBox)}
+          </DragonFire>,
+        )}
+      <FrontShadow style={at(d.tailBox)}>
+        <DragonPart $lit={lit} style={{ inset: 0 }}>
+          {crop(d.tail, d.tailBox)}
+        </DragonPart>
+      </FrontShadow>
+      {(d.highlights || []).map(h => (
+        <React.Fragment key={`${h.name}${h.box.join()}`}>
+          {below(
+            h.box,
+            <DragonHighlight $lit={lit} style={{ inset: 0 }}>
+              {crop(h.name, h.box)}
+            </DragonHighlight>,
+          )}
+        </React.Fragment>
+      ))}
+      {(d.tailHits || []).map(hit => (
+        <PeekHit
+          key={hit.join()}
+          style={at(hit)}
+          {...dragonHover(light)}
+        />
+      ))}
+    </TextFront>
+  )
+}
+
+/**
+ * A glowing spiral marking, as an SVG path (plate px): `at` its middle, `rx`
+ * and `ry` its outer radii, `rot` (deg) its turn, `turns` how many times it
+ * winds; it ends in a short flick outward, like the Wiki dragons' markings.
+ */
+function swirlPath({ at: [cx, cy], rx, ry = rx, rot = 0, turns = 2.1 }) {
+  const steps = 48
+  const a = (rot * Math.PI) / 180
+  const pts = []
+  for (let i = 0; i <= steps; i++) {
+    const k = i / steps
+    const th = k * turns * Math.PI * 2
+    const x = rx * k * Math.cos(th)
+    const y = ry * k * Math.sin(th)
+    pts.push([
+      cx + x * Math.cos(a) - y * Math.sin(a),
+      cy + x * Math.sin(a) + y * Math.cos(a),
+    ])
+  }
+  return `M${pts.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L")}`
+}
+
+/** One swing of a hanging layer, out and back until it settles. */
+const SWING_MS = 2600
+const SWING_SWAYS = [0, -1, 0.75, -0.5, 0.28, -0.12, 0]
+
+/**
+ * Something hanging (the Engineering bucket on its rope): hovered (tapped on
+ * touch), it swings from `swing.pivot` (plate px, where it hangs from) by up
+ * to `swing.deg` and settles. The hover area (`swing.hit`, else the layer)
+ * stays put while it swings.
+ */
+function SwingLayer({ plate, layer, children }) {
+  const ref = useRef(null)
+  const anim = useRef(null)
+  const [x0, y0, x1, y1] = layer.box
+  const [px, py] = layer.swing.pivot
+  const swing = () => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
+    if (anim.current?.playState === "running") return
+    const deg = layer.swing.deg ?? 2
+    anim.current = ref.current?.animate(
+      SWING_SWAYS.map(k => ({
+        transform: `rotate(${(k * deg).toFixed(2)}deg)`,
+        easing: "ease-in-out",
+      })),
+      { duration: SWING_MS },
+    )
+  }
+  return (
+    <>
+      <SwingWindow
+        ref={ref}
+        data-layer={layer.name}
+        style={{
+          ...plate.windowStyle(layer.box),
+          transformOrigin: `${(((px - x0) / (x1 - x0)) * 100).toFixed(2)}% ${(((py - y0) / (y1 - y0)) * 100).toFixed(2)}%`,
+        }}
+      >
+        {children}
+      </SwingWindow>
+      <PeekHit
+        style={plate.windowStyle(layer.swing.hit || layer.box)}
+        onMouseEnter={swing}
+        onPointerDown={event => {
+          if (event.pointerType !== "mouse") swing()
+        }}
+      />
+    </>
+  )
+}
+
 /** Ducking (ms): the hop back over the edge, and the sink behind it. */
 const DUCK_HOP_MS = 200
 const DUCK_SINK_MS = 550
@@ -1088,6 +1807,8 @@ function sceneVars(scene, plate) {
     "--pad-top": pp(side[1] - crop),
     "--side-h": pp(side[3] - side[1]),
     "--nav-top": pp(scene.side.navTop),
+    // Room under the last title, for a marker taller than its bar.
+    "--nav-bottom": pp(scene.side.navBottom || 0),
     // Room left of the list for an icon hanging off the highlight (the coin),
     // so the scrolling list doesn't clip it.
     "--nav-bleed": scene.side.indicatorIcon
@@ -1100,6 +1821,17 @@ function sceneVars(scene, plate) {
 export function SubpageScene({ scene, title, description, children }) {
   const plate = plateOf(scene)
   const { side, text } = scene
+  // A dragon partly drawn over the text box (text.front.dragon): the line
+  // its two parts split along, and whether it's burning (both parts follow).
+  const front = text.front
+  const frontDragon =
+    front?.dragon && scene.layers.find(l => l.name === front.dragon)
+  const split = frontDragon && {
+    ...splitPlate(front.line, plate),
+    feather: front.feather ?? 10,
+  }
+  const [frontLit, setFrontLit] = useState(false)
+  const frontLightRef = useRef(null)
   const sceneRef = useRef(null)
   const artRef = useRef(null)
   const frameRef = useRef(null)
@@ -1453,6 +2185,41 @@ export function SubpageScene({ scene, title, description, children }) {
                     </SwimLayer>
                   )
                 }
+                if (layer.fly) {
+                  return (
+                    <FlyLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </FlyLayer>
+                  )
+                }
+                if (layer.rocket) {
+                  return (
+                    <RocketLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </RocketLayer>
+                  )
+                }
+                if (layer.dragon) {
+                  return (
+                    <DragonLayer
+                      key={layer.name}
+                      plate={plate}
+                      layer={layer}
+                      split={layer === frontDragon ? split : undefined}
+                      onLit={layer === frontDragon ? setFrontLit : undefined}
+                      lightRef={layer === frontDragon ? frontLightRef : undefined}
+                    >
+                      {img}
+                    </DragonLayer>
+                  )
+                }
+                if (layer.swing) {
+                  return (
+                    <SwingLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </SwingLayer>
+                  )
+                }
                 if (layer.duck) {
                   return (
                     <DuckLayer key={layer.name} plate={plate} layer={layer}>
@@ -1567,6 +2334,8 @@ export function SubpageScene({ scene, title, description, children }) {
               $fit={!sideOpen}
               style={{
                 backgroundColor: side.fill,
+                // A drawn-in box: rounded like the narrow strip.
+                borderRadius: side.radius,
                 "--side-bottom": crabShown
                   ? "var(--crab-room)"
                   : sideToggle
@@ -1614,7 +2383,15 @@ export function SubpageScene({ scene, title, description, children }) {
                     {icon && (
                       <IndicatorIcon
                         style={{
-                          ...(icon.canvas
+                          ...(icon.layers
+                            ? {
+                                ...plate.bg(icon.layers[0], icon.from || icon.box),
+                                // Stacked layers of one canvas, top first.
+                                backgroundImage: icon.layers
+                                  .map(n => `url(${plate.asset(n)})`)
+                                  .join(", "),
+                              }
+                            : icon.canvas
                             ? canvasBg(plate.asset(icon.name), icon.canvas)
                             : // `from`: painted elsewhere on its plate than `box`.
                               plate.bg(icon.name, icon.from || icon.box)),
@@ -1710,7 +2487,10 @@ export function SubpageScene({ scene, title, description, children }) {
         <TextBox ref={textBoxRef} $solo={!side}>
           {/* A box the art doesn't paint is a flat colour. */}
           {text.fill ? (
-            <TextFill aria-hidden style={{ background: text.fill }} />
+            <TextFill
+              aria-hidden
+              style={{ background: text.fill, borderRadius: text.radius }}
+            />
           ) : (
             <StretchBox
               plate={plate}
@@ -1719,7 +2499,35 @@ export function SubpageScene({ scene, title, description, children }) {
               caps={text.caps}
             />
           )}
-          <TextInner ref={bodyRef} $hideIntro={scene.hideIntro}>
+          {/* `text.front`: a dragon's tail (and its glow, fire and markings
+              below `line`) over the box's lower edge, below the text, `dy`
+              plate px lower than painted. It moves with the box, so it
+              never covers text. */}
+          {frontDragon && (
+            <TextFrontArt
+              plate={plate}
+              text={text}
+              d={frontDragon.dragon}
+              split={split}
+              lit={frontLit}
+              light={(...args) => frontLightRef.current?.(...args)}
+            />
+          )}
+          <TextInner
+            ref={bodyRef}
+            $hideIntro={scene.hideIntro}
+            // `text.inset`: [top, right, bottom, left] plate px more padding.
+            style={{
+              ...(text.inset && {
+                "--inset-t": pp(text.inset[0]),
+                "--inset-r": pp(text.inset[1]),
+                "--inset-b": pp(text.inset[2]),
+                "--inset-l": pp(text.inset[3]),
+              }),
+              // `scene.tableHead`: table header rows in the menu's colour.
+              "--table-head": scene.tableHead,
+            }}
+          >
             {!scene.hideIntro && (
             <TitleBlock>
               <Title>{scene.boxTitle || title}</Title>
@@ -1741,6 +2549,9 @@ const Scene = styled.div`
   width: 100%;
   min-height: calc(100vh - var(--dl-header, 0px));
   background: var(--scene-bg);
+  /* Art over the box (text.front) reaches the window's edges; a tremble
+     mustn't widen the page. Clip, unlike hidden, keeps the menu sticky. */
+  overflow-x: clip;
 `
 
 /** Spans the scene; the art inside is shifted by the scroll handler. */
@@ -1943,6 +2754,465 @@ const PeekGlow = styled.div`
   opacity: ${({ $hidden }) => ($hidden ? 1 : 0)};
   transition: ${({ $hidden }) =>
     $hidden ? "opacity 220ms ease-out" : "opacity 420ms ease-in 420ms"};
+`
+
+/** In past the right, out past the left, then out of sight till the next. */
+const flyAcross = keyframes`
+  0% {
+    transform: translate3d(var(--fly-in-x), var(--fly-in-y), 0);
+  }
+  62%,
+  100% {
+    transform: translate3d(var(--fly-out-x), var(--fly-out-y), 0);
+  }
+`
+
+const FlyWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: ${({ $clickable }) => ($clickable ? "auto" : "none")};
+  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "auto")};
+  opacity: ${({ $gone }) => ($gone ? 0 : 1)};
+  animation: ${flyAcross} var(--fly-ms) linear var(--fly-delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/** The whole plate, for sparks to fly anywhere on it. */
+const FireworkStage = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+`
+
+/** Thrown out fast, slowing as it falls a little and fades. */
+const sparkFrom = css`
+  transform: translate(-50%, -50%) translate3d(var(--ox), var(--oy), 0)
+    rotate(var(--rot)) scale(1);
+`
+const sparkTo = css`
+  transform: translate(-50%, -50%)
+    translate3d(
+      calc(var(--ox) + var(--dx)),
+      calc(var(--oy) + var(--dy) + var(--droop)),
+      0
+    )
+    rotate(var(--rot)) scale(0.35);
+`
+
+const sparkFly = keyframes`
+  0% {
+    opacity: 1;
+    ${sparkFrom}
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    ${sparkTo}
+  }
+`
+
+/** The same, twinkling as it goes out. */
+const sparkGlitter = keyframes`
+  0% {
+    opacity: 1;
+    ${sparkFrom}
+  }
+  55% {
+    opacity: 1;
+  }
+  64% {
+    opacity: 0.15;
+  }
+  71% {
+    opacity: 1;
+  }
+  79% {
+    opacity: 0.2;
+  }
+  87% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    ${sparkTo}
+  }
+`
+
+const Spark = styled.span`
+  position: absolute;
+  border-radius: 999px;
+  opacity: 0;
+  /* Unseen until its delay is up (forwards, not both), then out for good. */
+  animation: ${({ $glitter }) => ($glitter ? sparkGlitter : sparkFly)}
+    var(--ms) cubic-bezier(0.12, 0.75, 0.35, 1) var(--delay) forwards;
+`
+
+/** A burst's flash of light, or (ring) its shockwave. */
+const flashPop = keyframes`
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate3d(var(--ox), var(--oy), 0)
+      scale(0.2);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate3d(var(--ox), var(--oy), 0)
+      scale(1.4);
+  }
+`
+
+const ringOut = keyframes`
+  from {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) translate3d(var(--ox), var(--oy), 0)
+      scale(0.15);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate3d(var(--ox), var(--oy), 0)
+      scale(2);
+  }
+`
+
+const Flash = styled.span`
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  ${({ $ring }) =>
+    $ring
+      ? css`
+          border: calc(var(--px) * 4) solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 0 calc(var(--px) * 18) rgba(160, 190, 255, 0.8);
+          animation: ${ringOut} 0.8s ease-out var(--delay) forwards;
+        `
+      : css`
+          background: radial-gradient(
+            circle,
+            #ffffff 0%,
+            rgba(255, 244, 214, 0.9) 22%,
+            rgba(255, 196, 120, 0.3) 50%,
+            transparent 70%
+          );
+          animation: ${flashPop} 0.5s ease-out var(--delay) forwards;
+        `}
+`
+
+/** The rocket hovering on its trail; the trail stretches to keep up. */
+const rocketHover = keyframes`
+  to {
+    transform: translate3d(0, calc(var(--px) * var(--hover-rise)), 0);
+  }
+`
+
+const trailHover = keyframes`
+  to {
+    transform: scaleY(var(--hover-stretch));
+  }
+`
+
+const HoverBob = styled.div`
+  position: absolute;
+  /* The trail crops here; the rocket inside its rattle, so a shake isn't cut. */
+  overflow: ${({ $trail }) => ($trail ? "hidden" : "visible")};
+  pointer-events: none;
+  opacity: ${({ $gone }) => ($gone ? 0 : 1)};
+  /* Gone at once when it bursts; back slowly. */
+  transition: opacity ${({ $gone }) => ($gone ? "0s" : "0.8s")} ease;
+  animation: ${({ $trail }) => ($trail ? trailHover : rocketHover)}
+    ${ROCKET_HOVER_MS}ms ease-in-out infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/** About to go off: a quick, small shake. */
+const rocketRattle = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(calc(var(--px) * -2.5), calc(var(--px) * 1), 0)
+      rotate(-2.5deg);
+  }
+  50% {
+    transform: translate3d(calc(var(--px) * 2.5), calc(var(--px) * -1), 0)
+      rotate(2deg);
+  }
+  75% {
+    transform: translate3d(calc(var(--px) * -1.5), 0, 0) rotate(-1.5deg);
+  }
+`
+
+const RocketRattle = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: 50% 80%;
+  ${({ $rattle }) =>
+    $rattle &&
+    css`
+      animation: ${rocketRattle} 0.16s linear infinite;
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/**
+ * A burning dragon trembles: every part of it (glow, fire, body, tail,
+ * markings) shakes on the same keyframes, started together, so they stay put
+ * on each other. Small steps of a plate px or so.
+ */
+const dragonShake = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(calc(var(--px) * -0.7), calc(var(--px) * 0.4), 0);
+  }
+  40% {
+    transform: translate3d(calc(var(--px) * 0.6), calc(var(--px) * -0.5), 0);
+  }
+  60% {
+    transform: translate3d(calc(var(--px) * -0.5), calc(var(--px) * -0.3), 0);
+  }
+  80% {
+    transform: translate3d(calc(var(--px) * 0.7), calc(var(--px) * 0.4), 0);
+  }
+`
+
+const shakeWhenLit = css`
+  ${({ $lit }) =>
+    $lit &&
+    css`
+      animation: ${dragonShake} 0.22s linear infinite;
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const DragonPart = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  ${shakeWhenLit}
+
+  /* Drawn over the text box instead, where there's room beside it. */
+  ${({ $narrowOnly }) =>
+    $narrowOnly &&
+    css`
+      @media (min-width: 861px) {
+        display: none;
+      }
+    `}
+`
+
+/** Flames licking: the glow behind a one-picture dragon flickers. */
+const haloFlicker = keyframes`
+  0%,
+  100% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  75% {
+    opacity: 0.7;
+  }
+`
+
+const HaloFade = styled.div`
+  position: absolute;
+  inset: 0;
+`
+
+/**
+ * A one-picture dragon glowing like fire behind itself: its picture, with
+ * fiery glows round it (the picture is hidden under the dragon itself).
+ */
+const HeatHalo = styled.div`
+  position: absolute;
+  overflow: hidden;
+  filter: drop-shadow(0 0 calc(var(--px) * 6) #ffd45a)
+    drop-shadow(0 0 calc(var(--px) * 14) #ff7a1e)
+    drop-shadow(0 0 calc(var(--px) * 22) rgba(230, 50, 20, 0.8));
+  ${({ $lit }) =>
+    $lit &&
+    css`
+      animation: ${haloFlicker} 1.1s ease-in-out infinite;
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const DragonGlow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  ${shakeWhenLit}
+  opacity: ${({ $lit }) => ($lit ? 1 : 0)};
+  transition: opacity ${({ $lit }) => ($lit ? "0.7s" : "0.9s")} ease;
+`
+
+/**
+ * The fire, seen through a soft circle that grows from the head. Its size
+ * and corner move on the same timing, so it stays centred on the head.
+ */
+const DragonFire = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  ${shakeWhenLit}
+  --fire-mask: radial-gradient(
+    circle closest-side,
+    #000 ${DRAGON_FIRE_SOLID * 100}%,
+    transparent 100%
+  );
+  -webkit-mask-image: var(--fire-mask);
+  mask-image: var(--fire-mask);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--fire-size) var(--fire-size);
+  mask-size: var(--fire-size) var(--fire-size);
+  -webkit-mask-position: var(--fire-x) var(--fire-y);
+  mask-position: var(--fire-x) var(--fire-y);
+  transition-property: mask-size, mask-position, -webkit-mask-size,
+    -webkit-mask-position;
+  transition-duration: ${({ $lit }) =>
+    $lit ? DRAGON_SPREAD_MS : DRAGON_FADE_MS}ms;
+  transition-timing-function: ${({ $lit }) => ($lit ? "linear" : "ease-in")};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0s;
+  }
+`
+
+/** A one-picture dragon's eye, glowing in and out while it burns. */
+const eyeGlow = keyframes`
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  to {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+`
+
+const DragonEye = styled.span`
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    #fffbe0 0%,
+    #ffd23f 30%,
+    rgba(255, 120, 0, 0.55) 55%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  opacity: ${({ $lit }) => ($lit ? 1 : 0)};
+  transition: opacity 0.9s ease;
+  ${({ $lit }) =>
+    $lit &&
+    css`
+      animation: ${eyeGlow} 2.4s ease-in-out 0.9s infinite alternate;
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+/** Lit markings (eyes and scales): glowing in and out, slowly, while it burns. */
+const highlightBreathe = keyframes`
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.3;
+  }
+`
+
+const DragonHighlight = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  ${shakeWhenLit}
+  opacity: ${({ $lit }) => ($lit ? 1 : 0)};
+  transition: opacity ${({ $lit }) => ($lit ? "0.9s" : "0.6s")} ease;
+
+  > * {
+    ${({ $lit }) =>
+      $lit &&
+      css`
+        animation: ${highlightBreathe} 2.4s ease-in-out 0.9s infinite alternate;
+      `}
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    > * {
+      animation: none;
+    }
+  }
+`
+
+/** Drawn markings (\`dragon.swirls\`): glowing violet-blue, like the Wiki's. */
+const SwirlSvg = styled.svg`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
+    drop-shadow(0 0 calc(var(--px) * 3) #5b3dff)
+    drop-shadow(0 0 calc(var(--px) * 6) rgba(90, 60, 255, 0.8));
+
+  path {
+    fill: none;
+    stroke: #cfc6ff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+`
+
+const SwingWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
+/** A tail's hover area; with \`$narrowOnly\`, only where it's in the art. */
+const TailHit = styled.div`
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+
+  ${({ $narrowOnly }) =>
+    $narrowOnly &&
+    css`
+      @media (min-width: 861px) {
+        display: none;
+      }
+    `}
 `
 
 const PeekHit = styled.div`
@@ -2474,7 +3744,8 @@ const SideNav = styled.nav`
   overscroll-behavior: contain;
   scrollbar-width: none;
   margin-left: calc(-1 * var(--nav-bleed));
-  padding: var(--nav-top) ${ax(6)} 0 calc(var(--nav-bleed) + ${ax(6)});
+  padding: var(--nav-top) ${ax(6)} var(--nav-bottom, 0px)
+    calc(var(--nav-bleed) + ${ax(6)});
 
   &::-webkit-scrollbar {
     display: none;
@@ -2729,6 +4000,30 @@ const SideCrab = styled.span`
   }
 `
 
+/**
+ * Art over the text box's lower edge (\`text.front\`), as if coming out of
+ * it. Narrow screens keep it in the art.
+ */
+const TextFront = styled.div`
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+
+  ${NARROW} {
+    display: none;
+  }
+`
+
+/** The tail's soft shadow on the box. */
+const FrontShadow = styled.div`
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(
+    0 calc(var(--px) * 3) calc(var(--px) * 4) rgba(20, 10, 10, 0.45)
+  );
+`
+
 const TextBox = styled.div`
   pointer-events: auto;
   position: relative;
@@ -2754,7 +4049,11 @@ const TextInner = styled.div`
   position: relative;
   /* Full-bleed components (e.g. the sticky-note board) stay inside the box. */
   --page-padding: 0px;
-  padding: max(1.5rem, ${ax(34)}) max(1.25rem, ${ax(36)}) max(2rem, ${ax(48)});
+  /* Plus the scene's \`text.inset\`, for a box painted with a soft edge. */
+  padding: calc(max(1.5rem, ${ax(34)}) + var(--inset-t, 0px))
+    calc(max(1.25rem, ${ax(36)}) + var(--inset-r, 0px))
+    calc(max(2rem, ${ax(48)}) + var(--inset-b, 0px))
+    calc(max(1.25rem, ${ax(36)}) + var(--inset-l, 0px));
 
   h2,
   h3 {
@@ -2783,6 +4082,10 @@ const TextInner = styled.div`
 
   && h2 + h3 {
     margin-top: var(--space-md);
+  }
+
+  && th {
+    background: var(--table-head, color-mix(in srgb, var(--color-accent) 15%, transparent));
   }
 
   && h4 {
