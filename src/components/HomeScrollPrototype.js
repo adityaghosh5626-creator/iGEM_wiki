@@ -293,8 +293,8 @@ const RAMP2_ARM_AT = 0.28
 const RAMP2_SLIDE_VH = 1.5
 
 /**
- * Section-5 chute bottle (stage 5, then 6 at the fish): starts inside the WWTP pipe (behind layer
- * 7, in front of layer 6 so the pipe masks it), slides the water column at a
+ * Section-5 chute bottle (stage 5, then 6 at the fish): starts inside the WWTP pipe (behind the
+ * pipe, in front of the repaint and its jet of water, so the pipe masks it), slides the water column at a
  * constant size, slams the pool (stretch/squash), then keeps scrolling with
  * the plate like the waterfall bottle. Coordinates are % of the 946×4000 plate.
  */
@@ -305,7 +305,10 @@ const CHUTE_CENTER_SPAN = 0.7
 const CHUTE_SINK_RATE = 0.85
 /** When the pipe mouth is this far down the viewport, progress is 0. */
 const CHUTE_ARM_VIEW_Y = 0.46
-/** Sandwich: water (7) < chute (8) < WWTP (9) so the pipe masks the bottle. */
+/**
+ * Sandwich: the repainted plant and its jet of water (7) < chute (8) < the
+ * pipe (9), so the bottle starts inside the pipe and slides out over the jet.
+ */
 const CHUTE_Z = 8
 /** Swap to stage 6 once the bottle centroid reaches the fish sprites (~79–82%). */
 const CHUTE_STAGE6_Y_PCT = 76.5
@@ -393,6 +396,19 @@ const ENDING_HOLD_VH = 1.1
  */
 const ENDING_HOLD_DROP_VH = 0.05
 
+/**
+ * The treatment plant and the sea under it, repainted as one picture on the
+ * same plate. It's drawn down to the reef, then fades into the older layers
+ * across SECTION5_REPAINT_FADE (plate px), above the coral and the honeycomb
+ * that sits between them.
+ */
+const SECTION5_REPAINT_SRC =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/rerenderee.avif"
+const SECTION5_REPAINT_FADE = [2350, 2500]
+/** The repaint's pipe and the gush out of it, on their own to go over the bottle. */
+const SECTION5_TUBE_CDN =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/new-tube"
+
 /** Tall underwater plate (946×4000), stacked back → front. */
 const SECTION5_LAYERS = [
   { id: 1, file: "1-bg.avif", z: 1, sizer: true },
@@ -401,8 +417,24 @@ const SECTION5_LAYERS = [
   { id: 4, file: "4-coral-texture.avif", z: 6 },
   { id: 5, file: "5-coral-blend.avif", z: 4 },
   { id: 6, file: "6-water-stream-gush-thing.avif", z: 7 },
-  { id: 7, file: "7-wwtp.avif", z: 9 },
+  { id: 6.5, src: SECTION5_REPAINT_SRC, z: 7, fade: SECTION5_REPAINT_FADE },
+  // Under the chute bottle, so it's seen sliding out over the jet of water.
+  {
+    id: 6.6,
+    src: `${SECTION5_TUBE_CDN}/half-of-water-goes-below-tube.avif`,
+    z: 7,
+  },
+  // Over it: the pipe it starts inside.
+  { id: 7, src: `${SECTION5_TUBE_CDN}/tube.avif`, z: 9 },
 ]
+
+const section5Src = layer => layer.src || `${SECTION5_CDN}/${layer.file}`
+
+/** A layer fading out down the plate between `[from, to]` plate px. */
+const section5Fade = ([from, to]) => {
+  const mask = `linear-gradient(to bottom, #000 ${((from / 4000) * 100).toFixed(2)}%, transparent ${((to / 4000) * 100).toFixed(2)}%)`
+  return { maskImage: mask, WebkitMaskImage: mask }
+}
 
 /** Splash foam — full plate, above scenery + chute bottle, below apps copy. */
 const SECTION5_FOAM_SRC =
@@ -1259,12 +1291,13 @@ export function HomeScrollPrototype() {
   const bottleVisualRef = useRef(null)
   const [logoLanded, setLogoLanded] = useState(false)
   const heroLogoRef = useRef(null)
-  const [navPinned, setNavPinned] = useState(false)
+  const homeNavMountRef = useRef(null)
   const [bottleTouchPinned, setBottleTouchPinned] = useState(false)
   const [shoreBottlePlaying, setShoreBottlePlaying] = useState(false)
   const [splashPlaying, setSplashPlaying] = useState(false)
-  const [walkArrived, setWalkArrived] = useState(false)
-  const [rnalabInteractive, setRnalabInteractive] = useState(false)
+  /** The forest copy band (its `data-arrived` swaps the dataset line out). */
+  const forestTextBandRef = useRef(null)
+  const labLiveTimerRef = useRef(0)
   const reduceMotionParallaxRef = useRef(false)
 
   bottleTouchPinnedRef.current = bottleTouchPinned
@@ -1396,19 +1429,39 @@ export function HomeScrollPrototype() {
     [],
   )
 
-  // RNAlab highlight is inert until the slide/fade-in has finished.
-  useEffect(() => {
-    if (!walkArrived) {
-      setRnalabInteractive(false)
-      return undefined
+  /**
+   * The walk arriving (or backing out): flags on the forest composition that
+   * the explorer, the "!", the revealed petamons and the RNAlab line style
+   * themselves from, set straight on the DOM. As React state they re-rendered
+   * the whole homepage right at the hand-off to the lab, which stuttered on
+   * phones. The RNAlab highlight goes live once its slide-in has finished.
+   */
+  const applyWalkArrived = useCallback(arrived => {
+    const root = compositionRef.current
+    const band = forestTextBandRef.current
+    window.clearTimeout(labLiveTimerRef.current)
+    if (root) {
+      if (arrived) root.dataset.walk = "arrived"
+      else {
+        delete root.dataset.walk
+        delete root.dataset.labLive
+      }
     }
+    if (band) {
+      if (arrived) band.dataset.arrived = "1"
+      else delete band.dataset.arrived
+    }
+    if (!arrived) return
     const reduce =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    const delay = reduce ? 0 : RNALAB_REVEAL_MS
-    const t = window.setTimeout(() => setRnalabInteractive(true), delay)
-    return () => window.clearTimeout(t)
-  }, [walkArrived])
+    labLiveTimerRef.current = window.setTimeout(() => {
+      if (walkArrivedRef.current && compositionRef.current) {
+        compositionRef.current.dataset.labLive = "1"
+      }
+    }, reduce ? 0 : RNALAB_REVEAL_MS)
+  }, [])
+  useEffect(() => () => window.clearTimeout(labLiveTimerRef.current), [])
 
   const applyBottleSinkVisual = useCallback(opacity => {
     const visual = bottleVisualRef.current
@@ -1527,7 +1580,13 @@ export function HomeScrollPrototype() {
 
       if (stack) {
         const rect = stack.getBoundingClientRect()
-        setNavPinned(rect.top < 0 && rect.bottom > 0)
+        // Set on the DOM, not as state: no re-render of the page to pin it.
+        const nav = homeNavMountRef.current
+        const pinned = rect.top < 0 && rect.bottom > 0
+        if (nav && (nav.dataset.pinned === "1") !== pinned) {
+          if (pinned) nav.dataset.pinned = "1"
+          else delete nav.dataset.pinned
+        }
       }
 
       const painting = compositionRef.current
@@ -1657,7 +1716,7 @@ export function HomeScrollPrototype() {
           }
           if (latched !== walkArrivedRef.current) {
             walkArrivedRef.current = latched
-            setWalkArrived(latched)
+            applyWalkArrived(latched)
           }
         }
 
@@ -3249,10 +3308,7 @@ export function HomeScrollPrototype() {
                   }
                   if (animal.revealOnArrive) {
                     body = (
-                      <PetamonReveal
-                        $show={walkArrived}
-                        $delayMs={animal.delayMs}
-                      >
+                      <PetamonReveal $delayMs={animal.delayMs}>
                         {plate}
                       </PetamonReveal>
                     )
@@ -3284,7 +3340,7 @@ export function HomeScrollPrototype() {
               $z={20}
             >
               <HumanWalkLayer ref={humanWalkRef} aria-hidden="true">
-                <HumanBob ref={humanBobRef} $arrived={walkArrived}>
+                <HumanBob ref={humanBobRef}>
                   <CrabMount $xPct={HUMAN.xPct} $yPct={HUMAN.yPct}>
                     <AnimalMotion
                       $scale={HUMAN.scale}
@@ -3296,14 +3352,14 @@ export function HomeScrollPrototype() {
                           $dx={HUMAN_HEAD_X - EXCLAMATION_MARK_X}
                           $dy={HUMAN_HEAD_Y - EXCLAMATION_MARK_Y}
                         >
-                          <ExclamationPop $show={walkArrived}>
+                          <ExclamationPop>
                             <StaticPlateImg src={EXCLAMATION_SRC} alt="" />
                           </ExclamationPop>
                         </ExclamationMark>
-                        <HumanPose $show={!walkArrived}>
+                        <HumanPose>
                           <StaticPlateImg src={HUMAN.src} alt="" />
                         </HumanPose>
-                        <HumanPose $show={walkArrived} $fill>
+                        <HumanPose $arrivedPose $fill>
                           <StaticPlateImg src={HUMAN.srcArrived} alt="" />
                         </HumanPose>
                       </CrabFlapper>
@@ -3317,7 +3373,7 @@ export function HomeScrollPrototype() {
               $top={FOREST_BAND_TOP}
               $height={FOREST_BAND_HEIGHT}
               $z={21}
-              data-arrived={walkArrived ? "1" : undefined}
+              ref={forestTextBandRef}
             >
               <ForestDatasetMount ref={forestDatasetRef}>
                 <ForestDatasetBody>
@@ -3325,10 +3381,7 @@ export function HomeScrollPrototype() {
                   200.
                 </ForestDatasetBody>
               </ForestDatasetMount>
-              <ForestRnalabMount
-                $show={walkArrived}
-                $interactive={rnalabInteractive}
-              >
+              <ForestRnalabMount>
                 <ForestDatasetBody>
                   With{" "}
                   <ExplainTerm
@@ -3383,7 +3436,8 @@ export function HomeScrollPrototype() {
                 <Section5Layer
                   key={layer.id}
                   $z={layer.z}
-                  src={`${SECTION5_CDN}/${layer.file}`}
+                  src={section5Src(layer)}
+                  style={layer.fade ? section5Fade(layer.fade) : undefined}
                   alt=""
                 />
               ))}
@@ -3399,7 +3453,8 @@ export function HomeScrollPrototype() {
                 <Section5Layer
                   key={layer.id}
                   $z={layer.z}
-                  src={`${SECTION5_CDN}/${layer.file}`}
+                  src={section5Src(layer)}
+                  style={layer.fade ? section5Fade(layer.fade) : undefined}
                   alt=""
                 />
               ))}
@@ -3419,7 +3474,8 @@ export function HomeScrollPrototype() {
                 <Section5Layer
                   key={layer.id}
                   $z={layer.z}
-                  src={`${SECTION5_CDN}/${layer.file}`}
+                  src={section5Src(layer)}
+                  style={layer.fade ? section5Fade(layer.fade) : undefined}
                   alt=""
                 />
               ))}
@@ -3572,7 +3628,7 @@ export function HomeScrollPrototype() {
           <EndingHoldSpacer ref={endingHoldSpacerRef} aria-hidden="true" />
         </EndingHoldTrack>
 
-        <HomeNavMount $pinned={navPinned}>
+        <HomeNavMount ref={homeNavMountRef}>
           <WikiTopBar />
         </HomeNavMount>
       </ScrollStack>
@@ -3599,7 +3655,10 @@ const ScrollStack = styled.div`
 
 /** Absolute at rest; `fixed` while scrolling through mockup so nav stays reachable. */
 const HomeNavMount = styled.div`
-  position: ${({ $pinned }) => ($pinned ? "fixed" : "absolute")};
+  position: absolute;
+  &[data-pinned="1"] {
+    position: fixed;
+  }
   top: 0;
   left: 0;
   right: 0;
@@ -4252,14 +4311,15 @@ const HumanBob = styled.div`
     animation: ${humanWalkBob} 0.4s steps(1, end) infinite;
   }
 
-  ${({ $arrived }) =>
-    $arrived &&
-    css`
-      animation: ${humanArriveJump} 0.64s cubic-bezier(0.22, 1.35, 0.32, 1) 1;
-    `}
+  [data-walk="arrived"] & {
+    animation: ${humanArriveJump} 0.64s cubic-bezier(0.22, 1.35, 0.32, 1) 1;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    animation: none;
+    &,
+    [data-walk="arrived"] & {
+      animation: none;
+    }
   }
 `
 
@@ -4309,37 +4369,41 @@ const ExclamationMark = styled.div`
 const ExclamationPop = styled.div`
   width: 100%;
   transform-origin: ${EXCLAMATION_MARK_X}% ${EXCLAMATION_MARK_Y}%;
-  opacity: ${({ $show }) => ($show ? 1 : 0)};
+  opacity: 0;
   /* Only bites on the way out — the pop-in keyframes own the entry. */
   transition: opacity 200ms ease;
+  animation: none;
 
-  ${({ $show }) =>
-    $show
-      ? css`
-          animation:
-            ${bangPopIn} 420ms cubic-bezier(0.34, 1.45, 0.64, 1) both,
-            ${bangIdleSway} 1.4s steps(1, end) 420ms infinite;
-        `
-      : css`
-          animation: none;
-        `}
+  [data-walk="arrived"] & {
+    opacity: 1;
+    animation:
+      ${bangPopIn} 420ms cubic-bezier(0.34, 1.45, 0.64, 1) both,
+      ${bangIdleSway} 1.4s steps(1, end) 420ms infinite;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    opacity: ${({ $show }) => ($show ? 1 : 0)};
-    transform: none;
-    transition: none;
+    &,
+    [data-walk="arrived"] & {
+      animation: none;
+      transform: none;
+      transition: none;
+    }
   }
 `
 
+/** The walking pose, or (`$arrivedPose`) the one swapped in on arrival. */
 const HumanPose = styled.div`
   position: ${({ $fill }) => ($fill ? "absolute" : "relative")};
   left: 0;
   top: 0;
   width: 100%;
   z-index: 2;
-  opacity: ${({ $show }) => ($show ? 1 : 0)};
+  opacity: ${({ $arrivedPose }) => ($arrivedPose ? 0 : 1)};
   pointer-events: none;
+
+  [data-walk="arrived"] & {
+    opacity: ${({ $arrivedPose }) => ($arrivedPose ? 1 : 0)};
+  }
 `
 
 /** Toronto + birds, height from the back plate — sits in the transparent sky hole. */
@@ -4410,32 +4474,35 @@ const petamonPopIn = keyframes`
 `
 
 /** Crabs + axolotls stay off the plate until the walker is surprised. */
+/** Shown once the walk arrives (`data-walk` on the forest composition). */
 const PetamonReveal = styled.div`
   width: 100%;
-  opacity: ${({ $show }) => ($show ? 1 : 0)};
+  opacity: 0;
   pointer-events: none;
   /* Only bites on the way out — the pop-in keyframes own the entry. */
   transition: opacity 240ms ease;
 
-  ${({ $show, $delayMs }) =>
-    $show &&
-    css`
-      animation: ${petamonPopIn} 620ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
-      animation-delay: ${$delayMs || 0}ms;
-    `}
+  button {
+    pointer-events: none;
+  }
 
-  ${({ $show }) =>
-    !$show &&
-    css`
-      button {
-        pointer-events: none;
-      }
-    `}
+  [data-walk="arrived"] & {
+    opacity: 1;
+    animation: ${petamonPopIn} 620ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-delay: ${({ $delayMs }) => $delayMs || 0}ms;
+
+    button {
+      pointer-events: auto;
+    }
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    transform: none;
-    transition: none;
+    &,
+    [data-walk="arrived"] & {
+      animation: none;
+      transform: none;
+      transition: none;
+    }
   }
 `
 
@@ -5068,16 +5135,31 @@ const ForestRnalabMount = styled.div`
   width: ${artPx(480)};
   box-sizing: border-box;
   text-align: left;
-  opacity: ${({ $show }) => ($show ? 1 : 0)};
-  transform: translate3d(${({ $show }) => ($show ? "0" : "20px")}, 0, 0);
+  opacity: 0;
+  transform: translate3d(20px, 0, 0);
   transition:
     opacity 520ms ease 180ms,
     transform 560ms cubic-bezier(0.22, 1.2, 0.36, 1) 180ms;
-  pointer-events: ${({ $interactive }) => ($interactive ? "auto" : "none")};
+  pointer-events: none;
 
   p,
   button {
-    pointer-events: ${({ $interactive }) => ($interactive ? "auto" : "none")};
+    pointer-events: none;
+  }
+
+  [data-walk="arrived"] & {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Live once it has slid in (data-lab-live, a beat after arriving). */
+  [data-lab-live="1"] & {
+    pointer-events: auto;
+
+    p,
+    button {
+      pointer-events: auto;
+    }
   }
 
   ${phone} {

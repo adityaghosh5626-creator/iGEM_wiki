@@ -14,12 +14,15 @@ import {
   ATTRIBUTIONS_SCENE,
   CONTRIBUTION_SCENE,
   DRY_LAB_SCENE,
+  ENGINEERING_SCENE,
   FINANCE_SCENE,
   WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
+  PROJECT_SCENE,
   SAFETY_SCENE,
   VENTURE_SCENE,
+  WIKI_SCENE,
 } from "../components/subpageScenes.js"
 
 const formatDate = (date) => {
@@ -43,9 +46,14 @@ const sceneFor = frontmatter => {
   if (frontmatter.path === "/beyond-the-bench/human-practices/")
     return HP_SCENE
   if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
+  // Served at the standard /description/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/project/description/") return PROJECT_SCENE
   if (frontmatter.path === "/finance/") return FINANCE_SCENE
+  // Served at the standard /engineering/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/project/engineering/") return ENGINEERING_SCENE
   // Served at the standard /safety-and-security/ too (standardRoutes.mjs).
   if (frontmatter.path === "/safety/") return SAFETY_SCENE
+  if (frontmatter.path === "/wiki/") return WIKI_SCENE
   if (
     frontmatter.path === "/team/attributions/" ||
     frontmatter.path === "/attributions/"

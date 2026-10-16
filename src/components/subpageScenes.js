@@ -193,6 +193,8 @@ export const VENTURE_SCENE = {
   skyBottom: 400,
   headerColor: "#23395b",
   accent: "#c4701f",
+  /** Table header rows in the menu highlight's orange. */
+  tableHead: "#f2b574",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
     { name: "coins", box: [11, 1696, 176, 3041] },
@@ -602,7 +604,31 @@ export const CONTRIBUTION_SCENE = {
     // Faces us; looping "rightward" rolls it counterclockwise.
     { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
     { name: "orpetamon", box: [222, 2806, 396, 3005] },
-    { name: "webpetamon", box: [371, 2755, 644, 3004] },
+    // Catches fire like the Wiki dragons: a fiery glow spreads out from
+    // behind it, from its head, its eyes glow and it trembles.
+    {
+      name: "webpetamon",
+      box: [371, 2755, 644, 3004],
+      dragon: {
+        // Its haze is cut off square at the left: the glow fades out there.
+        heat: { pad: 60, fade: [362, 404] },
+        from: [452, 2930],
+        reach: 260,
+        eyes: [
+          [437.8, 2947.5],
+          [475.4, 2945.6],
+        ],
+        eyeSize: 18,
+        // Glowing markings on its grey patches, along the body's lie.
+        swirls: [
+          { at: [621, 2808], rx: 5, ry: 13, rot: 8 },
+          { at: [578, 2832], rx: 9, ry: 5, rot: -28 },
+          { at: [579, 2871], rx: 10, ry: 5.5, rot: -22 },
+          { at: [511, 2872], rx: 10, ry: 5.5, rot: -20 },
+        ],
+        hits: [[371, 2755, 644, 3004]],
+      },
+    },
     // The axolotl hides like the Wet Lab ones: it lights up, hops back over
     // the floor's back edge (where the water starts) and sinks behind it,
     // peeking over, until the pointer leaves.
@@ -780,4 +806,248 @@ export const SAFETY_SCENE = {
   },
   /** Bottom of the painted box; the pond below is the ending. */
   textEndY: 3691,
+}
+
+/** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
+export const ENGINEERING_SCENE = {
+  header: "Engineering",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/engineering/",
+  plate: [1110, 4000],
+  background: "#fee7c5",
+  skyBottom: 400,
+  /** The mountain's dark brown, on the pale sunset. */
+  headerColor: "#3e3128",
+  accent: "#b04a38",
+  layers: [
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // The rope runs up behind the gear, so it swings from under it.
+    {
+      name: "rope-bucket-only",
+      box: [960, 850, 1110, 2462],
+      swing: { pivot: [1027, 857], deg: 2, hit: [965, 2280, 1100, 2462] },
+    },
+    { name: "gear-only", box: [985, 816, 1110, 1130] },
+  ],
+  side: null,
+  /** No menu highlight to match: the girders' red. */
+  footerButton: { bg: "#b04a38", text: "#ffffff" },
+  text: {
+    name: "text-space",
+    box: [135, 413, 979, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the painted box; the quarry below is the ending. */
+  textEndY: 3691,
+}
+
+/**
+ * Project Description: a night sky with two comets (the bottle and Gemy)
+ * flying over the box, and the CN Tower rocket hovering over a planet below.
+ * Comets and rocket burst into fireworks when clicked.
+ */
+export const PROJECT_SCENE = {
+  header: "Project",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/project/",
+  plate: [918, 4000],
+  background: "#111926",
+  skyBottom: 256,
+  /** The box's cream, glowing like the planets. */
+  headerColor: "#f1e6d4",
+  headerShadow:
+    "0 0 0.35em rgba(80, 130, 255, 0.55), 0 0.08em 0.3em rgba(0, 0, 0, 0.6)",
+  accent: "#2f4fa0",
+  layers: [
+    { name: "project-back", box: [0, 0, 918, 4000] },
+    // Flying through the sky head first, along their tails; clicked, they
+    // burst into fireworks from their heads.
+    {
+      name: "project-gemy",
+      box: [113, 101, 603, 224],
+      fly: {
+        slope: 0.17,
+        ms: 34000,
+        delayMs: 11000,
+        head: [173, 178],
+        colour: "#3fd94a",
+      },
+    },
+    {
+      name: "project-bottle",
+      box: [321, 110, 793, 256],
+      fly: {
+        slope: 0.24,
+        ms: 42000,
+        delayMs: 30000,
+        head: [360, 209],
+        colour: "#4f86f0",
+      },
+    },
+    // Hovers on its trail; rattles when hovered, bursts when clicked.
+    {
+      name: "cn-tower-rocket",
+      box: [418, 2070, 492, 2364],
+      rocket: {
+        trail: "project-smoke-rocket",
+        trailBox: [418, 2360, 495, 3620],
+        hit: [395, 2050, 515, 2380],
+        head: [455, 2190],
+        colour: "#6f9cff",
+      },
+    },
+  ],
+  side: null,
+  /** No menu highlight to match: the planet's orange. */
+  footerButton: { bg: "#e2662c", text: "#111926" },
+  text: {
+    name: "project-box",
+    box: [63, 256, 864, 2001],
+    // The speckled edges reach 68 (top) and 105 (bottom) plate px in, so
+    // they stay out of the stretched middle.
+    caps: [75, 110],
+    minH: 1500,
+    // Clear of the speckled edges (on top of the box's usual padding).
+    inset: [50, 50, 80, 36],
+  },
+  /** Bottom of the painted box; the rocket and planet below are the ending. */
+  textEndY: 2001,
+}
+
+/**
+ * Wiki: two fire dragons in a volcano. Hovered (tapped), a dragon glows,
+ * fire spreads across it from its head and its markings light up. Painted on a
+ * 451×1476 canvas (positions below); the sharper files are the same canvas
+ * scaled up, so they line up as is.
+ */
+/** The Wiki's sharper dragons and fire, on the same canvas at 1222×4000. */
+const WIKI_HQ = "https://static.igem.wiki/teams/6187/wiki/wiki/higher-qual/"
+
+export const WIKI_SCENE = {
+  header: "Wiki",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/wiki/",
+  plate: [451, 1476],
+  /**
+   * Shows through the small gaps between the painting's strokes (mostly in
+   * the lava): the dark of its outlines, so they read as painted, not holes.
+   */
+  background: "#211619",
+  skyBottom: 156,
+  /** Firelight on the smoky sky. */
+  headerColor: "#ffe7c2",
+  headerShadow:
+    "0 0 0.35em rgba(240, 96, 0, 0.65), 0 0.08em 0.3em rgba(0, 0, 0, 0.6)",
+  accent: "#b8430e",
+  layers: [
+    { name: "sky", src: `${WIKI_HQ}skygood.avif`, box: [0, 0, 451, 1223] },
+    {
+      name: "mountains",
+      src: `${WIKI_HQ}mountainsgood.avif`,
+      box: [0, 0, 451, 1476],
+    },
+    {
+      name: "dragon1",
+      src: `${WIKI_HQ}dragon1good.avif`,
+      box: [300, 36, 451, 540],
+      dragon: {
+        glow: "dragon1glow",
+        glowBox: [270, 0, 451, 548],
+        fire: `${WIKI_HQ}fire1good.avif`,
+        fireBox: [264, 0, 451, 250],
+        from: [395, 70],
+        reach: 240,
+        // A few of its neck markings were drawn on dragon 2's highlight.
+        highlights: [
+          { name: `${WIKI_HQ}dragon1higlight.avif`, box: [330, 25, 451, 192] },
+          { name: `${WIKI_HQ}dragon2higlight.avif`, box: [400, 170, 451, 206] },
+        ],
+        hits: [[300, 30, 451, 210]],
+      },
+    },
+    {
+      name: "dragon2",
+      src: `${WIKI_HQ}dragon2good.avif`,
+      box: [0, 537, 451, 1197],
+      dragon: {
+        glow: "dragon2glow",
+        glowBox: [0, 633, 451, 1195],
+        fire: `${WIKI_HQ}fire2good.avif`,
+        fireBox: [0, 588, 451, 1202],
+        tail: `${WIKI_HQ}dragon2tailgood.avif`,
+        // Beside the box it's drawn over the box's end instead (text.front).
+        tailNarrowOnly: true,
+        tailBox: [0, 896, 451, 1152],
+        from: [58, 760],
+        reach: 640,
+        highlights: [
+          { name: `${WIKI_HQ}dragon2higlight.avif`, box: [0, 600, 451, 1120] },
+        ],
+        // Where it shows round the boxes: head and coil.
+        hits: [
+          [0, 670, 136, 830],
+          [392, 670, 451, 800],
+        ],
+        // Along the tail, where it's painted (lowered with it over the box).
+        tailHits: [
+          [0, 1085, 136, 1160],
+          [136, 1030, 200, 1105],
+          [200, 1005, 260, 1095],
+          [260, 980, 330, 1088],
+          [330, 945, 392, 1075],
+          [392, 910, 451, 1052],
+        ],
+      },
+    },
+  ],
+  side: {
+    // A plain box in the painted one's colour: crisp at any size.
+    fill: "#f1dece",
+    radius: "0.6rem",
+    box: [55, 160, 121, 594],
+    navTop: 16,
+    navBottom: 6,
+    linkPadY: 7,
+    linkSize: 11.5,
+    /** No highlight is painted for this page: a flat one in the fire's orange. */
+    indicator: { fill: "#f39a3d", box: [55, 178, 121, 203] },
+    highlightColor: "#f39a3d",
+    /**
+     * A glowing dragon scale rides on its left end (three layers, top first),
+     * a bit taller than the bar and clear of the titles; the list leaves
+     * room under its last title for it (navBottom).
+     */
+    indicatorIcon: {
+      layers: [
+        `${WIKI_HQ}layer-29.avif`,
+        `${WIKI_HQ}layer-28.avif`,
+        `${WIKI_HQ}layer-27.avif`,
+      ],
+      from: [24, 167, 71, 217],
+      box: [38.5, 179.3, 59.5, 201.7],
+    },
+    linkColor: "#4a2418",
+    activeLinkColor: "#2a120a",
+    stripColor: "#f6e6da",
+  },
+  text: {
+    fill: "#f1dece",
+    radius: "0.6rem",
+    box: [136, 156, 392, 1047],
+    minH: 700,
+    // The lower dragon's tail, hung a little lower than painted, comes out
+    // over the box's bottom corner, below the last text; its glow, fire and
+    // markings below \`line\` (just above the tail) come with it.
+    front: {
+      dragon: "dragon2",
+      line: [
+        [0, 1067],
+        [451, 872],
+      ],
+      dy: 50,
+    },
+    // Room under the text for the tail (it reaches ~70 plate px up the box).
+    inset: [0, 0, 56, 0],
+  },
+  /** Bottom of the box; the lava below is the ending. */
+  textEndY: 1047,
 }
