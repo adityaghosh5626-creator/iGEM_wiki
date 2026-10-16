@@ -982,10 +982,10 @@ export const WIKI_SCENE = {
         highlights: [
           { name: `${WIKI_HQ}dragon2higlight.avif`, box: [0, 600, 451, 1120] },
         ],
-        // Where it shows round the boxes: head and coil.
+        // Where it shows round the boxes: head (left) and coil (right).
         hits: [
-          [0, 670, 136, 830],
-          [392, 670, 451, 800],
+          [0, 680, 136, 880],
+          [392, 740, 451, 892],
         ],
         // Along the tail, where it's painted (lowered with it over the box).
         tailHits: [
