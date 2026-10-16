@@ -19,6 +19,11 @@ import {
 
 const COVER_BOARD = "#4a3426"
 const PAPER = "#f5f0e6"
+const PAPER_ART = "https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/paper-open.avif"
+// The 2360×1640 canvas contains a spread at [476, 433, 1566, 1488].
+// Show one 545×1055 half per leaf, excluding the transparent margins.
+const PAPER_LEFT = `${476 / (2360 - 545) * 100}%`
+const PAPER_RIGHT = `${1021 / (2360 - 545) * 100}%`
 /** How far the static hardcover peeks past the paper on each outer edge. */
 const COVER_OVERHANG_PX = 14
 
@@ -765,7 +770,7 @@ export function DesignSketchbook() {
     (pageIndex >= lastPage ||
       (pageIndex >= lastPage - 2 && pageIndex < lastPage && flipDirection === 0))
   const showHardcoverCase =
-    !pages.some(page => page.coverImage) &&
+    bookOpen && pageIndex < lastPage &&
     tabAnchor.bookWidth > 0 &&
     tabAnchor.faceHeight > 0 &&
     !flippingFrontCover &&
@@ -845,11 +850,12 @@ export function DesignSketchbook() {
       <SketchbookRoot ref={sketchRootRef} data-nav-skip="">
         {renderRightTabs("open")}
         <ReducedMotionList aria-label="Design sketchbook pages">
-          {DESIGN_SKETCHBOOK_PAGES.map((page) => (
+          {DESIGN_SKETCHBOOK_PAGES.map((page, index) => (
             <ReducedMotionPage
               key={page.id}
               id={`sketch-${page.id}`}
               $variant={page.variant}
+               $paperX={index % 2 ? PAPER_LEFT : PAPER_RIGHT}
             >
               <SketchPageContent page={page} />
             </ReducedMotionPage>
@@ -889,9 +895,10 @@ export function DesignSketchbook() {
           className="stf__parent"
           $closed={!bookOpen || onBackCover}
         >
-          {pages.map((page) => (
+          {pages.map((page, index) => (
             <SketchPage
               key={page.id}
+               $paperX={index % 2 ? PAPER_LEFT : PAPER_RIGHT}
               data-sketch-page
               data-density={page.density}
               $hard={page.density === "hard"}
@@ -1240,14 +1247,11 @@ const HardcoverCase = styled.div`
   border-radius: ${({ $back, $closed }) =>
     $back ? "7px 3px 3px 7px" : $closed ? "3px 7px 7px 3px" : "3px 7px 7px 3px"};
   box-shadow: 0 10px 24px rgba(34, 22, 14, 0.22);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent 46%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.035) 0 1px,
-      transparent 1px 4px
-    ),
-    ${COVER_BOARD};
+  /* Crop the transparent canvas to the open backing artwork. */
+  background-image: url("https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/cover-open.avif");
+  background-repeat: no-repeat;
+  background-size: ${2360 / 1147 * 100}% ${1640 / 1112 * 100}%;
+  background-position: ${447 / (2360 - 1147) * 100}% ${404 / (1640 - 1112) * 100}%;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity ${({ $visible }) => ($visible ? "0.35s ease" : "0s")};
 `
@@ -1328,6 +1332,9 @@ const BookHost = styled.div`
 `
 
 const SketchPage = styled.div`
+  --paper-x: ${({ $paperX }) => $paperX || PAPER_LEFT};
+  &.--left { --paper-x: ${PAPER_LEFT}; }
+  &.--right { --paper-x: ${PAPER_RIGHT}; }
   /* Page text and padding scale with the page (cqw), which shrinks on short screens. */
   container-type: inline-size;
   background: ${({ $hard, $artwork }) => ($artwork ? "transparent" : $hard ? COVER_BOARD : PAPER)};
@@ -1372,9 +1379,11 @@ const SketchPageInner = styled.div`
       ${COVER_BOARD};
   `
       : `
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent 55%),
-      ${PAPER};
+    background-color: ${PAPER};
+    background-image: url("${PAPER_ART}");
+    background-repeat: no-repeat;
+    background-size: ${2360 / 545 * 100}% ${1640 / 1055 * 100}%;
+    background-position: var(--paper-x, ${PAPER_LEFT}) ${433 / (1640 - 1055) * 100}%;
   `}
 `
 
@@ -1704,6 +1713,7 @@ const ReducedMotionList = styled.div`
 `
 
 const ReducedMotionPage = styled.div`
+  --paper-x: ${({ $paperX }) => $paperX || PAPER_LEFT};
   ${({ $variant }) => ($variant === "cover" || $variant === "back") && `aspect-ratio: ${FLIP_SETTINGS.width} / ${FLIP_SETTINGS.height};`}
   border: 1px solid var(--color-border);
   ${({ $variant }) => ($variant === "cover" || $variant === "back") && "border: 0; border-radius: 0;"}
