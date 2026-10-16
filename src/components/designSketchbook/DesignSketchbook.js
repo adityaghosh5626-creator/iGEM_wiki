@@ -101,6 +101,7 @@ function SketchPageContent({ page }) {
               <TocButton
                 type="button"
                 $color={section.color}
+            $crop={section.tabCrop}
                 data-toc-section={section.id}
               >
                 <TocSwatch $color={section.color} aria-hidden />
@@ -243,65 +244,23 @@ export function DesignSketchbook() {
 
     const stageRect = stage.getBoundingClientRect()
 
-    const isVisibleFace = (el) => {
-      if (!el) return false
-      const r = el.getBoundingClientRect()
-      if (r.width < 2 || r.height < 2) return false
-      const style = window.getComputedStyle(el)
-      return style.display !== "none" && style.visibility !== "hidden"
+    // Use the library's stable layout, never a rotating page's bounding box.
+    const flip = pageFlipRef.current
+    const rect = flip?.getBoundsRect?.()
+    if (!rect?.pageWidth || !rect?.height) return
+    const hostRect = host.getBoundingClientRect()
+    const currentIndex = flip.getCurrentPageIndex()
+    const lastIndex = Math.max(0, flip.getPageCount() - 1)
+    const portrait = flip.getOrientation?.() === "portrait"
+    const single = portrait || currentIndex === 0 || currentIndex === lastIndex
+    const leftOffset = portrait || currentIndex === 0 ? rect.pageWidth : 0
+    const useRect = {
+      left: hostRect.left + rect.left + leftOffset,
+      top: hostRect.top + rect.top,
+      width: single ? rect.pageWidth : rect.width,
+      height: rect.height,
     }
-
-    let nodes = [...host.querySelectorAll(".stf__item.--simple")].filter(isVisibleFace)
-
-    // Closed cover sits on the right; the back cover sits on the left. Never
-    // union leftover hover faces into a two-page hardcover.
-    const currentIndex = pageFlipRef.current?.getCurrentPageIndex?.() ?? 0
-    const lastIndex = Math.max(0, (pageFlipRef.current?.getPageCount?.() ?? 1) - 1)
-    if (currentIndex === 0) {
-      const cover =
-        nodes.find((el) => el.classList.contains("--right")) ||
-        [...host.querySelectorAll(".stf__item.--right")].find(isVisibleFace) ||
-        host.querySelector("[data-density='hard']")
-      if (cover) nodes = [cover]
-    } else if (currentIndex === lastIndex) {
-      const back =
-        nodes.find((el) => el.classList.contains("--left")) ||
-        [...host.querySelectorAll(".stf__item.--left")].find(isVisibleFace)
-      if (back) nodes = [back]
-    } else if (!nodes.length) {
-      nodes = [...host.querySelectorAll(".stf__item")].filter(isVisibleFace)
-    }
-
-    let bookLeft = Infinity
-    let bookTop = Infinity
-    let bookRight = -Infinity
-    let bookBottom = -Infinity
-    nodes.forEach((el) => {
-      const r = el.getBoundingClientRect()
-      bookLeft = Math.min(bookLeft, r.left)
-      bookTop = Math.min(bookTop, r.top)
-      bookRight = Math.max(bookRight, r.right)
-      bookBottom = Math.max(bookBottom, r.bottom)
-    })
-
-    let useRect
-    if (bookLeft < Infinity) {
-      useRect = {
-        left: bookLeft,
-        top: bookTop,
-        right: bookRight,
-        bottom: bookBottom,
-        height: bookBottom - bookTop,
-        width: bookRight - bookLeft,
-      }
-    } else {
-      const fallback = host.querySelector(".stf__wrapper") || host
-      useRect = fallback.getBoundingClientRect()
-    }
-
-    if (useRect.height < 40) {
-      useRect = host.getBoundingClientRect()
-    }
+    useRect.right = useRect.left + useRect.width
 
     // Tabs start below the notebook top so the page edge leads the tab stack.
     const faceTop = Math.max(0, useRect.top - stageRect.top)
@@ -322,7 +281,7 @@ export function DesignSketchbook() {
     setReducedMotion(prefersReducedMotion())
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!ready) return undefined
     measureTabAnchor()
     const raf = window.requestAnimationFrame(() => {
@@ -641,7 +600,7 @@ export function DesignSketchbook() {
             ) {
               flipInstance.update()
             }
-            window.requestAnimationFrame(() => measureTabAnchor())
+            measureTabAnchor()
           }
         })
 
@@ -799,6 +758,7 @@ export function DesignSketchbook() {
             aria-selected={selected}
             title={section.progress}
             $color={section.color}
+            $crop={section.tabCrop}
             $active={selected && mode === "open"}
             $mode={mode}
             $compact={false}
@@ -834,6 +794,7 @@ export function DesignSketchbook() {
             aria-label={`Go back to ${section.label}`}
             title={`${section.label}: ${section.progress}`}
             $color={section.color}
+            $crop={section.tabCrop}
             $active={false}
             $mode="open"
             $compact
@@ -1057,7 +1018,7 @@ const TabRail = styled.div`
       }
     );
     right: auto;
-    width: ${$mode === "open" ? "7.75rem" : "6.5rem"};
+    width: ${$mode === "open" ? "11rem" : "8.2rem"};
     height: auto;
     justify-content: flex-start;
     gap: 0.4rem;
@@ -1082,8 +1043,8 @@ const TabRail = styled.div`
     ${({ $embedded, $side, $mode }) =>
       $embedded && $side === "right"
         ? `
-      /* Fits the stage's 4rem right padding plus the page gutter. */
-      width: 4.75rem;
+      /* Keep the artwork's roughly 3.49:1 proportions on phones too. */
+      width: 7rem;
     `
         : $embedded && $side === "left"
           ? `
@@ -1099,11 +1060,15 @@ const TabRail = styled.div`
 
 const SectionTab = styled.button`
   appearance: none;
-  border: 1px solid color-mix(in srgb, ${({ $color }) => $color} 55%, #222);
-  background: ${({ $color, $active }) =>
-    $active
-      ? `color-mix(in srgb, ${$color} 90%, #fff)`
-      : `color-mix(in srgb, ${$color} 74%, #f5f0e6)`};
+  border: 0;
+  background-color: transparent;
+  background-image: url("https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/tabs.avif");
+  background-repeat: no-repeat;
+  ${({ $crop }) => {
+    const [x0, y0, x1, y1] = $crop
+    return `background-size: ${2360 / (x1 - x0) * 100}% ${1640 / (y1 - y0) * 100}%;
+      background-position: ${x0 / (2360 - (x1 - x0)) * 100}% ${y0 / (1640 - (y1 - y0)) * 100}%;`
+  }}
   color: #1a1a1a;
   cursor: pointer;
   text-align: left;
@@ -1152,7 +1117,7 @@ const SectionTab = styled.button`
   `}
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, ${({ $color }) => $color} 92%, #fff);
+    filter: brightness(1.08);
     ${({ $compact, $active, $mode }) =>
       $compact
         ? `transform: translateX(-3px);`
@@ -1181,9 +1146,9 @@ const SectionTab = styled.button`
       ? ""
       : `
   @media (max-width: 720px) {
-    height: 2.6rem;
-    min-height: 2.6rem;
-    max-height: 2.6rem;
+    height: 2rem;
+    min-height: 2rem;
+    max-height: 2rem;
     padding: 0.3rem 0.4rem;
   }
   `}
@@ -1224,14 +1189,14 @@ const BookStage = styled.div`
   height: auto;
   min-height: 0;
   overflow: visible;
-  /* Room for left overpassed stubs + right named tabs */
-  padding-left: 3.25rem;
-  padding-right: 5.5rem;
+  /* Balance the gutters so longer tabs do not pull the book left. */
+  padding-left: 7.375rem;
+  padding-right: 7.375rem;
   box-sizing: border-box;
 
   @media (max-width: 720px) {
     padding-left: 2.25rem;
-    padding-right: 4rem;
+    padding-right: 7.5rem;
   }
 `
 
@@ -1619,7 +1584,7 @@ const underBook = `
   box-sizing: border-box;
   width: 100%;
   padding-left: 3.25rem;
-  padding-right: 5.5rem;
+  padding-right: 11.5rem;
 
   /* Doubled class: beats the article's \`p { max-width: 48rem }\`. */
   && {
@@ -1628,7 +1593,7 @@ const underBook = `
 
   @media (max-width: 720px) {
     padding-left: 2.25rem;
-    padding-right: 4rem;
+    padding-right: 7.5rem;
   }
 `
 

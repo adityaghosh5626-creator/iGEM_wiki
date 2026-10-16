@@ -19,6 +19,7 @@ const NB_IMG = (name) =>
 export const DESIGN_SKETCHBOOK_SECTIONS = [
   {
     id: "web-design",
+    tabCrop: [1486, 486, 1859, 593],
     label: "Web Design",
     color: "#3B82A0",
     progress: "Homepage painted and built; subpages follow.",
@@ -26,6 +27,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "animation",
+    tabCrop: [1485, 599, 1858, 706],
     label: "Animation",
     color: "#E07A3A",
     progress: "Promo animation drawn and delivered in July.",
@@ -33,6 +35,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "character-design",
+    tabCrop: [1484, 711, 1857, 818],
     label: "Character Design",
     color: "#5A9E4B",
     progress: "PETamon designed and printed as trading cards.",
@@ -40,6 +43,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "social",
+    tabCrop: [1481, 827, 1854, 934],
     label: "Social",
     color: "#C45B8C",
     progress: "Intro post, reels, newsletters and the promo.",
@@ -47,6 +51,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "branding",
+    tabCrop: [1482, 940, 1855, 1047],
     label: "Branding",
     color: "#7B5EA7",
     progress: "Competition winner became the PetaBite logo.",
@@ -54,6 +59,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "other",
+    tabCrop: [1481, 1054, 1854, 1161],
     label: "Other",
     color: "#8A8680",
     progress: "Promo out; presentation video filming now.",
