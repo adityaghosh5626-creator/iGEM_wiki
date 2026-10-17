@@ -40,4 +40,53 @@ jobs:
           git fetch igem main
           git switch -c igem-main-sync igem/main
           git merge --no-edit github-main
+
+          # GitLab refuses a push over 11 MiB, so a large sync first sends its
+          # new files in smaller batches on a scratch branch (CI skipped); the
+          # push to main then only carries what is left.
+          staging=refs/heads/github-sync-staging
+          limit=$((8 * 1024 * 1024))
+          staged=""
+          entries=""
+          sent=""
+          total=0
+          flush() {
+            [ -n "$entries" ] || return 0
+            # Each tree lists every file sent so far: git counts only the
+            # newest one's as already on GitLab.
+            sent="${sent}${entries}"
+            tree=$(printf '%s' "$sent" | git mktree)
+            if [ -n "$staged" ]; then
+              staged=$(git commit-tree "$tree" -p "$staged" -m "Sync staging")
+            else
+              staged=$(git commit-tree "$tree" -m "Sync staging")
+            fi
+            echo "Staging $(printf '%s' "$entries" | wc -l) files, $((total / 1024)) KiB"
+            git push -o ci.skip --force igem "$staged:$staging"
+            entries=""
+            total=0
+          }
+          while read -r sha type size; do
+            [ "$type" = blob ] || continue
+            if [ "$total" -gt 0 ] && [ $((total + size)) -gt "$limit" ]; then
+              flush
+            fi
+            entries="${entries}100644 blob ${sha}"$'\t'"${sha}"$'\n'
+            total=$((total + size))
+          done < <(
+            git rev-list --objects igem/main..HEAD | cut -d' ' -f1 |
+              git cat-file --batch-check='%(objectname) %(objecttype) %(objectsize)'
+          )
+          # Small syncs never fill a batch and go straight to main. Otherwise a
+          # last scratch commit takes the batches and the merge as parents: git
+          # only skips files already sent when they come in through a parent,
+          # so this push carries the rest and main then needs no upload.
+          if [ -n "$staged" ]; then
+            flush
+            bridge=$(git commit-tree "$(git mktree </dev/null)" \
+              -p "$staged" -p HEAD -m "Sync staging")
+            git push -o ci.skip --force igem "$bridge:$staging"
+          fi
+
           git push igem HEAD:main
+          [ -z "$staged" ] || git push -o ci.skip igem --delete "$staging" || true
