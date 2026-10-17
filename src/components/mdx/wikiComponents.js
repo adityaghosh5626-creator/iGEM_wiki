@@ -142,8 +142,10 @@ const toneStyles = {
   `,
 }
 
+// --wiki-block-max lets a page (the Dry Lab scene) run these boxes the full
+// width of its text box.
 const CalloutBox = styled.aside`
-  max-width: 48rem;
+  max-width: var(--wiki-block-max, 48rem);
   padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--color-border);
   border-left: 5px solid var(--callout-accent);
@@ -169,7 +171,7 @@ const CalloutBody = styled.div`
 `
 
 const PlaceholderBox = styled.div`
-  max-width: 48rem;
+  max-width: var(--wiki-block-max, 48rem);
   padding: var(--space-md) var(--space-lg);
   border: 1px dashed var(--color-muted);
   border-radius: 6px;
@@ -220,7 +222,7 @@ const GridWrap = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-md);
-  max-width: 54rem;
+  max-width: var(--wiki-block-max, 54rem);
   margin: var(--space-lg) 0;
 
   figure {
@@ -229,7 +231,7 @@ const GridWrap = styled.div`
 `
 
 const DataTableWrap = styled.div`
-  max-width: 54rem;
+  max-width: var(--wiki-block-max, 54rem);
   overflow-x: auto;
   margin: var(--space-lg) 0;
 `

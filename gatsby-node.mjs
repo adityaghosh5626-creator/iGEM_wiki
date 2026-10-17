@@ -56,9 +56,21 @@ export async function createPages({ actions, graphql, reporter }) {
     return
   }
 
+  // Comma-separated path prefixes left out of this build. The iGEM build skips
+  // the Dry Lab issue pages: their embedded images are far over iGEM's 5 MB
+  // upload limit until they move to static.igem.wiki.
+  const excludedPrefixes = (process.env.WIKI_EXCLUDE_PATHS || ``)
+    .split(`,`)
+    .map((prefix) => prefix.trim())
+    .filter(Boolean)
+  if (excludedPrefixes.length) {
+    reporter.info(`Leaving out wiki pages under: ${excludedPrefixes.join(`, `)}`)
+  }
+
   const selectedRoutes = new Map()
   const nodes = result.data.allMdx.nodes
     .filter((node) => !path.basename(node.internal.contentFilePath).startsWith(`_`))
+    .filter((node) => !excludedPrefixes.some((prefix) => node.frontmatter.path.startsWith(prefix)))
     .filter((node) => USE_PAYLOAD_EXPORTS || !isPayloadExport(node))
     .sort((a, b) => Number(isPayloadExport(b)) - Number(isPayloadExport(a)))
 

@@ -172,6 +172,8 @@ export const DRY_LAB_SCENE = {
     caps: [40, 40],
     /** Shortest box (plate px): the mockup's length. */
     minH: 2168,
+    /** Callouts, placeholders and other capped blocks span the whole box. */
+    fullWidthBlocks: true,
   },
   /**
    * Where the text ends in the art (plate y): just above the cobweb tunnel,

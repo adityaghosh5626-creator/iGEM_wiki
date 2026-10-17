@@ -129,7 +129,7 @@ Nothing runs between searches, so the tool costs almost nothing while it waits f
   src="/figures/diamond-search/diamond-search-temporal.svg"
   alt="Sequence diagram of one search over time. The web app sends the search to the orchestrator, which reads the database version and manifest from S3, starts Step Functions and returns a job ID within about a second, after which the web app starts polling. Step Functions then invokes all 32 workers in parallel; each downloads its shard, runs diamond blastp and writes its hits to S3, taking about 40 seconds. Once every part has landed, the aggregator reads all 32 parts, merges, sorts and enriches them, and writes the result and index, which the web app's poll finds."
   caption="One search over time. The page gets a job ID within a second and shows results when the fan-out and merge finish, usually in under a minute."
-  width="48rem"
+  width="100%"
 />
 
 <MethodsLink>How the database is split, why the merged ranking is exact, how results are versioned and cached, and how we measured all of this.</MethodsLink>

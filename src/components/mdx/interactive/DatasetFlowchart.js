@@ -218,7 +218,7 @@ export const DatasetFlowchart = () => {
 }
 
 const FigureWrap = styled.figure`
-  max-width: 54rem;
+  max-width: var(--wiki-block-max, 54rem);
   margin: var(--space-lg) 0;
 `
 

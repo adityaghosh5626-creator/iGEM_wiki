@@ -1767,6 +1767,7 @@ function sceneVars(scene, plate) {
       scene.headerShadow ||
       "0 0.04em 0 rgba(255, 255, 255, 0.55), 0 0.1em 0.35em rgba(0, 0, 0, 0.2)",
     "--accent": scene.accent,
+    "--wiki-block-max": scene.text.fullWidthBlocks ? "none" : undefined,
     "--crop-top": pp(crop),
     "--sky-h": pp(scene.skyBottom - crop),
     // Long headers shrink to stay inside ~88% of the width (≈0.6em a letter).
