@@ -1071,8 +1071,10 @@ const ZoneSide = styled.div`
 /** A dragon's front part (see `text.front`), positioned off the box's bottom. */
 function TextFrontArt({ plate, text, d, split, lit, light }) {
   const dy = text.front.dy || 0
+  // Across: where it's painted on the plate (--box-x is the box's own left,
+  // which moves when the menu shrinks to a rail). Down: off the box's bottom.
   const at = ([x0, y0, x1, y1]) => ({
-    left: pp(x0 - text.box[0]),
+    left: `calc(${pp(x0)} - var(--box-x, ${pp(text.box[0])}))`,
     top: `calc(100% + ${pp(y0 + dy - text.box[3])})`,
     width: pp(x1 - x0),
     height: pp(y1 - y0),
@@ -1836,6 +1838,22 @@ export function SubpageScene({ scene, title, description, children }) {
   const artRef = useRef(null)
   const frameRef = useRef(null)
   const textBoxRef = useRef(null)
+  // The box's left edge from the scene's (for text.front, which is painted
+  // against the plate): it moves when the menu shrinks to a rail.
+  useLayoutEffect(() => {
+    const box = textBoxRef.current
+    const sceneEl = sceneRef.current
+    if (!front || !box || !sceneEl) return undefined
+    const measure = () => {
+      const x = box.getBoundingClientRect().left - sceneEl.getBoundingClientRect().left
+      box.style.setProperty("--box-x", `${x.toFixed(2)}px`)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(box)
+    ro.observe(sceneEl)
+    return () => ro.disconnect()
+  }, [front])
   const bodyRef = useRef(null)
   const navRef = useRef(null)
   const sideColumnRef = useRef(null)
@@ -3746,6 +3764,17 @@ const SideNav = styled.nav`
   margin-left: calc(-1 * var(--nav-bleed));
   padding: var(--nav-top) ${ax(6)} var(--nav-bottom, 0px)
     calc(var(--nav-bleed) + ${ax(6)});
+
+  /* Beside the text, only the links take the pointer: the list's unseen
+     edge (room for the marker) mustn't block the art under it. */
+  @media (min-width: 861px) {
+    pointer-events: none;
+
+    a,
+    button {
+      pointer-events: auto;
+    }
+  }
 
   &::-webkit-scrollbar {
     display: none;
