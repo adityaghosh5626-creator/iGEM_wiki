@@ -19,10 +19,11 @@ jobs:
     steps:
       - name: Check out GitHub main
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
-      - name: Merge GitHub main into GitLab main
+      # GitLab gets a snapshot of GitHub main's files as one new commit, not
+      # GitHub's history: a file GitLab can't take (over 10 MB) that was later
+      # fixed on GitHub would otherwise block every sync from then on.
+      - name: Commit a snapshot of GitHub main onto GitLab main
         env:
           GITLAB_TOKEN: ${{ secrets.IGEM_GITLAB_TOKEN }}
         run: |
@@ -35,11 +36,17 @@ jobs:
 
           git config user.name "iGEM Toronto Sync Bot"
           git config user.email "igem-toronto-sync@users.noreply.github.com"
-          git branch github-main "$GITHUB_SHA"
           git remote add igem "https://oauth2:${GITLAB_TOKEN}@gitlab.igem.org/2026/toronto.git"
           git fetch igem main
-          git switch -c igem-main-sync igem/main
-          git merge --no-edit github-main
+
+          tree=$(git rev-parse "$GITHUB_SHA^{tree}")
+          if [ "$tree" = "$(git rev-parse "igem/main^{tree}")" ]; then
+            echo "GitLab main already has these files."
+            exit 0
+          fi
+          snapshot=$(git commit-tree "$tree" -p igem/main -m "Sync GitHub main at $(git rev-parse --short "$GITHUB_SHA")
+
+          $(git log -1 --format='Latest: %s (%an)' "$GITHUB_SHA")")
 
           # GitLab refuses a push over 11 MiB, so a large sync first sends its
           # new files in smaller batches on a scratch branch (CI skipped); the
@@ -74,19 +81,19 @@ jobs:
             entries="${entries}100644 blob ${sha}"$'\t'"${sha}"$'\n'
             total=$((total + size))
           done < <(
-            git rev-list --objects igem/main..HEAD | cut -d' ' -f1 |
+            git rev-list --objects "$snapshot" --not igem/main | cut -d' ' -f1 |
               git cat-file --batch-check='%(objectname) %(objecttype) %(objectsize)'
           )
           # Small syncs never fill a batch and go straight to main. Otherwise a
-          # last scratch commit takes the batches and the merge as parents: git
+          # last scratch commit takes the batches and the snapshot as parents: git
           # only skips files already sent when they come in through a parent,
           # so this push carries the rest and main then needs no upload.
           if [ -n "$staged" ]; then
             flush
             bridge=$(git commit-tree "$(git mktree </dev/null)" \
-              -p "$staged" -p HEAD -m "Sync staging")
+              -p "$staged" -p "$snapshot" -m "Sync staging")
             git push -o ci.skip --force igem "$bridge:$staging"
           fi
 
-          git push igem HEAD:main
+          git push igem "$snapshot:refs/heads/main"
           [ -z "$staged" ] || git push -o ci.skip igem --delete "$staging" || true
