@@ -6,18 +6,23 @@ import React, {
   useState,
 } from "react"
 import styled, { css, keyframes } from "styled-components"
+import { Link } from "gatsby"
 import { WikiTopBar, WIKI_TOP_BAR_Z_INDEX } from "./WikiTopBar.js"
 import { WaterfallSideText, PETASE_EXPLANATION } from "./WaterfallSideText.js"
 import { SwipeInBox } from "./SwipeInBox.js"
 import { ExplainTerm } from "./ExplainTermPopover.js"
+import { HomePlaza, PetamonProvider } from "./HomePlaza.js"
 import EndingPetamonBottle from "./EndingPetamonBottle.js"
 import { HomeAutoplay } from "./HomeAutoplay.js"
+import { LabConstellation, WindowSky } from "./LabConstellation.js"
+import { LabBench, WET_TIP, wetStage } from "./LabBench.js"
 import {
   ART_REF_W,
   ART_WIDTH_VAR,
   artFont,
   artPx,
   phone,
+  PHONE_MAX,
   phoneSize,
 } from "./artScale.js"
 import { LOGO_BOX, LOGO_FRAMES, LOGO_PLATE, LogoFrame } from "./logoFrames.js"
@@ -60,6 +65,24 @@ const BOTTLE_STAGE_ORDER = [
   BOTTLE_STAGES.section6,
 ]
 
+/**
+ * The top of the homepage, sharper for big screens: the front plate's rows
+ * 310–1400 (plaza, waterfall) cut from the original 1440 px painting, and the
+ * back's rows 0–420 (sky and skyline, all that shows through the sky hole)
+ * upscaled 3×. Drawn over the usual art from 520px wide up; phones keep the
+ * lighter art. Until they're uploaded, the usual art just shows through.
+ */
+const HQ_TOP = {
+  front: {
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/front-top-orig.avif",
+    rows: [310, 1400],
+  },
+  back: {
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/back-top-hq.avif",
+    rows: [0, 420],
+  },
+}
+
 const ASSETS = {
   /** Toronto sky + skyline, on the same 563×4000 canvas as the front. */
   back: "https://static.igem.wiki/teams/6187/wiki/homepage-components/wiki-front-page-back-new.avif",
@@ -74,7 +97,8 @@ const ASSETS = {
   /** Waterfall / sky section bottle (current homepage stage). */
   bottle: BOTTLE_STAGES.sky,
   /** Opaque puddle lip — sits over the bottle so it can tuck behind the water. */
-  water: "https://static.igem.wiki/teams/6187/wiki/homepage-components/wiki-front-water.avif",
+  water:
+    "https://static.igem.wiki/teams/6187/wiki/homepage-components/wiki-front-water.avif",
 }
 
 /**
@@ -137,13 +161,21 @@ const SECTION4_ASSETS = {
   sand: "https://static.igem.wiki/teams/6187/wiki/homepage-components/sand.avif",
   enzyme:
     "https://static.igem.wiki/teams/6187/wiki/homepage-components/enzyme-replacing-bottle.avif",
+  /**
+   * The enzyme alone, 4× its painted size and sharpened, for when it's shown
+   * big (LAB_ENZYME_BIG); the plate's copy shows until it has loaded.
+   */
+  enzymeHq:
+    "https://static.igem.wiki/teams/6187/wiki/homepage-components/enzyme-hq.avif",
 }
 /** Section-4 row the "1,000,000-fold" line centres on: above the UMAP screen. */
 const SECTION4_TEXT_ROW = 255
 /**
- * The enzyme's painted box on the section-4 plate (%). It fades in there,
- * follows the reader (held at ENZYME_FOLLOW_VIEW_Y), then fades out just
- * before the bottle rolls in, wearing it.
+ * The enzyme's painted box on the plate it's cut from (%): its size, and
+ * its place across the lab. It fades in where the constellation shrinks into
+ * it (the second of SECTION4_HOLD_ROWS), follows the reader (held at
+ * ENZYME_FOLLOW_VIEW_Y), then fades out just before the bottle rolls in,
+ * wearing it.
  */
 const SECTION4_ENZYME_CROP = {
   x: (441 / 1004) * 100,
@@ -153,9 +185,280 @@ const SECTION4_ENZYME_CROP = {
 }
 /** Its painted size (px), for the cut-out's shape. */
 const SECTION4_ENZYME_PX = { w: 109, h: 125 }
+/** The window on the lab wall (the PETadex's night sky), on the lab plate. */
+const SECTION4_WINDOW = [115, 313, 882, 868]
+/**
+ * The Dry Lab story, played through two holds where the lab stops scrolling
+ * (like the forest walk) while it plays (LabConstellation):
+ * 1. With the window filling the screen (row SECTION4_HOLD_ROWS[0] at its
+ *    middle) for LAB_HOLD_VH[0] of scrolling: stars are picked off the
+ *    clusters and drawn into constellations as the first lines come in.
+ * 2. The big blue cluster's constellation comes off the window and rides down
+ *    with the reader to row SECTION4_HOLD_ROWS[1], held for LAB_HOLD_VH[1]:
+ *    it assembles into the enzyme as the last lines come in, and the enzyme
+ *    follows the reader from there, before the first lab bench.
+ * Phones hold the lab in one place for both (SECTION4_PHONE_HOLD_ROW): under
+ * the window the lines take turns in one spot (SECTION4_PHONE_STORY_ROW), the
+ * second hold's on the left, and the constellation rides down to their right,
+ * where it assembles (SECTION4_PHONE_PROTEIN_ROW).
+ */
+const SECTION4_HOLD_ROWS = { at: [590, 1200] }
+/** Phones: the row held at the middle, centring the window and what's under it. */
+const SECTION4_PHONE_HOLD_ROW = 886
+/** Phones: the story lines' one spot (their top) and the protein's middle, right of it. */
+const SECTION4_PHONE_STORY_ROW = 1105
+const SECTION4_PHONE_PROTEIN_ROW = 1200
+/**
+ * The first hold centres the window under the site header (about this
+ * tall), not the screen, so its top isn't tucked under the header.
+ */
+const LAB_HEADER_HALF = "2.3rem"
+/**
+ * Screens too short for the whole window (laptops, landscape tablets) pan
+ * it instead: its top under the header for the first lines, then down to
+ * its bottom over this share of the first hold, before the last line
+ * (`--lab-pan`). The window keeps this gap (px) from the header and the
+ * screen's foot.
+ */
+const LAB_PAN = [0.44, 0.64]
+const LAB_PAN_MARGIN = 10
+/**
+ * How many times the enzyme's size the constellation grows to on its way
+ * down and assembles at, beside the second hold's lines; the enzyme takes
+ * over at that size and shrinks back over LAB_ENZYME_SHRINK_VH of scrolling
+ * after the hold.
+ */
+const LAB_ENZYME_BIG = { at: 1.9, phone: 1.5 }
+const LAB_ENZYME_SHRINK_VH = 0.6
+const LAB_HOLD_VH = [180, 160, 200, 180]
+/**
+ * Then two more holds (LabBench): the Wet Lab shelf, where the enzyme drops
+ * into the blue beaker that pours it down to the bioreactor, and the
+ * Hardware bench, where the beefed-up PETase pops out of it. These rows are
+ * held at the screen's middle, on phones too.
+ */
+const SECTION4_BENCH_ROWS = [1660, 2780]
+/**
+ * The next bottle rolls in once its cue is near the screen's foot, so the
+ * bench's hold puts a higher row at the middle where it must to keep the cue
+ * at least this far (share of vh) below the middle (benchHoldRow).
+ */
+const LAB_BENCH_CUE_VH = 0.5
+/** In the blue beaker's liquid, where the enzyme drops in; and its stream (x, rows). */
+const SECTION4_BEAKER = [458, 1830]
+const SECTION4_STREAM = { x: 641, rows: [1910, 2708] }
+/** The enzyme riding the stream, as a share of its own size. */
+const SECTION4_RIDE_SCALE = 0.7
+/**
+ * The beefed-up PETase: its box on its plate, where it lands when it pops out
+ * of the bioreactor (its middle), and its size there.
+ */
+const SECTION4_BEEFED = {
+  src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/lab-stuff/beefeduppetase.avif",
+  box: [400, 1200, 195, 193],
+  land: [470, 2640],
+  scale: 0.8,
+}
+/** The bioreactor vessel's mouth, which the stream pours into and the PETase pops out of. */
+const SECTION4_VESSEL = [641, 2706]
+const SECTION4_BEEFED_CROP = {
+  x: (SECTION4_BEEFED.box[0] / SECTION4_PLATE.w) * 100,
+  y: (SECTION4_BEEFED.box[1] / SECTION4_PLATE.h) * 100,
+  w: (SECTION4_BEEFED.box[2] / SECTION4_PLATE.w) * 100,
+  h: (SECTION4_BEEFED.box[3] / SECTION4_PLATE.h) * 100,
+}
+/** The big blue cluster's middle, where its constellation sets off from. */
+const SECTION4_BLUE_CLUSTER = [558, 698.2]
+/** Its lane: from there to where the lab holds the second time. */
+const SECTION4_CONSTELLATION_ROWS = {
+  at: [
+    SECTION4_BLUE_CLUSTER[1],
+    SECTION4_HOLD_ROWS.at[1] + SECTION4_ENZYME_PX.h,
+  ],
+}
+/** On phones the constellation and enzyme sit here (% across), right of the lines. */
+const SECTION4_PHONE_RIDE_LEFT = 71.5
+/** How far across (plate px) the cluster's middle is from its lane's. */
+const SECTION4_RIDE_DX = {
+  at: SECTION4_BLUE_CLUSTER[0] - (441 + SECTION4_ENZYME_PX.w / 2),
+  phone:
+    SECTION4_BLUE_CLUSTER[0] -
+    ((SECTION4_PHONE_RIDE_LEFT / 100) * SECTION4_PLATE.w +
+      SECTION4_ENZYME_PX.w / 2),
+}
+/**
+ * Each line: which hold it comes in through and when (share of it), and
+ * [top row, left %, width %]. The first hold's are in the window's night sky
+ * (`sky`); the second's either side of the constellation; the bench holds'
+ * take turns in one spot (its middle with `mid`), each going (`out`, [hold,
+ * share of it]) as the next comes. On phones the Dry Lab's take turns in one spot under the window:
+ * `phone` is when each comes in and goes, just before the next, and `phoneAt`
+ * [top row, left %, width %] moves one from that spot.
+ */
+const SECTION4_STORY = [
+  {
+    hold: 0,
+    in: 0.02,
+    sky: true,
+    at: [372, 12, 21],
+    phone: { in: [0, 0.06], out: [0, 0.28] },
+    text: "Each star is a protein in this database.",
+  },
+  {
+    hold: 0,
+    in: 0.3,
+    sky: true,
+    // Top right of the window, right of the red cluster.
+    at: [372, 68, 18.3],
+    // Up to LAB_NARROW_MAX it takes all the room there is.
+    narrow: [65.8, 21],
+    phone: { in: [0, 0.32], out: [0, 0.58] },
+    text: "We annotated each with signal peptides, protein domains, the temperature and pH of the environment it came from, and activity data scraped from the literature.",
+  },
+  {
+    hold: 0,
+    in: 0.58,
+    sky: true,
+    // Bottom right, above the light blue cluster.
+    at: [668, 69, 17],
+    // Gone before the constellation rides down through its spot.
+    phone: { in: [0, 0.62], out: [1, 0] },
+    text: "Clusters of related proteins form constellations that show us where to look.",
+  },
+  {
+    hold: 1,
+    in: 0.04,
+    at: [1080, 2, 30],
+    // Gone as the Wet Lab's hold starts, where tall screens still show it.
+    out: [2, 0],
+    phone: { in: [1, 0.2], out: [1, 0.46] },
+    phoneAt: [SECTION4_PHONE_STORY_ROW, 4, 60],
+    text: (
+      <>
+        Our <Link to="/dry-lab/overview/">Dry Lab</Link> team has trained models
+        on this database to rank which candidates to test for each condition.
+      </>
+    ),
+  },
+  {
+    hold: 1,
+    in: 0.3,
+    at: [1080, 68, 30],
+    out: [2, 0],
+    // Fades as the protein slides to the middle, at the hold's end.
+    phone: { in: [1, 0.5], out: [1, 0.9] },
+    phoneAt: [SECTION4_PHONE_STORY_ROW, 4, 60],
+    text: "We also designed a novel algorithm to optimize the DNA library to order to capture more constellations of proteins.",
+  },
+  // The Wet Lab shelf: on the wall right of it, centred on the bench (`mid`:
+  // the row is their middle), and under it on phones.
+  {
+    hold: 2,
+    in: 0.02,
+    out: [2, 0.3],
+    at: [1785, 69.5, 28],
+    mid: true,
+    phoneAt: [2040, 4, 92],
+    text: (
+      <>
+        Current methods are inefficient and expensive, so we developed our own
+        solution…
+        <br />
+        Our <Link to="/wet-lab/overview/">Wet Lab</Link> team has designed and
+        created 2 novel high-throughput assays!
+      </>
+    ),
+  },
+  {
+    hold: 2,
+    in: 0.32,
+    out: [2, 0.58],
+    at: [1785, 69.5, 28],
+    mid: true,
+    phoneAt: [2040, 4, 92],
+    text: "In both, copper is embedded in PET and when an enzyme degrades the plastic, copper is released and switches on a promoter.",
+  },
+  {
+    hold: 2,
+    in: 0.6,
+    out: [3, 0],
+    at: [1785, 69.5, 28],
+    mid: true,
+    phoneAt: [2040, 4, 92],
+    text: "In the biosensor, that makes cells glow green and in the selection, it turns on antibiotic resistance, so only cells with a working enzyme grow into colonies.",
+  },
+  // The Hardware bench: on the wall left of the bioreactor, centred on it
+  // (above it on phones).
+  {
+    hold: 3,
+    in: 0.02,
+    out: [3, 0.26],
+    at: [2880, 3, 33],
+    mid: true,
+    phoneAt: [2300, 4, 92],
+    text: "The best candidates then need to be tested under real conditions.",
+  },
+  {
+    hold: 3,
+    in: 0.28,
+    out: [3, 0.56],
+    at: [2880, 3, 33],
+    mid: true,
+    phoneAt: [2300, 4, 92],
+    text: (
+      <>
+        <Link to="/hardware/">Hardware</Link> built a low-cost, open-source
+        parallel{" "}
+        <ExplainTerm
+          term="bioreactor"
+          explanation="A bioreactor is a controlled vessel where biological reactions run under stable, adjustable conditions."
+          plain
+        />
+        , based on the Pioreactor, with its own optical density sensor,
+        temperature control, pumps, stirring and a live dashboard.
+      </>
+    ),
+  },
+  {
+    hold: 3,
+    in: 0.58,
+    at: [2880, 3, 33],
+    mid: true,
+    phoneAt: [2300, 4, 92],
+    text: "The aim is to scale up to 8 units, so one experiment can compare many enzymes across many temperatures and pH values.",
+  },
+]
+/** Up to this width (px) the window's lines use their `narrow` [left %, width %]. */
+const LAB_NARROW_MAX = 700
+/** The second hold's share over which the enzyme fades in over the constellation. */
+const LAB_HANDOFF = [0.74, 0.82]
+
 const ENZYME_FOLLOW_VIEW_Y = 0.5
-/** Scroll (share of vh) over which the enzyme fades out, ending as the bottle starts rolling in. */
-const ENZYME_FADE_OUT_VH = 0.35
+/** Phones: the second hold's share over which the enzyme slides to the middle and shrinks back. */
+const LAB_PHONE_SLIDE = [0.9, 1]
+/**
+ * The Wet Lab hold's share over which the enzyme drops into the beaker, and
+ * where the stream's rider takes over from it, at the tipped beaker's spout
+ * (LabBench's WET_TIP ends there).
+ */
+const LAB_DROP = [0.04, 0.2]
+const LAB_RIDE_FROM = WET_TIP[1]
+/** The bench hold's share over which the stream's rider goes into the vessel. */
+const LAB_RIDE_INTO = 0.06
+/** The bench hold's share over which the beefed-up PETase pops out. */
+const LAB_POP = [0.62, 0.78]
+/** The row the bench's hold puts at the screen's middle (see LAB_BENCH_CUE_VH). */
+const benchHoldRow = (vh, plateK) =>
+  Math.min(
+    SECTION4_BENCH_ROWS[1],
+    SECTION4_BOTTLE_CUE[0] - (vh * LAB_BENCH_CUE_VH) / Math.max(1e-6, plateK),
+  )
+
+/**
+ * The share of the next bottle's roll-in after which the beefed-up PETase
+ * flies at it, faster and faster, slamming into it as it stops rolling.
+ */
+const LAB_ONTO_BOTTLE = 0.55
 /**
  * Section-4 rows of the bottle's roll-in cue: a little above the sand (3464),
  * so the bottle rolls in over the sand and is centred in time for the ramp.
@@ -405,6 +708,9 @@ const ENDING_HOLD_DROP_VH = 0.05
 const SECTION5_REPAINT_SRC =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/rerenderee.avif"
 const SECTION5_REPAINT_FADE = [2350, 2500]
+/** Its cropped copy (rows 0–2500 of the plate). */
+const SECTION5_REPAINT_CROP =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-cropped/rerenderee.avif"
 /** The repaint's pipe and the gush out of it, on their own to go over the bottle. */
 const SECTION5_TUBE_CDN =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/new-tube"
@@ -645,11 +951,9 @@ const CONDITION_CARD_IMAGES = [
   },
 ]
 
-const RNALAB_TEXTBOX_IMG =
-  "https://static.igem.wiki/teams/6187/wiki/homepage-components/text-boxes/rnalab.avif"
-
+/** The RNAlab popover's text (as on its artwork). */
 const RNALAB_EXPLANATION =
-  "RNAlab is our advisory lab partner that helped uncover 300M unique proteins."
+  "A joint computational and molecular biology research group focused on understanding the interplay between RNA elements and genetics."
 
 /** Delay + slide duration; the RNAlab term is not hoverable until this elapses. */
 const RNALAB_REVEAL_MS = 740
@@ -722,14 +1026,25 @@ const BACK_PARALLAX_SPEED = 0.7
 const BIRDS = [
   {
     id: 1,
+    /**
+     * Human Practices' petamon: where its speech bubble spot sits on the bird
+     * (canvas px). HomePlaza draws the spot, over the logo, following it.
+     */
+    petamon: { box: [491, 630, 689, 756] },
+    /**
+     * Where it's moved to from where it's painted (canvas px): off the logo,
+     * into the empty sky right of the church, beside the "Meet the PETamons"
+     * line (phones: further right, over the houses there). It doesn't fly
+     * across like the other back birds (no `driftMs`), so it can always be
+     * hovered.
+     */
+    home: { at: [600, 170], phone: [640, 310] },
     a: "https://static.igem.wiki/teams/6187/wiki/homepage-components/birds/wiki-front-page-bird-1.avif",
     b: "https://static.igem.wiki/teams/6187/wiki/homepage-components/birds/wiki-front-page-bird-1-2.avif",
     speed: 0.82,
     flapMs: 980,
     delayMs: 0,
     depth: "back",
-    driftMs: 32000,
-    driftDelayMs: 2000,
   },
   {
     id: 2,
@@ -762,6 +1077,25 @@ const BIRDS = [
     depth: "front",
   },
 ]
+
+/** A bird's spot on its 1440×3239 canvas, as % of it. */
+/** A bird moved off where it's painted (`home`, canvas px). */
+const birdHomeStyle = home => {
+  if (!home) return undefined
+  const shift = ([x, y]) =>
+    `translate3d(${((x / 1440) * 100).toFixed(3)}%, ${((y / 3239) * 100).toFixed(3)}%, 0)`
+  return {
+    "--bird-home": shift(home.at),
+    "--bird-home-phone": shift(home.phone || home.at),
+  }
+}
+
+const birdSpotStyle = ([x0, y0, x1, y1]) => ({
+  left: `${((x0 / 1440) * 100).toFixed(3)}%`,
+  top: `${((y0 / 3239) * 100).toFixed(3)}%`,
+  width: `${(((x1 - x0) / 1440) * 100).toFixed(3)}%`,
+  height: `${(((y1 - y0) / 3239) * 100).toFixed(3)}%`,
+})
 
 /**
  * Fraction of the waterfall band height where the puddle / ripple sits.
@@ -1028,7 +1362,7 @@ const WALK_TRACK_VH = 120
  * Freeze after pose 2 + bang. Long enough to read the RNAlab reveal and scrub
  * the bird-steal beat before the forest unpins.
  */
-const WALK_HOLD_VH = 300
+const WALK_HOLD_VH = 240
 /**
  * Phones coast on after the finger lifts, and moving the scroll under that
  * coast stutters it (or jumps, on iOS). On touch, the walk and the ending
@@ -1194,6 +1528,8 @@ export function HomeScrollPrototype() {
   const flipCleanupRef = useRef(null)
   const parallaxBackRef = useRef(null)
   const birdParallaxRefs = useRef([])
+  /** The Human Practices bird: where its spot goes, and its drift (see HomePlaza). */
+  const hpBirdAnchorRef = useRef(null)
   const waterRef = useRef(null)
   const shoreRef = useRef(null)
   const mapBottleBandRef = useRef(null)
@@ -1202,8 +1538,23 @@ export function HomeScrollPrototype() {
   /** Band progress when forest walk begins — ease from here to the crab hold. */
   const mapBottleWalkStartPRef = useRef(null)
   const section4CueRef = useRef(null)
+  /**
+   * The lab's two holds (see SECTION4_HOLD_ROWS): the tracks and spacers
+   * they stick through, and how far through each the reader is (0–1).
+   */
+  const labHoldsRef = useRef(null)
+  const labBenchRef = useRef(null)
+  const labTrackRef = useRef(null)
+  const labInnerRef = useRef(null)
+  const labSpacerRefs = useRef([])
+  const section4RootRef = useRef(null)
+  const labHoldRef = useRef({ h1: 0, h2: 0 })
+  /** The lab's story lines; hidden once faded, so those sharing a spot don't take its clicks. */
+  const labLineRefs = useRef([])
   const section4EnzymeLaneRef = useRef(null)
   const section4EnzymeRef = useRef(null)
+  const section4RideRef = useRef(null)
+  const section4BeefedRef = useRef(null)
   const section5RootRef = useRef(null)
   const section5LeadRef = useRef(null)
   const creamBottleMountRef = useRef(null)
@@ -1455,11 +1806,14 @@ export function HomeScrollPrototype() {
     const reduce =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    labLiveTimerRef.current = window.setTimeout(() => {
-      if (walkArrivedRef.current && compositionRef.current) {
-        compositionRef.current.dataset.labLive = "1"
-      }
-    }, reduce ? 0 : RNALAB_REVEAL_MS)
+    labLiveTimerRef.current = window.setTimeout(
+      () => {
+        if (walkArrivedRef.current && compositionRef.current) {
+          compositionRef.current.dataset.labLive = "1"
+        }
+      },
+      reduce ? 0 : RNALAB_REVEAL_MS,
+    )
   }, [])
   useEffect(() => () => window.clearTimeout(labLiveTimerRef.current), [])
 
@@ -2026,25 +2380,226 @@ export function HomeScrollPrototype() {
         mapMount.style.visibility = opacity > 0.02 ? "visible" : "hidden"
       }
 
-      // Lab enzyme: fades in at its painted spot, follows the reader (sticky),
-      // then fades out just before the bottle starts rolling in.
+      // The lab's holds: how far through each the reader is. The lab sticks
+      // in its inner track while the first spacer goes by, then the inner
+      // track sticks in the next while the second does, and so on out.
+      const labHolds = labHoldsRef.current
+      const labBench = labBenchRef.current
+      const labTrack = labTrackRef.current
+      const labInner = labInnerRef.current
+      const labRoot = section4RootRef.current
+      const [labSpacer1, labSpacer2, labSpacer3, labSpacer4] =
+        labSpacerRefs.current
+      if (
+        labHolds &&
+        labBench &&
+        labTrack &&
+        labInner &&
+        labRoot &&
+        labSpacer4
+      ) {
+        const through = (stuckAt, top, spacer) =>
+          clamp01((stuckAt - top) / Math.max(1, spacer.offsetHeight))
+        // Through the first hold against the lab's unpanned top.
+        const was = labHoldRef.current
+        const h1 = through(
+          (parseFloat(getComputedStyle(labRoot).top) || 0) - (was.pan || 0),
+          labInner.getBoundingClientRect().top,
+          labSpacer1,
+        )
+        // How far the window overflows the screen under the header (see LAB_PAN).
+        const vh = window.innerHeight
+        const headerH =
+          parseFloat(LAB_HEADER_HALF) *
+          2 *
+          parseFloat(getComputedStyle(document.documentElement).fontSize)
+        const over =
+          window.innerWidth <= PHONE_MAX
+            ? 0
+            : Math.max(
+                0,
+                (labRoot.offsetWidth *
+                  (SECTION4_WINDOW[3] - SECTION4_WINDOW[1])) /
+                  SECTION4_PLATE.w +
+                  2 * LAB_PAN_MARGIN -
+                  (vh - headerH),
+              )
+        const pan = Math.round(
+          over / 2 -
+            over *
+              smoothstep(
+                clamp01((h1 - LAB_PAN[0]) / (LAB_PAN[1] - LAB_PAN[0])),
+              ),
+        )
+        const stuck2 = parseFloat(getComputedStyle(labInner).top) || 0
+        const track2 = labTrack.getBoundingClientRect().top
+        const h2 = through(stuck2, track2, labSpacer2)
+        // Scrolled on past the second hold (px), as the enzyme shrinks back.
+        const past = Math.max(0, stuck2 - track2 - labSpacer2.offsetHeight)
+        const h3 = through(
+          parseFloat(getComputedStyle(labTrack).top) || 0,
+          labBench.getBoundingClientRect().top,
+          labSpacer3,
+        )
+        const h4 = through(
+          parseFloat(getComputedStyle(labBench).top) || 0,
+          labHolds.getBoundingClientRect().top,
+          labSpacer4,
+        )
+        if (
+          h1 !== was.h1 ||
+          h2 !== was.h2 ||
+          h3 !== was.h3 ||
+          h4 !== was.h4 ||
+          past !== was.past ||
+          pan !== was.pan
+        ) {
+          labHoldRef.current = { h1, h2, h3, h4, past, pan }
+          labRoot.style.setProperty("--lab-hold-1", h1.toFixed(4))
+          labRoot.style.setProperty("--lab-hold-2", h2.toFixed(4))
+          labRoot.style.setProperty("--lab-hold-3", h3.toFixed(4))
+          labRoot.style.setProperty("--lab-hold-4", h4.toFixed(4))
+          labRoot.style.setProperty("--lab-pan", `${pan}px`)
+          // The Wet Lab axolotl pops up, then jumps (LabBench).
+          const stage = wetStage(h3)
+          if (labRoot.dataset.wetStage !== stage)
+            labRoot.dataset.wetStage = stage
+          for (const line of labLineRefs.current) {
+            if (!line) continue
+            const shown = parseFloat(getComputedStyle(line).opacity) > 0.02
+            line.style.visibility = shown ? "" : "hidden"
+          }
+        }
+      }
+
+      // Lab enzyme: fades in where the constellation shrinks into it at the
+      // end of the second hold and follows the reader (sticky) down to the
+      // Wet Lab shelf, where it drops into the blue beaker. Phones: it slides
+      // from beside the lines to the middle before the hold ends.
       const enzymeLane = section4EnzymeLaneRef.current
       const enzyme = section4EnzymeRef.current
       const bottleCue = section4CueRef.current
-      if (enzymeLane && enzyme && bottleCue) {
+      const onPhone = window.innerWidth <= PHONE_MAX
+      const { h2 = 0, h3 = 0, h4 = 0, past = 0 } = labHoldRef.current
+      const plateK = labRoot ? labRoot.offsetWidth / SECTION4_PLATE.w : 1
+      if (enzymeLane && enzyme) {
         const vh = window.innerHeight
-        const laneTop = enzymeLane.getBoundingClientRect().top
-        const cueTop = bottleCue.getBoundingClientRect().top
+        // In over the constellation as it hands over (LabConstellation).
         const fadeIn = clamp01(
-          (vh - laneTop) / Math.max(1, vh * (1 - ENZYME_FOLLOW_VIEW_Y)),
+          (h2 - LAB_HANDOFF[0]) / (LAB_HANDOFF[1] - LAB_HANDOFF[0]),
         )
-        const fadeOut = clamp01(
-          (cueTop - vh * CREAM_BOTTLE_ROLL_START_FRAC) /
-            Math.max(1, vh * ENZYME_FADE_OUT_VH),
+        // Taking over at the constellation's size, back to its own after.
+        const big = onPhone ? LAB_ENZYME_BIG.phone : LAB_ENZYME_BIG.at
+        const back = onPhone
+          ? clamp01(
+              (h2 - LAB_PHONE_SLIDE[0]) /
+                (LAB_PHONE_SLIDE[1] - LAB_PHONE_SLIDE[0]),
+            )
+          : clamp01(past / (vh * LAB_ENZYME_SHRINK_VH))
+        const eased = smoothstep(back)
+        const size = 1 + (big - 1) * (1 - eased)
+        // Phones: across from its lane, beside the lines, to the middle.
+        const laneMid = onPhone
+          ? (SECTION4_PHONE_RIDE_LEFT / 100) * SECTION4_PLATE.w +
+            SECTION4_ENZYME_PX.w / 2
+          : (SECTION4_ENZYME_CROP.x / 100) * SECTION4_PLATE.w +
+            SECTION4_ENZYME_PX.w / 2
+        const across = onPhone ? (SECTION4_PLATE.w / 2 - laneMid) * eased : 0
+        // Into the beaker: down into its liquid, shrinking to the stream
+        // rider's size. It stays there till the beaker tips, then goes to its
+        // spout, where the rider takes it on down the stream.
+        const drop = smoothstep(
+          clamp01((h3 - LAB_DROP[0]) / (LAB_DROP[1] - LAB_DROP[0])),
         )
-        const opacity = Math.min(fadeIn, fadeOut)
+        const tip = smoothstep(
+          clamp01((h3 - WET_TIP[0]) / (WET_TIP[1] - WET_TIP[0])),
+        )
+        const [beakerX, beakerY] = SECTION4_BEAKER
+        const toX = beakerX + (SECTION4_STREAM.x - beakerX) * tip
+        const toY = beakerY + (SECTION4_STREAM.rows[0] - beakerY) * tip
+        const dx = (across + (toX - (laneMid + across)) * drop) * plateK
+        const dy = (toY - SECTION4_BENCH_ROWS[0]) * drop * plateK
+        const opacity = h3 < LAB_RIDE_FROM ? fadeIn : 0
+        const scale = size * (1 - (1 - SECTION4_RIDE_SCALE) * drop)
         enzyme.style.opacity = String(opacity)
+        enzyme.style.transform = `translate3d(${dx.toFixed(1)}px, calc(-50% + ${dy.toFixed(1)}px), 0) scale(${scale.toFixed(4)})`
         enzyme.style.visibility = opacity > 0.01 ? "visible" : "hidden"
+      }
+
+      // The enzyme riding the stream: at its spout once the beaker pours,
+      // then down it as the reader scrolls on, reaching the vessel as the
+      // bench's hold starts, and into it.
+      const ride = section4RideRef.current
+      if (ride && labRoot) {
+        const [fromRow, toRow] = SECTION4_STREAM.rows
+        const shelfRow = SECTION4_BENCH_ROWS[0]
+        const benchRow = benchHoldRow(window.innerHeight, plateK)
+        const travel = clamp01(
+          (window.innerHeight / 2 -
+            shelfRow * plateK -
+            labRoot.getBoundingClientRect().top) /
+            Math.max(1, (benchRow - shelfRow) * plateK),
+        )
+        const row = fromRow + (toRow - fromRow) * travel
+        const into = clamp01(h4 / LAB_RIDE_INTO)
+        const opacity = (h3 >= LAB_RIDE_FROM ? 1 : 0) * (1 - into)
+        ride.style.top = `${((row / SECTION4_PLATE.h) * 100).toFixed(3)}%`
+        ride.style.opacity = String(opacity)
+        ride.style.transform = `translate3d(0, -50%, 0) scale(${(1 - 0.6 * into).toFixed(3)})`
+        ride.style.visibility = opacity > 0.01 ? "visible" : "hidden"
+      }
+
+      // The beefed-up PETase: pops out of the vessel in an arc to where it
+      // lands, then follows the reader (sticky) until the next bottle rolls
+      // in, and slams into it, where it sticks (the bottle's own copy takes
+      // over, `data-stuck`).
+      const beefed = section4BeefedRef.current
+      const bottleMount = creamBottleMountRef.current
+      if (beefed && bottleCue && bottleMount) {
+        const vh = window.innerHeight
+        const pop = smoothstep(
+          clamp01((h4 - LAB_POP[0]) / (LAB_POP[1] - LAB_POP[0])),
+        )
+        const arc = Math.sin(Math.PI * pop)
+        const [vx, vy] = SECTION4_VESSEL
+        const [lx, ly] = SECTION4_BEEFED.land
+        let dx = (vx - lx) * (1 - pop) * plateK
+        let dy = ((vy - ly) * (1 - pop) - 70 * arc) * plateK
+        let scale = 0.25 + 0.75 * pop + 0.15 * arc
+        // Into the rolling bottle: held where it is while the bottle rolls
+        // in (its lane scrolls away under it), then flung at the bottle's
+        // copy (BottleBeefed: 50% across, 20% down, 76% wide), which it
+        // reaches as the bottle stops rolling, upright.
+        const rollStart = vh * CREAM_BOTTLE_ROLL_START_FRAC
+        const roll = clamp01(
+          (rollStart - bottleCue.getBoundingClientRect().top) /
+            Math.max(1, rollStart - vh * CREAM_BOTTLE_ROLL_END_FRAC),
+        )
+        const fling = clamp01((roll - LAB_ONTO_BOTTLE) / (1 - LAB_ONTO_BOTTLE))
+        const onto = fling * fling
+        const stuck = roll >= 1
+        if (roll > 0) {
+          const lane = beefed.parentElement.getBoundingClientRect()
+          const h = beefed.offsetHeight
+          const stuckAt = vh / 2 - (benchHoldRow(vh, plateK) - ly) * plateK
+          const home = Math.max(lane.top, stuckAt)
+          const atY = Math.min(home, lane.bottom - h)
+          const atX = lane.left + lane.width / 2
+          const b = bottleMount.getBoundingClientRect()
+          dy += home - atY
+          dx += (b.left + b.width / 2 - atX) * onto
+          dy += (b.top + b.height * 0.2 - home) * onto
+          scale *=
+            1 +
+            ((bottleMount.offsetWidth * 0.76) / beefed.offsetWidth - 1) * onto
+        }
+        const opacity = stuck ? 0 : clamp01(pop * 5)
+        beefed.style.opacity = String(opacity)
+        beefed.style.transform = `translate3d(${dx.toFixed(1)}px, calc(-50% + ${dy.toFixed(1)}px), 0) scale(${scale.toFixed(3)})`
+        beefed.style.visibility = opacity > 0.01 ? "visible" : "hidden"
+        const stuckFlag = stuck ? "1" : ""
+        if (bottleMount.dataset.stuck !== stuckFlag)
+          bottleMount.dataset.stuck = stuckFlag
       }
 
       // Section4 bottle (enzyme attached): barrel-roll in as the lab's sand comes
@@ -2947,693 +3502,851 @@ export function HomeScrollPrototype() {
   }, [bottleTouchPinned])
 
   return (
-    <WikiFrontRoot ref={frontRootRef}>
-      <SiteLoader handoff={logoHandoff} always />
-      <ScrollStack ref={stackRef}>
-        <WalkTrack ref={walkTrackRef}>
-          <CompositionRoot ref={compositionRef} data-autoplay-forest="">
-            <BackScene>
-              <BackClip>
-                <ParallaxBack ref={parallaxBackRef}>
-                  <RailImg
-                    src={ASSETS.back}
-                    alt="Homepage background scenery"
-                  />
-                </ParallaxBack>
-              </BackClip>
-              <BirdsStack aria-hidden="true">
-                {BIRDS.map((bird, i) => (
-                  <BirdParallax
-                    key={bird.id}
-                    $z={bird.z ?? (bird.depth === "front" ? 2 : 1)}
-                    ref={el => {
-                      birdParallaxRefs.current[i] = el
-                    }}
-                  >
-                    <BirdDrift
-                      $enabled={bird.depth === "back"}
-                      $durationMs={bird.driftMs || 36000}
-                      $delayMs={bird.driftDelayMs || 0}
-                    >
-                      <BirdHoverMotion $delayMs={bird.delayMs}>
-                        <BirdFlapper>
-                          <BirdFrame
-                            $phase="a"
-                            $durationMs={bird.flapMs}
-                            $delayMs={bird.delayMs}
-                            src={bird.a}
-                            alt=""
-                          />
-                          <BirdFrame
-                            $phase="b"
-                            $durationMs={bird.flapMs}
-                            $delayMs={bird.delayMs}
-                            src={bird.b}
-                            alt=""
-                          />
-                        </BirdFlapper>
-                      </BirdHoverMotion>
-                    </BirdDrift>
-                  </BirdParallax>
-                ))}
-              </BirdsStack>
-            </BackScene>
-
-            <FlowSizer>
-              <RailImg src={ASSETS.front} alt="" />
-            </FlowSizer>
-
-            <TurtleWindow
-              ref={turtleRef}
-              aria-hidden="true"
-              style={{
-                left: `${(TURTLE_CROP.x / FRONT_ART_WIDTH) * 100}%`,
-                top: `${(TURTLE_CROP.y / FRONT_ART_HEIGHT) * 100}%`,
-                width: `${(TURTLE_CROP.w / FRONT_ART_WIDTH) * 100}%`,
-                height: `${(TURTLE_CROP.h / FRONT_ART_HEIGHT) * 100}%`,
-              }}
-            >
-              <TurtleSneak $out={turtleOut}>
-                <TurtleFloat $out={turtleOut}>
-                  <TurtleImg
-                    src={ASSETS.turtle}
-                    alt=""
-                    style={{
-                      width: `${(FRONT_ART_WIDTH / TURTLE_CROP.w) * 100}%`,
-                      left: `${(-TURTLE_CROP.x / TURTLE_CROP.w) * 100}%`,
-                      top: `${(-TURTLE_CROP.y / TURTLE_CROP.h) * 100}%`,
-                    }}
-                  />
-                </TurtleFloat>
-              </TurtleSneak>
-            </TurtleWindow>
-
-            <ArtBand
-              ref={waterRef}
-              $top={WATERFALL_BAND_TOP}
-              $height={WATERFALL_BAND_HEIGHT}
-              $z={2}
-            >
-              <OverlayStack>
-                <OverlaySlice $z={Z.text} $interactive>
-                  <WaterfallSideText />
-                </OverlaySlice>
-                <OverlaySlice $z={Z.logo}>
-                  <LogoShiftWrap>
-                    <LogoFloatWrap $landed={logoLanded}>
-                      <LogoFlapper
-                        ref={heroLogoRef}
-                        aria-label="PETABITE"
-                        $landed={logoLanded}
-                      >
-                        {LOGO_FRAMES.map((src, i) => (
-                          <LogoFrame
-                            key={src}
-                            src={src}
-                            alt={i === 0 ? "PETABITE" : ""}
-                            aria-hidden={i !== 0}
-                            $index={i}
-                          />
-                        ))}
-                      </LogoFlapper>
-                    </LogoFloatWrap>
-                  </LogoShiftWrap>
-                </OverlaySlice>
-                <OverlaySlice $z={Z.bottle}>
-                  <BottlePinSpot
-                    ref={bottleTouchRef}
-                    $touchPinned={bottleTouchPinned}
-                  >
-                    <BottleFlipSurface ref={bottleFlipRef}>
-                      <BottleStickyRock $active={bottleTouchPinned}>
-                        <BottleShiftWrap>
-                          <BottleSinkMotion ref={bottleSinkMotionRef}>
-                            <BottleFloatWrap>
-                              <BottleVisual ref={bottleVisualRef}>
-                                <RailImg src={ASSETS.bottle} alt="" />
-                              </BottleVisual>
-                            </BottleFloatWrap>
-                          </BottleSinkMotion>
-                        </BottleShiftWrap>
-                      </BottleStickyRock>
-                    </BottleFlipSurface>
-                  </BottlePinSpot>
-                </OverlaySlice>
-                <OverlaySlice $z={Z.water}>
-                  <PuddleImg src={ASSETS.water} alt="" />
-                  <PuddleImg $under src={ASSETS.water} alt="" />
-                </OverlaySlice>
-                <OverlaySlice $z={Z.text}>
-                  {splashPlaying ? (
-                    <WaterfallSplashAnchor
-                      key="bottle-splash"
-                      aria-hidden="true"
-                      onAnimationEnd={e => {
-                        if (e.target !== e.currentTarget) return
-                        setSplashPlaying(false)
+    <PetamonProvider>
+      <WikiFrontRoot ref={frontRootRef}>
+        <SiteLoader handoff={logoHandoff} always />
+        <ScrollStack ref={stackRef}>
+          <WalkTrack ref={walkTrackRef}>
+            <CompositionRoot ref={compositionRef} data-autoplay-forest="">
+              <BackScene>
+                <BackClip>
+                  <ParallaxBack ref={parallaxBackRef}>
+                    <RailImg
+                      src={ASSETS.back}
+                      alt="Homepage background scenery"
+                    />
+                    <HqTop $part="back" aria-hidden="true" />
+                  </ParallaxBack>
+                </BackClip>
+                <BirdsStack aria-hidden="true" data-birds="">
+                  {BIRDS.map((bird, i) => (
+                    <BirdParallax
+                      key={bird.id}
+                      $z={bird.z ?? (bird.depth === "front" ? 2 : 1)}
+                      ref={el => {
+                        birdParallaxRefs.current[i] = el
                       }}
                     >
-                      <SplashRipple $delay={0} />
-                      <SplashRipple $delay={120} $large />
-                      <SplashDrop $n={0} />
-                      <SplashDrop $n={1} />
-                      <SplashDrop $n={2} />
-                      <SplashDrop $n={3} />
-                      <SplashDrop $n={4} />
-                      <SplashDrop $n={5} />
-                      <SplashDrop $n={6} />
-                      <SplashFoam />
-                    </WaterfallSplashAnchor>
-                  ) : null}
-                </OverlaySlice>
-              </OverlayStack>
-            </ArtBand>
+                      <BirdHome style={birdHomeStyle(bird.home)}>
+                        <BirdDrift
+                          $enabled={!!bird.driftMs}
+                          $durationMs={bird.driftMs || 36000}
+                          $delayMs={bird.driftDelayMs || 0}
+                        >
+                          <BirdHoverMotion $delayMs={bird.delayMs}>
+                            {bird.petamon && (
+                              <BirdSpotAnchor
+                                ref={hpBirdAnchorRef}
+                                style={birdSpotStyle(bird.petamon.box)}
+                              />
+                            )}
+                            <BirdFlapper>
+                              <BirdFrame
+                                $phase="a"
+                                $durationMs={bird.flapMs}
+                                $delayMs={bird.delayMs}
+                                src={bird.a}
+                                alt=""
+                              />
+                              <BirdFrame
+                                $phase="b"
+                                $durationMs={bird.flapMs}
+                                $delayMs={bird.delayMs}
+                                src={bird.b}
+                                alt=""
+                              />
+                            </BirdFlapper>
+                          </BirdHoverMotion>
+                        </BirdDrift>
+                      </BirdHome>
+                    </BirdParallax>
+                  ))}
+                </BirdsStack>
+              </BackScene>
 
-            <ArtBand
-              ref={shoreRef}
-              $top={SHORE_BAND_TOP}
-              $height={SHORE_BAND_HEIGHT}
-              $z={3}
-            >
-              <ShoreOverlayStack>
-                <CrabsStack aria-hidden="true">
-                  {CRABS.map(crab => (
-                    <CrabMount
-                      key={crab.id}
-                      $xPct={crab.xPct}
-                      $yPct={crab.yPct}
+              <FlowSizer>
+                <RailImg src={ASSETS.front} alt="" />
+                <HqTop $part="front" aria-hidden="true" />
+              </FlowSizer>
+
+              <TurtleWindow
+                ref={turtleRef}
+                aria-hidden="true"
+                style={{
+                  left: `${(TURTLE_CROP.x / FRONT_ART_WIDTH) * 100}%`,
+                  top: `${(TURTLE_CROP.y / FRONT_ART_HEIGHT) * 100}%`,
+                  width: `${(TURTLE_CROP.w / FRONT_ART_WIDTH) * 100}%`,
+                  height: `${(TURTLE_CROP.h / FRONT_ART_HEIGHT) * 100}%`,
+                }}
+              >
+                <TurtleSneak $out={turtleOut}>
+                  <TurtleFloat $out={turtleOut}>
+                    <TurtleImg
+                      src={ASSETS.turtle}
+                      alt=""
+                      style={{
+                        width: `${(FRONT_ART_WIDTH / TURTLE_CROP.w) * 100}%`,
+                        left: `${(-TURTLE_CROP.x / TURTLE_CROP.w) * 100}%`,
+                        top: `${(-TURTLE_CROP.y / TURTLE_CROP.h) * 100}%`,
+                      }}
+                    />
+                  </TurtleFloat>
+                </TurtleSneak>
+              </TurtleWindow>
+
+              <HomePlaza hpAnchorRef={hpBirdAnchorRef} />
+
+              <ArtBand
+                ref={waterRef}
+                $top={WATERFALL_BAND_TOP}
+                $height={WATERFALL_BAND_HEIGHT}
+                $z={2}
+              >
+                <OverlayStack>
+                  <OverlaySlice $z={Z.text} $interactive>
+                    <WaterfallSideText />
+                  </OverlaySlice>
+                  <OverlaySlice $z={Z.logo}>
+                    <LogoShiftWrap>
+                      <LogoFloatWrap $landed={logoLanded}>
+                        <LogoFlapper
+                          ref={heroLogoRef}
+                          aria-label="PETABITE"
+                          $landed={logoLanded}
+                        >
+                          {LOGO_FRAMES.map((src, i) => (
+                            <LogoFrame
+                              key={src}
+                              src={src}
+                              alt={i === 0 ? "PETABITE" : ""}
+                              aria-hidden={i !== 0}
+                              $index={i}
+                            />
+                          ))}
+                        </LogoFlapper>
+                      </LogoFloatWrap>
+                    </LogoShiftWrap>
+                  </OverlaySlice>
+                  <OverlaySlice $z={Z.bottle}>
+                    <BottlePinSpot
+                      ref={bottleTouchRef}
+                      $touchPinned={bottleTouchPinned}
                     >
-                      <CrabScuttle
-                        originX={crab.originX}
-                        originY={crab.originY}
-                        label={`Crab ${crab.id}`}
+                      <BottleFlipSurface ref={bottleFlipRef}>
+                        <BottleStickyRock $active={bottleTouchPinned}>
+                          <BottleShiftWrap>
+                            <BottleSinkMotion ref={bottleSinkMotionRef}>
+                              <BottleFloatWrap>
+                                <BottleVisual ref={bottleVisualRef}>
+                                  <RailImg src={ASSETS.bottle} alt="" />
+                                </BottleVisual>
+                              </BottleFloatWrap>
+                            </BottleSinkMotion>
+                          </BottleShiftWrap>
+                        </BottleStickyRock>
+                      </BottleFlipSurface>
+                    </BottlePinSpot>
+                  </OverlaySlice>
+                  <OverlaySlice $z={Z.water}>
+                    <PuddleImg src={ASSETS.water} alt="" />
+                    <PuddleImg $under src={ASSETS.water} alt="" />
+                  </OverlaySlice>
+                  <OverlaySlice $z={Z.text}>
+                    {splashPlaying ? (
+                      <WaterfallSplashAnchor
+                        key="bottle-splash"
+                        aria-hidden="true"
+                        onAnimationEnd={e => {
+                          if (e.target !== e.currentTarget) return
+                          setSplashPlaying(false)
+                        }}
+                      >
+                        <SplashRipple $delay={0} />
+                        <SplashRipple $delay={120} $large />
+                        <SplashDrop $n={0} />
+                        <SplashDrop $n={1} />
+                        <SplashDrop $n={2} />
+                        <SplashDrop $n={3} />
+                        <SplashDrop $n={4} />
+                        <SplashDrop $n={5} />
+                        <SplashDrop $n={6} />
+                        <SplashFoam />
+                      </WaterfallSplashAnchor>
+                    ) : null}
+                  </OverlaySlice>
+                </OverlayStack>
+              </ArtBand>
+
+              <ArtBand
+                ref={shoreRef}
+                $top={SHORE_BAND_TOP}
+                $height={SHORE_BAND_HEIGHT}
+                $z={3}
+              >
+                <ShoreOverlayStack>
+                  <CrabsStack aria-hidden="true">
+                    {CRABS.map(crab => (
+                      <CrabMount
+                        key={crab.id}
+                        $xPct={crab.xPct}
+                        $yPct={crab.yPct}
+                      >
+                        <CrabScuttle
+                          originX={crab.originX}
+                          originY={crab.originY}
+                          label={`Crab ${crab.id}`}
+                        >
+                          <CrabFlapper>
+                            <CrabFrame
+                              $phase="a"
+                              $durationMs={crab.flapMs}
+                              $delayMs={crab.delayMs}
+                              src={crab.a}
+                              alt=""
+                            />
+                            <CrabFrame
+                              $phase="b"
+                              $durationMs={crab.flapMs}
+                              $delayMs={crab.delayMs}
+                              src={crab.b}
+                              alt=""
+                            />
+                          </CrabFlapper>
+                          {crab.bang && (
+                            <CrabBang
+                              style={{
+                                left: `${crab.originX}%`,
+                                top: `${crab.originY}%`,
+                              }}
+                            >
+                              <CrabBangImg src={CRAB_BANG_SRC} alt="" />
+                            </CrabBang>
+                          )}
+                        </CrabScuttle>
+                      </CrabMount>
+                    ))}
+                  </CrabsStack>
+                  <ShoreBottleLayer $z={3}>
+                    <ShoreBottleMount
+                      ref={shoreBottleMountRef}
+                      $playing={shoreBottlePlaying}
+                    >
+                      <ShoreBottleSize>
+                        <ShoreBottleRock $playing={shoreBottlePlaying}>
+                          <ShoreBottleImg
+                            src={BOTTLE_STAGES.sky}
+                            alt=""
+                            style={{
+                              clipPath: `inset(0 0 ${100 - SHORE_BOTTLE_WATERLINE_PCT}% 0)`,
+                            }}
+                          />
+                          <ShoreBottleRipples
+                            src={SHORE_BOTTLE_RIPPLES_IMG}
+                            alt=""
+                            style={{
+                              clipPath: `inset(${SHORE_BOTTLE_WATERLINE_PCT}% 0 0 0)`,
+                            }}
+                          />
+                        </ShoreBottleRock>
+                      </ShoreBottleSize>
+                    </ShoreBottleMount>
+                  </ShoreBottleLayer>
+                  <ShoreTextLayer $z={4}>
+                    <ShorePetaseMount>
+                      <ShorePetaseBody>
+                        To combat this, we are engineering plastic-degrading
+                        enzymes such as{" "}
+                        <ExplainTerm
+                          term="PETases"
+                          explanation={PETASE_EXPLANATION}
+                          plain
+                        />
+                        .
+                      </ShorePetaseBody>
+                    </ShorePetaseMount>
+                    <ShoreTextMount>
+                      <ShoreBody>
+                        However, the current PETases used in industry have a
+                        major limitation.
+                      </ShoreBody>
+                    </ShoreTextMount>
+                    <ShoreMidTextMount>
+                      <ShoreMidBody>They only work under…</ShoreMidBody>
+                    </ShoreMidTextMount>
+                    <ShoreCardsMount>
+                      <SwipeInBox stationary title="...3 specific conditions">
+                        <ConditionImageRow
+                          ref={conditionRowRef}
+                          data-shine={conditionShine ? "1" : undefined}
+                        >
+                          {CONDITION_CARD_IMAGES.map(image => (
+                            <ConditionFigure key={image.alt}>
+                              <ConditionImageWrap>
+                                <ConditionImage
+                                  src={image.src}
+                                  alt={image.alt}
+                                />
+                                <CardShine
+                                  aria-hidden="true"
+                                  $src={image.src}
+                                />
+                              </ConditionImageWrap>
+                              <ConditionCaption>{image.alt}</ConditionCaption>
+                            </ConditionFigure>
+                          ))}
+                        </ConditionImageRow>
+                      </SwipeInBox>
+                    </ShoreCardsMount>
+                    <ShoreLoganMount>
+                      <ShoreLoganBody>
+                        That&apos;s why our team is using the Logan index
+                        (developed by our advisory lab, the{" "}
+                        <ExplainTerm
+                          term="RNAlab"
+                          explanation={RNALAB_EXPLANATION}
+                          plain
+                        />{" "}
+                        at UofT, and collaborators): a planetary sequence search
+                        that can discover novel plastic-degrading enzymes.
+                      </ShoreLoganBody>
+                    </ShoreLoganMount>
+                  </ShoreTextLayer>
+                </ShoreOverlayStack>
+              </ArtBand>
+
+              <ArtBand
+                $top={WORLD_MAP_TOP}
+                $height={WORLD_MAP_HEIGHT}
+                $z={10}
+              />
+
+              <ArtBand
+                ref={mapBottleBandRef}
+                $top={MAP_BOTTLE_BAND_TOP}
+                $height={MAP_BOTTLE_BAND_HEIGHT}
+                $z={11}
+              >
+                <MapBottleLayer aria-hidden="true">
+                  <MapBottleMount ref={mapBottleMountRef}>
+                    <MapBottleRock>
+                      <MapBottleImg
+                        ref={mapBottleImgRef}
+                        src={BOTTLE_STAGES.sky}
+                        alt=""
+                      />
+                    </MapBottleRock>
+                  </MapBottleMount>
+                </MapBottleLayer>
+              </ArtBand>
+
+              <ArtBand
+                $top={FOREST_BAND_TOP}
+                $height={FOREST_BAND_HEIGHT}
+                $z={3}
+              >
+                <ForestAnimalsStack aria-hidden="true">
+                  {SECTION3_ANIMALS.map(animal => {
+                    let plate = animal.static ? (
+                      <CrabFlapper>
+                        <StaticPlateImg src={animal.src} alt="" />
+                      </CrabFlapper>
+                    ) : (
+                      <AnimalMotion
+                        $scale={animal.scale || 1}
+                        $ox={animal.originX}
+                        $oy={animal.originY}
+                        $hover={animal.hover}
+                        $delayMs={animal.delayMs}
+                        $clipRightPct={animal.clipRightPct || 0}
                       >
                         <CrabFlapper>
                           <CrabFrame
                             $phase="a"
-                            $durationMs={crab.flapMs}
-                            $delayMs={crab.delayMs}
-                            src={crab.a}
+                            $durationMs={animal.flapMs}
+                            $delayMs={animal.delayMs}
+                            $hoverFlap={animal.hover}
+                            src={animal.a}
                             alt=""
                           />
                           <CrabFrame
                             $phase="b"
-                            $durationMs={crab.flapMs}
-                            $delayMs={crab.delayMs}
-                            src={crab.b}
+                            $durationMs={animal.flapMs}
+                            $delayMs={animal.delayMs}
+                            $hoverFlap={animal.hover}
+                            src={animal.b}
                             alt=""
                           />
                         </CrabFlapper>
-                        {crab.bang && (
-                          <CrabBang
-                            style={{
-                              left: `${crab.originX}%`,
-                              top: `${crab.originY}%`,
-                            }}
-                          >
-                            <CrabBangImg src={CRAB_BANG_SRC} alt="" />
-                          </CrabBang>
-                        )}
-                      </CrabScuttle>
-                    </CrabMount>
-                  ))}
-                </CrabsStack>
-                <ShoreBottleLayer $z={3}>
-                  <ShoreBottleMount
-                    ref={shoreBottleMountRef}
-                    $playing={shoreBottlePlaying}
-                  >
-                    <ShoreBottleSize>
-                      <ShoreBottleRock $playing={shoreBottlePlaying}>
-                        <ShoreBottleImg
-                          src={BOTTLE_STAGES.sky}
-                          alt=""
-                          style={{
-                            clipPath: `inset(0 0 ${100 - SHORE_BOTTLE_WATERLINE_PCT}% 0)`,
-                          }}
-                        />
-                        <ShoreBottleRipples
-                          src={SHORE_BOTTLE_RIPPLES_IMG}
-                          alt=""
-                          style={{
-                            clipPath: `inset(${SHORE_BOTTLE_WATERLINE_PCT}% 0 0 0)`,
-                          }}
-                        />
-                      </ShoreBottleRock>
-                    </ShoreBottleSize>
-                  </ShoreBottleMount>
-                </ShoreBottleLayer>
-                <ShoreTextLayer $z={4}>
-                  <ShorePetaseMount>
-                    <ShorePetaseBody>
-                      To combat this, we are engineering plastic-degrading
-                      enzymes or{" "}
-                      <ExplainTerm
-                        term="PETases"
-                        explanation={PETASE_EXPLANATION}
-                      />
-                      .
-                    </ShorePetaseBody>
-                  </ShorePetaseMount>
-                  <ShoreTextMount>
-                    <ShoreBody>
-                      However, PETases currently in industry have a major
-                      limitation...
-                    </ShoreBody>
-                  </ShoreTextMount>
-                  <ShoreMidTextMount>
-                    <ShoreMidBody>
-                      ...the current enzymes only work under…
-                    </ShoreMidBody>
-                  </ShoreMidTextMount>
-                  <ShoreCardsMount>
-                    <SwipeInBox stationary title="...3 specific conditions">
-                      <ConditionImageRow
-                        ref={conditionRowRef}
-                        data-shine={conditionShine ? "1" : undefined}
+                      </AnimalMotion>
+                    )
+
+                    let body = plate
+                    if (animal.id.startsWith("crab")) {
+                      plate = (
+                        <CrabScuttle
+                          originX={animal.originX}
+                          originY={animal.originY}
+                          label={`Crab ${animal.id}`}
+                        >
+                          {plate}
+                        </CrabScuttle>
+                      )
+                      body = plate
+                    }
+                    if (animal.revealOnArrive) {
+                      body = (
+                        <PetamonReveal $delayMs={animal.delayMs}>
+                          {plate}
+                        </PetamonReveal>
+                      )
+                    } else if (animal.id === STEAL_BIRD_ID) {
+                      body = (
+                        <BirdStealMount ref={birdStealRef}>
+                          {plate}
+                        </BirdStealMount>
+                      )
+                    }
+
+                    return (
+                      <CrabMount
+                        key={animal.id}
+                        $xPct={animal.xPct}
+                        $yPct={animal.yPct}
+                        $z={animal.id === STEAL_BIRD_ID ? 12 : 0}
                       >
-                        {CONDITION_CARD_IMAGES.map(image => (
-                          <ConditionFigure key={image.alt}>
-                            <ConditionImageWrap>
-                              <ConditionImage src={image.src} alt={image.alt} />
-                              <CardShine aria-hidden="true" $src={image.src} />
-                            </ConditionImageWrap>
-                            <ConditionCaption>{image.alt}</ConditionCaption>
-                          </ConditionFigure>
-                        ))}
-                      </ConditionImageRow>
-                    </SwipeInBox>
-                  </ShoreCardsMount>
-                  <ShoreLoganMount>
-                    <ShoreLoganBody>
-                      That&apos;s why our team has developed the LOGAN index: a
-                      planetary sequence search that discovers novel
-                      plastic-degrading enzymes.
-                    </ShoreLoganBody>
-                  </ShoreLoganMount>
-                </ShoreTextLayer>
-              </ShoreOverlayStack>
-            </ArtBand>
+                        {body}
+                      </CrabMount>
+                    )
+                  })}
+                </ForestAnimalsStack>
+              </ArtBand>
 
-            <ArtBand $top={WORLD_MAP_TOP} $height={WORLD_MAP_HEIGHT} $z={10} />
+              <ArtBand
+                $top={FOREST_BAND_TOP}
+                $height={FOREST_BAND_HEIGHT}
+                $z={20}
+              >
+                <HumanWalkLayer ref={humanWalkRef} aria-hidden="true">
+                  <HumanBob ref={humanBobRef}>
+                    <CrabMount $xPct={HUMAN.xPct} $yPct={HUMAN.yPct}>
+                      <AnimalMotion
+                        $scale={HUMAN.scale}
+                        $ox={HUMAN.originX}
+                        $oy={HUMAN.originY}
+                      >
+                        <CrabFlapper>
+                          <ExclamationMark
+                            $dx={HUMAN_HEAD_X - EXCLAMATION_MARK_X}
+                            $dy={HUMAN_HEAD_Y - EXCLAMATION_MARK_Y}
+                          >
+                            <ExclamationPop>
+                              <StaticPlateImg src={EXCLAMATION_SRC} alt="" />
+                            </ExclamationPop>
+                          </ExclamationMark>
+                          <HumanPose>
+                            <StaticPlateImg src={HUMAN.src} alt="" />
+                          </HumanPose>
+                          <HumanPose $arrivedPose $fill>
+                            <StaticPlateImg src={HUMAN.srcArrived} alt="" />
+                          </HumanPose>
+                        </CrabFlapper>
+                      </AnimalMotion>
+                    </CrabMount>
+                  </HumanBob>
+                </HumanWalkLayer>
+              </ArtBand>
 
-            <ArtBand
-              ref={mapBottleBandRef}
-              $top={MAP_BOTTLE_BAND_TOP}
-              $height={MAP_BOTTLE_BAND_HEIGHT}
-              $z={11}
-            >
-              <MapBottleLayer aria-hidden="true">
-                <MapBottleMount ref={mapBottleMountRef}>
-                  <MapBottleRock>
-                    <MapBottleImg
-                      ref={mapBottleImgRef}
+              <ArtBand
+                $top={FOREST_BAND_TOP}
+                $height={FOREST_BAND_HEIGHT}
+                $z={21}
+                ref={forestTextBandRef}
+              >
+                <ForestDatasetMount ref={forestDatasetRef}>
+                  <ForestDatasetBody>
+                    Before, the field worked with roughly 495 known
+                    plastic-degrading enzymes.
+                  </ForestDatasetBody>
+                </ForestDatasetMount>
+                <ForestRnalabMount>
+                  <ForestDatasetBody>
+                    We found <BigFigure>300 million</BigFigure> candidates. That
+                    is an increase of more than 600,000-fold.
+                  </ForestDatasetBody>
+                </ForestRnalabMount>
+              </ArtBand>
+
+              <BushLayer>
+                <RailImg src={ASSETS.bush} alt="" />
+              </BushLayer>
+            </CompositionRoot>
+          </WalkTrack>
+
+          <Section4HoldTrack ref={labHoldsRef}>
+            <Section4HoldBench ref={labBenchRef} $hold={3}>
+              <Section4HoldBench ref={labTrackRef} $hold={2}>
+                <Section4HoldInner ref={labInnerRef}>
+                  <Section4Root ref={section4RootRef}>
+                    <RailImg src={SECTION4_ASSETS.bg} alt="" />
+                    <Section4Layer $z={2} src={SECTION4_ASSETS.umap} alt="" />
+                    <Section4Sky
+                      holdRef={labHoldRef}
+                      style={{
+                        left: `${(SECTION4_WINDOW[0] / SECTION4_PLATE.w) * 100}%`,
+                        top: `${(SECTION4_WINDOW[1] / SECTION4_PLATE.h) * 100}%`,
+                        width: `${((SECTION4_WINDOW[2] - SECTION4_WINDOW[0]) / SECTION4_PLATE.w) * 100}%`,
+                        height: `${((SECTION4_WINDOW[3] - SECTION4_WINDOW[1]) / SECTION4_PLATE.h) * 100}%`,
+                      }}
+                    />
+                    <LabBench />
+                    <Section4Layer $z={2} src={SECTION4_ASSETS.sand} alt="" />
+                    <Section4Fringe aria-hidden="true">
+                      <PlateCropImg
+                        src={ASSETS.front}
+                        alt=""
+                        style={SECTION4_FRINGE_IMG_STYLE}
+                      />
+                      <PlateCropImg
+                        src={ASSETS.bush}
+                        alt=""
+                        style={SECTION4_FRINGE_IMG_STYLE}
+                      />
+                    </Section4Fringe>
+                    <Section4ButtonMount>
+                      <BrowseButton
+                        href="https://petadex.net"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Browse the full PETadex
+                      </BrowseButton>
+                    </Section4ButtonMount>
+                    <Section4TextMount>
+                      <Section4Body>
+                        We named this database the PETadex. And it is completely
+                        open-source and available to browse.
+                      </Section4Body>
+                    </Section4TextMount>
+                    {SECTION4_STORY.map((line, i) => (
+                      <Section4StoryLine
+                        key={`${line.hold}-${line.in}`}
+                        ref={el => {
+                          labLineRefs.current[i] = el
+                        }}
+                        $at={line}
+                        data-autoplay-read={line.hold >= 2 ? "" : undefined}
+                      >
+                        {line.text}
+                      </Section4StoryLine>
+                    ))}
+                    <Section4Constellation
+                      holdRef={labHoldRef}
+                      dx={SECTION4_RIDE_DX.at}
+                      phoneDx={SECTION4_RIDE_DX.phone}
+                      phoneDy={
+                        SECTION4_PHONE_PROTEIN_ROW - SECTION4_BLUE_CLUSTER[1]
+                      }
+                      big={LAB_ENZYME_BIG.at}
+                      phoneBig={LAB_ENZYME_BIG.phone}
+                    />
+                    <Section4EnzymeLane
+                      ref={section4EnzymeLaneRef}
+                      aria-hidden="true"
+                    >
+                      <Section4EnzymeFollow ref={section4EnzymeRef}>
+                        <EnzymeSprite />
+                      </Section4EnzymeFollow>
+                    </Section4EnzymeLane>
+                    <Section4Rider ref={section4RideRef} aria-hidden="true">
+                      <EnzymeSprite />
+                    </Section4Rider>
+                    <Section4BeefedLane aria-hidden="true">
+                      <Section4BeefedStick ref={section4BeefedRef}>
+                        <BeefedPetase />
+                      </Section4BeefedStick>
+                    </Section4BeefedLane>
+                    <Section4BottleCue
+                      ref={section4CueRef}
+                      aria-hidden="true"
+                    />
+                    <Section4Lead>
+                      The enzyme is now optimized for a condition, and Venture
+                      found the perfect use case for these enzymes…
+                    </Section4Lead>
+                  </Section4Root>
+                  <Section4HoldSpacer
+                    ref={el => {
+                      labSpacerRefs.current[0] = el
+                    }}
+                    $vh={LAB_HOLD_VH[0]}
+                    aria-hidden="true"
+                  />
+                </Section4HoldInner>
+                <Section4HoldSpacer
+                  ref={el => {
+                    labSpacerRefs.current[1] = el
+                  }}
+                  $vh={LAB_HOLD_VH[1]}
+                  aria-hidden="true"
+                />
+              </Section4HoldBench>
+              <Section4HoldSpacer
+                ref={el => {
+                  labSpacerRefs.current[2] = el
+                }}
+                $vh={LAB_HOLD_VH[2]}
+                aria-hidden="true"
+              />
+            </Section4HoldBench>
+            <Section4HoldSpacer
+              ref={el => {
+                labSpacerRefs.current[3] = el
+              }}
+              $vh={LAB_HOLD_VH[3]}
+              aria-hidden="true"
+            />
+          </Section4HoldTrack>
+
+          <EndingHoldTrack ref={endingHoldTrackRef}>
+            <EndingHoldSticky ref={endingHoldStickyRef}>
+              <Section5Root ref={section5RootRef}>
+                <Section5Sizer>
+                  <RailImg src={`${SECTION5_CDN}/1-bg.avif`} alt="" />
+                </Section5Sizer>
+                {SECTION5_LAYERS.filter(
+                  layer => !layer.sizer && layer.id < 4,
+                ).map(layer => (
+                  <Section5Layer
+                    key={layer.id}
+                    $z={layer.z}
+                    src={section5Src(layer)}
+                    style={layer.fade ? section5Fade(layer.fade) : undefined}
+                    alt=""
+                  />
+                ))}
+                <HexFieldOverlap
+                  ref={hexOverlapRef}
+                  $topPct={HEX_FIELD_TOP_PCT}
+                >
+                  <HexFieldImg src={HEX_FIELD_SRC} alt="" />
+                  <EndingBottleSlot ref={endingSlotRef}>
+                    <EndingPetamonBottle ref={endingBottleRef} />
+                  </EndingBottleSlot>
+                </HexFieldOverlap>
+                {SECTION5_LAYERS.filter(
+                  layer => layer.id >= 4 && layer.id < 7,
+                ).map(layer => (
+                  <Section5Layer
+                    key={layer.id}
+                    $z={layer.z}
+                    src={section5Src(layer)}
+                    style={layer.fade ? section5Fade(layer.fade) : undefined}
+                    alt=""
+                  />
+                ))}
+                <Section5ChuteBottleLayer aria-hidden="true">
+                  <ChuteBottleMount ref={chuteBottleMountRef}>
+                    <ChuteBottleIdle>
+                      <ChuteBottleImg
+                        ref={chuteBottleImgRef}
+                        src={BOTTLE_STAGES.section5}
+                        alt=""
+                      />
+                      <BottleBeefed />
+                    </ChuteBottleIdle>
+                  </ChuteBottleMount>
+                </Section5ChuteBottleLayer>
+                {SECTION5_LAYERS.filter(layer => layer.id >= 7).map(layer => (
+                  <Section5Layer
+                    key={layer.id}
+                    $z={layer.z}
+                    src={section5Src(layer)}
+                    style={layer.fade ? section5Fade(layer.fade) : undefined}
+                    alt=""
+                  />
+                ))}
+                <Section5FishStack aria-hidden="true">
+                  {SECTION5_FISHES.map(fish => (
+                    <Section5FishPlane
+                      key={fish.id}
+                      $z={fish.z}
+                      style={plateCropStyle(fish.crop)}
+                    >
+                      <FishDrift
+                        $durationMs={fish.driftMs}
+                        $delayMs={fish.driftDelayMs}
+                        style={{ "--swim": `${(115 / fish.crop.w) * 100}%` }}
+                      >
+                        <Section5FishHover $delayMs={fish.hoverDelayMs}>
+                          <PlateCropImg
+                            src={fish.src}
+                            alt=""
+                            style={plateCropImgStyle(fish.crop)}
+                          />
+                        </Section5FishHover>
+                      </FishDrift>
+                    </Section5FishPlane>
+                  ))}
+                </Section5FishStack>
+                <Section5BubbleStack aria-hidden="true">
+                  {STREAM_BUBBLES.map((bubble, i) => {
+                    const painted = BUBBLE_PLATES[bubble.id]
+                    const [shiftX, riseDy] = bubbleShift(
+                      bubble.id,
+                      bubble.x - painted.x,
+                      FOAM_BARRIER_Y_PCT - 0.4 - painted.y,
+                    )
+                    const [wobbleX] = bubbleShift(
+                      bubble.id,
+                      (i % 2 === 0 ? 1 : -1) * (1.15 + i * 0.35),
+                      0,
+                    )
+                    return (
+                      <Section5StreamBubble
+                        key={`stream-${bubble.id}`}
+                        style={{
+                          ...plateCropStyle(BUBBLE_CROPS[bubble.id]),
+                          "--shift-x": `${shiftX}%`,
+                          "--rise-dy": `${riseDy}%`,
+                          "--wobble-x": `${wobbleX}%`,
+                        }}
+                        $dur={6.6 + i * 1.05}
+                        $delay={-i * 1.7}
+                      >
+                        <Section5BubbleIdle
+                          $delay={i * 0.35}
+                          $dur={3.1 + (i % 3) * 0.4}
+                        >
+                          <PlateCropImg
+                            src={`${BUBBLE_CDN}/bubble${bubble.id}.avif`}
+                            alt=""
+                            style={plateCropImgStyle(BUBBLE_CROPS[bubble.id])}
+                          />
+                        </Section5BubbleIdle>
+                      </Section5StreamBubble>
+                    )
+                  })}
+                  <Section5CompanionLayer ref={companionBubbleLayerRef}>
+                    {COMPANION_BUBBLE_SPECS.map(spec => (
+                      <Section5CompanionBubble
+                        key={`companion-${spec.id}`}
+                        data-companion={spec.id}
+                        style={plateCropStyle(BUBBLE_CROPS[spec.id])}
+                      >
+                        <Section5BubbleIdle
+                          $delay={spec.id * 0.18}
+                          $dur={2.8 + (spec.id % 4) * 0.35}
+                        >
+                          <PlateCropImg
+                            src={`${BUBBLE_CDN}/bubble${spec.id}.avif`}
+                            alt=""
+                            style={plateCropImgStyle(BUBBLE_CROPS[spec.id])}
+                          />
+                        </Section5BubbleIdle>
+                      </Section5CompanionBubble>
+                    ))}
+                  </Section5CompanionLayer>
+                </Section5BubbleStack>
+                <Section5AppsBottleLayer aria-hidden="true">
+                  <Section5AppsBottleMount ref={creamBottleMountRef}>
+                    <Section5AppsBottleImg
+                      ref={creamBottleImgRef}
                       src={BOTTLE_STAGES.sky}
                       alt=""
                     />
-                  </MapBottleRock>
-                </MapBottleMount>
-              </MapBottleLayer>
-            </ArtBand>
-
-            <ArtBand $top={FOREST_BAND_TOP} $height={FOREST_BAND_HEIGHT} $z={3}>
-              <ForestAnimalsStack aria-hidden="true">
-                {SECTION3_ANIMALS.map(animal => {
-                  let plate = animal.static ? (
-                    <CrabFlapper>
-                      <StaticPlateImg src={animal.src} alt="" />
-                    </CrabFlapper>
-                  ) : (
-                    <AnimalMotion
-                      $scale={animal.scale || 1}
-                      $ox={animal.originX}
-                      $oy={animal.originY}
-                      $hover={animal.hover}
-                      $delayMs={animal.delayMs}
-                      $clipRightPct={animal.clipRightPct || 0}
-                    >
-                      <CrabFlapper>
-                        <CrabFrame
-                          $phase="a"
-                          $durationMs={animal.flapMs}
-                          $delayMs={animal.delayMs}
-                          $hoverFlap={animal.hover}
-                          src={animal.a}
-                          alt=""
-                        />
-                        <CrabFrame
-                          $phase="b"
-                          $durationMs={animal.flapMs}
-                          $delayMs={animal.delayMs}
-                          $hoverFlap={animal.hover}
-                          src={animal.b}
-                          alt=""
-                        />
-                      </CrabFlapper>
-                    </AnimalMotion>
-                  )
-
-                  let body = plate
-                  if (animal.id.startsWith("crab")) {
-                    plate = (
-                      <CrabScuttle
-                        originX={animal.originX}
-                        originY={animal.originY}
-                        label={`Crab ${animal.id}`}
-                      >
-                        {plate}
-                      </CrabScuttle>
-                    )
-                    body = plate
-                  }
-                  if (animal.revealOnArrive) {
-                    body = (
-                      <PetamonReveal $delayMs={animal.delayMs}>
-                        {plate}
-                      </PetamonReveal>
-                    )
-                  } else if (animal.id === STEAL_BIRD_ID) {
-                    body = (
-                      <BirdStealMount ref={birdStealRef}>
-                        {plate}
-                      </BirdStealMount>
-                    )
-                  }
-
-                  return (
-                    <CrabMount
-                      key={animal.id}
-                      $xPct={animal.xPct}
-                      $yPct={animal.yPct}
-                      $z={animal.id === STEAL_BIRD_ID ? 12 : 0}
-                    >
-                      {body}
-                    </CrabMount>
-                  )
-                })}
-              </ForestAnimalsStack>
-            </ArtBand>
-
-            <ArtBand
-              $top={FOREST_BAND_TOP}
-              $height={FOREST_BAND_HEIGHT}
-              $z={20}
-            >
-              <HumanWalkLayer ref={humanWalkRef} aria-hidden="true">
-                <HumanBob ref={humanBobRef}>
-                  <CrabMount $xPct={HUMAN.xPct} $yPct={HUMAN.yPct}>
-                    <AnimalMotion
-                      $scale={HUMAN.scale}
-                      $ox={HUMAN.originX}
-                      $oy={HUMAN.originY}
-                    >
-                      <CrabFlapper>
-                        <ExclamationMark
-                          $dx={HUMAN_HEAD_X - EXCLAMATION_MARK_X}
-                          $dy={HUMAN_HEAD_Y - EXCLAMATION_MARK_Y}
-                        >
-                          <ExclamationPop>
-                            <StaticPlateImg src={EXCLAMATION_SRC} alt="" />
-                          </ExclamationPop>
-                        </ExclamationMark>
-                        <HumanPose>
-                          <StaticPlateImg src={HUMAN.src} alt="" />
-                        </HumanPose>
-                        <HumanPose $arrivedPose $fill>
-                          <StaticPlateImg src={HUMAN.srcArrived} alt="" />
-                        </HumanPose>
-                      </CrabFlapper>
-                    </AnimalMotion>
-                  </CrabMount>
-                </HumanBob>
-              </HumanWalkLayer>
-            </ArtBand>
-
-            <ArtBand
-              $top={FOREST_BAND_TOP}
-              $height={FOREST_BAND_HEIGHT}
-              $z={21}
-              ref={forestTextBandRef}
-            >
-              <ForestDatasetMount ref={forestDatasetRef}>
-                <ForestDatasetBody>
-                  Before, the industry was using an enzyme dataset of roughly
-                  200.
-                </ForestDatasetBody>
-              </ForestDatasetMount>
-              <ForestRnalabMount>
-                <ForestDatasetBody>
-                  With{" "}
-                  <ExplainTerm
-                    term="RNAlab"
-                    explanation={RNALAB_EXPLANATION}
-                    imageSrc={RNALAB_TEXTBOX_IMG}
-                    imageAlt="RNAlab"
-                  />
-                  , our advisory lab, our team uncovered 300M unique
-                  proteins.
-                </ForestDatasetBody>
-              </ForestRnalabMount>
-            </ArtBand>
-
-            <BushLayer>
-              <RailImg src={ASSETS.bush} alt="" />
-            </BushLayer>
-          </CompositionRoot>
-        </WalkTrack>
-
-        <Section4Root>
-          <RailImg src={SECTION4_ASSETS.bg} alt="" />
-          <Section4Layer $z={2} src={SECTION4_ASSETS.umap} alt="" />
-          <Section4Layer $z={2} src={SECTION4_ASSETS.sand} alt="" />
-          <Section4Fringe aria-hidden="true">
-            <PlateCropImg src={ASSETS.front} alt="" style={SECTION4_FRINGE_IMG_STYLE} />
-            <PlateCropImg src={ASSETS.bush} alt="" style={SECTION4_FRINGE_IMG_STYLE} />
-          </Section4Fringe>
-          <Section4TextMount>
-            <Section4Body>
-              A 1,000,000‑fold increase from the enzyme landscape previously
-              known.
-            </Section4Body>
-          </Section4TextMount>
-          <Section4EnzymeLane ref={section4EnzymeLaneRef} aria-hidden="true">
-            <Section4EnzymeFollow ref={section4EnzymeRef}>
-              <EnzymeSprite />
-            </Section4EnzymeFollow>
-          </Section4EnzymeLane>
-          <Section4BottleCue ref={section4CueRef} aria-hidden="true" />
-        </Section4Root>
-
-        <EndingHoldTrack ref={endingHoldTrackRef}>
-          <EndingHoldSticky ref={endingHoldStickyRef}>
-            <Section5Root ref={section5RootRef}>
-              <Section5Sizer>
-                <RailImg src={`${SECTION5_CDN}/1-bg.avif`} alt="" />
-              </Section5Sizer>
-              {SECTION5_LAYERS.filter(
-                layer => !layer.sizer && layer.id < 4,
-              ).map(layer => (
-                <Section5Layer
-                  key={layer.id}
-                  $z={layer.z}
-                  src={section5Src(layer)}
-                  style={layer.fade ? section5Fade(layer.fade) : undefined}
-                  alt=""
-                />
-              ))}
-              <HexFieldOverlap ref={hexOverlapRef} $topPct={HEX_FIELD_TOP_PCT}>
-                <HexFieldImg src={HEX_FIELD_SRC} alt="" />
-                <EndingBottleSlot ref={endingSlotRef}>
-                  <EndingPetamonBottle ref={endingBottleRef} />
-                </EndingBottleSlot>
-              </HexFieldOverlap>
-              {SECTION5_LAYERS.filter(
-                layer => layer.id >= 4 && layer.id < 7,
-              ).map(layer => (
-                <Section5Layer
-                  key={layer.id}
-                  $z={layer.z}
-                  src={section5Src(layer)}
-                  style={layer.fade ? section5Fade(layer.fade) : undefined}
-                  alt=""
-                />
-              ))}
-              <Section5ChuteBottleLayer aria-hidden="true">
-                <ChuteBottleMount ref={chuteBottleMountRef}>
-                  <ChuteBottleIdle>
-                    <ChuteBottleImg
-                      ref={chuteBottleImgRef}
-                      src={BOTTLE_STAGES.section5}
+                    {/* The beefed-up PETase from the lab slams into this one
+                      and sticks (the next two carry it too). */}
+                    <BottleBeefed $waits />
+                    <SlamBurst aria-hidden="true" />
+                  </Section5AppsBottleMount>
+                  <Section5AppsBottleMount ref={ramp2BottleMountRef}>
+                    <Section5AppsBottleImg
+                      src={BOTTLE_STAGES.section4}
                       alt=""
                     />
-                    <BottleEnzyme />
-                  </ChuteBottleIdle>
-                </ChuteBottleMount>
-              </Section5ChuteBottleLayer>
-              {SECTION5_LAYERS.filter(layer => layer.id >= 7).map(layer => (
-                <Section5Layer
-                  key={layer.id}
-                  $z={layer.z}
-                  src={section5Src(layer)}
-                  style={layer.fade ? section5Fade(layer.fade) : undefined}
-                  alt=""
-                />
-              ))}
-              <Section5FishStack aria-hidden="true">
-                {SECTION5_FISHES.map(fish => (
-                  <Section5FishPlane
-                    key={fish.id}
-                    $z={fish.z}
-                    style={plateCropStyle(fish.crop)}
-                  >
-                    <FishDrift
-                      $durationMs={fish.driftMs}
-                      $delayMs={fish.driftDelayMs}
-                      style={{ "--swim": `${(115 / fish.crop.w) * 100}%` }}
-                    >
-                      <Section5FishHover $delayMs={fish.hoverDelayMs}>
-                        <PlateCropImg
-                          src={fish.src}
-                          alt=""
-                          style={plateCropImgStyle(fish.crop)}
-                        />
-                      </Section5FishHover>
-                    </FishDrift>
-                  </Section5FishPlane>
-                ))}
-              </Section5FishStack>
-              <Section5BubbleStack aria-hidden="true">
-                {STREAM_BUBBLES.map((bubble, i) => {
-                  const painted = BUBBLE_PLATES[bubble.id]
-                  const [shiftX, riseDy] = bubbleShift(
-                    bubble.id,
-                    bubble.x - painted.x,
-                    FOAM_BARRIER_Y_PCT - 0.4 - painted.y,
-                  )
-                  const [wobbleX] = bubbleShift(
-                    bubble.id,
-                    (i % 2 === 0 ? 1 : -1) * (1.15 + i * 0.35),
-                    0,
-                  )
-                  return (
-                    <Section5StreamBubble
-                      key={`stream-${bubble.id}`}
-                      style={{
-                        ...plateCropStyle(BUBBLE_CROPS[bubble.id]),
-                        "--shift-x": `${shiftX}%`,
-                        "--rise-dy": `${riseDy}%`,
-                        "--wobble-x": `${wobbleX}%`,
-                      }}
-                      $dur={6.6 + i * 1.05}
-                      $delay={-i * 1.7}
-                    >
-                      <Section5BubbleIdle
-                        $delay={i * 0.35}
-                        $dur={3.1 + (i % 3) * 0.4}
-                      >
-                        <PlateCropImg
-                          src={`${BUBBLE_CDN}/bubble${bubble.id}.avif`}
-                          alt=""
-                          style={plateCropImgStyle(BUBBLE_CROPS[bubble.id])}
-                        />
-                      </Section5BubbleIdle>
-                    </Section5StreamBubble>
-                  )
-                })}
-                <Section5CompanionLayer ref={companionBubbleLayerRef}>
-                  {COMPANION_BUBBLE_SPECS.map(spec => (
-                    <Section5CompanionBubble
-                      key={`companion-${spec.id}`}
-                      data-companion={spec.id}
-                      style={plateCropStyle(BUBBLE_CROPS[spec.id])}
-                    >
-                      <Section5BubbleIdle
-                        $delay={spec.id * 0.18}
-                        $dur={2.8 + (spec.id % 4) * 0.35}
-                      >
-                        <PlateCropImg
-                          src={`${BUBBLE_CDN}/bubble${spec.id}.avif`}
-                          alt=""
-                          style={plateCropImgStyle(BUBBLE_CROPS[spec.id])}
-                        />
-                      </Section5BubbleIdle>
-                    </Section5CompanionBubble>
-                  ))}
-                </Section5CompanionLayer>
-              </Section5BubbleStack>
-              <Section5AppsBottleLayer aria-hidden="true">
-                <Section5AppsBottleMount ref={creamBottleMountRef}>
-                  <Section5AppsBottleImg
-                    ref={creamBottleImgRef}
-                    src={BOTTLE_STAGES.sky}
+                    <BottleBeefed />
+                  </Section5AppsBottleMount>
+                </Section5AppsBottleLayer>
+                <Section5FoamMount
+                  ref={section5FoamRef}
+                  aria-hidden="true"
+                  style={plateCropStyle(FOAM_CROP)}
+                  onAnimationEnd={e => {
+                    if (e.target !== e.currentTarget) return
+                    e.currentTarget.dataset.impact = ""
+                  }}
+                >
+                  <PlateCropImg
+                    src={SECTION5_FOAM_SRC}
                     alt=""
+                    style={plateCropImgStyle(FOAM_CROP)}
                   />
-                  <BottleEnzyme />
-                </Section5AppsBottleMount>
-                <Section5AppsBottleMount ref={ramp2BottleMountRef}>
-                  <Section5AppsBottleImg src={BOTTLE_STAGES.section4} alt="" />
-                  <BottleEnzyme />
-                </Section5AppsBottleMount>
-              </Section5AppsBottleLayer>
-              <Section5FoamMount
-                ref={section5FoamRef}
-                aria-hidden="true"
-                style={plateCropStyle(FOAM_CROP)}
-                onAnimationEnd={e => {
-                  if (e.target !== e.currentTarget) return
-                  e.currentTarget.dataset.impact = ""
-                }}
-              >
-                <PlateCropImg
-                  src={SECTION5_FOAM_SRC}
-                  alt=""
-                  style={plateCropImgStyle(FOAM_CROP)}
-                />
-              </Section5FoamMount>
-              <Section5SplashLayer
-                ref={section5SplashLayerRef}
-                aria-hidden="true"
-              >
-                {SPLASH_PLATES.map(splash => (
-                  <Section5SplashDrop
-                    key={splash.id}
-                    data-splash={splash.id}
-                    style={plateCropStyle(splash.crop)}
-                  >
-                    <PlateCropImg
-                      src={`${SPLASH_CDN}/splash${splash.id}.avif`}
-                      alt=""
-                      style={plateCropImgStyle(splash.crop)}
-                    />
-                  </Section5SplashDrop>
-                ))}
-              </Section5SplashLayer>
-              <Section5TextStack aria-hidden="false">
-                <Section5Lead ref={section5LeadRef}>
-                  Some applications include...
-                </Section5Lead>
-                <Section5WwtpLine>
-                  PETases in wastewater treatment,...
-                </Section5WwtpLine>
-                <Section5RecyclingLine>
-                  ..., Breaking down plastics in trash and recycling bins,...
-                </Section5RecyclingLine>
-                <Section5AndMoreLine>...and more.</Section5AndMoreLine>
-                <Section5Cta>Discover more about Petabite.</Section5Cta>
-              </Section5TextStack>
-            </Section5Root>
+                </Section5FoamMount>
+                <Section5SplashLayer
+                  ref={section5SplashLayerRef}
+                  aria-hidden="true"
+                >
+                  {SPLASH_PLATES.map(splash => (
+                    <Section5SplashDrop
+                      key={splash.id}
+                      data-splash={splash.id}
+                      style={plateCropStyle(splash.crop)}
+                    >
+                      <PlateCropImg
+                        src={`${SPLASH_CDN}/splash${splash.id}.avif`}
+                        alt=""
+                        style={plateCropImgStyle(splash.crop)}
+                      />
+                    </Section5SplashDrop>
+                  ))}
+                </Section5SplashLayer>
+                <Section5RampPatch aria-hidden="true" />
+                <Section5TextStack aria-hidden="false">
+                  {/* Where the ramp bottle parks under (the bottom of the
+                    one-line lead that used to sit here), so the lead's
+                    length doesn't move it. */}
+                  <Section5ParkAnchor
+                    ref={section5LeadRef}
+                    aria-hidden="true"
+                  />
+                  <Section5WwtpLine>
+                    Our interviews pointed us towards{" "}
+                    <Link to="/entrepreneurship/">
+                      wastewater treatment plants
+                    </Link>
+                    , where microplastics concentrate in solids.
+                  </Section5WwtpLine>
+                  <Section5RecyclingLine>
+                    Other avenues include trash and recycling streams and
+                    textile and detergent microplastics.
+                  </Section5RecyclingLine>
+                  <Section5OceanLine $at={SECTION5_OCEAN_LINES[0]}>
+                    The science only matters if it leaves the lab…
+                  </Section5OceanLine>
+                  <Section5OceanLine $at={SECTION5_OCEAN_LINES[1]}>
+                    and so we worked with regulators, researchers and
+                    stakeholders to unite the community…
+                  </Section5OceanLine>
+                  <Section5OceanLine $at={SECTION5_OCEAN_LINES[2]}>
+                    and to champion the idea of plastic-degrading enzymes for
+                    microplastic cleanup.
+                  </Section5OceanLine>
+                  <Section5Cta>Discover more about Petabite.</Section5Cta>
+                </Section5TextStack>
+              </Section5Root>
 
-            <HexFieldRoot aria-hidden="true" />
-          </EndingHoldSticky>
-          <EndingHoldSpacer ref={endingHoldSpacerRef} aria-hidden="true" />
-        </EndingHoldTrack>
+              <HexFieldRoot aria-hidden="true" />
+            </EndingHoldSticky>
+            <EndingHoldSpacer ref={endingHoldSpacerRef} aria-hidden="true" />
+          </EndingHoldTrack>
 
-        <HomeNavMount ref={homeNavMountRef}>
-          <WikiTopBar />
-        </HomeNavMount>
-      </ScrollStack>
-      <HomeAutoplay />
-    </WikiFrontRoot>
+          <HomeNavMount ref={homeNavMountRef}>
+            <WikiTopBar />
+          </HomeNavMount>
+        </ScrollStack>
+        <HomeAutoplay />
+      </WikiFrontRoot>
+    </PetamonProvider>
   )
 }
 
@@ -4153,100 +4866,184 @@ const ChuteBottleIdle = styled.div`
   }
 `
 
-const Section5Lead = styled.p`
+/**
+ * Ramp 1's painted end stops a few px short of the plate's left edge (rows
+ * 438–562), leaving a sliver of sand. Its end column (x 18–22) is stretched
+ * over x 0–18 to close it.
+ */
+const RAMP_PATCH = { x: [0, 18], src: [18, 22], rows: [436, 564] }
+const RAMP_PATCH_W = RAMP_PATCH.x[1] - RAMP_PATCH.x[0]
+const RAMP_PATCH_H = RAMP_PATCH.rows[1] - RAMP_PATCH.rows[0]
+const RAMP_SRC_W = RAMP_PATCH.src[1] - RAMP_PATCH.src[0]
+/** The crop is the plate's rows 0–2500, so 946 × 2500. */
+const RAMP_IMG = { w: 946, h: 2500 }
+/** Stretched across: the source columns fill the patch's width. */
+const rampSizeX = (RAMP_IMG.w / RAMP_SRC_W) * 100
+const rampPosX =
+  (RAMP_PATCH.src[0] / RAMP_SRC_W / (RAMP_IMG.w / RAMP_SRC_W - 1)) * 100
+/** Down: drawn at the plate's own scale. */
+const rampSizeY = (RAMP_IMG.h / RAMP_PATCH_H) * 100
+const rampPosY = (RAMP_PATCH.rows[0] / (RAMP_IMG.h - RAMP_PATCH_H)) * 100
+
+const Section5RampPatch = styled.div`
+  position: absolute;
+  z-index: 7;
+  left: 0;
+  top: ${(RAMP_PATCH.rows[0] / 4000) * 100}%;
+  width: ${(RAMP_PATCH_W / RAMP_IMG.w) * 100}%;
+  height: ${(RAMP_PATCH_H / 4000) * 100}%;
+  pointer-events: none;
+  background-image: url(${SECTION5_REPAINT_CROP});
+  background-repeat: no-repeat;
+  background-size: ${rampSizeX}% ${rampSizeY}%;
+  background-position: ${rampPosX}% ${rampPosY}%;
+`
+
+/** The ramp bottle parks just under this: 5% down, one lead line tall. */
+const Section5ParkAnchor = styled.div`
   position: absolute;
   top: 5%;
   left: 50%;
-  transform: translate3d(-50%, 0, 0);
-  width: ${artPx(672)};
-  margin: 0;
-  color: #0a0a0a;
-  font-family: var(--font-body);
-  ${artFont(40.32)}
-  font-weight: 800;
-  line-height: 1.25;
-  text-align: center;
-  overflow-wrap: break-word;
+  width: 1px;
+  height: calc(${artPx(40.32)} * 1.25);
+  pointer-events: none;
 
   ${phone} {
-    width: 90%;
-    font-size: ${phoneSize(1.05)};
+    height: calc(${phoneSize(1.05)} * 1.25);
   }
 `
 
-const section5AppLineBase = `
+/**
+ * The treatment plant's lines all share one style: dark with a cream glow on
+ * the sand, white with a dark shadow on the water. Each is clear of the
+ * bottle, which comes down the middle (held at the window's centre as the
+ * plant scrolls past it), so they sit to its left or right.
+ */
+const section5LineBase = `
   position: absolute;
-  transform: translate3d(-50%, 0, 0);
-  width: ${artPx(640)};
   margin: 0;
-  color: #0a0a0a;
   font-family: var(--font-body);
-  ${artFont(34.24)}
-  font-weight: 600;
+  ${artFont(34)}
+  font-weight: 700;
   line-height: 1.35;
   text-align: center;
   overflow-wrap: break-word;
+
+  a {
+    pointer-events: auto;
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  ${phone} {
+    font-size: ${phoneSize(0.8)};
+  }
+`
+
+const onSand = `
+  color: #10202a;
   text-shadow:
     0 0 6px rgba(255, 252, 240, 0.95),
     0 0 14px rgba(255, 248, 220, 0.7),
     0 1px 3px rgba(255, 255, 255, 0.85);
-
-  ${phone} {
-    width: 60%;
-    font-size: ${phoneSize(0.85)};
-  }
 `
 
-/** WWTP callout — edit top/left/width here. */
-const Section5WwtpLine = styled.p`
-  ${section5AppLineBase}
-  top: 16%;
-  left: 55%;
-  width: ${artPx(352)};
-
-  ${phone} {
-    width: 48%;
-  }
-`
-
-/** Trash / recycling bins callout — edit top/left/width independently. */
-const Section5RecyclingLine = styled.p`
-  ${section5AppLineBase}
-  top: 33%;
-  left: 45%;
-  width: ${artPx(352)};
-
-  ${phone} {
-    width: 48%;
-  }
-`
-
-/** “...and more.” — edit top/left independently. */
-const Section5AndMoreLine = styled.p`
-  ${section5AppLineBase}
-  top: 46%;
-  left: 83%;
-
-  ${phone} {
-    left: 76%;
-    width: 40%;
-  }
-`
-
-const Section5Cta = styled.p`
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  transform: translate3d(-50%, 0, 0);
-  width: ${artPx(768)};
-  margin: 0;
+const onWater = `
   color: #fff;
-  font-family: var(--font-body);
-  ${artFont(51.84)}
+  text-shadow:
+    0 1px 3px rgba(4, 30, 40, 0.85),
+    0 0 14px rgba(4, 36, 52, 0.7);
+`
+
+/**
+ * The treatment plant's lead-in, up on the lab's bare wall under the
+ * Hardware bench (its middle at this row), left of where the next bottle
+ * rolls in.
+ */
+const SECTION4_LEAD_ROW = 3370
+const Section4Lead = styled.p`
+  ${section5LineBase}
+  ${onSand}
+  z-index: 4;
+  top: ${(SECTION4_LEAD_ROW / SECTION4_PLATE.h) * 100}%;
+  left: 4%;
+  width: 40%;
+  transform: translate3d(0, -50%, 0);
+
+  ${phone} {
+    left: 3%;
+    width: 42%;
+  }
+`
+
+/** On the sand at the top, right of the bottle, level with it. */
+const Section5WwtpLine = styled.p`
+  ${section5LineBase}
+  ${onSand}
+  top: 1.6%;
+  left: 56%;
+  width: 40%;
+
+  ${phone} {
+    top: 1.2%;
+    left: 55%;
+    width: 42%;
+  }
+`
+
+/** Centred on the second tank's broad grey wall (about 10–77% across, 30–36.5% down). */
+const Section5RecyclingLine = styled.p`
+  ${section5LineBase}
+  ${onSand}
+  top: 33.2%;
+  left: 41%;
+  width: 46%;
+  transform: translate3d(-50%, -50%, 0);
+
+  ${phone} {
+    width: 58%;
+  }
+`
+
+/**
+ * The closing words, split down the open water under the foam, either side
+ * of the sinking bottle in turn, above the coral (from 81%); each part that
+ * runs on into the next ends in "…". [top, left, width] in % of the plant,
+ * then the same on phones.
+ */
+const SECTION5_OCEAN_LINES = [
+  { at: [55, 4, 40], phone: [55, 3, 43] },
+  { at: [63, 57, 39], phone: [63, 55, 42] },
+  { at: [71, 4, 40], phone: [71, 3, 43] },
+]
+
+const Section5OceanLine = styled.p`
+  ${section5LineBase}
+  ${onWater}
+  top: ${({ $at }) => $at.at[0]}%;
+  left: ${({ $at }) => $at.at[1]}%;
+  width: ${({ $at }) => $at.at[2]}%;
+
+  ${phone} {
+    top: ${({ $at }) => $at.phone[0]}%;
+    left: ${({ $at }) => $at.phone[1]}%;
+    width: ${({ $at }) => $at.phone[2]}%;
+  }
+`
+
+/** Last, centred in the dark water under the coral (from 92.5%): bigger, glowing. */
+const Section5Cta = styled.p`
+  ${section5LineBase}
+  top: 94.5%;
+  left: 50%;
+  width: 70%;
+  transform: translate3d(-50%, 0, 0);
+  color: #fff;
+  ${artFont(48)}
   font-weight: 800;
   line-height: 1.2;
-  text-align: center;
-  overflow-wrap: break-word;
   text-shadow:
     0 0 12px rgba(255, 255, 255, 0.85),
     0 0 28px rgba(170, 230, 255, 0.75),
@@ -4254,8 +5051,9 @@ const Section5Cta = styled.p`
     0 2px 4px rgba(0, 0, 0, 0.35);
 
   ${phone} {
+    top: 94%;
     width: 90%;
-    font-size: ${phoneSize(1.2)};
+    font-size: ${phoneSize(0.95)};
   }
 `
 
@@ -4415,6 +5213,25 @@ const BackScene = styled.div`
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+`
+
+/** A sharper copy of part of a plate, over it (see HQ_TOP). */
+const HqTop = styled.div`
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: ${({ $part }) => (HQ_TOP[$part].rows[0] / FRONT_ART_HEIGHT) * 100}%;
+  height: ${({ $part }) =>
+    ((HQ_TOP[$part].rows[1] - HQ_TOP[$part].rows[0]) / FRONT_ART_HEIGHT) *
+    100}%;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+
+  /* Only where it's worth the download (phones keep the lighter art). */
+  @media (min-width: 520px) {
+    background-image: ${({ $part }) => `url(${HQ_TOP[$part].src})`};
+  }
 `
 
 const FlowSizer = styled.div`
@@ -4696,12 +5513,17 @@ const crabFlapB = keyframes`
  * Safari gives each animated element a layer the size of its box, and a
  * screen-sized layer per flapping frame is what made phones lag.
  */
-const plateFlap = ({ $phase, $durationMs, $delayMs }, flapA, flapB, fallbackMs) => css`
+const plateFlap = (
+  { $phase, $durationMs, $delayMs },
+  flapA,
+  flapB,
+  fallbackMs,
+) => css`
   &:is(img),
   & > img {
     opacity: ${$phase === "a" ? 1 : 0};
-    animation: ${$phase === "a" ? flapA : flapB}
-      ${$durationMs || fallbackMs}ms steps(1, end) ${$delayMs || 0}ms infinite;
+    animation: ${$phase === "a" ? flapA : flapB} ${$durationMs || fallbackMs}ms
+      steps(1, end) ${$delayMs || 0}ms infinite;
 
     @media (prefers-reduced-motion: reduce) {
       animation: none;
@@ -5070,6 +5892,11 @@ const ShoreLoganMount = styled.div`
 
 const ShoreLoganBody = styled.p`
   margin: 0;
+
+  /* The RNAlab popup takes the pointer; the rest lets it through. */
+  span[role="button"] {
+    pointer-events: auto;
+  }
   color: #0a0a0a;
   font-family: var(--font-body);
   ${artFont(31.68)}
@@ -5090,7 +5917,7 @@ const ForestDatasetMount = styled.div`
   position: absolute;
   top: 66%;
   left: 8%;
-  width: ${artPx(264)};
+  width: ${artPx(300)};
   box-sizing: border-box;
   pointer-events: none;
   text-align: left;
@@ -5112,6 +5939,13 @@ const ForestDatasetMount = styled.div`
   }
 `
 
+/** A headline number in a line of copy ("300 million"), set larger. */
+const BigFigure = styled.strong`
+  font-size: 1.45em;
+  font-weight: 800;
+  line-height: 1;
+`
+
 const ForestDatasetBody = styled.p`
   margin: 0;
   color: #0a0a0a;
@@ -5128,11 +5962,12 @@ const ForestDatasetBody = styled.p`
 `
 
 /** RNAlab payoff on the walker's right; swaps in when the bang pops. */
+/** Left of the axolotl that pops up by the right edge on arrival. */
 const ForestRnalabMount = styled.div`
   position: absolute;
-  top: 66%;
-  right: 9%;
-  width: ${artPx(480)};
+  top: 63%;
+  right: 16%;
+  width: ${artPx(470)};
   box-sizing: border-box;
   text-align: left;
   opacity: 0;
@@ -5175,13 +6010,78 @@ const ForestRnalabMount = styled.div`
 `
 
 /** RNAlab copy on the cream pad below the bushes. */
-/** The lab, pulled up over the old cream pad so its row 0 sits on front row SECTION4_FRONT_ROW. */
-const Section4Root = styled.div`
+/**
+ * The lab and its holds: pulled up over the old cream pad so its row 0 sits
+ * on front row SECTION4_FRONT_ROW. The lab sticks in Section4HoldInner (with
+ * the first of SECTION4_HOLD_ROWS at the window's middle) while the first
+ * spacer goes by; then that sticks in here (with the second there) while
+ * the second spacer does.
+ */
+const Section4HoldTrack = styled.div`
   position: relative;
   z-index: 1;
   width: 100%;
   min-width: 0;
   margin-top: ${(-(FRONT_ART_HEIGHT - SECTION4_FRONT_ROW) / FRONT_ART_WIDTH) * 100}%;
+`
+
+/**
+ * The bench holds' tracks (`$hold`: 2 for the Wet Lab shelf, 3 for the
+ * Hardware bench): each sticks, with its row of SECTION4_BENCH_ROWS at the
+ * screen's middle, while the spacer after it goes by.
+ */
+const Section4HoldBench = styled.div`
+  position: sticky;
+  top: calc(
+    50vh -
+      ${({ $hold }) => ($hold === 3 ? BENCH_HOLD_ROW_CSS : labRowPx(SECTION4_BENCH_ROWS[0]))} -
+      ${({ $hold }) => LAB_HOLD_VH.slice(0, $hold).reduce((a, b) => a + b, 0)}vh
+  );
+`
+
+const Section4HoldSpacer = styled.div`
+  height: ${({ $vh }) => $vh}vh;
+  pointer-events: none;
+`
+
+/** A row of the lab's plate, as a length on the page. */
+const labRowPx = row =>
+  `var(${ART_WIDTH_VAR}, 100vw) * ${row / SECTION4_PLATE.w}`
+
+/** The bench hold's row (benchHoldRow), as a length on the page. */
+const BENCH_HOLD_ROW_CSS = `min(${labRowPx(SECTION4_BENCH_ROWS[1])}, ${labRowPx(
+  SECTION4_BOTTLE_CUE[0],
+)} - ${LAB_BENCH_CUE_VH * 100}vh)`
+
+const Section4HoldInner = styled.div`
+  position: sticky;
+  top: calc(50vh - ${labRowPx(SECTION4_HOLD_ROWS.at[1])} - ${LAB_HOLD_VH[0]}vh);
+
+  /* Phones: the lab stays where the first hold put it. */
+  ${phone} {
+    top: calc(
+      50vh + ${LAB_HEADER_HALF} - ${labRowPx(SECTION4_PHONE_HOLD_ROW)} -
+        ${LAB_HOLD_VH[0]}vh
+    );
+  }
+`
+
+const Section4Root = styled.div`
+  position: sticky;
+  top: calc(
+    50vh + ${LAB_HEADER_HALF} - ${labRowPx(SECTION4_HOLD_ROWS.at[0])} +
+      var(--lab-pan, 0px)
+  );
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+
+  ${phone} {
+    top: calc(
+      50vh + ${LAB_HEADER_HALF} - ${labRowPx(SECTION4_PHONE_HOLD_ROW)} +
+        var(--lab-pan, 0px)
+    );
+  }
 `
 
 /** Same full-plate overlay as the WWTP's layers. */
@@ -5194,10 +6094,23 @@ const Section4Fringe = styled.div`
   left: 0;
   z-index: 3;
   width: 100%;
-  aspect-ratio: ${FRONT_ART_WIDTH} / ${SECTION4_FRINGE_END_ROW - SECTION4_FRONT_ROW};
+  aspect-ratio: ${FRONT_ART_WIDTH} /
+    ${SECTION4_FRINGE_END_ROW - SECTION4_FRONT_ROW};
   overflow: hidden;
   pointer-events: none;
 `
+
+/**
+ * Phones: under the window instead, above the button. Above the window it
+ * would meet the forest's lines, which sit just under the bushes there. As
+ * the first hold starts it goes and the button moves up towards its place
+ * (phoneMakeRoom), making room for the story lines' spot under them.
+ */
+const SECTION4_PHONE_TEXT_ROW = 1050
+const SECTION4_PHONE_BUTTON_ROW = 1180
+/** Where the button moves up to on phones, clear of the sill. */
+const SECTION4_PHONE_BUTTON_UP_ROW = 1022
+const phoneMakeRoom = `clamp(0, calc(var(--lab-hold-1, 0) * 20), 1)`
 
 const Section4TextMount = styled.div`
   position: absolute;
@@ -5211,12 +6124,81 @@ const Section4TextMount = styled.div`
   text-align: center;
 
   ${phone} {
+    top: ${(SECTION4_PHONE_TEXT_ROW / SECTION4_PLATE.h) * 100}%;
     width: 88%;
+    opacity: calc(1 - ${phoneMakeRoom});
+  }
+`
+
+/** Under the window's sill, on the tiled wall. */
+const SECTION4_BUTTON_ROW = 985
+
+const Section4ButtonMount = styled.div`
+  position: absolute;
+  top: ${(SECTION4_BUTTON_ROW / SECTION4_PLATE.h) * 100}%;
+  left: 50%;
+  /* Over the constellation as it lifts out of the window past it. */
+  z-index: 6;
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: auto;
+
+  ${phone} {
+    top: ${(SECTION4_PHONE_BUTTON_ROW / SECTION4_PLATE.h) * 100}%;
+    transform: translate3d(
+      -50%,
+      calc(
+        -50% - ${phoneMakeRoom} *
+          ${labRowPx(SECTION4_PHONE_BUTTON_ROW - SECTION4_PHONE_BUTTON_UP_ROW)}
+      ),
+      0
+    );
+  }
+`
+
+/** A night-sky button, like the window's view of the PETadex. */
+const BrowseButton = styled.a`
+  display: inline-block;
+  padding: 0.7em 1.5em;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #24305e, #141c3c);
+  box-shadow:
+    0 6px 16px rgba(10, 20, 50, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: var(--font-body);
+  ${artFont(24)}
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 22px rgba(10, 20, 50, 0.45),
+      0 0 18px rgba(140, 170, 255, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  ${phone} {
+    font-size: ${phoneSize(0.85)};
   }
 `
 
 const Section4Body = styled.p`
   margin: 0;
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
   color: #0a0a0a;
   font-family: var(--font-body);
   ${artFont(31.68)}
@@ -5235,9 +6217,199 @@ const Section4EnzymeLane = styled.div`
   z-index: 5;
   left: ${SECTION4_ENZYME_CROP.x}%;
   width: ${SECTION4_ENZYME_CROP.w}%;
-  top: ${SECTION4_ENZYME_CROP.y + SECTION4_ENZYME_CROP.h / 2}%;
+  top: ${(SECTION4_HOLD_ROWS.at[1] / SECTION4_PLATE.h) * 100}%;
+  /* Down to the Wet Lab shelf's hold, where it drops into the beaker. */
+  bottom: ${(1 - (SECTION4_BENCH_ROWS[0] + SECTION4_ENZYME_PX.h) / SECTION4_PLATE.h) * 100}%;
+  pointer-events: none;
+
+  ${phone} {
+    left: ${SECTION4_PHONE_RIDE_LEFT}%;
+    top: ${(SECTION4_PHONE_PROTEIN_ROW / SECTION4_PLATE.h) * 100}%;
+  }
+`
+
+/** The enzyme riding the beaker's stream down to the bioreactor; the scroll handler moves it. */
+const SECTION4_RIDE_W = SECTION4_ENZYME_PX.w * SECTION4_RIDE_SCALE
+const Section4Rider = styled.div`
+  position: absolute;
+  z-index: 5;
+  left: ${((SECTION4_STREAM.x - SECTION4_RIDE_W / 2) / SECTION4_PLATE.w) * 100}%;
+  top: ${(SECTION4_STREAM.rows[0] / SECTION4_PLATE.h) * 100}%;
+  width: ${(SECTION4_RIDE_W / SECTION4_PLATE.w) * 100}%;
+  transform: translate3d(0, -50%, 0);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+`
+
+/**
+ * The beefed-up PETase: pops out of the vessel to where it lands, holds there
+ * through the bench's hold, then follows the reader at that height down to
+ * the bottle, which it rides on into the treatment plant.
+ */
+const SECTION4_BEEFED_W = SECTION4_BEEFED.box[2] * SECTION4_BEEFED.scale
+const Section4BeefedLane = styled.div`
+  position: absolute;
+  z-index: 5;
+  left: ${((SECTION4_BEEFED.land[0] - SECTION4_BEEFED_W / 2) / SECTION4_PLATE.w) * 100}%;
+  width: ${(SECTION4_BEEFED_W / SECTION4_PLATE.w) * 100}%;
+  top: ${(SECTION4_BEEFED.land[1] / SECTION4_PLATE.h) * 100}%;
   bottom: ${(1 - SECTION4_BOTTLE_CUE[0] / SECTION4_PLATE.h) * 100}%;
   pointer-events: none;
+`
+
+const Section4BeefedStick = styled.div`
+  position: sticky;
+  top: calc(
+    50vh + ${labRowPx(SECTION4_BEEFED.land[1])} - ${BENCH_HOLD_ROW_CSS}
+  );
+  transform: translate3d(0, -50%, 0);
+  opacity: 0;
+  visibility: hidden;
+`
+
+const BeefedSprite = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: ${SECTION4_BEEFED.box[2]} / ${SECTION4_BEEFED.box[3]};
+  overflow: hidden;
+  pointer-events: none;
+`
+
+/** The beefed-up PETase (with its sparkles), as wide as its parent. */
+function BeefedPetase({ className }) {
+  return (
+    <BeefedSprite className={className}>
+      <PlateCropImg
+        src={SECTION4_BEEFED.src}
+        alt=""
+        style={plateCropImgStyle(SECTION4_BEEFED_CROP)}
+      />
+    </BeefedSprite>
+  )
+}
+
+/** The constellation's lane: the enzyme's left and width, from the window's middle. */
+const Section4Constellation = styled(LabConstellation)`
+  z-index: 5;
+  left: ${SECTION4_ENZYME_CROP.x}%;
+  width: ${SECTION4_ENZYME_CROP.w}%;
+  top: ${(SECTION4_CONSTELLATION_ROWS.at[0] / SECTION4_PLATE.h) * 100}%;
+  height: ${((SECTION4_CONSTELLATION_ROWS.at[1] - SECTION4_CONSTELLATION_ROWS.at[0]) / SECTION4_PLATE.h) * 100}%;
+
+  ${phone} {
+    left: ${SECTION4_PHONE_RIDE_LEFT}%;
+    top: ${(SECTION4_PHONE_PROTEIN_ROW / SECTION4_PLATE.h) * 100}%;
+    height: ${(SECTION4_ENZYME_PX.h / SECTION4_PLATE.h) * 100}%;
+  }
+`
+
+const Section4Sky = styled(WindowSky)`
+  z-index: 3;
+`
+
+/** How far a story line has come in (0–1), through its hold. */
+const storyIn = ({ $at }) =>
+  `clamp(0, calc((var(--lab-hold-${$at.hold + 1}, 0) - ${$at.in}) * 14), 1)`
+
+/** Phones: how far through `[hold, share]` the lab is (0–1), quickly. */
+const phoneStoryAt = ([hold, at]) =>
+  `clamp(0, calc((var(--lab-hold-${hold + 1}, 0) - ${at}) * 20), 1)`
+
+/** How far a line has gone (0–1) by its `out`, as the next comes in. */
+const storyOut = ({ $at }) => ($at.out ? phoneStoryAt($at.out) : "0")
+
+/** Phones: when it comes in and goes; the bench's lines as on wider screens. */
+const phoneTiming = $at => $at.phone || { in: [$at.hold, $at.in], out: $at.out }
+
+/**
+ * The lab's story lines, each coming in at its point in its hold: the first
+ * hold's in the window's night sky, the second's either side of the
+ * constellation (on phones, taking turns in one spot under the window), the
+ * bench holds' taking turns beside their scenes.
+ */
+const Section4StoryLine = styled.p`
+  position: absolute;
+  z-index: 4;
+  opacity: calc(${storyIn} - ${storyOut});
+  transform: translate3d(
+    0,
+    calc(${({ $at }) => ($at.mid ? "-50% + " : "")}(1 - ${storyIn}) * 0.6em),
+    0
+  );
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  top: ${({ $at }) => ($at.at[0] / SECTION4_PLATE.h) * 100}%;
+  left: ${({ $at }) => $at.at[1]}%;
+  width: ${({ $at }) => $at.at[2]}%;
+  margin: 0;
+  color: #0a0a0a;
+  font-family: var(--font-body);
+  ${artFont(36)}
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: break-word;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.95),
+    0 0 14px rgba(240, 248, 248, 0.8);
+
+  /* In the night sky: pale, a little smaller to fit its clear patches. */
+  ${({ $at }) =>
+    $at.sky &&
+    css`
+      color: #fffbe8;
+      ${artFont(25)}
+      line-height: 1.35;
+      text-shadow:
+        0 1px 3px rgba(6, 12, 40, 0.9),
+        0 0 10px rgba(6, 12, 40, 0.7);
+    `}
+
+  /* Just above phone widths the sky's text stops shrinking: set tighter. */
+  ${({ $at }) =>
+    $at.sky &&
+    css`
+      @media (min-width: ${PHONE_MAX + 1}px) and (max-width: ${LAB_NARROW_MAX}px) {
+        line-height: 1.25;
+        ${
+          $at.narrow &&
+          css`
+            left: ${$at.narrow[0]}%;
+            width: ${$at.narrow[1]}%;
+          `
+        }
+      }
+    `}
+
+  /* Phones: all in one spot under the window, each giving way to the next. */
+  ${phone} {
+    top: ${({ $at }) => (($at.phoneAt || [SECTION4_PHONE_STORY_ROW])[0] / SECTION4_PLATE.h) * 100}%;
+    left: ${({ $at }) => ($at.phoneAt || [0, 4])[1]}%;
+    width: ${({ $at }) => ($at.phoneAt || [0, 4, 92])[2]}%;
+    opacity: calc(
+      ${({ $at }) => phoneStoryAt(phoneTiming($at).in)} -
+        ${({ $at }) => (phoneTiming($at).out ? phoneStoryAt(phoneTiming($at).out) : 0)}
+    );
+    transform: translate3d(
+      0,
+      calc((1 - ${({ $at }) => phoneStoryAt(phoneTiming($at).in)}) * 0.6em),
+      0
+    );
+    color: #0a0a0a;
+    font-size: ${phoneSize(0.8)};
+    /* A tight halo keeps them crisp on the tiles. */
+    text-shadow:
+      0 0 2px #fff,
+      0 0 4px #fff,
+      0 0 10px rgba(240, 248, 248, 0.9);
+  }
 `
 
 /** Sticks with its centre at ENZYME_FOLLOW_VIEW_Y; the scroll handler fades it. */
@@ -5261,21 +6433,65 @@ const Section4BottleCue = styled.div`
   pointer-events: none;
 `
 
-/** The lab enzyme cut from its plate, as wide as its parent. */
+/**
+ * The lab enzyme, as wide as its parent: cut from its plate, then its
+ * sharper copy over that once loaded.
+ */
 function EnzymeSprite({ className }) {
+  const hqRef = useRef(null)
+  const [sharp, setSharp] = useState(false)
+  useEffect(() => {
+    const img = hqRef.current
+    if (img?.complete && img.naturalWidth > 0) setSharp(true)
+  }, [])
   return (
     <EnzymeWindow
       className={className}
-      style={{ aspectRatio: `${SECTION4_ENZYME_PX.w} / ${SECTION4_ENZYME_PX.h}` }}
+      style={{
+        aspectRatio: `${SECTION4_ENZYME_PX.w} / ${SECTION4_ENZYME_PX.h}`,
+      }}
     >
-      <PlateCropImg
-        src={SECTION4_ASSETS.enzyme}
+      {!sharp && (
+        <PlateCropImg
+          src={SECTION4_ASSETS.enzyme}
+          alt=""
+          style={plateCropImgStyle(SECTION4_ENZYME_CROP)}
+        />
+      )}
+      <EnzymeHqImg
+        ref={hqRef}
+        src={SECTION4_ASSETS.enzymeHq}
         alt=""
-        style={plateCropImgStyle(SECTION4_ENZYME_CROP)}
+        decoding="async"
+        $shown={sharp}
+        onLoad={() => setSharp(true)}
       />
     </EnzymeWindow>
   )
 }
+
+const EnzymeHqImg = styled.img`
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  opacity: ${({ $shown }) => ($shown ? 1 : 0)};
+`
+
+/** The PETase hitting the bottle: in big, squashed flat, then settling. */
+const slamIn = keyframes`
+  0% { transform: translate3d(-50%, -50%, 0) scale(1.35); }
+  35% { transform: translate3d(-50%, -42%, 0) scale(1.18, 0.78); }
+  62% { transform: translate3d(-50%, -54%, 0) scale(0.94, 1.08); }
+  100% { transform: translate3d(-50%, -50%, 0) scale(1); }
+`
+
+const slamRing = keyframes`
+  0% { opacity: 0.95; transform: translate3d(-50%, -50%, 0) scale(0.3); }
+  100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.5); }
+`
 
 const EnzymeWindow = styled.div`
   position: relative;
@@ -5285,16 +6501,57 @@ const EnzymeWindow = styled.div`
 `
 
 /**
- * The enzyme riding a WWTP bottle: about as wide as the bottle, sitting over its
- * top end (the bottle spans 16–84% of its image), with a shadow to lift it off.
+ * The beefed-up PETase riding a WWTP bottle, sitting over its top end (the
+ * bottle spans 16–84% of its image), with a shadow to lift it off; its
+ * sparkles make its box wider than the bottle. With `$waits` (the bottle
+ * the lab hands it to) it shows once the lab's copy slams into the bottle
+ * (`data-stuck` on the mount), squashing on impact.
  */
-const BottleEnzyme = styled(EnzymeSprite)`
+const BottleBeefed = styled(BeefedPetase)`
   position: absolute;
   left: 50%;
   top: 20%;
-  width: 48%;
+  width: 76%;
   transform: translate3d(-50%, -50%, 0);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+
+  ${({ $waits }) =>
+    $waits &&
+    css`
+      visibility: hidden;
+
+      [data-stuck="1"] > & {
+        visibility: visible;
+        animation: ${slamIn} 420ms ease-out;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none !important;
+      }
+    `}
+`
+
+/** Over the bottle's top end, where the PETase hits it: a ring flashes out. */
+const SlamBurst = styled.span`
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  width: 90%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 240, 0.95);
+  box-shadow: 0 0 12px rgba(255, 250, 200, 0.8);
+  transform: translate3d(-50%, -50%, 0) scale(0.3);
+  opacity: 0;
+  pointer-events: none;
+
+  [data-stuck="1"] > & {
+    animation: ${slamRing} 480ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
 `
 
 const ConditionImageRow = styled.div`
@@ -5427,6 +6684,7 @@ const RailImg = styled(PlateImg)`
 `
 
 const ParallaxBack = styled.div`
+  position: relative;
   width: 100%;
   will-change: auto;
 
@@ -5503,6 +6761,13 @@ const TurtleImg = styled(PlateImg)`
   user-select: none;
 `
 
+/** Where a bird's petamon spot goes; it moves with the bird. */
+const BirdSpotAnchor = styled.div`
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+`
+
 const BirdsStack = styled.div`
   position: absolute;
   inset: 0;
@@ -5521,6 +6786,17 @@ const BirdParallax = styled.div`
   @media (prefers-reduced-motion: reduce) {
     transform: none !important;
     will-change: auto;
+  }
+`
+
+/** Moves a bird off its painted spot (birdHomeStyle). */
+const BirdHome = styled.div`
+  position: absolute;
+  inset: 0;
+  transform: var(--bird-home, none);
+
+  ${phone} {
+    transform: var(--bird-home-phone, none);
   }
 `
 
@@ -5618,6 +6894,15 @@ const BirdHoverMotion = styled.div`
 const BirdFlapper = styled.div`
   position: absolute;
   inset: 0;
+  transition: filter 0.25s ease;
+
+  /* Human Practices' bird while its bubble is open (HomePlaza's BirdSpot),
+     lit like the plaza petamons' spotlights, with a faint halo since it's
+     pale. */
+  [data-lit="1"] > & {
+    filter: brightness(1.04) saturate(1.3)
+      drop-shadow(0 0 4px rgba(255, 250, 225, 0.6));
+  }
 `
 
 const BirdFrame = styled(PlateImg)`

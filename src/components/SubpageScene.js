@@ -1215,6 +1215,332 @@ function SwingLayer({ plate, layer, children }) {
   )
 }
 
+const stillPlease = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+
+/** `part` of a layer's `box`, as a window inside the layer's own (%). */
+const partStyle = ([x0, y0, x1, y1], [px0, py0, px1, py1]) => ({
+  left: `${(((px0 - x0) / (x1 - x0)) * 100).toFixed(3)}%`,
+  top: `${(((py0 - y0) / (y1 - y0)) * 100).toFixed(3)}%`,
+  width: `${(((px1 - px0) / (x1 - x0)) * 100).toFixed(3)}%`,
+  height: `${(((py1 - py0) / (y1 - y0)) * 100).toFixed(3)}%`,
+})
+
+/** Hover (tap on touch) handlers for an art layer's hit area. */
+const hoverOrTap = act => ({
+  onMouseEnter: act,
+  onPointerDown: event => {
+    if (event.pointerType !== "mouse") act()
+  },
+})
+
+/** How long the streak lingers after the last scroll that moved the slider. */
+const SLIDE_STREAK_MS = 220
+
+/**
+ * A critter sliding down the text box's edge (Outreach's squirrel), with its
+ * motion streak painted above it (`slide.outline`: plate points, left to
+ * right, along the critter's top, between the two). Drawn over the box
+ * (`front`), it rides down with the reader between two of the box's
+ * headings (`slide.between`, their ids): its body starts level with the
+ * first; once scrolled up to `slide.view` under the header it stays there,
+ * sliding down the box's edge as the box goes up, and it stops level with
+ * the second, where the box carries it off. The streak only shows while it
+ * slides. `layer.from` is where it's painted, if `box` (where it's drawn)
+ * differs. Hovered (tapped), an acorn bonks it (`layer.bonk`, see
+ * BonkLayer; `bonk.hit` is on its painted box). In the art (narrow
+ * screens) it just clings there.
+ */
+function SlideLayer({ plate, layer, at, follow = false }) {
+  const laneRef = useRef(null)
+  const stickRef = useRef(null)
+  const streakRef = useRef(null)
+  const { box } = layer
+  const from = layer.from || box
+  const [fx0, fy0, fx1, fy1] = from
+  const { outline } = layer.slide
+  // The two sides of the outline, as clip paths over the whole crop.
+  const pt = ([x, y]) =>
+    `${(((x - fx0) / (fx1 - fx0)) * 100).toFixed(2)}% ${(((y - fy0) / (fy1 - fy0)) * 100).toFixed(2)}%`
+  const line = outline.map(pt).join(", ")
+  const lineBack = [...outline].reverse().map(pt).join(", ")
+  const streakClip = `polygon(0% 0%, 100% 0%, ${lineBack})`
+  const bodyClip = `polygon(${line}, 100% 100%, 0% 100%)`
+  // Its streak's height above the critter's top (for where it rides).
+  const streakH = Math.min(...outline.map(([, y]) => y)) - fy0
+  useEffect(() => {
+    const stick = stickRef.current
+    const streak = streakRef.current
+    if (!follow || !stick || !streak) return undefined
+    let off = 0
+    let raf = 0
+    let lastTop = null
+    const check = () => {
+      raf = 0
+      const top = stick.getBoundingClientRect().top
+      // Riding with the reader: still on screen while the page moves.
+      const lane = stick.parentElement.getBoundingClientRect()
+      const sliding =
+        lastTop !== null &&
+        Math.abs(top - lastTop) < 0.5 &&
+        top > lane.top + 1 &&
+        top + stick.offsetHeight < lane.bottom - 1
+      lastTop = top
+      if (!sliding || stillPlease()) return
+      streak.style.opacity = "1"
+      window.clearTimeout(off)
+      off = window.setTimeout(() => {
+        streak.style.opacity = "0"
+      }, SLIDE_STREAK_MS)
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check)
+    }
+    lastTop = stick.getBoundingClientRect().top
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      cancelAnimationFrame(raf)
+      window.clearTimeout(off)
+    }
+  }, [follow])
+  // Its lane, from the first heading to the second (as the box's text lays
+  // out, so again whenever the box changes size).
+  const between = layer.slide.between
+  useLayoutEffect(() => {
+    const lane = laneRef.current
+    const stick = stickRef.current
+    const box = lane?.offsetParent
+    if (!follow || !lane || !stick || !box || !between) return undefined
+    const fit = () => {
+      const [a, b] = between.map(id => box.parentElement.querySelector(`#${id}`))
+      if (!a || !b) return
+      const o = box.getBoundingClientRect().top
+      const streakPx = (stick.offsetHeight * streakH) / (fy1 - fy0)
+      const top = a.getBoundingClientRect().top - o - streakPx
+      lane.style.top = `${top.toFixed(1)}px`
+      lane.style.height = `${(b.getBoundingClientRect().top - o - streakPx - top + stick.offsetHeight).toFixed(1)}px`
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [follow, between, streakH, fy0, fy1])
+  const bonk = layer.bonk
+  const bonkMe = () =>
+    dropAcornOn(stickRef.current, layer.box, [
+      // The head, from its painted box onto where it's drawn.
+      layer.box[0] + ((bonk.head[0] - fx0) * (layer.box[2] - layer.box[0])) / (fx1 - fx0),
+      layer.box[1] + ((bonk.head[1] - fy0) * (layer.box[3] - layer.box[1])) / (fy1 - fy0),
+    ], bonk.acorn, false)
+  const part = clip => (
+    <CropWindow style={{ inset: 0, clipPath: clip }}>
+      <CropImg
+        src={plate.asset(layer.src || layer.name)}
+        alt=""
+        decoding="async"
+        draggable={false}
+        style={plate.imgStyle(from)}
+      />
+    </CropWindow>
+  )
+  const critter = (
+    <>
+      <SlideStreak ref={streakRef}>{part(streakClip)}</SlideStreak>
+      {part(bodyClip)}
+    </>
+  )
+  if (!follow) {
+    return (
+      <SlideWindow data-layer={layer.name} style={at(box)}>
+        {critter}
+      </SlideWindow>
+    )
+  }
+  const [, y0, , y1] = box
+  const lane = at(box)
+  return (
+    <SlideLane
+      ref={laneRef}
+      data-layer={layer.name}
+      style={{ left: lane.left, width: lane.width, top: lane.top, height: pp(y1 - y0) }}
+    >
+      <SlideStick
+        ref={stickRef}
+        style={{
+          // Its body (under the streak) held `slide.view` under the header.
+          top: `calc(var(--dl-header, 0px) + ${layer.slide.view || "16vh"} - ${pp(
+            (streakH * (y1 - y0)) / (fy1 - fy0),
+          )})`,
+          height: pp(y1 - y0),
+        }}
+      >
+        {critter}
+        {bonk && (
+          <PeekHit style={partStyle(from, bonk.hit || from)} {...hoverOrTap(bonkMe)} />
+        )}
+      </SlideStick>
+    </SlideLane>
+  )
+}
+
+/**
+ * Leaves on the wind: each crosses from `wind.from` to `wind.to` (plate px
+ * from where it's painted), bobbing and turning, over `wind.ms`, again and
+ * again. Both ends are out of sight (off the window, or behind the text
+ * box), so none is ever seen popping in. `wind.at` (0–1) is how far along
+ * it is when the page opens, so they're spread out. `layer.from` is the
+ * leaf on its plate, if it's drawn somewhere else (`box`). `at` places it.
+ */
+function WindLayer({ plate, layer, at }) {
+  const ref = useRef(null)
+  const [x0, y0, x1, y1] = layer.box
+  const {
+    from: [fx, fy],
+    to: [tx, ty],
+    ms = 12000,
+    at: startAt = 0,
+    bob = 30,
+    spin = 120,
+    wobble = 18,
+  } = layer.wind
+  useEffect(() => {
+    const el = ref.current
+    if (!el || stillPlease()) return undefined
+    const w = x1 - x0
+    const h = y1 - y0
+    const steps = 12
+    const frames = Array.from({ length: steps + 1 }, (_, i) => {
+      const k = i / steps
+      const x = fx + (tx - fx) * k
+      const y = fy + (ty - fy) * k + bob * Math.sin(k * Math.PI * 4)
+      const r = spin * k + wobble * Math.sin(k * Math.PI * 3)
+      return {
+        transform: `translate(${((x / w) * 100).toFixed(1)}%, ${((y / h) * 100).toFixed(1)}%) rotate(${r.toFixed(1)}deg)`,
+      }
+    })
+    const anim = el.animate(frames, {
+      duration: ms,
+      iterations: Infinity,
+      easing: "linear",
+      delay: -startAt * ms,
+    })
+    return () => anim.cancel()
+  }, [x0, y0, x1, y1, fx, fy, tx, ty, ms, startAt, bob, spin, wobble])
+  return (
+    <WindWindow
+      ref={ref}
+      data-layer={layer.name}
+      style={{
+        ...at(layer.box),
+        // Out of sight at its start until the wind has it.
+        transform: `translate(${((fx / (x1 - x0)) * 100).toFixed(1)}%, ${((fy / (y1 - y0)) * 100).toFixed(1)}%)`,
+      }}
+    >
+      <CropImg
+        src={plate.asset(layer.src || layer.name)}
+        alt=""
+        decoding="async"
+        draggable={false}
+        style={plate.imgStyle(layer.from || layer.box)}
+      />
+    </WindWindow>
+  )
+}
+
+/** A bonked critter's squash, from its feet. */
+const BONK_SQUASH = [
+  { transform: "scale(1, 1)" },
+  { transform: "scale(1.06, 0.88)", offset: 0.2 },
+  { transform: "scale(0.96, 1.05) rotate(-2deg)", offset: 0.5 },
+  { transform: "scale(1, 1) rotate(1.5deg)", offset: 0.75 },
+  { transform: "scale(1, 1)" },
+].map(k => ({ ...k, transformOrigin: "50% 100%" }))
+const BONK_BOUNCE_MS = 900
+
+/**
+ * Drops an acorn (`acorn`: its `src` and `box` on a `plate`-sized canvas,
+ * drawn at `scale` of its size) from the top of the window, under the site
+ * header, onto `head` (plate px, on the `box` that `el` draws). It bonks
+ * the critter, which squashes, and bounces off. Drawn fixed over the page
+ * for the moment it takes. Not when the head is hidden under the text box
+ * or the section menu (`behind`: it's in the art behind them).
+ */
+function dropAcornOn(el, box, head, acorn, behind = true) {
+  if (!el || el.dataset.bonked || stillPlease()) return
+  const r = el.getBoundingClientRect()
+  const k = r.width / (box[2] - box[0])
+  const hx = r.left + (head[0] - box[0]) * k
+  const hy = r.top + (head[1] - box[1]) * k
+  if (behind) {
+    const over = document.elementFromPoint(hx, hy + 6 * k)
+    if (over?.closest("[data-scene-text], [data-scene-strip]")) return
+  }
+  const [ax0, ay0, ax1, ay1] = acorn.box
+  const [W, H] = acorn.plate
+  const size = (ax1 - ax0) * k * (acorn.scale ?? 0.8)
+  const left = hx - size / 2
+  // It lands with its bottom just on the head.
+  const top = hy - size * 0.9
+  const header = parseFloat(getComputedStyle(el).getPropertyValue("--dl-header")) || 0
+  const fall = top - (header - size)
+  if (fall <= 0) return
+  const nut = document.createElement("div")
+  Object.assign(nut.style, {
+    position: "fixed",
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${size}px`,
+    height: `${size}px`,
+    zIndex: "40",
+    pointerEvents: "none",
+    backgroundImage: `url(${acorn.src})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${(W / (ax1 - ax0)) * 100}% ${(H / (ay1 - ay0)) * 100}%`,
+    backgroundPosition: `${(ax0 / (W - (ax1 - ax0))) * 100}% ${(ay0 / (H - (ay1 - ay0))) * 100}%`,
+  })
+  document.body.appendChild(nut)
+  // Falling faster the further it drops, as things do.
+  const fallMs = Math.min(1100, Math.max(380, Math.sqrt(fall) * 30))
+  const total = fallMs + BONK_BOUNCE_MS
+  const landed = fallMs / total
+  nut.animate(
+    [
+      { transform: `translate(0, ${-fall}px) rotate(-25deg)`, offset: 0, easing: "cubic-bezier(0.55, 0, 1, 0.8)" },
+      { transform: "translate(0, 0) rotate(0deg)", offset: landed, easing: "cubic-bezier(0.2, 0.7, 0.4, 1)" },
+      {
+        transform: `translate(${-size * 0.9}px, ${-size * 1.2}px) rotate(-110deg)`,
+        offset: landed + (1 - landed) * 0.4,
+        easing: "cubic-bezier(0.55, 0, 1, 0.6)",
+      },
+      { transform: `translate(${-size * 1.7}px, ${size * 1.4}px) rotate(-250deg)`, opacity: 0, offset: 1 },
+    ],
+    { duration: total },
+  ).onfinish = () => nut.remove()
+  el.dataset.bonked = "1"
+  el.animate(BONK_SQUASH, { duration: 700, delay: fallMs - 30, easing: "ease-out" }).onfinish =
+    () => delete el.dataset.bonked
+}
+
+/**
+ * A critter that gets bonked by an acorn when hovered (tapped on touch):
+ * `bonk.head` is where it lands (plate px), `bonk.acorn` the acorn,
+ * `bonk.hit` the hover area (else the layer).
+ */
+function BonkLayer({ plate, layer, children }) {
+  const ref = useRef(null)
+  const { head, acorn, hit } = layer.bonk
+  const bonk = () => dropAcornOn(ref.current, layer.box, head, acorn)
+  return (
+    <>
+      <BonkWindow ref={ref} data-layer={layer.name} style={plate.windowStyle(layer.box)}>
+        {children}
+      </BonkWindow>
+      <PeekHit style={plate.windowStyle(hit || layer.box)} {...hoverOrTap(bonk)} />
+    </>
+  )
+}
+
 /** Ducking (ms): the hop back over the edge, and the sink behind it. */
 const DUCK_HOP_MS = 200
 const DUCK_SINK_MS = 550
@@ -1837,6 +2163,21 @@ export function SubpageScene({ scene, title, description, children }) {
   }
   const [frontLit, setFrontLit] = useState(false)
   const frontLightRef = useRef(null)
+  /**
+   * Layers painted over the text box (`layer.front`): on wide screens they're
+   * drawn on the box, off its right edge and its top (`front: "top"`) or
+   * bottom (`"bottom"`) as painted, so they stay with it as it grows.
+   */
+  const boxFront = scene.layers.filter(l => l.front && !l.hidden)
+  const frontAt = ([x0, y0, x1, y1], from) => ({
+    left: `calc(100% + ${pp(x0 - text.box[2])})`,
+    top:
+      from === "top"
+        ? pp(y0 - text.box[1])
+        : `calc(100% + ${pp(y0 - text.box[3])})`,
+    width: pp(x1 - x0),
+    height: pp(y1 - y0),
+  })
   const sceneRef = useRef(null)
   const artRef = useRef(null)
   const frameRef = useRef(null)
@@ -2264,6 +2605,30 @@ export function SubpageScene({ scene, title, description, children }) {
                     <BirdLayer key={layer.name} plate={plate} layer={layer} />
                   )
                 }
+                if (layer.slide || layer.wind) {
+                  const Moving = layer.slide ? SlideLayer : WindLayer
+                  const moving = (
+                    <Moving
+                      key={layer.name}
+                      plate={plate}
+                      layer={layer}
+                      at={plate.windowStyle}
+                    />
+                  )
+                  // `front`: over the text box on wide screens (see BoxFront).
+                  return layer.front ? (
+                    <ArtOnNarrow key={layer.name}>{moving}</ArtOnNarrow>
+                  ) : (
+                    moving
+                  )
+                }
+                if (layer.bonk) {
+                  return (
+                    <BonkLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </BonkLayer>
+                  )
+                }
                 if (layer.loop) {
                   return (
                     <LoopLayer key={layer.name} plate={plate} layer={layer}>
@@ -2597,7 +2962,7 @@ export function SubpageScene({ scene, title, description, children }) {
           </SideColumn>
         )}
 
-        <TextBox ref={textBoxRef} $solo={!side}>
+        <TextBox ref={textBoxRef} $solo={!side} data-scene-text>
           {/* A box the art doesn't paint is a flat colour. */}
           {text.fill ? (
             <TextFill
@@ -2611,6 +2976,23 @@ export function SubpageScene({ scene, title, description, children }) {
               box={text.box}
               caps={text.caps}
             />
+          )}
+          {/* `layer.front`: art painted over the box, under its text. */}
+          {boxFront.length > 0 && (
+            <BoxFront aria-hidden>
+              {boxFront.map(layer => {
+                const Moving = layer.slide ? SlideLayer : WindLayer
+                return (
+                  <Moving
+                    key={layer.name}
+                    plate={plate}
+                    layer={layer}
+                    at={box => frontAt(box, layer.front)}
+                    follow
+                  />
+                )
+              })}
+            </BoxFront>
           )}
           {/* `text.front`: a dragon's tail (and its glow, fire and markings
               below `line`) over the box's lower edge, below the text, `dy`
@@ -2705,6 +3087,66 @@ const PatrolWindow = styled.div`
 const CropWindow = styled.div`
   position: absolute;
   overflow: hidden;
+`
+
+const SlideWindow = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+/** From where it's painted down to where it stops (see SlideLayer). */
+const SlideLane = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+const SlideStick = styled.div`
+  position: sticky;
+  left: 0;
+  width: 100%;
+`
+
+/** Only while it slides (see SlideLayer). */
+const SlideStreak = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+`
+
+const WindWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+`
+
+const BonkWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
+/** Its own place in the art on narrow screens, over the text box on wide ones. */
+const ArtOnNarrow = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  ${WIDE} {
+    display: none;
+  }
+`
+
+/** Art over the text box (\`layer.front\`): over its fill, under its text. */
+const BoxFront = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  ${NARROW} {
+    display: none;
+  }
 `
 
 const BirdWindow = styled.div`

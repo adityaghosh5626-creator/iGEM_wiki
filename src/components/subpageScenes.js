@@ -610,6 +610,16 @@ export const WET_LAB_SCENE = {
  * so there's no section list and the text box is wide, ending just above the
  * petamons on the steps (they and the pool below are the ending).
  */
+/**
+ * The Outreach acorn (drop-acorn.avif): it bonks the squirrels on the head
+ * when they're hovered (see BonkLayer), there and on Contribution.
+ */
+const OUTREACH_ACORN = {
+  src: "https://static.igem.wiki/teams/6187/wiki/outreach/drop-acorn.avif",
+  plate: [1110, 4000],
+  box: [130, 3426, 254, 3550],
+}
+
 export const CONTRIBUTION_SCENE = {
   header: "Contribution",
   boxTitle: "Overview",
@@ -624,14 +634,21 @@ export const CONTRIBUTION_SCENE = {
     // Seedlings in the planter, behind the Dry Lab bug.
     { name: "sprouts", box: [70, 2997, 290, 3090] },
     // Each subteam's petamon on the steps, one file each so they can move
-    // on their own. Five do what their subteam's critters do on hover (tap
+    // on their own. Six do what their subteam's critters do on hover (tap
     // on touch): the kangaroo throws Venture's coins, the bird loops like
-    // the Human Practices birds, the crab scuttles like Dry Lab's, the
-    // turtle gets Hardware's lightning and the axolotl hides like Wet Lab's.
+    // the Human Practices birds, Outreach's gets bonked by an acorn, the
+    // crab scuttles like Dry Lab's, the turtle gets Hardware's lightning and
+    // the axolotl hides like Wet Lab's.
     { name: "venpetamon", coinBurst: true, box: [0, 2800, 196, 3362] },
     // Faces us; looping "rightward" rolls it counterclockwise.
     { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
-    { name: "orpetamon", box: [222, 2806, 396, 3005] },
+    // Outreach's: bonked by an acorn, like the Outreach squirrels.
+    {
+      name: "orpetamon",
+      box: [222, 2806, 396, 3005],
+      // A smaller acorn for this smaller critter.
+      bonk: { head: [272, 2878], acorn: { ...OUTREACH_ACORN, scale: 0.5 } },
+    },
     // Catches fire like the Wiki dragons: a fiery glow spreads out from
     // behind it, from its head, its eyes glow and it trembles.
     {
@@ -871,6 +888,164 @@ export const ENGINEERING_SCENE = {
 }
 
 /**
+ * Outreach: an autumn forest. The squirrel on the box's right edge slides
+ * down it with the reader, leaves drift across on the wind (left to right)
+ * and an acorn rolls down the log at the bottom. Hovered (tapped), each
+ * squirrel gets bonked on the head by an acorn from the top of the window.
+ */
+export const OUTREACH_SCENE = {
+  header: "Outreach",
+  hideIntro: true,
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/outreach/",
+  plate: [1110, 4000],
+  background: "#3d4423",
+  skyBottom: 400,
+  /** Cream on the sunlit canopy, lifted off it with a dark shadow. */
+  headerColor: "#fff2d6",
+  headerShadow:
+    "0 0.06em 0 rgba(30, 36, 14, 0.6), 0 0.1em 0.45em rgba(0, 0, 0, 0.45)",
+  accent: "#a8642c",
+  layers: [
+    { name: "background", box: [0, 0, 1110, 4000] },
+    // The leaves on the left blow right, in behind the box; the painted
+    // ones and a few more along the page.
+    ...[
+      [[26, 2210, 238, 2318], null, [-268, -40], [334, 100], 9000, 0],
+      [[186, 2322, 310, 2414], null, [-340, -20], [174, 140], 8000, 0.45],
+      [[226, 2682, 358, 2758], null, [-388, 0], [134, 90], 8500, 0.75],
+      [[26, 1300, 238, 1408], [26, 2210, 238, 2318], [-268, 0], [334, 120], 10000, 0.2],
+      [[186, 3000, 310, 3092], [186, 2322, 310, 2414], [-340, 0], [174, 100], 9000, 0.6],
+      [[226, 1000, 358, 1076], [226, 2682, 358, 2758], [-388, 0], [134, 80], 9500, 0.1],
+    ].map(([box, from, a, b, ms, at]) => ({
+      name: `leaf-1-${box[0]}-${box[1]}`,
+      src: "leaf-1",
+      box,
+      ...(from && { from }),
+      wind: { from: a, to: b, ms, at },
+    })),
+    {
+      name: "branch-squirrel",
+      box: [84, 1636, 348, 1916],
+      bonk: { head: [282, 1738], acorn: OUTREACH_ACORN },
+    },
+    // Rolling slowly down the log (it slopes down to the left), behind the
+    // bottom squirrel's feet, from off the window's right to off its left.
+    {
+      name: "rolling-acorn",
+      src: "drop-acorn",
+      from: OUTREACH_ACORN.box,
+      box: [556, 3652, 644, 3740],
+      wind: {
+        from: [550, -94],
+        to: [-700, 119],
+        ms: 18000,
+        at: 0.3,
+        bob: 0,
+        wobble: 0,
+        // Rolling, not sliding: its turn is the distance over its radius.
+        spin: -1628,
+      },
+    },
+    {
+      name: "bottom-squirrel",
+      box: [4, 3524, 292, 3862],
+      bonk: { head: [178, 3562], acorn: OUTREACH_ACORN },
+    },
+    // The green leaves on the right: some come out from behind the box and
+    // blow off the window, some cross over it, under its text (and the
+    // sketchbook), from one side of the window to the other.
+    ...[
+      [[996, 3162, 1108, 3278], [-133, -20], [124, 80], 4500, 0],
+      [[1050, 2970, 1108, 3100], [-133, 0], [70, 60], 4000, 0.5],
+      [[948, 3036, 996, 3092], [-21, -10], [172, 70], 4500, 0.3],
+      [[972, 3262, 1052, 3388], [-77, 0], [148, 90], 4200, 0.7],
+    ].map(([box, a, b, ms, at]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 90 },
+    })),
+    ...[
+      [[754, 3162, 974, 3334], [-994, -40], [371, 60], 22000, 0],
+      [[730, 3410, 830, 3500], [-850, -30], [395, 50], 20000, 0.5],
+      [[676, 3340, 780, 3390], [-800, -20], [449, 70], 21000, 0.25],
+      [[586, 3402, 662, 3446], [-682, -30], [539, 40], 19000, 0.75],
+    ].map(([box, a, b, ms, at]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 200 },
+      front: "bottom",
+    })),
+    // Hugging the box's right edge (its paw and head on it), a third
+    // smaller than painted; it slides down with the reader from Promo Video
+    // to Road to Jamboree (see SlideLayer). Its outline (traced 4 plate px above its top, every
+    // 4 columns) runs over its ears and raised paw.
+    {
+      name: "slide-squirrel",
+      from: [884, 1176, 1106, 2044],
+      box: [952, 1176, 1099, 1749],
+      slide: {
+        outline: [
+          [884, 1640], [888, 1640], [892, 1653], [896, 1650], [900, 1650], [904, 1649],
+          [908, 1649], [912, 1602], [916, 1590], [920, 1586], [924, 1515], [928, 1518],
+          [932, 1522], [936, 1525], [940, 1525], [944, 1523], [948, 1528], [952, 1534],
+          [956, 1534], [960, 1537], [964, 1543], [968, 1550], [972, 1560], [976, 1559],
+          [980, 1557], [984, 1555], [988, 1554], [992, 1554], [996, 1558], [1000, 1574],
+          [1004, 1575], [1008, 1509], [1012, 1506], [1016, 1503], [1020, 1500], [1024, 1500],
+          [1028, 1501], [1032, 1505], [1036, 1507], [1040, 1518], [1044, 1700], [1048, 1700],
+          [1052, 1700], [1056, 1700], [1060, 1700], [1064, 1700], [1068, 1700], [1072, 1700],
+          [1076, 1700], [1080, 1700], [1084, 1700], [1088, 1700], [1092, 1700], [1096, 1700],
+          [1100, 1700], [1106, 1700],
+        ],
+        view: "16vh",
+        between: ["promo-video", "road-to-jamboree-series"],
+      },
+      bonk: {
+        head: [955, 1530],
+        // Where it's off the box, so the box's text keeps the pointer.
+        hit: [1000, 1500, 1106, 2044],
+        acorn: OUTREACH_ACORN,
+      },
+      front: "top",
+    },
+  ],
+  side: {
+    name: "small-block",
+    box: [135, 409, 291, 1226],
+    caps: [4, 4],
+    navTop: 40,
+    linkPadY: 7,
+    linkSize: 11.5,
+    indicator: { fill: "#a8642c", box: [136, 456, 290, 518] },
+    /** The highlight's colour, for UI that matches it (footer button). */
+    highlightColor: "#a8642c",
+    /** The acorn sticker rides on the highlight's left end, drawn smaller. */
+    indicatorIcon: {
+      name: "tab-acorn",
+      from: [72, 448, 208, 584],
+      box: [98, 453, 162, 517],
+    },
+    linkIndent: 20,
+    linkColor: "#33401f",
+    activeLinkColor: "#ffffff",
+    stripColor: "#efe3c8",
+  },
+  text: {
+    name: "big-block",
+    box: [339, 404, 988, 3693],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /**
+   * Above the painted box's bottom (3693), so the ending shows the bottom
+   * squirrel and its acorn whole, under the box and the section menu that
+   * follows it down.
+   */
+  textEndY: 3420,
+}
+
+/**
  * Project Description: a night sky with two comets (the bottle and Gemy)
  * flying over the box, and the CN Tower rocket hovering over a planet below.
  * Comets and rocket burst into fireworks when clicked.
@@ -1028,8 +1203,9 @@ export const WIKI_SCENE = {
     },
   ],
   side: {
-    // A plain box in the painted one's colour: crisp at any size.
-    fill: "#f1dece",
+    // A plain box (crisp at any size), a shade deeper than the text box's
+    // peach so the two read apart, as on the other pages.
+    fill: "#e6c4ab",
     radius: "0.6rem",
     box: [55, 160, 121, 594],
     navTop: 16,
