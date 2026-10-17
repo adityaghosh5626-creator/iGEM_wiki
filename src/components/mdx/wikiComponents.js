@@ -19,6 +19,11 @@ import {
   DatasetFlowchart,
   DatasetFlowchartFigure,
 } from "./interactive/DatasetFlowchart.js"
+import {
+  ArchitectureFigure,
+  DiamondSearchHero,
+  MethodsLink,
+} from "./interactive/DiamondSearch.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
@@ -95,6 +100,9 @@ export const mdxComponents = {
   PetAssayAnimation,
   DatasetFlowchart,
   DatasetFlowchartFigure,
+  ArchitectureFigure,
+  DiamondSearchHero,
+  MethodsLink,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,
