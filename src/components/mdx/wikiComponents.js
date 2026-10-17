@@ -5,6 +5,7 @@ import styled, { css } from "styled-components"
 import { BioreactorRequirements } from "../bioreactorRequirements/BioreactorRequirements.js"
 import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
+import { DryLabCalendar } from "../dryLabCalendar/DryLabCalendar.js"
 import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
 import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
 import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
@@ -24,10 +25,12 @@ import {
   DiamondSearchHero,
   MethodsLink,
 } from "./interactive/DiamondSearch.js"
+import { ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
 import { CodeDropdown } from "../Dropdown.js"
+import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
 import References from "../References"
 
@@ -61,6 +64,16 @@ export const Figure = ({ src, alt = "", caption, credit, width = "32rem", childr
   </FigureWrap>
 )
 
+// Markdown links to other wiki pages are root-relative too, so they need the
+// same prefix. Protocol-relative (//) and hash-only links are left alone.
+const MdxLink = ({ href = "", ...props }) => (
+  <a
+    {...props}
+    {...useLinkTarget(href)}
+    href={href.startsWith("/") && !href.startsWith("//") ? withPrefix(href) : href}
+  />
+)
+
 export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
 
 export const DataTable = ({ caption, children }) => (
@@ -79,6 +92,7 @@ export const ContributionCalendar = ({ title, caption }) => (
 )
 
 export const mdxComponents = {
+  a: MdxLink,
   HardwareIterations,
   Callout,
   Placeholder,
@@ -87,6 +101,7 @@ export const mdxComponents = {
   DataTable,
   ContributionCalendar,
   ContributionTimeline,
+  DryLabCalendar,
   DesignSketchbook,
   HardwareNotebookSandbox,
   HardwareJournal,
@@ -103,6 +118,7 @@ export const mdxComponents = {
   ArchitectureFigure,
   DiamondSearchHero,
   MethodsLink,
+  ModelDatasets,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,

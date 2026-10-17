@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { withPrefix } from "gatsby"
 import styled, { keyframes } from "styled-components"
+import { useLinkTarget } from "../linkTarget.js"
 
 /**
  * The sharded DIAMOND search's logo hero and the link card into its Methods
@@ -26,40 +27,43 @@ const STATS = [
   { value: "< 1 min", label: "from paste to results" },
 ]
 
-export const DiamondSearchHero = ({ logoSrc, methodsHref = METHODS_PATH }) => (
-  <Hero>
-    <Logo
-      src={logoSrc.startsWith("/") ? withPrefix(logoSrc) : logoSrc}
-      alt="PETadex DIAMOND search logo: a hand holding a diamond made of protein sequence, refracting light from a protein structure"
-      width={625}
-      height={900}
-      loading="lazy"
-    />
-    <HeroBody>
-      <Tagline>Paste a protein. Search every enzyme in PETadex.</Tagline>
-      <Stats>
-        {STATS.map(({ value, label }) => (
-          <Stat key={label}>
-            <StatValue>{value}</StatValue>
-            <StatLabel>{label}</StatLabel>
-          </Stat>
-        ))}
-      </Stats>
-      <Actions>
-        <Action href={SEARCH_URL} target="_blank" rel="noopener noreferrer">
-          Try it on petadex.net
-        </Action>
-        <Action href={methodsHref} $secondary>
-          Read the full methods
-        </Action>
-      </Actions>
-    </HeroBody>
-  </Hero>
-)
+export const DiamondSearchHero = ({ logoSrc, methodsHref = METHODS_PATH }) => {
+  const methodsTarget = useLinkTarget(methodsHref)
+  return (
+    <Hero>
+      <Logo
+        src={logoSrc.startsWith("/") ? withPrefix(logoSrc) : logoSrc}
+        alt="PETadex DIAMOND search logo: a hand holding a diamond made of protein sequence, refracting light from a protein structure"
+        width={625}
+        height={900}
+        loading="lazy"
+      />
+      <HeroBody>
+        <Tagline>Paste a protein. Search every enzyme in PETadex.</Tagline>
+        <Stats>
+          {STATS.map(({ value, label }) => (
+            <Stat key={label}>
+              <StatValue>{value}</StatValue>
+              <StatLabel>{label}</StatLabel>
+            </Stat>
+          ))}
+        </Stats>
+        <Actions>
+          <Action href={SEARCH_URL} target="_blank" rel="noopener noreferrer">
+            Try it on petadex.net
+          </Action>
+          <Action href={withPrefix(methodsHref)} {...methodsTarget} $secondary>
+            Read the full methods
+          </Action>
+        </Actions>
+      </HeroBody>
+    </Hero>
+  )
+}
 
 /** Inline link card that leads into the Methods sub-page. */
 export const MethodsLink = ({ href = METHODS_PATH, children }) => (
-  <MethodsCard href={href}>
+  <MethodsCard href={withPrefix(href)} {...useLinkTarget(href)}>
     <MethodsKicker>Methods</MethodsKicker>
     <MethodsText>{children}</MethodsText>
     <MethodsArrow aria-hidden="true">→</MethodsArrow>
@@ -174,6 +178,7 @@ export const ArchitectureFigure = ({ src, alt = "", caption, sectionsPath = "", 
   const resolved = src.startsWith("/") ? withPrefix(src) : src
   const base = sectionsPath ? withPrefix(sectionsPath) : ""
   const [active, setActive] = useState(null)
+  const hotspotTarget = useLinkTarget(sectionsPath ? base : "#")
   const spot = active === null ? null : ARCH_HOTSPOTS[active]
   return (
     <ArchWrap $width={width}>
@@ -185,6 +190,7 @@ export const ArchitectureFigure = ({ src, alt = "", caption, sectionsPath = "", 
             <a
               key={label}
               href={`${base}#${section}`}
+              {...hotspotTarget}
               aria-label={`${label}: read ${SECTION_TITLES[section]}`}
               aria-describedby={active === i ? "ds-arch-popover" : undefined}
               data-active={active === i || undefined}

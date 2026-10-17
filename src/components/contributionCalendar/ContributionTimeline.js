@@ -6,6 +6,11 @@ import {
   getDefaultWeekId,
   parseWeekHash,
 } from "../../data/contributionCalendar/weeks.js"
+import { CONTRIBUTION_MONTHS } from "../../data/contributionCalendar/calendarUtils.js"
+import {
+  MILESTONE_TRACK_BY_ID,
+  SUBTEAM_TRACKS,
+} from "../../data/subteamTracks.js"
 import { MonthNav } from "./MonthNav.js"
 import { WeekNav } from "./WeekNav.js"
 import { PanelChrome, RestorePanelBar } from "./PanelChrome.js"
@@ -15,6 +20,31 @@ import { VintageMonthGrid } from "./VintageMonthGrid.js"
 import { WeekDetailPanel } from "./WeekDetailPanel.js"
 
 /** @typedef {null | 'detail' | 'calendar'} HiddenPanel */
+
+/**
+ * Everything the calendar shows, so another page can bring its own weeks and
+ * tracks (the Dry Lab overview's workstreams) while /contribution/ keeps the
+ * whole team's.
+ */
+export const TEAM_CALENDAR = {
+  weeks: CONTRIBUTION_WEEKS,
+  weekById: CONTRIBUTION_WEEK_BY_ID,
+  months: CONTRIBUTION_MONTHS,
+  tracks: SUBTEAM_TRACKS,
+  /** Every track a milestone can belong to, including "all". */
+  trackById: MILESTONE_TRACK_BY_ID,
+  defaultWeekId: getDefaultWeekId(),
+  parseHash: parseWeekHash,
+  /** Track filters on at first; none, so turning one on shows its progress. */
+  initialActiveIds: [],
+  /** True: the whole calendar fits in one screen under the site header. */
+  fit: false,
+  labels: {
+    tracks: "Subteams",
+    overview: "Team overview",
+    hint: "Turn on a subteam above to see its progress this week.",
+  },
+}
 
 function buildMilestonesByDate(weeks) {
   /** @type {Record<string, import('../../data/contributionCalendar/weeks.js').WeekMilestone[]>} */
@@ -28,35 +58,38 @@ function buildMilestonesByDate(weeks) {
   return map
 }
 
-function firstWeekIdForMonth(monthKey) {
+function firstWeekIdForMonth(weeks, monthKey, fallbackId) {
   // Prefer a week whose primary month is the target (avoids cross-month weeks
   // whose monthKeys[0] is the previous month).
-  const preferred = CONTRIBUTION_WEEKS.find((wk) => wk.monthKeys[0] === monthKey)
+  const preferred = weeks.find((wk) => wk.monthKeys[0] === monthKey)
   if (preferred) return preferred.id
-  const w = CONTRIBUTION_WEEKS.find((wk) => wk.monthKeys.includes(monthKey))
-  return w?.id ?? getDefaultWeekId()
+  const w = weeks.find((wk) => wk.monthKeys.includes(monthKey))
+  return w?.id ?? fallbackId
 }
 
-export function ContributionTimeline({ embedded = false }) {
-  const initialWeekId = getDefaultWeekId()
+export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDAR }) {
+  const { weeks, weekById, months, tracks, trackById, parseHash, labels } = calendar
+  const fit = Boolean(calendar.fit)
+  const initialWeekId = calendar.defaultWeekId
   const initialMonth =
-    CONTRIBUTION_WEEK_BY_ID[initialWeekId]?.monthKeys[0] ?? "2026-04"
+    weekById[initialWeekId]?.monthKeys[0] ?? months[0]?.key
 
   const [monthKey, setMonthKey] = useState(initialMonth)
   const [selectedWeekId, setSelectedWeekId] = useState(initialWeekId)
-  // Subteam filters start off; turning one on shows its progress.
-  const [activeSubteams, setActiveSubteams] = useState(() => new Set())
+  const [activeSubteams, setActiveSubteams] = useState(
+    () => new Set(calendar.initialActiveIds)
+  )
   /** @type {[HiddenPanel, function]} */
   const [hiddenPanel, setHiddenPanel] = useState(null)
 
   const { splitPct, nudgeSplit, containerRef, onDividerPointerDown } = useSplitPane()
 
   const milestonesByDate = useMemo(
-    () => buildMilestonesByDate(CONTRIBUTION_WEEKS),
-    []
+    () => buildMilestonesByDate(weeks),
+    [weeks]
   )
 
-  const selectedWeek = CONTRIBUTION_WEEK_BY_ID[selectedWeekId] ?? null
+  const selectedWeek = weekById[selectedWeekId] ?? null
   const showDetail = hiddenPanel !== "detail"
   const showCalendar = hiddenPanel !== "calendar"
   const showDivider = showDetail && showCalendar
@@ -71,8 +104,8 @@ export function ContributionTimeline({ embedded = false }) {
 
   const selectWeek = useCallback(
     (weekId) => {
-      if (!CONTRIBUTION_WEEK_BY_ID[weekId]) return
-      const week = CONTRIBUTION_WEEK_BY_ID[weekId]
+      if (!weekById[weekId]) return
+      const week = weekById[weekId]
       setSelectedWeekId(weekId)
       syncHash(weekId)
       // Keep the visible month if this week still belongs to it; otherwise follow the week.
@@ -80,19 +113,19 @@ export function ContributionTimeline({ embedded = false }) {
         week.monthKeys.includes(prev) ? prev : week.monthKeys[0] ?? prev
       )
     },
-    [syncHash]
+    [syncHash, weekById]
   )
 
   const selectMonth = useCallback(
     (key) => {
-      const nextId = firstWeekIdForMonth(key)
+      const nextId = firstWeekIdForMonth(weeks, key, initialWeekId)
       setMonthKey(key)
       if (nextId) {
         setSelectedWeekId(nextId)
         syncHash(nextId)
       }
     },
-    [syncHash]
+    [syncHash, weeks, initialWeekId]
   )
 
   const toggleSubteam = useCallback((id) => {
@@ -116,9 +149,9 @@ export function ContributionTimeline({ embedded = false }) {
   // or month navigation gets snapped back to the hash week's monthKeys[0].
   useEffect(() => {
     if (typeof window === "undefined") return undefined
-    const initialHashId = parseWeekHash(window.location.hash)
+    const initialHashId = parseHash(window.location.hash)
     if (initialHashId) {
-      const initialHashWeek = CONTRIBUTION_WEEK_BY_ID[initialHashId]
+      const initialHashWeek = weekById[initialHashId]
       setSelectedWeekId(initialHashId)
       if (initialHashWeek?.monthKeys[0]) {
         setMonthKey(initialHashWeek.monthKeys[0])
@@ -130,18 +163,21 @@ export function ContributionTimeline({ embedded = false }) {
   useEffect(() => {
     if (typeof window === "undefined") return undefined
     const onHash = () => {
-      const id = parseWeekHash(window.location.hash)
+      const id = parseHash(window.location.hash)
       if (id) selectWeek(id)
     }
     window.addEventListener("hashchange", onHash)
     return () => window.removeEventListener("hashchange", onHash)
-  }, [selectWeek])
+  }, [parseHash, selectWeek])
 
   return (
-    <TimelineRoot $embedded={embedded}>
+    <TimelineRoot $embedded={embedded} $fit={fit}>
       <SubteamNavRow>
         <SubteamFilterBar
           layout="navbar"
+          compact={fit}
+          tracks={tracks}
+          label={labels.tracks}
           activeIds={activeSubteams}
           onToggle={toggleSubteam}
         />
@@ -149,27 +185,37 @@ export function ContributionTimeline({ embedded = false }) {
 
       <SplitContainer
         ref={containerRef}
+        $fit={fit}
         style={{ "--detail-split": `${splitPct}%` }}
       >
         {showDetail && (
-          <DetailHalf $full={hiddenPanel === "calendar"} $split={showDivider}>
+          <DetailHalf $full={hiddenPanel === "calendar"} $split={showDivider} $fit={fit}>
             {!showCalendar && (
               <RestorePanelBar
                 label="Show calendar →"
                 onRestore={() => setHiddenPanel(null)}
               />
             )}
-            <PanelChrome
-              title="Week details"
-              hideLabel="Hide details"
-              onHide={() => hidePanel("detail")}
-              isHidden={false}
-            />
+            <ChromeSlot $fit={fit}>
+              <PanelChrome
+                title="Week details"
+                hideLabel="Hide details"
+                onHide={() => hidePanel("detail")}
+                isHidden={false}
+              />
+            </ChromeSlot>
             <WeekNavBar>
-              <WeekNav selectedWeekId={selectedWeekId} onSelect={selectWeek} />
+              <WeekNav weeks={weeks} selectedWeekId={selectedWeekId} onSelect={selectWeek} />
             </WeekNavBar>
-            <DetailScroll>
-              <WeekDetailPanel week={selectedWeek} activeIds={activeSubteams} />
+            <DetailScroll $fit={fit}>
+              <WeekDetailPanel
+                week={selectedWeek}
+                activeIds={activeSubteams}
+                tracks={tracks}
+                trackById={trackById}
+                overviewLabel={labels.overview}
+                hint={labels.hint}
+              />
             </DetailScroll>
           </DetailHalf>
         )}
@@ -189,26 +235,31 @@ export function ContributionTimeline({ embedded = false }) {
         )}
 
         {showCalendar && (
-          <CalendarHalf $full={hiddenPanel === "detail"}>
+          <CalendarHalf $full={hiddenPanel === "detail"} $fit={fit}>
             {!showDetail && (
               <RestorePanelBar
                 label="← Show week details"
                 onRestore={restorePanels}
               />
             )}
-            <PanelChrome
-              title="Calendar"
-              hideLabel="Hide calendar"
-              onHide={() => hidePanel("calendar")}
-              isHidden={false}
-            />
-            <CalendarPanel>
-              <MonthNav selectedKey={monthKey} onSelect={selectMonth} />
+            <ChromeSlot $fit={fit}>
+              <PanelChrome
+                title="Calendar"
+                hideLabel="Hide calendar"
+                onHide={() => hidePanel("calendar")}
+                isHidden={false}
+              />
+            </ChromeSlot>
+            <CalendarPanel $fit={fit}>
+              <MonthNav months={months} selectedKey={monthKey} onSelect={selectMonth} />
               <VintageMonthGrid
                 monthKey={monthKey}
                 selectedWeekId={selectedWeekId}
                 onSelectWeek={selectWeek}
                 milestonesByDate={milestonesByDate}
+                months={months}
+                trackById={trackById}
+                fit={fit}
               />
             </CalendarPanel>
           </CalendarHalf>
@@ -240,6 +291,34 @@ const TimelineRoot = styled.div`
       transition: none !important;
     }
   }
+
+  /* Fit: one screen tall under the site header (75px), so its top and bottom
+     are in view together. The month grid and the week details share what's
+     left; the details scroll. */
+  ${({ $fit }) =>
+    $fit &&
+    `
+    min-height: 0;
+    height: clamp(24rem, calc(100svh - var(--dl-header, 4.75rem) - 2.25rem), 52rem);
+
+    /* Narrow pages pin the section strip under the header too. */
+    @media (max-width: 860px) {
+      height: clamp(24rem, calc(100svh - var(--dl-header, 4.75rem) - 5rem), 52rem);
+    }
+  `}
+`
+
+/** Panel title bars; short screens drop them in fit mode to give the month room. */
+const ChromeSlot = styled.div`
+  flex: none;
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    @media (max-height: 820px) {
+      display: none;
+    }
+  `}
 `
 
 const SubteamNavRow = styled.div`
@@ -266,6 +345,13 @@ const SplitContainer = styled.div`
     flex-direction: column;
     min-height: auto;
   }
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    flex: 1 1 auto;
+    min-height: 0;
+  `}
 `
 
 const DetailHalf = styled.div`
@@ -281,6 +367,17 @@ const DetailHalf = styled.div`
     flex: 1 1 auto;
     max-width: 100%;
   }
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    min-height: 0;
+
+    @container (max-width: 720px) {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  `}
 `
 
 const WeekNavBar = styled.div`
@@ -303,6 +400,16 @@ const DetailScroll = styled.div`
     flex: none;
     height: min(24rem, 55vh);
   }
+
+  /* Fit: whatever height is left over. */
+  ${({ $fit }) =>
+    $fit &&
+    `
+    @container (max-width: 720px) {
+      flex: 1 1 0;
+      height: auto;
+    }
+  `}
 `
 
 const ResizeDivider = styled.div`
@@ -353,6 +460,22 @@ const CalendarHalf = styled.div`
     border-left: none;
     border-top: 1px solid var(--cal-line, var(--color-border));
   }
+
+  /* Fit, stacked: the month takes a bit over half the height. */
+  ${({ $fit, $full }) =>
+    $fit &&
+    `
+    min-height: 0;
+
+    @container (max-width: 720px) {
+      flex: ${$full ? "1 1 0" : "0 0 56%"};
+      min-width: 0;
+
+      @media (max-height: 820px) {
+        flex-basis: ${$full ? "0" : "62%"};
+      }
+    }
+  `}
 `
 
 const CalendarPanel = styled.div`
@@ -363,6 +486,18 @@ const CalendarPanel = styled.div`
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    min-height: 0;
+    padding: var(--space-sm) clamp(0.5rem, 2vw, 1.5rem);
+
+    /* The month nav: less room under it. */
+    > :first-child {
+      margin-bottom: var(--space-xs);
+    }
+  `}
 `
 
 

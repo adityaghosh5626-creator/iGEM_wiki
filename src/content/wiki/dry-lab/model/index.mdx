@@ -467,12 +467,14 @@ Agreement between human and language-model extraction.
 ## Machine Learning
 
 {/*
-  ~700 words. Answers Q1 and Q2. Figures: architecture; controls result.
-  Lead with the controls, not the architecture: does the embedding space
+  ~700 words. Answers Q1 and Q2. Figures: data flow; architecture; controls
+  result.
+  Open with the datasets: what the model learns from and where to get it.
+  Then the controls, before the architecture: does the embedding space
   encode anything beyond taxonomy?
-  Must cover: domain-adapted ESM-LoRA (PlasticESM), how it was built and
-  whether it works (its release is documented on the Software page);
-  embedding the corpus; embedding controls.
+  Must cover: the datasets (linked on Hugging Face); domain-adapted ESM-LoRA
+  (PlasticESM), how it was built and whether it works (its release is
+  documented on the Software page); embedding the corpus; embedding controls.
   Should cover: activity prediction (PETai).
   Kept off the wiki for now: manifold method comparison; embedding search
   hit characterization.
@@ -480,11 +482,23 @@ Agreement between human and language-model extraction.
 
 <Placeholder>
 
-Before trusting any prediction, we tested whether the model's internal representation of a sequence carries information beyond which organism it came from. This section opens with those controls and what they showed.
-
-The representation comes from a protein language model that we adapted to plastic-degrading enzyme families and then used to embed the corpus. An activity classifier trained on the labelled sequences sits on top of it. We compare the adapted model against its unadapted base, and test whether adding annotation features improves on sequence alone.
+This section opens with the data the model learns from. Before trusting any prediction, we then tested whether the model's internal representation of a sequence carries information beyond which organism it came from. The representation comes from a protein language model that we adapted to plastic-degrading enzyme families and then used to embed the corpus. An activity classifier trained on the labelled sequences sits on top of it. We compare the adapted model against its unadapted base, and test whether adding annotation features improves on sequence alone.
 
 </Placeholder>
+
+### Datasets
+
+{/*
+  Overview tier: the figure and two sentences. The full write-up is the
+  Methods sub-page, src/content/wiki/dry-lab/model/datasets/, and the
+  sources for every number are listed in its writer notes.
+*/}
+
+The model learns from two datasets. The PETadex corpus supplies the candidates it scores, and the PETai activity labels supply the targets it learns to predict. Both are open on Hugging Face (labelled 🤗 where they are on Hugging Face).
+
+<ModelDatasets />
+
+<MethodsLink href="/dry-lab/model/datasets/">What each dataset holds, how the labelled sequences were split, how far they sit from the candidates, and how to download everything.</MethodsLink>
 
 ### Embedding Controls
 

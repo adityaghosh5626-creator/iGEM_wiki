@@ -5,6 +5,7 @@ import styled, { css } from "styled-components"
 import WikiLayout from "../components/layout.js"
 import Seo from "../components/seo.js"
 import { mdxComponents } from "../components/mdx/wikiComponents.js"
+import { NewTabLinks } from "../components/mdx/linkTarget.js"
 import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
@@ -67,6 +68,13 @@ const WikiMdxTemplate = ({ data, children }) => {
   const owners = frontmatter.owners || []
   const updated = formatDate(frontmatter.updated)
 
+  // Every link on the Dry Lab pages opens in a new tab.
+  const content = (
+    <NewTabLinks enabled={frontmatter.path?.startsWith("/dry-lab/")}>
+      <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+    </NewTabLinks>
+  )
+
   const scene = sceneFor(frontmatter)
   if (scene) {
     return (
@@ -87,7 +95,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           description={frontmatter.description}
         >
           <Article $wideProse>
-            <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+            {content}
           </Article>
         </SubpageScene>
       </WikiLayout>
@@ -118,7 +126,7 @@ const WikiMdxTemplate = ({ data, children }) => {
         </InlinePageHeader>
         {pageHeader}
         <Article $wide>
-          <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+          {content}
         </Article>
       </ArticleShell>
     </WideSideTabProvider>
@@ -126,7 +134,7 @@ const WikiMdxTemplate = ({ data, children }) => {
     <ArticleShell id="page-content">
       {pageHeader}
       <Article $wideProse={wideProse}>
-        <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+        {content}
       </Article>
     </ArticleShell>
   )

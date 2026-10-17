@@ -1,0 +1,101 @@
+<svg class="fc" xmlns="http://www.w3.org/2000/svg" viewBox="-4.00 1.0 601.00 37.00"
+     role="navigation" aria-label="Dataset generation pipeline" font-family="sans-serif" text-anchor="middle">
+<defs>
+  <marker id="fc-arrowhead" viewBox="0 0 10 10" refX="1" refY="5" markerUnits="userSpaceOnUse"
+          markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f3928"/>
+  </marker>
+</defs>
+<a class="fc-stage" data-stage="curation" href="#curation" aria-label="PETadex-PAZy">
+  <g class="fc-node fc-data"><rect x="0.00" y="2.0" width="38.0" height="16.0" rx="2.5" fill="#f3e9e5" stroke="#5e689e" stroke-width="0.75"/>
+  <text x="19.00" y="8.60" font-size="3.5" font-weight="bold" fill="#5e689e">PETadex-PAZy</text>
+  <text x="19.00" y="13.40" font-size="3.0" font-weight="bold" fill="#5e689e">609 proteins</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="cath-assignment" href="#cath-assignment" aria-label="CATH assignment">
+  <path class="fc-arrow" d="M 19.00,18.4 V 22.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-annotation"><rect x="-3.00" y="24.0" width="44.0" height="13.0" rx="2.5" fill="#f3e9e5" stroke="#72a09c" stroke-width="0.75"/>
+  <text x="19.00" y="28.40" font-size="3.2" font-weight="bold" fill="#72a09c">CATH assignment</text>
+  <text x="19.00" y="32.20" font-size="2.8" font-weight="bold" fill="#72a09c">606 / 609 annotated</text>
+  <text x="19.00" y="35.50" font-size="2.6" font-weight="normal" font-style="italic" fill="#72a09c">Foldseek, Gene3D, Pfam</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="clustering" href="#clustering" aria-label="USEARCH cluster_fast, then nr query">
+  <path class="fc-arrow" d="M 38.40,10.0 H 45.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="47.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="65.50" y="7.60" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">USEARCH cluster_fast</text>
+  <text x="65.50" y="11.00" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">90% identity, full length</text>
+  <text x="65.50" y="14.40" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">13 reference seeds</text>
+  </g>
+  <path class="fc-arrow" d="M 84.40,10.0 H 91.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="93.00" y="2.0" width="38.0" height="16.0" rx="8.0" fill="#f3e9e5" stroke="#5f3928" stroke-width="0.75"/>
+  <text x="112.00" y="7.00" font-size="3.5" font-weight="bold" fill="#5f3928">nr query</text>
+  <text x="112.00" y="11.60" font-size="3.0" font-weight="bold" fill="#5f3928">411 proteins</text>
+  <text x="112.00" y="15.20" font-size="2.8" font-weight="normal" fill="#5f3928">90% centroids</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="nr-search" href="#nr-search" aria-label="DIAMOND blastp, then nr raw hits">
+  <path class="fc-arrow" d="M 131.40,10.0 H 138.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="140.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="158.50" y="9.30" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">DIAMOND blastp</text>
+  <text x="158.50" y="12.70" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">e-value &lt; 1e-5</text>
+  </g>
+  <path class="fc-arrow" d="M 177.40,10.0 H 184.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="186.00" y="2.0" width="38.0" height="16.0" rx="2.5" fill="#f3e9e5" stroke="#5f3928" stroke-width="0.75" stroke-dasharray="3 0.75"/>
+  <text x="205.00" y="7.00" font-size="3.5" font-weight="bold" fill="#5f3928">nr raw hits</text>
+  <text x="205.00" y="11.60" font-size="3.0" font-weight="bold" fill="#5f3928">7,825,535 sequences</text>
+  <text x="205.00" y="15.20" font-size="2.8" font-weight="normal" fill="#5f3928">non-redundant</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="nr-filter" href="#nr-filter" aria-label="HMMsearch, then PETadex-nr">
+  <path class="fc-arrow" d="M 224.40,10.0 H 231.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="233.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="251.50" y="9.30" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">HMMsearch</text>
+  <text x="251.50" y="12.70" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">e-value &lt; 1e-5</text>
+  </g>
+  <path class="fc-arrow" d="M 270.40,10.0 H 277.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="279.00" y="2.0" width="38.0" height="16.0" rx="2.5" fill="#f3e9e5" stroke="#9d5e91" stroke-width="0.75"/>
+  <text x="298.00" y="8.60" font-size="3.5" font-weight="bold" fill="#9d5e91">PETadex-nr</text>
+  <text x="298.00" y="13.40" font-size="3.0" font-weight="bold" fill="#9d5e91">6,857,582 proteins</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="logan-query" href="#logan-query" aria-label="DIAMOND 90pid linclust, then Logan query">
+  <path class="fc-arrow" d="M 317.40,10.0 H 324.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="326.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="344.50" y="7.60" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">DIAMOND 90pid linclust</text>
+  <text x="344.50" y="11.00" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">of complete</text>
+  <text x="344.50" y="14.40" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">catalytic domains</text>
+  </g>
+  <path class="fc-arrow" d="M 363.40,10.0 H 370.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="372.00" y="2.0" width="38.0" height="16.0" rx="8.0" fill="#f3e9e5" stroke="#5f3928" stroke-width="0.75"/>
+  <text x="391.00" y="7.00" font-size="3.5" font-weight="bold" fill="#5f3928">Logan query</text>
+  <text x="391.00" y="11.60" font-size="3.0" font-weight="bold" fill="#5f3928">2,740,458 proteins</text>
+  <text x="391.00" y="15.20" font-size="2.8" font-weight="normal" fill="#5f3928">90% centroids</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="logan-search" href="#logan-search" aria-label="DIAMOND blastx, then Logan raw hits">
+  <path class="fc-arrow" d="M 410.40,10.0 H 417.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="419.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="437.50" y="9.30" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">DIAMOND blastx</text>
+  <text x="437.50" y="12.70" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">e-value &lt; 1e-5</text>
+  </g>
+  <path class="fc-arrow" d="M 456.40,10.0 H 463.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="465.00" y="2.0" width="38.0" height="16.0" rx="2.5" fill="#f3e9e5" stroke="#5f3928" stroke-width="0.75" stroke-dasharray="3 0.75"/>
+  <text x="484.00" y="7.00" font-size="3.5" font-weight="bold" fill="#5f3928">Logan raw hits</text>
+  <text x="484.00" y="11.60" font-size="3.0" font-weight="bold" fill="#5f3928">xxx sequences</text>
+  <text x="484.00" y="15.20" font-size="2.8" font-weight="normal" fill="#5f3928">non-redundant</text>
+  </g>
+</a>
+<a class="fc-stage" data-stage="logan-filter" href="#logan-filter" aria-label="HMMsearch, then PETadex-Logan">
+  <path class="fc-arrow" d="M 503.40,10.0 H 510.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-process"><rect x="512.00" y="3.5" width="37.0" height="13.0" fill="#e2e1dc" stroke="#805340" stroke-width="0.5"/>
+  <text x="530.50" y="9.30" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">HMMsearch</text>
+  <text x="530.50" y="12.70" font-size="2.8" font-weight="normal" font-style="italic" fill="#805340">e-value &lt; 1e-5</text>
+  </g>
+  <path class="fc-arrow" d="M 549.40,10.0 H 556.00" stroke="#5f3928" stroke-width="0.75" fill="none" marker-end="url(#fc-arrowhead)"/>
+  <g class="fc-node fc-data"><rect x="558.00" y="2.0" width="38.0" height="16.0" rx="2.5" fill="#f3e9e5" stroke="#679a79" stroke-width="0.75"/>
+  <text x="577.00" y="8.60" font-size="3.5" font-weight="bold" fill="#679a79">PETadex-Logan</text>
+  <text x="577.00" y="13.40" font-size="3.0" font-weight="bold" fill="#679a79">xxx proteins</text>
+  </g>
+</a>
+</svg>

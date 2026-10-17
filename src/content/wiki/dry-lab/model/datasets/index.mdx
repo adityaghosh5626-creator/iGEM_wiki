@@ -1,0 +1,96 @@
+---
+title: "Model Datasets: Methods"
+section: "Dry Lab"
+path: "/dry-lab/model/datasets/"
+navTitle: "Model datasets methods"
+order: 21
+description: "The two datasets the PETadex model learns from, the corpus of candidates and the PETai activity labels, how they were split, and where to download them on Hugging Face."
+owners: ["Dry Lab"]
+updated: "2026-10-17"
+status: "draft"
+---
+
+{/*
+  WRITER NOTES — not rendered.
+
+  Methods tier for the Datasets subsection of the Model page. The overview,
+  with the <ModelDatasets /> figure, is on /dry-lab/model/#datasets. This
+  page is reached only from the Methods link there; it is not in any menu.
+
+  Sources for every number (no Numbers.md entry yet). All are the dataset
+  cards on huggingface.co/petadex, built 2026-10-14/15:
+    - 307,155,746 ORFs (PAZy 211, NCBI nr 4,723,128, Logan 302,432,407);
+      123,966,734 distinct (40.4%); 18,172,960 90% clusters, 50.5%
+      singletons, 6,591 largest hold half the ORFs; 22,235 30% clusters:
+      petadex-corpus-full and petadex-corpus-centroids90
+    - 98 / 1 / 1 split, 17,809,500 / 181,730 / 181,730: catalytic-orfs-90pid
+    - 13,092 labels, 1,219 sequences, 696 references, source counts, 200
+      negatives (168 halo), 796 train sequences in 70 clusters, 401 / 1,219
+      in the corpus by MD5 (327 nr, 109 PAZy, 21 Logan), pH 53.25% and
+      temperature 29.74% of labels: petai-activity-labels
+
+  Open checks:
+    - 307,155,746 should be the headline ORF count everywhere (Overview says
+      "over 300 million"; Corpus-Scale Embedding notes list rivals).
+    - 1,342 kinetics labels here vs 464 rows in the Model page's Kinetics
+      Dataset subsection.
+    - The corpus cards still say the licence is pending.
+    - Which split were PETai's reported metrics computed on? See Splitting.
+*/}
+
+<Callout title="Methods for the model's datasets">
+This page is the full write-up behind the [Datasets](/dry-lab/model/#datasets) subsection of the Model page. Every dataset described here can be downloaded from [huggingface.co/petadex](https://huggingface.co/petadex).
+</Callout>
+
+## Two datasets
+
+The model learns from two datasets that we publish separately and join on sequence MD5. The PETadex corpus supplies the candidates the model scores, and the PETai activity labels supply the targets it learns to predict. Neither contains the other: the corpus carries no activity data, and the labels carry no corpus annotations. Protein language model embeddings are in neither.
+
+## The corpus
+
+The corpus holds 307,155,746 open reading frames (ORFs): 211 from PAZy, 4,723,128 from NCBI nr and 302,432,407 assembled from public sequencing runs through Logan. Each ORF comes with every annotation we could key to it: catalytic domain calls, signal peptides, biochemical properties, taxonomy, structures and the metadata of the sample it came from.
+
+The corpus is highly redundant. Only 40% of the ORFs are distinct sequences, half of its 18,172,960 clusters at 90% identity are singletons, and the largest 6,591 clusters hold half of all ORFs. We therefore adapted the protein language model on the 90% cluster centroids rather than on raw ORFs, split 98 / 1 / 1 into training, validation and test sets.
+
+## The activity labels
+
+The labels hold 13,092 activity and stability measurements on 1,219 sequences. They come from 696 published papers, through the human and language-model extraction described on the Model page, and from our own halo screen.
+
+| Source | Labels |
+|---|---|
+| Hand-curated activity | 6,655 |
+| LLM-extracted | 4,898 |
+| Published kinetics | 1,342 |
+| Our halo screen | 197 |
+
+The labels are not one quantity. Relative activity, melting temperature and the kinetic constants kcat, Km and kcat/Km are separate targets with different units, which is why Activity Prediction runs several label definitions in parallel. The cleanest are binary activity from the halo screen, for classification, and PET monomer release, for regression.
+
+Confirmed inactive enzymes are rare. Only 200 labels are negative, 168 of them from our screen, and the LLM-extracted labels contain none, since papers seldom report enzymes that did not work. The halo screen measured BHET hydrolysis, so its negatives mean that no BHET hydrolysis was detected, not that the enzyme cannot degrade PET.
+
+## Splitting
+
+We split the labelled sequences at 30% identity so that close relatives never fall on both sides of the split, and checked the result for leakage. The 796 training sequences fall into only 70 clusters, so their effective diversity is closer to 70 enzyme families than to 796 sequences. Confidence intervals are therefore bootstrapped over clusters, not sequences.
+
+The released split is homology-clean but unevenly stratified. Its test fold holds few negatives and a much larger share of LLM-extracted labels than the training fold, so it should be treated as a cluster assignment and re-stratified before it is used for evaluation. The dataset card describes this in detail.
+
+## Distance to the candidates
+
+The labelled set sits far from the population the model is meant to screen. Only 401 of the 1,219 labelled sequences appear in the corpus by exact sequence, and only 21 of those are Logan ORFs. Measurement conditions show the same gap: pH is recorded for about half of the labels and temperature for under a third, but neither exists for a sequence mined from Logan. A model that uses them in training has to work without them when it scores candidates.
+
+## Downloading the data
+
+| Dataset | What it holds | Role in the model |
+|---|---|---|
+| [petadex/petadex-corpus-centroids90](https://huggingface.co/datasets/petadex/petadex-corpus-centroids90) | One row per 90% identity cluster, with member summaries | Recommended starting point |
+| [petadex/petadex-corpus-full](https://huggingface.co/datasets/petadex/petadex-corpus-full) | Every ORF in the corpus with every annotation layer | Candidates to score |
+| [petadex/catalytic-orfs-90pid](https://huggingface.co/datasets/petadex/catalytic-orfs-90pid) | 90% identity centroid sequences, split for training | PlasticESM pretraining |
+| [petadex/petai-activity-labels](https://huggingface.co/datasets/petadex/petai-activity-labels) | Measured activity and stability labels with a homology-aware split | PETai training labels |
+
+Each dataset card documents its columns, how its tables join and its known caveats. Every table loads with the Hugging Face `datasets` library, and for joins across the full corpus, querying the Parquet files directly with DuckDB or Polars is much faster.
+
+```python
+from datasets import load_dataset
+
+centroids = load_dataset("petadex/petadex-corpus-centroids90", split="train")
+labels = load_dataset("petadex/petai-activity-labels", "labels", split="train")
+```

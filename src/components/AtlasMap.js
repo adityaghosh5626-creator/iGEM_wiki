@@ -3,6 +3,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import config from "../config"
+import { useLinkTarget, useNewTabLinks } from "./mdx/linkTarget.js"
 import {
   COMPONENT_SHADE_RGBA,
   CATH_GROUPS,
@@ -217,6 +218,9 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
   const compact = propHighlightId != null
   const [highlightFamilyId, setHighlightFamilyId] = useState(propHighlightId)
   const containerRef    = useRef(null)
+  const newTabRef       = useRef(false)   // read by the deck's click handler
+  newTabRef.current     = useNewTabLinks()
+  const petadexTarget   = useLinkTarget("https://petadex.net")
   const deckRef         = useRef(null)
   const pointsRef       = useRef([])
   const maxSizeRef      = useRef(1)
@@ -432,7 +436,9 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
           getTooltip: ({ object }) => object && buildTooltip(object, highlightFamilyId),
           onClick: ({ object }) => {
             if (object?.family_id != null && object.family_id !== highlightFamilyId) {
-              window.location.href = `https://petadex.net/family/${object.family_id}`
+              const url = `https://petadex.net/family/${object.family_id}`
+              if (newTabRef.current) window.open(url, "_blank", "noopener,noreferrer")
+              else window.location.href = url
             }
           },
           getCursor: ({ isHovering }) => isHovering ? "pointer" : "grab",
@@ -931,6 +937,7 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
             <div>{error}</div>
             <a
               href="https://petadex.net"
+              {...petadexTarget}
               style={{ color: "#7dd3c7", display: "inline-block", marginTop: "0.75rem" }}
             >
               Open petadex.net

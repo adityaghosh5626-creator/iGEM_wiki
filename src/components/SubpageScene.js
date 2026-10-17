@@ -32,7 +32,7 @@ const pp = px => `calc(var(--px) * ${px})`
 const NARROW = "@media (max-width: 860px)"
 const WIDE = "@media (min-width: 861px)"
 // The minimised section menu: its width and the gap to the text box.
-const RAIL_W = "2.5rem"
+const RAIL_W = "12.75rem"
 const RAIL_GAP = "1rem"
 
 /**
@@ -1799,6 +1799,9 @@ function sceneVars(scene, plate) {
       ? pp(scene.side.box[3] - scene.side.crab.box[1] + 4)
       : "0px",
     "--strip-color": scene.side.stripColor,
+    "--rail-active": scene.side.highlightColor,
+    "--rail-tag-bg": scene.side.railTag?.bg,
+    "--rail-tag-text": scene.side.railTag?.text,
     "--grid-cols": [
       pct(side[0]),
       pct(side[2] - side[0]),
@@ -1859,11 +1862,31 @@ export function SubpageScene({ scene, title, description, children }) {
   const sideColumnRef = useRef(null)
   const headerH = useHeaderHeight()
   const [sections, setSections] = useState([])
+  // Set once the headings are read, so a page with none keeps the full box
+  // rather than an empty rail.
+  const scannedRef = useRef(false)
   const [activeId, setActiveId] = useState(null)
+  // The section last picked from the menu: it stays the current one until the
+  // reader scrolls, even when a short section leaves the next heading above
+  // the reading line.
+  const pickedRef = useRef(null)
+  // The pending follow-up scroll of the last click, so a newer click (or the
+  // reader scrolling) cancels it instead of being pulled back.
+  const settleRef = useRef(null)
   const [activeSubId, setActiveSubId] = useState(null)
   const [indicator, setIndicator] = useState(null)
   // The section menu shrunk to a rail, giving its width to the text.
-  const [sideMin, setSideMin] = useState(false)
+  // The compact rail is the default; the full box opens from its button.
+  const [sideMin, setSideMin] = useState(true)
+  // The button that swaps the rail and the box hides itself, so focus moves
+  // to the one that swaps them back.
+  const expandRef = useRef(null)
+  const minimiseRef = useRef(null)
+  const toggledRef = useRef(false)
+  const toggleSide = min => {
+    toggledRef.current = true
+    setSideMin(min)
+  }
   /** Section box opened to full height; and whether, shut, it hides sections. */
   const [sideOpen, setSideOpen] = useState(false)
   const [sideMore, setSideMore] = useState(false)
@@ -1895,6 +1918,7 @@ export function SubpageScene({ scene, title, description, children }) {
       if (el.tagName === "H2") list.push({ ...item, subs: [] })
       else list[list.length - 1]?.subs.push(item)
     })
+    scannedRef.current = true
     setSections(list)
   }, [children])
 
@@ -2018,6 +2042,19 @@ export function SubpageScene({ scene, title, description, children }) {
           currentSub = null
         }
       }
+      // Once the click's scroll is done, the pick holds only while its heading
+      // is still near the top (dragging the scrollbar sends no input event).
+      const picked = pickedRef.current && document.getElementById(pickedRef.current)
+      if (
+        picked &&
+        !settleRef.current &&
+        Math.abs(picked.getBoundingClientRect().top - headerH) > vh / 3
+      )
+        pickedRef.current = null
+      if (pickedRef.current) {
+        current = pickedRef.current
+        currentSub = null
+      }
       setActiveId(prev => (prev === current ? prev : current))
       setActiveSubId(prev => (prev === currentSub ? prev : currentSub))
     }
@@ -2099,10 +2136,33 @@ export function SubpageScene({ scene, title, description, children }) {
     return () => ro.disconnect()
   }, [activeId, activeSubId, sections, sideOpen])
 
+  const stopSettle = () => {
+    settleRef.current?.()
+    settleRef.current = null
+  }
+  useEffect(() => {
+    // The reader taking over: no more follow-up scroll, and the menu goes back
+    // to tracking what's on screen.
+    const inputs = ["wheel", "touchstart", "keydown", "pointerdown"]
+    const release = () => {
+      stopSettle()
+      pickedRef.current = null
+    }
+    inputs.forEach(t => window.addEventListener(t, release, { passive: true }))
+    return () => {
+      stopSettle()
+      inputs.forEach(t => window.removeEventListener(t, release))
+    }
+  }, [])
+
   const goTo = (e, id) => {
     const el = document.getElementById(id)
     if (!el) return
     e.preventDefault()
+    stopSettle()
+    pickedRef.current = id
+    setActiveId(id)
+    setActiveSubId(null)
     const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")
       .matches
       ? "auto"
@@ -2124,16 +2184,38 @@ export function SubpageScene({ scene, title, description, children }) {
     // Images loading on the way (lazy ones above it) push the heading down
     // mid-scroll: once it stops, scroll the rest of the way.
     let tries = 0
+    let timer
     const settle = () => {
-      if (Math.abs(offset()) <= 4 || tries++ >= 4) return
+      if (Math.abs(offset()) <= 4 || tries++ >= 4) return stopSettle()
       window.scrollTo({ top: window.scrollY + offset(), behavior })
-      window.setTimeout(settle, 700)
+      timer = window.setTimeout(settle, 700)
     }
-    window.setTimeout(settle, 900)
+    timer = window.setTimeout(settle, 900)
+    settleRef.current = () => window.clearTimeout(timer)
   }
 
+  const compact = sideMin && (sections.length > 0 || !scannedRef.current)
+  useEffect(() => {
+    if (!toggledRef.current) return
+    toggledRef.current = false
+    ;(compact ? expandRef : minimiseRef).current?.focus()
+  }, [compact])
   const [ix0, iy0, ix1, iy1] = side?.indicator.box ?? []
   const icon = side?.indicatorIcon
+  const iconBg = !icon
+    ? null
+    : icon.layers
+    ? {
+        ...plate.bg(icon.layers[0], icon.from || icon.box),
+        // Stacked layers of one canvas, top first.
+        backgroundImage: icon.layers
+          .map(n => `url(${plate.asset(n)})`)
+          .join(", "),
+      }
+    : icon.canvas
+    ? canvasBg(plate.asset(icon.name), icon.canvas)
+    : // `from`: painted elsewhere on its plate than `box`.
+      plate.bg(icon.name, icon.from || icon.box)
   const sideW = side ? side.box[2] - side.box[0] : 0
   // Narrow strip: plain colour, or the side box's stretchy middle on top of it.
   const stripCss = side?.stripTexture
@@ -2153,7 +2235,7 @@ export function SubpageScene({ scene, title, description, children }) {
       style={{
         "--dl-header": `${headerH}px`,
         ...sceneVars(scene, plate),
-        ...(side && sideMin ? railCols(scene, plate) : null),
+        ...(side && compact ? railCols(scene, plate) : null),
       }}
     >
       <BgTrack aria-hidden>
@@ -2322,33 +2404,56 @@ export function SubpageScene({ scene, title, description, children }) {
         {side && (
           <SideColumn ref={sideColumnRef} data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
-            {sideMin && sections.length > 0 && (
+            {compact && sections.length > 0 && (
               <SideRail aria-label="Sections on this page">
-                <SideToggle
-                  type="button"
-                  aria-label="Expand the section menu"
-                  title="Expand the section menu"
-                  onClick={() => setSideMin(false)}
-                >
-                  <Chevron aria-hidden viewBox="0 0 16 16">
-                    <path d="M6 3l5 5-5 5" />
-                  </Chevron>
-                </SideToggle>
+                <RailHead>
+                  <RailTag>Compact</RailTag>
+                  <RailExpand
+                    ref={expandRef}
+                    type="button"
+                    aria-label="Expand the section menu"
+                    title="Expand the section menu"
+                    onClick={() => toggleSide(false)}
+                  >
+                    <Chevron aria-hidden viewBox="0 0 16 16">
+                      <path d="M6 3l5 5-5 5" />
+                    </Chevron>
+                  </RailExpand>
+                </RailHead>
+                <RailRule aria-hidden />
                 {sections.map(s => (
-                  <RailDot
+                  <RailLink
                     key={s.id}
                     href={`#${s.id}`}
-                    aria-label={s.label}
-                    title={s.label}
                     aria-current={s.id === activeId ? "location" : undefined}
                     onClick={e => goTo(e, s.id)}
-                  />
+                  >
+                    {/* The open menu's highlight icon marks the current one. */}
+                    {icon && s.id === activeId ? (
+                      <RailIcon
+                        aria-hidden
+                        style={{
+                          ...iconBg,
+                          aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
+                          filter: icon.glow
+                            ? `drop-shadow(0 0 4px ${icon.glow})`
+                            : undefined,
+                          transform: icon.rotate
+                            ? `rotate(${icon.rotate}deg)`
+                            : undefined,
+                        }}
+                      />
+                    ) : (
+                      <RailDot aria-hidden />
+                    )}
+                    <RailLabel>{s.label}</RailLabel>
+                  </RailLink>
                 ))}
               </SideRail>
             )}
             <SideBox
               $stripCss={stripCss}
-              $min={sideMin}
+              $min={compact}
               $fit={!sideOpen}
               style={{
                 backgroundColor: side.fill,
@@ -2363,10 +2468,11 @@ export function SubpageScene({ scene, title, description, children }) {
               }}
             >
               <SideMinimise
+                ref={minimiseRef}
                 type="button"
                 aria-label="Minimise the section menu"
                 title="Minimise the section menu"
-                onClick={() => setSideMin(true)}
+                onClick={() => toggleSide(true)}
               >
                 <Chevron aria-hidden viewBox="0 0 16 16">
                   <path d="M10 3L5 8l5 5" />
@@ -2401,18 +2507,7 @@ export function SubpageScene({ scene, title, description, children }) {
                     {icon && (
                       <IndicatorIcon
                         style={{
-                          ...(icon.layers
-                            ? {
-                                ...plate.bg(icon.layers[0], icon.from || icon.box),
-                                // Stacked layers of one canvas, top first.
-                                backgroundImage: icon.layers
-                                  .map(n => `url(${plate.asset(n)})`)
-                                  .join(", "),
-                              }
-                            : icon.canvas
-                            ? canvasBg(plate.asset(icon.name), icon.canvas)
-                            : // `from`: painted elsewhere on its plate than `box`.
-                              plate.bg(icon.name, icon.from || icon.box)),
+                          ...iconBg,
                           left: `${((icon.box[0] - ix0) / (ix1 - ix0)) * 100}%`,
                           width: `${((icon.box[2] - icon.box[0]) / (ix1 - ix0)) * 100}%`,
                           aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
@@ -3662,16 +3757,23 @@ const SideMinimise = styled(SideToggle)`
   }
 `
 
-/** The minimised menu: a dot per section under the button that restores it. */
+/** The minimised menu: a labelled row per section under the button that
+    restores it. */
 const SideRail = styled.nav`
   pointer-events: auto;
   position: sticky;
   top: calc(var(--dl-header, 0px) + 1.25rem);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.4rem 0 0.6rem;
+  align-items: stretch;
+  gap: 3px;
+  width: ${RAIL_W};
+  max-height: calc(100vh - var(--dl-header, 0px) - 2.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 12px 12px 15px;
+  text-align: left;
   border-radius: 1.25rem;
   background-color: var(--strip-color);
   box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);
@@ -3681,38 +3783,107 @@ const SideRail = styled.nav`
   }
 `
 
-const RailDot = styled.a`
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.5rem;
+const RailHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px 9px;
+`
 
-  &::before {
-    content: "";
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--link-color);
-    opacity: 0.45;
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
+const RailTag = styled.span`
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rail-tag-text, var(--link-active));
+  background: var(--rail-tag-bg, var(--rail-active, #9c6e56));
+  padding: 4px 10px;
+  border-radius: 999px;
+`
+
+const RailExpand = styled(SideToggle)`
+  width: 2.6rem;
+  height: 2.6rem;
+  background: color-mix(in srgb, var(--link-color) 16%, transparent);
+  opacity: 1;
+
+  &:hover {
+    background: color-mix(in srgb, var(--link-color) 30%, transparent);
+  }
+  ${Chevron} {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+`
+
+const RailRule = styled.div`
+  height: 1px;
+  margin: 0 6px 6px;
+  background: color-mix(in srgb, var(--link-color) 28%, transparent);
+`
+
+const RailDot = styled.span`
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: var(--link-color);
+  opacity: 0.6;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+`
+
+/** The open menu's highlight icon, standing in for the current row's dot. */
+const RailIcon = styled.span`
+  flex: none;
+  width: 30px;
+  margin: -6px -6px -6px -10px;
+`
+
+const RailLabel = styled.span`
+  font-family: var(--font-body);
+  font-size: 16.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: left;
+  text-wrap: pretty;
+`
+
+const RailLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 8px 12px 8px 9px;
+  border-radius: 12px;
+  color: var(--link-color);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--rail-active, #9c6e56) 55%, transparent);
   }
 
-  &:hover::before,
-  &[aria-current]::before {
-    opacity: 1;
+  &[aria-current] {
+    background: var(--rail-active, #9c6e56);
+    color: var(--link-active);
   }
-
-  &[aria-current]::before {
+  &[aria-current] ${RailDot} {
     background: var(--link-active);
-    transform: scale(1.5);
+    opacity: 1;
+    transform: scale(1.45);
+  }
+  &[aria-current] ${RailLabel} {
+    font-weight: 700;
   }
 
   &:focus-visible {
     outline: 2px solid var(--link-color);
     outline-offset: -2px;
-    border-radius: 4px;
   }
 `
 

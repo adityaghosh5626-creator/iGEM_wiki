@@ -161,6 +161,8 @@ export const DRY_LAB_SCENE = {
     linkColor: "#fbf3ea",
     /** Narrow screens: the list becomes a sticky strip of this colour. */
     stripColor: "#b0886c",
+    /** The compact menu's "Compact" chip. */
+    railTag: { bg: "#e9d5bf", text: "#5c3f2e" },
     stripTexture: true,
   },
   /** Text box; it stretches with the text between its caps. */
@@ -179,6 +181,32 @@ export const DRY_LAB_SCENE = {
    */
   textEndY: 2960,
   cactus: DRY_LAB_CACTUS,
+  /**
+   * The Dry Lab calendar (overview page) in desert colours: parchment panels,
+   * sandstone lines, terracotta for what's selected. Its workstreams carry
+   * their own colours (dryLabCalendar.js); "all" is the header's brown.
+   */
+  vars: {
+    "--cal-surface": "#fffaf2",
+    "--cal-chrome": "#f4e8d6",
+    "--cal-line": "#dcc6a4",
+    "--cal-ink": "#3b2a1f",
+    "--cal-muted": "#76604c",
+    "--cal-accent": "#a0603a",
+    "--cal-hover": "#f3e6d2",
+    "--cal-tint": "rgba(160, 96, 58, 0.12)",
+    "--cal-cell": "#fffaf2",
+    "--cal-cell-hover": "#f7ecdc",
+    "--cal-cell-line": "rgba(120, 84, 50, 0.2)",
+    "--cal-cell-out": "#f3e7d6",
+    "--cal-cell-out-hover": "#ebdcc6",
+    "--cal-cell-out-line": "rgba(120, 84, 50, 0.1)",
+    "--cal-band": "#ecc9a8",
+    "--cal-band-out": "#f3dfcb",
+    "--cal-band-line": "#a0603a",
+    "--cal-band-out-line": "rgba(160, 96, 58, 0.35)",
+    "--cal-sunday": "#a0603a",
+  },
 }
 
 export const VENTURE_SCENE = {
