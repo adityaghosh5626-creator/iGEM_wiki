@@ -1086,8 +1086,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Skule site live.",
-        detail: "The Skule site is live; the competition wiki is built out section by section.",
+        summary: "Skule site live; enzyme battle.",
+        detail:
+          "The Skule site is live; the competition wiki is built out section by section.\n• August 24: the Dry Lab notebooks set up on the wiki.\n• August 29: the enzyme battle, opened from the PETadex browser.",
         link: WEB,
       },
     },
@@ -1124,6 +1125,12 @@ const WEEK_CONTENT_OVERRIDES = {
         detail: "Focus moved to the North American Mini Jamboree on September 12.",
         link: VENTURE,
       },
+      web: {
+        summary: "Homepage forest walk.",
+        detail:
+          "• September 4: the forest reveal on the homepage, with the shore art scaling to the window.\n• September 5: the second treatment-plant bottle, and the river bottle now waits for the reader.",
+        link: "/",
+      },
     },
   },
   "week-2026-09-06": {
@@ -1157,6 +1164,12 @@ const WEEK_CONTENT_OVERRIDES = {
           "Second place at the North American Mini Jamboree, then back to the verticals: wastewater sections and the financial projections.",
         link: VENTURE,
       },
+      web: {
+        summary: "Homepage map and splash; citations.",
+        detail:
+          "• September 6: LOGAN sample pins on the painted homepage map, bubbles on the chute bottle and splash droplets as it lands. The PETadex moved off the homepage onto its own site. Pages can now cite sources in their text and build a reference list.\n• September 10: the map's sample pins can be reached with the keyboard.\n• September 12: the homepage on phones: a fitted shore text box, all three condition cards, a bigger bottle and popups that fit the screen.",
+        link: "/",
+      },
     },
   },
   "week-2026-09-13": {
@@ -1188,6 +1201,12 @@ const WEEK_CONTENT_OVERRIDES = {
         detail:
           "Finalized content due October 9 to give Web time before the freeze. Assignments: market sizing (TAM/SAM/SOM) for every vertical, financial projections and regulatory edits.",
         link: VENTURE,
+      },
+      web: {
+        summary: "Design sketchbook; pinned top bar.",
+        detail:
+          "• September 13: the Outreach design sketchbook got its hardcover look and tabs, and the top bar now stays pinned while scrolling, with a back-to-top button.\n• September 19: the Human Practices write-up added to that page's tabs.",
+        link: OUTREACH,
       },
     },
   },
@@ -1223,9 +1242,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Pulling the wiki together.",
+        summary: "Pulling the wiki together; homepage story.",
         detail:
-          "Every subteam is writing up its work, and Web assembles it section by section.",
+          "Every subteam is writing up its work, and Web assembles it section by section.\n• September 26: the homepage copy pinned to the art, the ending bottle assembling, and the logo loading screen.",
         link: WEB,
       },
     },
@@ -1237,6 +1256,7 @@ const WEEK_CONTENT_OVERRIDES = {
       { date: "2026-09-28", label: "V2 bioreactor assembled", subteamId: "hardware" },
       { date: "2026-09-30", label: "First PETase library ordered", subteamId: "wetLab" },
       { date: "2026-10-02", label: "Venture wiki content complete", subteamId: "venture" },
+      { date: "2026-10-01", label: "Dry Lab page art", subteamId: "web" },
     ],
     subteams: {
       wetLab: {
@@ -1264,9 +1284,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Ticket board for the wiki.",
+        summary: "Ticket board; Dry Lab page art.",
         detail:
-          "Opened a tickets channel to track what's left on the wiki, including notebook figures and filling in this calendar.",
+          "Opened a tickets channel to track what's left on the wiki, including notebook figures and filling in this calendar.\n• September 29: new Toronto art and turtle on the homepage.\n• September 30: subteam labels around the ending bottle, each linking to its page.\n• October 1: the Dry Lab page's painted skyline, and DM Sans across the site.\n• October 3: the loading screen counts images further down the page, so its progress is truer.",
         link: WEB,
       },
     },
@@ -1275,7 +1295,10 @@ const WEEK_CONTENT_OVERRIDES = {
     overview:
       "Wet Lab ran its first co-transformations, Dry Lab organized its wiki into five pipeline components, and PetaScale was a Food Forward Summit finalist (October 8). Merch orders opened, and attribution forms are due October 11.",
     milestones: [
+      { date: "2026-10-05", label: "Entrepreneurship page live", subteamId: "web" },
+      { date: "2026-10-06", label: "Human Practices page live", subteamId: "web" },
       { date: "2026-10-08", label: "Food Forward Summit finalist", subteamId: "venture" },
+      { date: "2026-10-10", label: "Contribution and Attributions pages", subteamId: "web" },
     ],
     subteams: {
       wetLab: {
@@ -1302,16 +1325,28 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Notebooks, calendar and mobile homepage.",
+        summary: "Entrepreneurship, Human Practices, Dry Lab, Contribution and Attributions pages.",
         detail:
-          "Dry Lab pages went up, the Hardware and Wet Lab notebooks and this calendar filled in from team records, and lighter homepage images for phones.",
+          "The Hardware and Wet Lab notebooks and this calendar filled in from team records, and lighter homepage images for phones.\n• October 5: the Entrepreneurship page, with its kangaroo coin bursts.\n• October 6: the Human Practices page, and the Entrepreneurship content filled in.\n• October 7: sponsor logos, and the Hardware and Entrepreneurship footer art.\n• October 8: the Food Forward appendix on Entrepreneurship.\n• October 9: the homepage's lab section.\n• October 10: the Dry Lab Overview (with its figures), Model and Software pages, the Hardware notebook's source-code dropdowns, the Contribution and Attributions pages, the Project menu, the Wet Lab notebook, the homepage auto-scroll, and a size check that keeps the site under iGEM's upload limit.",
         link: WEB,
       },
     },
   },
   "week-2026-10-11": {
     overview: "Attribution forms close October 11. Wiki editing ahead of the October 21 freeze.",
-    milestones: [{ date: "2026-10-11", label: "Attribution forms due", subteamId: "all" }],
+    milestones: [
+      { date: "2026-10-11", label: "Attribution forms due", subteamId: "all" },
+      { date: "2026-10-12", label: "Wet Lab, Finance and Safety pages", subteamId: "web" },
+      { date: "2026-10-16", label: "Engineering, Project and Wiki pages", subteamId: "web" },
+    ],
+    subteams: {
+      web: {
+        summary: "Wet Lab, Outreach, Finance, Safety, Hardware Iterations, Engineering, Project and Wiki pages.",
+        detail:
+          "• October 11: Meet the Team's waterfall, the logo in the navbar, the enzyme favicon, the Outreach design notebook filled in, and references in IEEE style.\n• October 12: the Wet Lab sea page, the rebuilt Outreach page, the Finance and Safety pages, every image moved to iGEM's servers, and iGEM's CC BY 4.0 licence restored.\n• October 13: the Dry Lab Dataset Generation flowchart, with a section menu that can be minimised.\n• October 14: the Hardware Iterations page, with a timeline and subsystem tabs for versions 1 to 3, and the version 1 temperature page.\n• October 15: the Finance page's content and funding cycle sheet, the version 1 power page, the Outreach sketchbook's covers, inner pages and tabs, and the Attributions background.\n• October 16: the Engineering, Project Description and Wiki pages, dragons that catch fire on the Wiki and Contribution pages, the new treatment plant on the homepage, subteam badges on Meet the Team, and the Human Practices sections with their photos.",
+        link: WEB,
+      },
+    },
   },
   "week-2026-10-18": {
     overview: "Wiki freeze on October 21.",

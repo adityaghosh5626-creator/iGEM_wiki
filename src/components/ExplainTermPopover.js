@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import styled, { keyframes } from "styled-components"
+import { POPUP_CLOSED_EVENT, PopupClose } from "./PopupClose"
 
 /** Combined textbox + copy (PETase / MHETase explanation) from team iGEM static assets. */
 const MHETASE_TEXTBOX_IMG =
@@ -74,6 +75,40 @@ const POINTER_H_PX = 18
 /** Keep the popover inside the viewport with this padding (px). */
 const POPOVER_EDGE_PAD_PX = 16
 
+/**
+ * Plain-text popovers (\`plain\`) are drawn to match the painted ones: a black
+ * box tilted up to the right, white heavy text on the same tilt, the enzyme
+ * sticker from the artwork on its top-right corner and a bolt below. The box
+ * grows with the text. Sizes are shares of the popover's width.
+ */
+const PLAIN_ART =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/text-boxes/rnalab.avif"
+/** The sticker's crop on that artwork (px of its 580×362). */
+const PLAIN_STICKER = { art: [580, 362], crop: [449, 0, 580, 145] }
+const PLAIN_TILT_DEG = 9.1
+const PLAIN_SLOPE = Math.tan((PLAIN_TILT_DEG * Math.PI) / 180)
+/** The box's top-left corner, and its width (it ends under the sticker). */
+const PLAIN_BOX_TOP = 0.31
+const PLAIN_BOX_W = 0.9
+/** Room under the box for the bolt. */
+const PLAIN_BOLT_ROOM = 0.08
+
+/** The box's edges and the sticker, as shares of a plain popover's height. */
+function plainEdges(popW, popH, boxH) {
+  const y = v => v / popH
+  const top = PLAIN_BOX_TOP * popW
+  const rise = PLAIN_SLOPE * popW
+  const [, , cx1, cy1] = PLAIN_STICKER.crop
+  const stickerW = (PLAIN_STICKER.crop[2] - PLAIN_STICKER.crop[0]) / PLAIN_STICKER.art[0]
+  const stickerH = (stickerW * (cy1 - PLAIN_STICKER.crop[1])) / (cx1 - PLAIN_STICKER.crop[0])
+  return {
+    character: [1 - stickerW, 0, 0.94, y(stickerH * popW)],
+    top: [y(top), y(top - rise)],
+    bottom: [y(top + boxH), y(top + boxH - rise)],
+    clipBottom: [y(top + boxH + 2), y(top + boxH - rise + 2)],
+  }
+}
+
 /** Approximate height ÷ width before the popover image loads (updated after onLoad). */
 const SHELL_ASPECT = 0.62
 
@@ -126,6 +161,13 @@ function computePopoverWidth() {
   return Math.min(scaled, available)
 }
 
+/** A plain popover's width: wider than a painted one on phones (long text). */
+function computePlainWidth() {
+  if (typeof window === "undefined") return POPOVER_WIDTH_PX
+  const available = window.innerWidth - POPOVER_EDGE_PAD_PX * 2
+  return Math.min(available, Math.max(340, window.innerWidth * 0.42), 640)
+}
+
 /** Lowest y the popover may reach up to: below any fixed/sticky top bar. */
 function topLimit() {
   if (typeof document === "undefined") return POPOVER_EDGE_PAD_PX
@@ -148,11 +190,19 @@ function topLimit() {
  * Returns { left, top, width, place: "above" | "below", pointer: null |
  * x-share, pointerLen }.
  */
-function layoutFromButton(btn, aspect, maxW, box) {
+function layoutFromButton(btn, aspect, maxW, box, keepWidth = false) {
   const gap = POPOVER_GAP_PX
   const roomAbove = btn.top - gap - topLimit()
-  let popW = Math.min(maxW, roomAbove / aspect)
-  const place = popW >= POPOVER_MIN_WIDTH_PX ? "above" : "below"
+  // A plain popover gets taller as it narrows, so it keeps its width and
+  // goes below the term when it doesn't fit above.
+  let popW = keepWidth ? maxW : Math.min(maxW, roomAbove / aspect)
+  const place = keepWidth
+    ? roomAbove >= maxW * aspect
+      ? "above"
+      : "below"
+    : popW >= POPOVER_MIN_WIDTH_PX
+      ? "above"
+      : "below"
   if (place === "below") popW = maxW
   const popH = popW * aspect
   const targetX = place === "above" ? btn.firstX : btn.lastX
@@ -212,17 +262,28 @@ export function ExplainTerm({
   explanation,
   imageSrc = MHETASE_TEXTBOX_IMG,
   imageAlt,
+  // Draw the explanation as text in a box like the artwork's (see PLAIN_ART).
+  plain = false,
   className,
 }) {
   const popoverId = useId()
   const rootRef = useRef(null)
   const buttonRef = useRef(null)
   const popoverRef = useRef(null)
+  const plainBoxRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [pos, setPos] = useState(null)
   const coarsePointerRef = useRef(false)
   const pinnedRef = useRef(false)
+  // Opened by auto-scroll (HomeAutoplay's simulated hover): the reader's own
+  // hover doesn't close it then, only a click on the term or its ✕ does.
+  const [autoOpen, setAutoOpen] = useState(false)
+  const autoOpenRef = useRef(false)
+  const setAuto = useCallback((on) => {
+    autoOpenRef.current = on
+    setAutoOpen(on)
+  }, [])
 
   useEffect(() => {
     pinnedRef.current = pinned
@@ -241,21 +302,56 @@ export function ExplainTerm({
       popEl?.offsetHeight > 0 && popEl.offsetWidth > 0
         ? popEl.offsetHeight / popEl.offsetWidth
         : SHELL_ASPECT
+    // A plain box's edges depend on how tall its text runs.
+    const edges =
+      plain && popEl?.offsetHeight > 0 && plainBoxRef.current
+        ? plainEdges(
+            popEl.offsetWidth,
+            popEl.offsetHeight,
+            plainBoxRef.current.offsetHeight,
+          )
+        : box
 
-    setPos(layoutFromButton(m, aspect, computePopoverWidth(), box))
-  }, [box])
+    setPos({
+      ...layoutFromButton(
+        m,
+        aspect,
+        plain ? computePlainWidth() : computePopoverWidth(),
+        edges,
+        plain,
+      ),
+      edges,
+    })
+  }, [box, plain])
 
   const show = useCallback(() => setOpen(true), [])
   const dismiss = useCallback(() => {
+    setAuto(false)
     setOpen(false)
     setPinned(false)
     setPos(null)
-  }, [])
+  }, [setAuto])
   const hideUnlessPinned = useCallback(() => {
     if (pinnedRef.current) return
     setOpen(false)
     setPos(null)
   }, [])
+
+  const onMouseEnter = useCallback(
+    (ev) => {
+      if (!ev.nativeEvent.isTrusted) setAuto(true)
+      show()
+    },
+    [setAuto, show]
+  )
+  const onMouseLeave = useCallback(
+    (ev) => {
+      if (ev.nativeEvent.isTrusted && autoOpenRef.current) return
+      setAuto(false)
+      hideUnlessPinned()
+    },
+    [setAuto, hideUnlessPinned]
+  )
 
   useLayoutEffect(() => {
     if (!open) return undefined
@@ -288,9 +384,17 @@ export function ExplainTerm({
     [dismiss]
   )
 
-  /** Click pins the popover open; click again (or Escape) dismisses it. */
+  /**
+   * Click pins the popover open; click again (or Escape) dismisses it. One
+   * auto-scroll opened closes on the click, like its ✕: auto-scroll carries on.
+   */
   const onTermClick = useCallback((ev) => {
     ev.stopPropagation()
+    if (autoOpenRef.current) {
+      dismiss()
+      window.dispatchEvent(new Event(POPUP_CLOSED_EVENT))
+      return
+    }
     setPinned((wasPinned) => {
       if (wasPinned) {
         setOpen(false)
@@ -300,7 +404,7 @@ export function ExplainTerm({
       setOpen(true)
       return true
     })
-  }, [])
+  }, [dismiss])
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return undefined
@@ -320,6 +424,7 @@ export function ExplainTerm({
 
     const onDocPointer = (ev) => {
       if (rootRef.current?.contains(ev.target)) return
+      if (popoverRef.current?.contains(ev.target)) return
       if (buttonRef.current?.contains(ev.target)) return
       dismiss()
     }
@@ -332,8 +437,8 @@ export function ExplainTerm({
       <TermRoot
         ref={rootRef}
         className={className}
-        onMouseEnter={show}
-        onMouseLeave={hideUnlessPinned}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
         onFocus={show}
         onBlur={hideUnlessPinned}
         onKeyDown={onKeyDown}
@@ -345,6 +450,8 @@ export function ExplainTerm({
           aria-expanded={open}
           aria-pressed={pinned}
           aria-describedby={open ? popoverId : undefined}
+          // Closing one auto-scroll opened isn't the reader taking over.
+          data-autoplay-skip={autoOpen ? "" : undefined}
           onClick={onTermClick}
         >
           {term}
@@ -384,7 +491,7 @@ export function ExplainTerm({
                 transformOrigin:
                   pos?.pointer == null
                     ? `${BOLT_TIP_X_FRAC * 100}% 100%`
-                    : `${pos.pointer * 100}% ${pointerEdge(pos, box) * 100}%`,
+                    : `${pos.pointer * 100}% ${pointerEdge(pos, pos.edges || box) * 100}%`,
               }}
             >
               {pos?.pointer != null && (
@@ -393,18 +500,37 @@ export function ExplainTerm({
                   $below={pos.place === "below"}
                   style={{
                     left: `${pos.pointer * 100}%`,
-                    top: `${pointerEdge(pos, box) * 100}%`,
+                    top: `${pointerEdge(pos, pos.edges || box) * 100}%`,
                     // Below the term it may have to reach further (see layout).
                     ...(pos.place === "below" && { borderBottomWidth: pos.pointerLen }),
                   }}
                 />
               )}
-              <ShellWrap style={{ clipPath: shellClip(pos, box) }}>
-                <ShellImg
-                  src={imageSrc}
-                  alt={imageAlt || explanation || term}
-                  onLoad={updatePosition}
-                />
+              {/* Shown when it stays open by itself: pinned, or opened by auto-scroll. */}
+              <PopoverClose
+                $pinned={pinned}
+                label="Close this explanation"
+                onClose={dismiss}
+                style={{ top: `${(pos?.edges || box).top[0] * 100}%` }}
+              />
+              <ShellWrap style={{ clipPath: shellClip(pos, pos?.edges || box) }}>
+                {plain ? (
+                  <PlainShell>
+                    <PlainBox ref={plainBoxRef}>
+                      <PlainText>{explanation}</PlainText>
+                      <PlainBolt aria-hidden="true" viewBox="0 0 40 90">
+                        <path d="M14 0 L26 0 L20 34 L34 30 L10 90 L16 46 L4 50 Z" />
+                      </PlainBolt>
+                    </PlainBox>
+                    <PlainSticker aria-hidden="true" />
+                  </PlainShell>
+                ) : (
+                  <ShellImg
+                    src={imageSrc}
+                    alt={imageAlt || explanation || term}
+                    onLoad={updatePosition}
+                  />
+                )}
               </ShellWrap>
             </PopoverInner>
           </PopoverOuter>,
@@ -413,6 +539,22 @@ export function ExplainTerm({
     </>
   )
 }
+
+/** On the box's top-left corner. */
+const PopoverClose = styled(PopupClose)`
+  left: 0;
+  display: ${({ $pinned }) => ($pinned ? "grid" : "none")};
+  font-size: 16px;
+  transform: translate(-35%, -55%);
+
+  html[data-autoplaying] & {
+    display: grid;
+  }
+
+  &:hover {
+    transform: translate(-35%, -55%) scale(1.1);
+  }
+`
 
 const TermRoot = styled.span`
   display: inline;
@@ -504,6 +646,66 @@ const Pointer = styled.span`
     $below
       ? `border-bottom: ${POINTER_H_PX}px solid #000; transform: translate(-50%, -100%);`
       : `border-top: ${POINTER_H_PX}px solid #000; transform: translate(-50%, -2px);`}
+`
+
+/** A plain popover: room above for the sticker and the box's rise, below for the bolt. */
+const PlainShell = styled.div`
+  position: relative;
+  padding-top: ${PLAIN_BOX_TOP * 100}%;
+  padding-bottom: ${PLAIN_BOLT_ROOM * 100}%;
+  container-type: inline-size;
+`
+
+/** The black box, tilted up to the right from its top-left corner. */
+const PlainBox = styled.div`
+  position: relative;
+  width: ${PLAIN_BOX_W * 100}%;
+  box-sizing: border-box;
+  padding: 3.4cqi 6cqi 4.2cqi 5cqi;
+  background: #000;
+  transform: skewY(-${PLAIN_TILT_DEG}deg);
+  transform-origin: 0 0;
+`
+
+/** Its text: straightened from the skew, then turned to the same tilt. */
+const PlainText = styled.p`
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: clamp(12px, 3.05cqi, 21px);
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+  text-align: center;
+  transform: skewY(${PLAIN_TILT_DEG}deg) rotate(-${PLAIN_TILT_DEG}deg);
+`
+
+/** The bolt hanging off the box's bottom edge (its tip where the term is). */
+const PlainBolt = styled.svg`
+  position: absolute;
+  top: calc(100% - 1px);
+  left: calc(${(BOLT_TIP_X_FRAC / PLAIN_BOX_W) * 100}% - 3.5cqi);
+  width: 7cqi;
+  height: auto;
+  fill: #000;
+  transform: skewY(${PLAIN_TILT_DEG}deg);
+  transform-origin: 0 0;
+`
+
+/** The enzyme sticker, cropped from the artwork, over the box's top-right corner. */
+const PlainSticker = styled.span`
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: ${(1 - (PLAIN_STICKER.crop[2] - PLAIN_STICKER.crop[0]) / PLAIN_STICKER.art[0]) * 100}%;
+  width: ${((PLAIN_STICKER.crop[2] - PLAIN_STICKER.crop[0]) / PLAIN_STICKER.art[0]) * 100}%;
+  aspect-ratio: ${PLAIN_STICKER.crop[2] - PLAIN_STICKER.crop[0]} /
+    ${PLAIN_STICKER.crop[3] - PLAIN_STICKER.crop[1]};
+  background-image: url(${PLAIN_ART});
+  background-repeat: no-repeat;
+  background-size: ${(PLAIN_STICKER.art[0] / (PLAIN_STICKER.crop[2] - PLAIN_STICKER.crop[0])) * 100}%
+    auto;
+  background-position: 100% 0;
 `
 
 const ShellImg = styled.img`

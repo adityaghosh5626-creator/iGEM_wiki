@@ -20,6 +20,7 @@ import {
   WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
+  OUTREACH_SCENE,
   PROJECT_SCENE,
   SAFETY_SCENE,
   VENTURE_SCENE,
@@ -46,6 +47,7 @@ const sceneFor = frontmatter => {
     return VENTURE_SCENE
   if (frontmatter.path === "/beyond-the-bench/human-practices/")
     return HP_SCENE
+  if (frontmatter.path === "/beyond-the-bench/outreach/") return OUTREACH_SCENE
   if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
   // Served at the standard /description/ too (standardRoutes.mjs).
   if (frontmatter.path === "/project/description/") return PROJECT_SCENE

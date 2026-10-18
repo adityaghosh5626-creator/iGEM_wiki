@@ -6,12 +6,15 @@ import React, {
   useRef,
   useState,
 } from "react"
+import { createPortal } from "react-dom"
 import styled from "styled-components"
+import { PopupClose } from "../PopupClose"
 import {
   DESIGN_SKETCHBOOK_PAGES,
   DESIGN_SKETCHBOOK_SECTIONS,
   PAGE_FLIP_ATTRIBUTION,
   buildSketchbookPages,
+  continuedTitle,
   getTocSections,
 } from "../../data/designSketchbookPages.js"
 
@@ -57,12 +60,123 @@ const MIN_PHOTO_SHARE = 0.4
 /** The page's padding and text get remeasured this long after a resize. */
 const RESIZE_SETTLE_MS = 200
 
-/** The pages whose text can crowd out their photo: each section's first page. */
+/** Each section's first page, whose photo's shape is read as it loads. */
 const SPREAD_PAGES = DESIGN_SKETCHBOOK_PAGES.filter((p) => p.variant === "spread")
+/** The pages with text, which are measured so none ever has to scroll. */
+const TEXT_PAGES = DESIGN_SKETCHBOOK_PAGES.filter(
+  (p) => ["spread", "notes", "aside"].includes(p.variant) && typeof p.body === "string" && p.body
+)
+/** Kept clear under a page's text when it's measured (px), for rounding. */
+const FIT_SLACK_PX = 6
+/** A run-on page ends on a full stop if one ends in this last share of it. */
+const SENTENCE_REACH = 0.4
+
+/** A notes page's small heading: its section, then its own title. */
+function pageLabel(page, title = page.title) {
+  const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === page.sectionId)
+  return section ? `${section.label} / ${title}` : title
+}
 
 function prefersReducedMotion() {
   if (typeof window === "undefined" || !window.matchMedia) return false
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+/**
+ * Pictures open bigger when clicked (or Enter on them): see the root's
+ * capture listeners, since page-flip moves the pages out of React's tree and
+ * would otherwise take the press as a page turn.
+ */
+const ZOOM_SELECTOR = "[data-zoom-src]"
+const zoomProps = (src, alt) => ({
+  "data-zoom-src": src,
+  "data-zoom-alt": alt || "",
+  role: "button",
+  tabIndex: 0,
+  "aria-label": alt ? `Enlarge: ${alt}` : "Enlarge picture",
+})
+
+/** A picture enlarged over the page, closed with its ✕, Escape or a click outside. */
+function SketchZoom({ zoom, onClose }) {
+  const closeRef = useRef(null)
+  useEffect(() => {
+    if (!zoom) return undefined
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    closeRef.current?.querySelector("button")?.focus()
+    const { overflow } = document.documentElement.style
+    document.documentElement.style.overflow = "hidden"
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      document.documentElement.style.overflow = overflow
+    }
+  }, [zoom, onClose])
+  if (!zoom || typeof document === "undefined") return null
+  return createPortal(
+    <ZoomBackdrop role="dialog" aria-modal="true" aria-label={zoom.alt || "Enlarged picture"} onClick={onClose}>
+      <ZoomFigure ref={closeRef} onClick={(event) => event.stopPropagation()}>
+        <ZoomImage src={zoom.src} alt={zoom.alt} />
+        <ZoomClose onClose={onClose} />
+      </ZoomFigure>
+    </ZoomBackdrop>,
+    document.body,
+  )
+}
+
+/**
+ * A page's `images` ({ src, alt }) in a grid that fills what's left of the
+ * page, `cols` across (up to three by default), each kept whole; one caption.
+ * An image with `crop` [x0, y0, x1, y1] (of its `size` [w, h]) shows just
+ * that part, e.g. one piece of a tall picture split side by side; it still
+ * enlarges whole.
+ */
+function GalleryFigure({ page }) {
+  const n = page.images.length
+  const cols = page.cols || Math.min(n, 3)
+  return (
+    <GalleryWrap>
+      <GalleryGrid
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
+        }}
+      >
+        {page.images.map((image) =>
+          image.crop ? (
+            <GalleryCrop
+              key={`${image.src}:${image.crop}`}
+              viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              preserveAspectRatio="xMidYMin meet"
+              {...zoomProps(image.src, image.alt)}
+            >
+              {/* Its own viewport clips the picture to the crop (the
+                  outer one shows past it where the cell is roomier). */}
+              <svg
+                x={image.crop[0]}
+                y={image.crop[1]}
+                width={image.crop[2] - image.crop[0]}
+                height={image.crop[3] - image.crop[1]}
+                viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              >
+                <image href={image.src} width={image.size[0]} height={image.size[1]} />
+              </svg>
+            </GalleryCrop>
+          ) : (
+            <GalleryImage
+              key={image.src}
+              src={image.src}
+              alt={image.alt || ""}
+              loading="lazy"
+              {...zoomProps(image.src, image.alt)}
+            />
+          ),
+        )}
+      </GalleryGrid>
+      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+    </GalleryWrap>
+  )
 }
 
 function SketchPageContent({ page }) {
@@ -140,9 +254,11 @@ function SketchPageContent({ page }) {
       <SketchPageInner $variant="notes">
         {label}
         {page.body && <SketchBody>{page.body}</SketchBody>}
-        {page.imageSrc ? (
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : page.imageSrc ? (
           <SketchFigure>
-            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
             {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
           </SketchFigure>
         ) : (
@@ -157,10 +273,14 @@ function SketchPageContent({ page }) {
   if (page.variant === "image") {
     return (
       <SketchPageInner $variant="image">
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : (
         <SketchFigure $alone>
-          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
+        )}
       </SketchPageInner>
     )
   }
@@ -173,7 +293,7 @@ function SketchPageContent({ page }) {
       {page.body && <SketchBody>{page.body}</SketchBody>}
       {showMedia && page.imageSrc && (
         <SketchFigure>
-          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
       )}
@@ -194,20 +314,26 @@ export function DesignSketchbook() {
   const pageFlipRef = useRef(null)
   const flipRunIdRef = useRef(0)
   const [ready, setReady] = useState(false)
-  /** Sections whose photo has its own page, and whether two pages show at once. */
-  const [splitIds, setSplitIds] = useState([])
+  /**
+   * How the pages fit at this size (buildSketchbookPages): pages whose photo
+   * has its own page, and where text runs on to more pages.
+   */
+  const [fit, setFit] = useState({ split: [], breaks: {} })
+  /** Whether two pages show at once. */
   const [landscape, setLandscape] = useState(true)
   /** One page's size in px, to measure the pages against. */
   const [pageBox, setPageBox] = useState(null)
   /** Height / width of each section's photo, as they load. */
   const [photoRatios, setPhotoRatios] = useState({})
+  /** Set once the web fonts are in, so the pages are measured in them. */
+  const [fontsReady, setFontsReady] = useState(false)
   const pages = useMemo(
-    () => buildSketchbookPages({ split: splitIds, pairs: landscape }),
-    [splitIds, landscape]
+    () => buildSketchbookPages({ ...fit, pairs: landscape }),
+    [fit, landscape]
   )
   const pagesRef = useRef(pages)
   pagesRef.current = pages
-  const layoutKey = `${landscape ? "pairs" : "single"}:${splitIds.join(",")}`
+  const layoutKey = `${landscape ? "pairs" : "single"}:${JSON.stringify(fit)}`
   /** Page to reopen at when the book is rebuilt with a new layout. */
   const resumePageIdRef = useRef(null)
   const measureRef = useRef(null)
@@ -484,38 +610,155 @@ export function DesignSketchbook() {
     }
   }, [])
 
-  // Lay each section's first page out at the current page size (off screen,
-  // text and caption only) and give its photo its own page if the room left
-  // would shrink the photo too far.
+  useEffect(() => {
+    let cancelled = false
+    document.fonts?.ready.then(() => {
+      if (!cancelled) setFontsReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Lay each page with text out at the current page size (off screen, text
+  // and caption only). Its photo gets its own page if the room left would
+  // shrink it too far, and text that still doesn't fit runs on over more
+  // pages, broken where a probe page fills up, so no page ever scrolls.
   useLayoutEffect(() => {
     const layer = measureRef.current
     if (!layer || !pageBox) return
-    const next = []
-    layer.querySelectorAll("[data-measure-section]").forEach((clone) => {
-      const sectionId = clone.getAttribute("data-measure-section")
-      const inner = clone.firstElementChild
-      const parts = inner ? [...inner.children] : []
-      if (!parts.length) return
+    const probeInner = layer.querySelector("[data-measure-probe]")?.firstElementChild
+    const probeLabel = probeInner?.querySelector("[data-probe-label]")
+    const probeBody = probeInner?.querySelector("[data-probe-body]")
+    if (!probeInner || !probeLabel || !probeBody) return
+    const contentBox = (inner) => {
       const style = window.getComputedStyle(inner)
       const padTop = parseFloat(style.paddingTop) || 0
       const padBottom = parseFloat(style.paddingBottom) || 0
-      const padSides = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
-      const roomH = inner.clientHeight - padTop - padBottom
-      const used =
-        parts[parts.length - 1].getBoundingClientRect().bottom -
-        parts[0].getBoundingClientRect().top
-      const left = roomH - used
-      const photoW = Math.min(inner.clientWidth - padSides, 28 * 16)
-      const photoH = photoW * (photoRatios[sectionId] ?? 1)
-      if (left < Math.min(photoH, MIN_PHOTO_SHARE * roomH)) next.push(sectionId)
+      return {
+        top: inner.getBoundingClientRect().top + padTop,
+        height: inner.clientHeight - padTop - padBottom,
+        width:
+          inner.clientWidth -
+          (parseFloat(style.paddingLeft) || 0) -
+          (parseFloat(style.paddingRight) || 0),
+      }
+    }
+    const split = []
+    const breaks = {}
+    layer.querySelectorAll("[data-measure-page]").forEach((clone) => {
+      const page = TEXT_PAGES.find((p) => p.id === clone.getAttribute("data-measure-page"))
+      const inner = clone.firstElementChild
+      const body = inner?.querySelector("[data-measure-body]")
+      if (!page || !body) return
+      const box = contentBox(inner)
+      const bodyRect = body.getBoundingClientRect()
+      const headH = bodyRect.top - box.top
+      const figure = inner.querySelector("figure")
+      const figureH = figure ? figure.getBoundingClientRect().bottom - bodyRect.bottom : 0
+      const hasPhoto = Boolean(page.imageSrc || page.images?.length)
+      if (hasPhoto) {
+        const photoW = Math.min(box.width, 28 * 16)
+        const ratio = page.variant === "spread" ? photoRatios[page.sectionId] ?? 1 : 1
+        const left = box.height - headH - bodyRect.height - figureH
+        if (left >= Math.min(photoW * ratio, MIN_PHOTO_SHARE * box.height)) return
+        split.push(page.id)
+      } else if (headH + bodyRect.height <= box.height - FIT_SLACK_PX) {
+        return
+      }
+      // Its text on its own: run it on over as many pages as it needs.
+      probeLabel.textContent = pageLabel(page, continuedTitle(page))
+      const probeBox = contentBox(probeInner)
+      const runOnRoom =
+        probeBox.height - (probeBody.getBoundingClientRect().top - probeBox.top) - FIT_SLACK_PX
+      const words = page.body.split(/\s+/).filter(Boolean)
+      const cuts = []
+      let from = 0
+      let room = box.height - headH - FIT_SLACK_PX
+      const fits = (n) => {
+        probeBody.textContent = words.slice(from, from + n).join(" ")
+        return probeBody.getBoundingClientRect().height <= room
+      }
+      while (from < words.length && !fits(words.length - from)) {
+        let lo = 1
+        let hi = words.length - from - 1
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1
+          if (fits(mid)) lo = mid
+          else hi = mid - 1
+        }
+        let n = lo
+        for (let k = n; k > Math.floor(n * (1 - SENTENCE_REACH)); k -= 1) {
+          if (/[.!?…:]["”’)]?$/.test(words[from + k - 1])) {
+            n = k
+            break
+          }
+        }
+        from += n
+        cuts.push(from)
+        room = runOnRoom
+      }
+      probeBody.textContent = ""
+      if (cuts.length) breaks[page.id] = cuts
     })
-    next.sort()
-    setSplitIds((prev) => (prev.join(",") === next.join(",") ? prev : next))
-  }, [pageBox, photoRatios])
+    split.sort()
+    const next = { split, breaks }
+    setFit((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+  }, [pageBox, photoRatios, fontsReady])
 
   const sketchRootRef = useRef(null)
   const goToSectionRef = useRef(goToSection)
   goToSectionRef.current = goToSection
+
+  const [zoom, setZoom] = useState(null)
+  const zoomFromRef = useRef(null)
+  const closeZoom = useCallback(() => {
+    setZoom(null)
+    zoomFromRef.current?.focus?.()
+  }, [])
+
+  // Pictures enlarge on click, Enter or Space. Pressing one mustn't reach
+  // page-flip (it would turn the page), so presses on them stop here.
+  useEffect(() => {
+    const root = sketchRootRef.current
+    if (!root) return undefined
+    const zoomTarget = (event) => {
+      const target = event.target instanceof Element ? event.target : null
+      const img = target?.closest?.(ZOOM_SELECTOR)
+      return img && root.contains(img) ? img : null
+    }
+    const open = (img) => {
+      zoomFromRef.current = img
+      setZoom({ src: img.getAttribute("data-zoom-src"), alt: img.getAttribute("data-zoom-alt") })
+    }
+    const onPress = (event) => {
+      if (zoomTarget(event)) event.stopPropagation()
+    }
+    const onClick = (event) => {
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const onKey = (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const presses = ["mousedown", "touchstart", "pointerdown"]
+    presses.forEach((type) => root.addEventListener(type, onPress, true))
+    root.addEventListener("click", onClick, true)
+    root.addEventListener("keydown", onKey, true)
+    return () => {
+      presses.forEach((type) => root.removeEventListener(type, onPress, true))
+      root.removeEventListener("click", onClick, true)
+      root.removeEventListener("keydown", onKey, true)
+    }
+  }, [])
 
   // TOC buttons live inside page-flip's reparented DOM — use capture delegation.
   useEffect(() => {
@@ -822,6 +1065,7 @@ export function DesignSketchbook() {
             </ReducedMotionPage>
           ))}
         </ReducedMotionList>
+        <SketchZoom zoom={zoom} onClose={closeZoom} />
         <AttributionFooter />
       </SketchbookRoot>
     )
@@ -874,21 +1118,49 @@ export function DesignSketchbook() {
 
       {pageBox && (
         <MeasureLayer ref={measureRef} aria-hidden>
-          {SPREAD_PAGES.map((page) => (
+          {TEXT_PAGES.map((page) => (
             <SketchPage
               key={page.id}
-              data-measure-section={page.sectionId}
+              data-measure-page={page.id}
               style={{ width: pageBox.w, height: pageBox.h }}
             >
-              <SketchPageInner $variant="spread">
-                <SketchTitle>{page.title}</SketchTitle>
-                {page.body && <SketchBody>{page.body}</SketchBody>}
-                <SketchFigure>
-                  {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
-                </SketchFigure>
-              </SketchPageInner>
+              {page.variant === "spread" ? (
+                <SketchPageInner $variant="spread">
+                  <SketchTitle>{page.title}</SketchTitle>
+                  {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.imageSrc && (
+                    <SketchFigure>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </SketchFigure>
+                  )}
+                </SketchPageInner>
+              ) : (
+                <SketchPageInner $variant={page.variant}>
+                  <SketchLabel>{pageLabel(page)}</SketchLabel>
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.images ? (
+                    <GalleryWrap style={{ flex: "none" }}>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </GalleryWrap>
+                  ) : (
+                    page.imageSrc && (
+                      <SketchFigure>
+                        {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                      </SketchFigure>
+                    )
+                  )}
+                </SketchPageInner>
+              )}
             </SketchPage>
           ))}
+          {/* A run-on page, filled word by word to find where each breaks. */}
+          <SketchPage data-measure-probe style={{ width: pageBox.w, height: pageBox.h }}>
+            <SketchPageInner $variant="aside">
+              <SketchLabel data-probe-label />
+              <SketchBody data-probe-body />
+            </SketchPageInner>
+          </SketchPage>
         </MeasureLayer>
       )}
 
@@ -920,9 +1192,11 @@ export function DesignSketchbook() {
 
       <Hint>
         Named tabs sit on the right. After you pass a section, its tab moves to the left as a
-        color stub; tap it to flip back. Open the cover for the table of contents.
+        color stub; tap it to flip back. Open the cover for the table of contents. Click any
+        picture in the book to enlarge it.
       </Hint>
 
+      <SketchZoom zoom={zoom} onClose={closeZoom} />
       <AttributionFooter />
     </SketchbookRoot>
   )
@@ -951,23 +1225,17 @@ function AttributionFooter() {
 
 export default DesignSketchbook
 
+/**
+ * The text box's full width: open, the two pages span it; shut, the cover
+ * sits where its page does (the right half), its tabs just past the box.
+ */
 const SketchbookRoot = styled.div`
+  position: relative;
+  z-index: 0;
   width: 100%;
   max-width: none;
   margin: var(--space-lg) 0;
   overflow: visible;
-
-  /*
-   * Side PageTabs leave an ~11–14rem rail for the tab list. Pull the book into
-   * that column so it can use the full article width (and grow taller with it).
-   */
-  @media (min-width: 721px) {
-    width: calc(100% + 14rem + var(--space-xl));
-    max-width: calc(100% + 14rem + var(--space-xl));
-    margin-left: calc(-14rem - var(--space-xl));
-    position: relative;
-    z-index: 0;
-  }
 `
 
 /* How far closed tabs tuck under the outer hardcover rim. */
@@ -1189,9 +1457,7 @@ const BookStage = styled.div`
   height: auto;
   min-height: 0;
   overflow: visible;
-  /* Balance the gutters so longer tabs do not pull the book left. */
-  padding-left: 7.375rem;
-  padding-right: 7.375rem;
+  padding: 0;
   box-sizing: border-box;
 
   @media (max-width: 720px) {
@@ -1323,9 +1589,9 @@ const SketchPageInner = styled.div`
     $variant === "cover" || $variant === "back" ? "center" : "left"};
   box-sizing: border-box;
   padding: clamp(0.85rem, 7.4cqw, 2rem);
-  /* Last resort when a very small page can't fit its text. */
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Never scrolls: text that wouldn't fit runs on to more pages (see the
+     layout effect that measures them). */
+  overflow: hidden;
   height: 100%;
   min-height: 100%;
   width: 100%;
@@ -1529,8 +1795,56 @@ const SketchPlaceholderLabel = styled.span`
 `
 
 /** Takes the room left under the text; a tall image shrinks to fit the page. */
+const GalleryWrap = styled.figure`
+  margin: var(--space-sm) 0 0;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+`
+
+const GalleryGrid = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 0.5rem;
+`
+
+/** Pictures that enlarge when clicked (zoomProps). */
+const zoomable = `
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent, #6b7fe6);
+    outline-offset: 2px;
+  }
+`
+
+const GalleryImage = styled.img`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** A gallery image's `crop`, fitted in its cell like the others. */
+const GalleryCrop = styled.svg`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** Centred on the page (it's narrower than a wide page). */
 const SketchFigure = styled.figure`
   margin: ${({ $alone }) => ($alone ? "0" : "var(--space-md) 0 0")};
+  align-self: center;
   width: 100%;
   max-width: 28rem;
   display: flex;
@@ -1540,13 +1854,14 @@ const SketchFigure = styled.figure`
 `
 
 const SketchImage = styled.img`
+  ${zoomable}
   display: block;
   width: 100%;
   height: auto;
   flex: 0 1 auto;
   min-height: 0;
   object-fit: contain;
-  object-position: left top;
+  object-position: center top;
   border-radius: 4px;
   /* Follows the picture rather than its box, which is wider once it shrinks. */
   filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
@@ -1583,8 +1898,8 @@ const MeasureLayer = styled.div`
 const underBook = `
   box-sizing: border-box;
   width: 100%;
-  padding-left: 3.25rem;
-  padding-right: 11.5rem;
+  padding-left: 0;
+  padding-right: 0;
 
   /* Doubled class: beats the article's \`p { max-width: 48rem }\`. */
   && {
@@ -1685,4 +2000,40 @@ const ReducedMotionPage = styled.div`
   border-radius: 6px;
   overflow: hidden;
   min-height: 10rem;
+`
+
+const ZoomBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px);
+  background: rgba(28, 20, 14, 0.82);
+  cursor: zoom-out;
+`
+
+const ZoomFigure = styled.figure`
+  position: relative;
+  margin: 0;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  cursor: default;
+`
+
+/** As big as the screen allows, on the sketchbook's paper. */
+const ZoomImage = styled.img`
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(calc(100vw - 2 * clamp(16px, 4vw, 48px)), 1400px);
+  max-height: calc(100vh - 2 * clamp(28px, 5vw, 56px));
+  object-fit: contain;
+  border-radius: 6px;
+  background: ${PAPER};
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+`
+
+const ZoomClose = styled(PopupClose)`
+  top: -0.8em;
+  right: -0.8em;
 `

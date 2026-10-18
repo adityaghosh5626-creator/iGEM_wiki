@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react"
 import styled, { keyframes } from "styled-components"
+import { POPUP_CLOSED_EVENT } from "./PopupClose"
 
 /**
  * Optional auto-scroll for the homepage: a play button (bottom left; its
  * "Auto-scroll" label slides out on hover, where there is one) makes the page scroll itself at a reading pace. As each popup
  * reaches the middle of the screen it stops and opens it (the red underlined
  * terms, then each petamon's description at the ending), then carries on.
- * Any scroll, tap or key from the reader hands control back.
+ * Any scroll, tap or key from the reader hands control back, except closing
+ * a popup with its ✕: that just skips the rest of its wait.
  *
  * Self-contained: popups are opened through their own hover behaviour, so
  * nothing else knows this exists. To take it out, delete this file, the two
@@ -15,7 +17,7 @@ import styled, { keyframes } from "styled-components"
  */
 
 /** Scroll speed, in screen heights per second. */
-const SPEED_VH_PER_S = 0.16
+const SPEED_VH_PER_S = 0.19
 /** How long each term's popup stays open. */
 const TERM_HOLD_MS = 4500
 /** How long each petamon's description stays open at the ending. */
@@ -47,6 +49,26 @@ const LOADER_SELECTOR = '[role="progressbar"][aria-label="Loading"]'
 const TERM_SELECTOR = 'span[role="button"][aria-expanded]'
 /** The petamon names at the ending (EndingPetamonBottle): they open on hover. */
 const PETAMON_LABEL_SELECTOR = "[data-label]"
+/** The petamons at the top (HomePlaza): their speech bubbles open on hover. */
+const PLAZA_PETAMON_SELECTOR = "[data-petamon-spot]"
+/**
+ * The plaza's first stops, on their own, in this order (the bird by the
+ * logo, then the dragon on the roof); the rest play one after another.
+ */
+const PLAZA_FIRST = ["humanPractices", "web"]
+/** How long each plaza petamon's speech bubble stays open. */
+const PLAZA_HOLD_MS = 2600
+/** Boxes to stop and read (the journey callout), and for how long. */
+const HOLD_SELECTOR = "[data-autoplay-hold]"
+const HOLD_MS = 7000
+/**
+ * Lines that take turns in one spot while the page holds still (the lab's
+ * Wet Lab and Hardware lines): it stops on each once it's fully in, for
+ * long enough to read it (READ_MS plus READ_MS_PER_WORD a word).
+ */
+const READ_SELECTOR = "[data-autoplay-read]"
+const READ_MS = 1200
+const READ_MS_PER_WORD = 250
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -57,6 +79,21 @@ function isShown(el) {
   return el.checkVisibility
     ? el.checkVisibility({ opacityProperty: true, visibilityProperty: true })
     : true
+}
+
+/** How opaque `el` really is: its opacity times all its ancestors'. */
+function opacityOf(el) {
+  let opacity = 1
+  for (let node = el; node && node !== document.body; node = node.parentElement) {
+    opacity *= parseFloat(getComputedStyle(node).opacity)
+  }
+  return opacity
+}
+
+/** Wholly on screen (a line held in one spot may never reach STOP_AT_VIEW_Y). */
+function inView(el) {
+  const r = el.getBoundingClientRect()
+  return r.top >= 0 && r.bottom <= window.innerHeight
 }
 
 /** A mouse moving onto or off a term (React's mouse enter / leave). */
@@ -117,18 +154,96 @@ export function HomeAutoplay() {
     let raf = 0
     // Closes whatever popup is open, if the run ends while it's showing.
     let closeOpen = null
+    // Ends the current popup's wait early (its ✕ was clicked).
+    let skipHold = null
+    const hold = ms =>
+      new Promise(resolve => {
+        const done = () => {
+          window.clearTimeout(timer)
+          skipHold = null
+          resolve()
+        }
+        const timer = window.setTimeout(done, ms)
+        skipHold = done
+      })
+    const onPopupClosed = () => skipHold?.()
+    window.addEventListener(POPUP_CLOSED_EVENT, onPopupClosed)
+    // Popups show their ✕ while this runs.
+    document.documentElement.dataset.autoplaying = ""
 
     if (window.scrollY >= maxScroll() - 2) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" })
     }
 
+    // A plaza petamon's bubble, opened like a pointer moving onto it.
+    const showSpot = async el => {
+      hover(el, true)
+      closeOpen = () => hover(el, false)
+      await wait(PLAZA_HOLD_MS)
+      closeOpen()
+      closeOpen = null
+    }
+    const spots = [...root.querySelectorAll(PLAZA_PETAMON_SELECTOR)]
+    const spotById = id => spots.find(el => el.dataset.petamonSpot === id)
+    const firstSpots = PLAZA_FIRST.map(spotById).filter(Boolean)
+    // The rest, top to bottom then left to right, as they're painted.
+    const restSpots = spots
+      .filter(el => !firstSpots.includes(el))
+      .sort((a, b) => {
+        const ra = a.getBoundingClientRect()
+        const rb = b.getBoundingClientRect()
+        return ra.top - rb.top || ra.left - rb.left
+      })
+    const plaza = [
+      ...firstSpots.map(el => ({
+        el,
+        ready: () => true,
+        play: () => showSpot(el),
+      })),
+      ...(restSpots.length
+        ? [
+            {
+              el: restSpots[0],
+              ready: () => true,
+              play: async () => {
+                for (const el of restSpots) {
+                  if (cancelled) return
+                  await showSpot(el)
+                }
+              },
+            },
+          ]
+        : []),
+    ]
+
+    const holds = [...root.querySelectorAll(HOLD_SELECTOR)].map(el => ({
+      el,
+      // Not once it's been closed or scrolled past.
+      ready: () => el.dataset.gone !== "1",
+      play: () => hold(HOLD_MS),
+    }))
+
+    const reads = [...root.querySelectorAll(READ_SELECTOR)].map(el => ({
+      el,
+      held: true,
+      // Once it's fully in (they fade in and out as the page scrolls).
+      ready: () => isShown(el) && opacityOf(el) > 0.95,
+      play: () =>
+        hold(
+          READ_MS +
+            READ_MS_PER_WORD * el.textContent.trim().split(/\s+/).length,
+        ),
+    }))
+
     const terms = [...root.querySelectorAll(TERM_SELECTOR)].map(el => ({
       el,
-      ready: () => isShown(el),
+      held: !!el.closest(READ_SELECTOR),
+      // Not while its line is still fading in (or out).
+      ready: () => isShown(el) && opacityOf(el) > 0.95,
       play: async () => {
         mouse(el, true)
         closeOpen = () => mouse(el, false)
-        await wait(TERM_HOLD_MS)
+        await hold(TERM_HOLD_MS)
       },
     }))
     const labels = [...root.querySelectorAll(PETAMON_LABEL_SELECTOR)]
@@ -153,7 +268,8 @@ export function HomeAutoplay() {
         ]
       : []
     // Popups already scrolled past when it starts are skipped.
-    const stops = [...terms, ...petamons].map(stop => ({
+    // A held line is read before its term's popup covers it.
+    const stops = [...plaza, ...holds, ...reads, ...terms, ...petamons].map(stop => ({
       ...stop,
       done: stop.el.getBoundingClientRect().bottom < 0,
     }))
@@ -161,7 +277,8 @@ export function HomeAutoplay() {
       const r = stop.el.getBoundingClientRect()
       return (
         r.bottom > 0 &&
-        r.top + r.height / 2 <= window.innerHeight * STOP_AT_VIEW_Y &&
+        (r.top + r.height / 2 <= window.innerHeight * STOP_AT_VIEW_Y ||
+          (stop.held && inView(stop.el))) &&
         stop.ready()
       )
     }
@@ -211,6 +328,7 @@ export function HomeAutoplay() {
     // The reader taking over (not this button, not the simulated hovers).
     const takeOver = event => {
       if (!event.isTrusted || buttonRef.current?.contains(event.target)) return
+      if (event.target.closest?.("[data-autoplay-skip]")) return
       setPlaying(false)
     }
     const inputs = ["wheel", "touchstart", "keydown", "pointerdown"]
@@ -221,6 +339,9 @@ export function HomeAutoplay() {
       cancelled = true
       cancelAnimationFrame(raf)
       closeOpen?.()
+      skipHold?.()
+      window.removeEventListener(POPUP_CLOSED_EVENT, onPopupClosed)
+      delete document.documentElement.dataset.autoplaying
       inputs.forEach(type => window.removeEventListener(type, takeOver))
     }
   }, [playing])
