@@ -27,6 +27,7 @@ import {
 } from "./interactive/DiamondSearch.js"
 import { ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
+import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
 import { CodeDropdown } from "../Dropdown.js"
@@ -122,6 +123,7 @@ export const mdxComponents = {
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,
+  Dropdown,
   Citation,
   References,
   ...embedComponents,
