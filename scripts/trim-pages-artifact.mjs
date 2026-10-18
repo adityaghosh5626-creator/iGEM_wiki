@@ -25,7 +25,6 @@ const legacyAssets = [
   "figures/dry-lab-issue-107/petadex-sequence-density.svg",
   "figures/dry-lab-issue-107/logan-biosample-distribution.svg",
   "figures/dry-lab-issue-107/petase-density-normalized.svg",
-  "images/dry-lab/260529/umap.png",
 ]
 
 const removeGlobs = [

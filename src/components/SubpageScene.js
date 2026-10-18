@@ -81,6 +81,16 @@ function plateOf(scene) {
         top: `${(-y0 / h) * 100}%`,
       }
     },
+    /**
+     * A layer's `clip` (an outline, plate px) on its full-plate image: only
+     * what's inside shows, for art sharing one picture with its neighbours.
+     */
+    clip: points =>
+      points && {
+        clipPath: `polygon(${points
+          .map(([x, y]) => `${((x / W) * 100).toFixed(3)}% ${((y / H) * 100).toFixed(3)}%`)
+          .join(", ")})`,
+      },
     /** Background that stretches `box` of a plate over the whole element. */
     bg: (name, [x0, y0, x1, y1]) => {
       const w = x1 - x0
@@ -442,7 +452,9 @@ function ZapLayer({ plate, layer, children }) {
         style={plate.windowStyle(jolt || layer.box)}
       >
         {jolt
-          ? React.cloneElement(children, { style: plate.imgStyle(jolt) })
+          ? React.cloneElement(children, {
+              style: { ...children.props.style, ...plate.imgStyle(jolt) },
+            })
           : children}
       </ZapBody>
       <ZapBolt ref={boltRef} style={plate.windowStyle(bolt.box)}>
@@ -888,7 +900,9 @@ const DRAGON_FIRE_SOLID = 0.75
  *
  * A dragon painted as one picture (the Contribution one) gives `heat` in
  * place of the glow and fire art: a fiery glow spreads out from behind it,
- * from its head, and `eyes` (plate px) glow in and out.
+ * from its head, and `eyes` (plate px) glow in and out. Its `markings`
+ * (pictures on the same canvas) are drawn over it, and `swirls` (one of
+ * them) lights up violet-blue while it burns.
  */
 function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   const d = layer.dragon
@@ -919,13 +933,13 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   }
   // Its front part (text.front) lights it from its own hover areas.
   if (lightRef) lightRef.current = light
-  const crop = (name, box) => (
+  const crop = (name, box, clip) => (
     <CropImg
       src={plate.asset(name)}
       alt=""
       decoding="async"
       draggable={false}
-      style={plate.imgStyle(box)}
+      style={{ ...plate.imgStyle(box), ...plate.clip(clip) }}
     />
   )
   // The fire shows through a soft circle on the head, grown to cover it.
@@ -989,7 +1003,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         >
           <HaloFade style={haloFade}>
             <HeatHalo $lit={lit} style={inHalo(layer.box)}>
-              {crop(layer.src || layer.name, layer.box)}
+              {crop(layer.src || layer.name, layer.box, layer.clip)}
             </HeatHalo>
           </HaloFade>
         </DragonFire>
@@ -1000,6 +1014,9 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         style={plate.windowStyle(layer.box)}
       >
         {children}
+        {(d.markings || []).map(name => (
+          <React.Fragment key={name}>{crop(name, layer.box)}</React.Fragment>
+        ))}
       </DragonPart>
       {(d.eyes || []).map(([x, y]) => (
         <DragonEye
@@ -1025,14 +1042,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
       )}
       {d.swirls && (
         <DragonHighlight aria-hidden $lit={lit} style={plate.windowStyle(layer.box)}>
-          <SwirlSvg
-            viewBox={`${layer.box[0]} ${layer.box[1]} ${layer.box[2] - layer.box[0]} ${layer.box[3] - layer.box[1]}`}
-            preserveAspectRatio="none"
-          >
-            {d.swirls.map(sw => (
-              <path key={sw.at.join()} d={swirlPath(sw)} />
-            ))}
-          </SwirlSvg>
+          <SwirlGlow>{crop(d.swirls, layer.box)}</SwirlGlow>
         </DragonHighlight>
       )}
       {(d.highlights || []).map(h => (
@@ -1178,28 +1188,6 @@ function TextFrontArt({ plate, text, d, split, lit, light }) {
       ))}
     </TextFront>
   )
-}
-
-/**
- * A glowing spiral marking, as an SVG path (plate px): `at` its middle, `rx`
- * and `ry` its outer radii, `rot` (deg) its turn, `turns` how many times it
- * winds; it ends in a short flick outward, like the Wiki dragons' markings.
- */
-function swirlPath({ at: [cx, cy], rx, ry = rx, rot = 0, turns = 2.1 }) {
-  const steps = 48
-  const a = (rot * Math.PI) / 180
-  const pts = []
-  for (let i = 0; i <= steps; i++) {
-    const k = i / steps
-    const th = k * turns * Math.PI * 2
-    const x = rx * k * Math.cos(th)
-    const y = ry * k * Math.sin(th)
-    pts.push([
-      cx + x * Math.cos(a) - y * Math.sin(a),
-      cy + x * Math.sin(a) + y * Math.cos(a),
-    ])
-  }
-  return `M${pts.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L")}`
 }
 
 /** One swing of a hanging layer, out and back until it settles. */
@@ -2635,7 +2623,10 @@ export function SubpageScene({ scene, title, description, children }) {
                     alt=""
                     decoding="async"
                     draggable={false}
-                    style={plate.imgStyle(layer.from || layer.box)}
+                    style={{
+                      ...plate.imgStyle(layer.from || layer.box),
+                      ...plate.clip(layer.clip),
+                    }}
                   />
                 )
                 if (layer.flyer) {
@@ -3807,24 +3798,16 @@ const DragonHighlight = styled.div`
   }
 `
 
-/** Drawn markings (\`dragon.swirls\`): glowing violet-blue, like the Wiki's. */
-const SwirlSvg = styled.svg`
+/**
+ * Painted markings (\`dragon.swirls\`), lit: their dark violet brightened to
+ * lavender and glowing violet-blue, like the Wiki's.
+ */
+const SwirlGlow = styled.div`
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
+  filter: brightness(3.4) drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
     drop-shadow(0 0 calc(var(--px) * 3) #5b3dff)
     drop-shadow(0 0 calc(var(--px) * 6) rgba(90, 60, 255, 0.8));
-
-  path {
-    fill: none;
-    stroke: #cfc6ff;
-    stroke-width: 2.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
 `
 
 const SwingWindow = styled.div`

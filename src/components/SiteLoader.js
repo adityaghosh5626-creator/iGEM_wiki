@@ -5,6 +5,7 @@ import {
   LOGO_FRAMES,
   LOGO_FRAME_TIMING,
   LOGO_PLATE,
+  LOGO_REST,
   LogoFrame,
 } from "./logoFrames.js"
 
@@ -244,14 +245,16 @@ export function SiteLoader({ handoff, always = false }) {
       $fadeIn={state === "waiting"}
     >
       <Backdrop ref={backdropRef} />
-      <Logo ref={logoRef}>
-        <Faint>
-          <LogoFrames />
-        </Faint>
-        <Fill style={{ clipPath: `inset(${(1 - progress) * 100}% 0 0 0)` }}>
-          <LogoFrames />
-        </Fill>
-      </Logo>
+      <Centred>
+        <Logo ref={logoRef}>
+          <Faint>
+            <LogoFrames />
+          </Faint>
+          <Fill style={{ clipPath: `inset(${(1 - progress) * 100}% 0 0 0)` }}>
+            <LogoFrames />
+          </Fill>
+        </Logo>
+      </Centred>
     </Overlay>
   )
 }
@@ -289,6 +292,19 @@ const Backdrop = styled.div`
   position: absolute;
   inset: 0;
   background: var(--color-bg);
+`
+
+/**
+ * Moves the logo so the resting logo, not the box round every frame, sits in
+ * the middle of the screen. Its own element, so the homepage's bounce and
+ * spring (animations on Logo) start from where it's drawn.
+ */
+const Centred = styled.div`
+  position: relative;
+  transform: translate(
+    ${(((LOGO_BOX.x + LOGO_BOX.w / 2 - (LOGO_REST.x + LOGO_REST.w / 2)) / LOGO_BOX.w) * 100).toFixed(2)}%,
+    ${(((LOGO_BOX.y + LOGO_BOX.h / 2 - (LOGO_REST.y + LOGO_REST.h / 2)) / LOGO_BOX.h) * 100).toFixed(2)}%
+  );
 `
 
 const Logo = styled.div`
