@@ -166,7 +166,7 @@ function SketchZoom({ zoom, onClose }) {
     return zoomTo(Math.max(2.5, (window.innerWidth * 0.92) / fitted().w), px, py)
   }
   const handlers = useRef({})
-  handlers.current = { zoomTo, panBy, fit, onClose }
+  handlers.current = { zoomTo, panBy, fit, clamp, onClose }
 
   useEffect(() => {
     if (!zoom) return undefined
@@ -201,7 +201,7 @@ function SketchZoom({ zoom, onClose }) {
         panBy(-event.deltaX * unit, -event.deltaY * unit)
       }
     }
-    const onResize = () => setView((v) => clamp(v))
+    const onResize = () => setView((v) => handlers.current.clamp(v))
     const backdrop = backdropRef.current
     window.addEventListener("keydown", onKey)
     window.addEventListener("resize", onResize)
