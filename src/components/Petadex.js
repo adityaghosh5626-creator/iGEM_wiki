@@ -1,36 +1,35 @@
 import React, { useState } from "react"
 import styled from "styled-components"
-import { withPrefix } from "gatsby"
 
 const ENTRIES = [
   {
     id: "001",
     name: "Petase 1",
     properties: ["Antibacterial"],
-    image: withPrefix("/images/petase-1.png"),
+    image: "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petase-1.avif",
   },
   {
     id: "002",
     name: "Petase 2",
     properties: ["Decomposes H₂O"],
-    image: withPrefix("/images/petase-2.png"),
+    image: "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petase-2.avif",
   },
   {
     id: "003",
     name: "Petase 3",
     properties: ["Digestive enzyme"],
-    image: withPrefix("/images/petase-3.png"),
+    image: "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petase-3.avif",
   },
 ]
 
 const IMG = {
-  background:        withPrefix("/images/petadex-background.png"),
-  screen:            withPrefix("/images/petadex-screen.png"),
-  petaseBg:          withPrefix("/images/petadex-petase-bg.png"),
-  propertiesBg:      withPrefix("/images/petadex-properties-bg.png"),
-  underPropertiesBg: withPrefix("/images/petadex-under-properties-bg.png"),
-  prev:              withPrefix("/images/petadex-prev-petase-button.png"),
-  next:              withPrefix("/images/petadex-next-petase-button.png"),
+  background:        "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-background.avif",
+  screen:            "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-screen.avif",
+  petaseBg:          "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-petase-bg.avif",
+  propertiesBg:      "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-properties-bg.avif",
+  underPropertiesBg: "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-under-properties-bg.avif",
+  prev:              "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-prev-petase-button.avif",
+  next:              "https://static.igem.wiki/teams/6187/wiki/drylab-page/game/petadex-next-petase-button.avif",
 }
 
 const Shell = styled.div`

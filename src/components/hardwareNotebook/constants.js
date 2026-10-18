@@ -1,6 +1,5 @@
-import { withPrefix } from "gatsby"
 
-export const NOTE_ASSET = withPrefix("/hardware-notebook/note-taped-yellow.png")
+export const NOTE_ASSET = "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/note-taped-yellow.avif"
 
 /** Fraction of note width/height for string anchors (tape corners). */
 export const NOTE_ANCHOR_FRAC = {

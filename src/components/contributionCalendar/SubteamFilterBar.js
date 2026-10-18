@@ -6,14 +6,21 @@ import {
   trackTextColor,
 } from "../../data/subteamTracks.js"
 
-export function SubteamFilterBar({ activeIds, onToggle, layout = "inline" }) {
+export function SubteamFilterBar({
+  activeIds,
+  onToggle,
+  layout = "inline",
+  tracks = SUBTEAM_TRACKS,
+  label = "Subteams",
+  compact = false,
+}) {
   const isNavbar = layout === "navbar"
 
   return (
-    <FilterRoot $navbar={isNavbar} role="group" aria-label="Filter subteam details">
-      {!isNavbar && <FilterLabel>Subteams</FilterLabel>}
-      <ChipRow $navbar={isNavbar}>
-        {SUBTEAM_TRACKS.map((track) => {
+    <FilterRoot $navbar={isNavbar} role="group" aria-label={`Filter ${label.toLowerCase()} details`}>
+      {!isNavbar && <FilterLabel>{label}</FilterLabel>}
+      <ChipRow $navbar={isNavbar} $compact={compact}>
+        {tracks.map((track) => {
           const on = activeIds.has(track.id)
           return (
             <Chip
@@ -23,6 +30,7 @@ export function SubteamFilterBar({ activeIds, onToggle, layout = "inline" }) {
               $text={trackTextColor(track)}
               $on={on}
               $navbar={isNavbar}
+              $compact={compact}
               aria-pressed={on}
               onClick={() => onToggle(track.id)}
             >
@@ -62,6 +70,16 @@ const ChipRow = styled.div`
   gap: ${({ $navbar }) => ($navbar ? "0.5rem" : "0.4rem")};
   align-items: center;
   ${({ $navbar }) => $navbar && `justify-content: flex-start;`}
+
+  /* Compact: one row, scrolling sideways when it doesn't fit. */
+  ${({ $compact }) =>
+    $compact &&
+    `
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  `}
 `
 
 const Chip = styled.button`
@@ -85,6 +103,14 @@ const Chip = styled.button`
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
+
+  ${({ $compact }) =>
+    $compact &&
+    `
+    flex: none;
+    font-size: 0.74rem;
+    padding: 0.3rem 0.7rem;
+  `}
 `
 
 export default SubteamFilterBar

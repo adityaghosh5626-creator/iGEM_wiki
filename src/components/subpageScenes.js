@@ -32,6 +32,51 @@ const DRY_LAB_PATROL = {
   ],
 }
 
+const NEEDLEMAN_BASE = "https://static.igem.wiki/teams/6187/wiki/drylab-page/needleman/"
+
+/**
+ * Needleman the cactus and Wunsch the tumbleweed (see NeedlemanCactus), drawn
+ * on their own 2580×1872 plate: `scale` and `at` (where the plate's top-left
+ * lands, in scene px) put them on the skyline where the old saguaro stood.
+ */
+const DRY_LAB_CACTUS = {
+  assetBase: NEEDLEMAN_BASE,
+  plate: [2580, 1872],
+  scale: 0.17,
+  at: [512, -8],
+  body: { name: "needleman", box: [1507, 472, 2016, 1713] },
+  /** Where he sways from: the bottom of his trunk. */
+  base: [1820, 1713],
+  /** Rests flipped down about the shoulder; flips up on hover. */
+  arm: { name: "needleman-arm", box: [1880, 559, 2176, 992], shoulderY: 940 },
+  /** `tail`: the tip it pops out from. */
+  bubble: { name: "text-box", box: [894, 87, 1616, 726], tail: [1520, 714] },
+  /**
+   * Wunsch and his scroll share one image; `clip` splits them along a line
+   * just left of the scroll's outline, so none of it rolls away with him.
+   */
+  friend: {
+    name: "wunch",
+    box: [1930, 1310, 2302, 1745],
+    clip: "polygon(0% 0%, 96.77% 0%, 96.24% 20.69%, 94.89% 25.29%, 94.09% 29.89%, 93.55% 34.48%, 92.47% 39.08%, 91.13% 43.68%, 90.05% 48.28%, 88.71% 52.87%, 87.9% 57.47%, 86.56% 62.07%, 85.75% 66.67%, 84.68% 71.26%, 83.06% 75.86%, 81.72% 80.46%, 79.84% 85.06%, 78.23% 89.66%, 77.69% 94.25%, 76.88% 100%, 0% 100%)",
+    /** Center of the ball he rolls on, and its radius (plate px). */
+    hub: [2100, 1600],
+    radius: 118,
+  },
+  prop: {
+    name: "wunch",
+    box: [2205, 1310, 2355, 1745],
+    clip: "polygon(56.67% 0%, 100% 0%, 100% 100%, 7.33% 100%, 9.33% 94.25%, 10.67% 89.66%, 14.67% 85.06%, 19.33% 80.46%, 22.67% 75.86%, 26.67% 71.26%, 29.33% 66.67%, 31.33% 62.07%, 34.67% 57.47%, 36.67% 52.87%, 40% 48.28%, 42.67% 43.68%, 46% 39.08%, 48.67% 34.48%, 50% 29.89%, 52% 25.29%, 55.33% 20.69%)",
+  },
+  /** The skyline Wunsch rolls along (scene px), with the painted cactus and tumbleweed smoothed out. */
+  floor: [
+    [0, 265], [40, 273], [80, 283], [120, 290], [160, 295], [200, 286],
+    [240, 275], [280, 266], [320, 263], [360, 258], [400, 255], [440, 253],
+    [480, 258], [520, 266], [560, 276], [600, 281], [640, 277], [680, 276],
+    [720, 275], [760, 274], [800, 274], [840, 278], [880, 281], [917, 262],
+  ],
+}
+
 export const DRY_LAB_SCENE = {
   header: "Dry Lab",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/drylab-page/",
@@ -47,6 +92,8 @@ export const DRY_LAB_SCENE = {
   layers: [
     // Ground layers (whole width).
     { name: "layer-1", box: [0, 0, 918, 4000] },
+    // Paints out layer-1's saguaro, where Needleman (`cactus`) now stands.
+    { name: "cactus-patch", src: `${NEEDLEMAN_BASE}cactus-patch.avif`, box: [760, 85, 918, 300] },
     { name: "layer-2", box: [0, 1305, 918, 3136] },
     { name: "layer-3", box: [0, 2567, 918, 4000] },
     // Holes and paths dug into the ground.
@@ -95,14 +142,27 @@ export const DRY_LAB_SCENE = {
     caps: [60, 70],
     /** First item's distance below the box top (plate px). */
     navTop: 32,
+    /** A little taller than the other boxes shut, so the overview fits. */
+    maxHeight: "min(26rem, 56vh)",
     indicator: { name: "box-subsection-indicator", box: [88, 452, 241, 513] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#9c6e56",
+    /**
+     * Fossil riding on the left end of the highlight. Its own image rather
+     * than a plate layer; `crop` is the painted part of its `size` canvas.
+     */
+    indicatorIcon: {
+      name: "https://static.igem.wiki/teams/6187/wiki/drylab-page/icon-dry-lab-small.avif",
+      box: [63, 467, 96, 498],
+      canvas: { size: [360, 342], crop: [0, 0, 360, 342] },
+    },
     /** Crab sitting on the box's bottom edge. */
     crab: { name: "box-crab", box: [144, 804, 195, 860] },
     linkColor: "#fbf3ea",
     /** Narrow screens: the list becomes a sticky strip of this colour. */
     stripColor: "#b0886c",
+    /** The compact menu's "Compact" chip. */
+    railTag: { bg: "#e9d5bf", text: "#5c3f2e" },
     stripTexture: true,
   },
   /** Text box; it stretches with the text between its caps. */
@@ -112,6 +172,8 @@ export const DRY_LAB_SCENE = {
     caps: [40, 40],
     /** Shortest box (plate px): the mockup's length. */
     minH: 2168,
+    /** Callouts, placeholders and other capped blocks span the whole box. */
+    fullWidthBlocks: true,
   },
   /**
    * Where the text ends in the art (plate y): just above the cobweb tunnel,
@@ -120,6 +182,33 @@ export const DRY_LAB_SCENE = {
    * decorative ending that scrolls with the page.
    */
   textEndY: 2960,
+  cactus: DRY_LAB_CACTUS,
+  /**
+   * The Dry Lab calendar (overview page) in desert colours: parchment panels,
+   * sandstone lines, terracotta for what's selected. Its workstreams carry
+   * their own colours (dryLabCalendar.js); "all" is the header's brown.
+   */
+  vars: {
+    "--cal-surface": "#fffaf2",
+    "--cal-chrome": "#f4e8d6",
+    "--cal-line": "#dcc6a4",
+    "--cal-ink": "#3b2a1f",
+    "--cal-muted": "#76604c",
+    "--cal-accent": "#a0603a",
+    "--cal-hover": "#f3e6d2",
+    "--cal-tint": "rgba(160, 96, 58, 0.12)",
+    "--cal-cell": "#fffaf2",
+    "--cal-cell-hover": "#f7ecdc",
+    "--cal-cell-line": "rgba(120, 84, 50, 0.2)",
+    "--cal-cell-out": "#f3e7d6",
+    "--cal-cell-out-hover": "#ebdcc6",
+    "--cal-cell-out-line": "rgba(120, 84, 50, 0.1)",
+    "--cal-band": "#ecc9a8",
+    "--cal-band-out": "#f3dfcb",
+    "--cal-band-line": "#a0603a",
+    "--cal-band-out-line": "rgba(160, 96, 58, 0.35)",
+    "--cal-sunday": "#a0603a",
+  },
 }
 
 export const VENTURE_SCENE = {
@@ -134,6 +223,8 @@ export const VENTURE_SCENE = {
   skyBottom: 400,
   headerColor: "#23395b",
   accent: "#c4701f",
+  /** Table header rows in the menu highlight's orange. */
+  tableHead: "#f2b574",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
     { name: "coins", box: [11, 1696, 176, 3041] },
@@ -155,18 +246,21 @@ export const VENTURE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    /**
-     * Sized to its list but capped at about half the window (the list
-     * scrolls inside), so the kangaroos on the left stay in view.
-     */
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
     /** The highlight's painted colour, for UI that matches it (footer button). */
     highlightColor: "#f2b574",
-    /** Coin that rides on the left end of the highlight. */
-    indicatorIcon: { name: "navbar-icon", box: [100, 460, 160, 515] },
+    /**
+     * Coin that rides on the left end of the highlight; turned so its $
+     * stands upright, and drawn 5px left of where it's painted so it clears
+     * the item's text.
+     */
+    indicatorIcon: {
+      name: "navbar-icon",
+      from: [100, 460, 160, 515],
+      box: [95, 460, 155, 515],
+      rotate: -30,
+    },
     linkColor: "#5b3a1a",
     /** Narrower column than Dry Lab's, so slightly smaller section names. */
     linkSize: 11.5,
@@ -313,8 +407,6 @@ export const HP_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 456, 289, 528] },
@@ -359,6 +451,8 @@ export const HARDWARE_SCENE = {
       name: "turtle-1",
       box: [76, 1815, 426, 2392],
       hit: [125, 1865, 315, 2150],
+      // Just it and its halo shiver: glints on the pipes stay put.
+      jolt: [118, 1858, 388, 2166],
       zap: { name: "zapzap", box: [122, 1830, 352, 2133] },
     },
     // The turtle lying in the pool does the same with its own lightning.
@@ -375,8 +469,6 @@ export const HARDWARE_SCENE = {
     box: [135, 412, 288, 1225],
     caps: [4, 4],
     navTop: 40,
-    fit: true,
-    maxHeight: "min(24rem, 52vh)",
     linkPadY: 7,
     linkSize: 11.5,
     indicator: { name: "nav-bar-highlight", box: [136, 458, 287, 517] },
@@ -401,10 +493,140 @@ export const HARDWARE_SCENE = {
 }
 
 /**
+ * Every Wet Lab page: a sunset sea. Bubbles keep rising, the school of fish
+ * keeps swimming laps, and the three axolotls light up when hovered (tapped
+ * on touch): two hide behind the text box, peeking out, until the pointer
+ * leaves; the one in open water swims a lap round the page.
+ */
+export const WET_LAB_SCENE = {
+  header: "Wet Lab",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/wetlab/",
+  plate: [1110, 4000],
+  background: "#0b8fa6",
+  skyBottom: 400,
+  /** Deep sea blue: reads on the pink and gold of the sunset. */
+  headerColor: "#123540",
+  accent: "#0b6f80",
+  layers: [
+    { name: "1-background", box: [0, 266, 1110, 4000] },
+    // Rising from the seafloor to the surface, in the open water either side
+    // of the text box, behind everything else in the sea.
+    {
+      name: "bubbles",
+      bubbles: {
+        lanes: [
+          { x: [15, 315], count: 16 },
+          { x: [990, 1095], count: 9 },
+        ],
+        from: 3480,
+        /** The water's surface, under the waves' edge: they fade out there. */
+        to: 385,
+        seconds: [26, 40],
+      },
+    },
+    { name: "2-sky", box: [0, 0, 1110, 358] },
+    { name: "3-sunset-clouds", box: [0, 0, 1110, 353] },
+    { name: "4-waves", box: [0, 152, 1110, 396] },
+    // Painted on the left; drawn on the right of the text box instead,
+    // mirrored so it still dives out towards the page's edge.
+    {
+      name: "8-shark",
+      from: [69, 2411, 261, 2631],
+      box: [918, 2411, 1110, 2631],
+      flip: true,
+    },
+    { name: "6-seabed", box: [0, 3349, 1110, 4000] },
+    { name: "9-seaweeds", box: [0, 1696, 1110, 4000] },
+    { name: "5-kelp", box: [56, 2960, 257, 3475] },
+    // The school faces right: off the right edge, back in from the left.
+    {
+      name: "7-fishies",
+      box: [947, 1022, 1093, 1111],
+      swim: { ms: 52000, delayMs: 1200, dir: 1 },
+    },
+    // These two (`box` covers their glow) slide `dx` plate px behind the text
+    // box (333–982) when hovered, leaving their heads peeking out.
+    // Its painting stops flat where the box covers it: rest it 30px further
+    // in than painted, so the pop back out (which overshoots) never shows that
+    // edge.
+    {
+      name: "15-pop-out-glow",
+      from: [36, 1357, 429, 1788],
+      box: [66, 1357, 459, 1788],
+      peek: { plain: "14-pop-out", dx: 131 },
+    },
+    // Painted beside the other two; drawn up near the top of the text box
+    // instead, above the fish, so the three spread down the page.
+    {
+      name: "11-swimming-right-glow",
+      from: [829, 1480, 1110, 1720],
+      box: [829, 640, 1110, 880],
+      // Its glow runs off the page's edge: faded there, as it slides in.
+      peek: { plain: "10-swimming-right", dx: -58, fadeX: [1088, 1110] },
+    },
+    // This one swims a lap: out the left edge, back in at the right edge to
+    // peek, then left again behind the text box to its spot. Drawn lower
+    // than it's painted: just above the seabed, in front of the kelp.
+    {
+      name: "13-swimming-left-glow",
+      from: [21, 1934, 331, 2171],
+      box: [21, 3080, 331, 3317],
+      lap: { plain: "12-swimming-left", out: -340, enter: 1100, peek: 965 },
+    },
+  ],
+  side: {
+    name: "17-side-box",
+    box: [135, 413, 289, 1224],
+    caps: [4, 4],
+    navTop: 40,
+    linkPadY: 7,
+    linkSize: 11.5,
+    /** No highlight is painted for this page: a flat one in the axolotls' yellow. */
+    indicator: { fill: "#f7e36b", box: [135, 456, 289, 517] },
+    highlightColor: "#f7e36b",
+    /**
+     * A bubble rides on its left end (painted on its own 946×4000 canvas); a
+     * soft glow keeps it from getting lost against the water.
+     */
+    indicatorIcon: {
+      name: "bubble",
+      box: [89, 457, 147, 512],
+      canvas: { size: [946, 4000], crop: [458, 3090, 529, 3157] },
+      glow: "rgba(255, 255, 255, 0.9)",
+      /** A little bigger than the other pages' icons in the labelled menu. */
+      railScale: 1.2,
+    },
+    linkColor: "#0b4a57",
+    activeLinkColor: "#0b4a57",
+    stripColor: "#e6f6f8",
+  },
+  text: {
+    // The box's solid edges: its painted top and bottom rows are see-through,
+    // and stretched on a long page they'd show as a fade.
+    name: "16-main-body-box",
+    box: [340, 413, 980, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the mockup's text box; the seabed below is the ending. */
+  textEndY: 3691,
+}
+
+/**
  * Project › Contribution: a greenhouse. The page is one big season calendar,
  * so there's no section list and the text box is wide, ending just above the
  * petamons on the steps (they and the pool below are the ending).
  */
+/**
+ * The Outreach acorn (drop-acorn.avif): it bonks the squirrels on the head
+ * when they're hovered (see BonkLayer), there and on Contribution.
+ */
+const OUTREACH_ACORN = {
+  src: "https://static.igem.wiki/teams/6187/wiki/outreach/drop-acorn.avif",
+  plate: [1110, 4000],
+  box: [130, 3426, 254, 3550],
+}
+
 export const CONTRIBUTION_SCENE = {
   header: "Contribution",
   boxTitle: "Overview",
@@ -419,16 +641,55 @@ export const CONTRIBUTION_SCENE = {
     // Seedlings in the planter, behind the Dry Lab bug.
     { name: "sprouts", box: [70, 2997, 290, 3090] },
     // Each subteam's petamon on the steps, one file each so they can move
-    // on their own. Four do what their subteam's critters do on hover (tap
+    // on their own. Six do what their subteam's critters do on hover (tap
     // on touch): the kangaroo throws Venture's coins, the bird loops like
-    // the Human Practices birds, the crab scuttles like Dry Lab's, and the
-    // turtle gets Hardware's lightning.
+    // the Human Practices birds, Outreach's gets bonked by an acorn, the
+    // crab scuttles like Dry Lab's, the turtle gets Hardware's lightning and
+    // the axolotl hides like Wet Lab's.
     { name: "venpetamon", coinBurst: true, box: [0, 2800, 196, 3362] },
     // Faces us; looping "rightward" rolls it counterclockwise.
     { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
-    { name: "orpetamon", box: [222, 2806, 396, 3005] },
-    { name: "webpetamon", box: [371, 2755, 644, 3004] },
-    { name: "wlpetamon", box: [604, 2783, 805, 2910] },
+    // Outreach's: bonked by an acorn, like the Outreach squirrels.
+    {
+      name: "orpetamon",
+      box: [222, 2806, 396, 3005],
+      // A smaller acorn for this smaller critter.
+      bonk: { head: [272, 2878], acorn: { ...OUTREACH_ACORN, scale: 0.5 } },
+    },
+    // Catches fire like the Wiki dragons: a fiery glow spreads out from
+    // behind it, from its head, its eyes glow and it trembles.
+    {
+      name: "webpetamon",
+      box: [371, 2755, 644, 3004],
+      dragon: {
+        // Its haze is cut off square at the left: the glow fades out there.
+        heat: { pad: 60, fade: [362, 404] },
+        from: [452, 2930],
+        reach: 260,
+        eyes: [
+          [437.8, 2947.5],
+          [475.4, 2945.6],
+        ],
+        eyeSize: 18,
+        // Glowing markings on its grey patches, along the body's lie.
+        swirls: [
+          { at: [621, 2808], rx: 5, ry: 13, rot: 8 },
+          { at: [578, 2832], rx: 9, ry: 5, rot: -28 },
+          { at: [579, 2871], rx: 10, ry: 5.5, rot: -22 },
+          { at: [511, 2872], rx: 10, ry: 5.5, rot: -20 },
+        ],
+        hits: [[371, 2755, 644, 3004]],
+      },
+    },
+    // The axolotl hides like the Wet Lab ones: it lights up, hops back over
+    // the floor's back edge (where the water starts) and sinks behind it,
+    // peeking over, until the pointer leaves.
+    {
+      name: "wlpetamon",
+      box: [604, 2783, 805, 2910],
+      // The floor's back edge slopes down to the right under it.
+      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 36 },
+    },
     { name: "dlpetamon", crab: true, box: [161, 3046, 290, 3148] },
     {
       name: "hwpetamon",
@@ -498,12 +759,15 @@ export const CONTRIBUTION_SCENE = {
     "--cal-team-venture-text": "#3a230e",
     "--cal-team-web": "#afbc90",
     "--cal-team-web-text": "#1f2914",
+    "--cal-team-all": "#2b3a30",
+    "--cal-team-all-text": "#fffdf7",
   },
 }
 
 /**
  * Attributions: a sunset over the Toronto skyline. No section list yet; the
- * box ends above the buildings, which (with the birds) are the ending.
+ * box runs down over the empty sunset to the dome's top, and the dome and the
+ * buildings round it (with the birds) are the ending.
  */
 export const ATTRIBUTIONS_SCENE = {
   header: "Attributions",
@@ -515,7 +779,7 @@ export const ATTRIBUTIONS_SCENE = {
   headerColor: "#4f4159",
   accent: "#8a4f60",
   layers: [
-    { name: "bg", box: [0, 0, 1110, 4000] },
+    { name: "bg1", box: [0, 0, 1110, 4000] },
     // Loop-the-loop on hover (tap on touch), counterclockwise like the
     // Contribution bird.
     { name: "birds", loop: { facing: 1 }, box: [1020, 3388, 1108, 3484] },
@@ -526,8 +790,488 @@ export const ATTRIBUTIONS_SCENE = {
   /** Not painted: a flat, faintly warm box on the sunset. */
   text: {
     fill: "#fffbf7",
-    box: [140, 412, 970, 3400],
+    box: [140, 412, 970, 3720],
+    minH: 2000,
+  },
+  textEndY: 3720,
+}
+
+/** Finance: one painting of snowy peaks with a mine cart of gold coins. */
+export const FINANCE_SCENE = {
+  header: "Finance",
+  hideIntro: true,
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/finance/",
+  plate: [1216, 4000],
+  background: "#c0d8db",
+  skyBottom: 400,
+  headerColor: "#2f3b52",
+  accent: "#94651a",
+  layers: [{ name: "img-3638", box: [0, 0, 1216, 4000] }],
+  side: {
+    fill: "#f8fafb",
+    box: [70, 412, 365, 1100],
+    navTop: 24,
+    linkColor: "#2f3b52",
+    activeLinkColor: "#ffffff",
+    linkSize: 15,
+    linkIndent: 18,
+    stripColor: "#f8fafb",
+    highlightColor: "#94651a",
+    indicator: { fill: "#94651a", box: [80, 442, 355, 492] },
+  },
+  /** No menu highlight to match: the valley's navy. */
+  footerButton: { bg: "#3a4760", text: "#ffffff" },
+  /** Not painted: a flat, cool white box, right of the mine cart. */
+  text: {
+    fill: "#f8fafb",
+    box: [400, 412, 1140, 3400],
     minH: 2000,
   },
   textEndY: 3400,
+}
+
+/** Safety and Security: a murky swamp, caution tape strung through the trees. */
+export const SAFETY_SCENE = {
+  header: "Safety",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/safety/",
+  plate: [1110, 4000],
+  background: "#578b7d",
+  skyBottom: 400,
+  /** The tape's cream, lifted off the teal with a dark shadow. */
+  headerColor: "#f4e6a8",
+  headerShadow:
+    "0 0.06em 0 rgba(16, 32, 48, 0.55), 0 0.1em 0.4em rgba(0, 0, 0, 0.35)",
+  accent: "#a8483a",
+  layers: [
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // Strung either side of the box (the right-hand strands run behind it):
+    // each hanging strand sways in the wind from where it's tied, a little
+    // out of step with the others.
+    ...[
+      [[0, 1716, 120, 2300], 1.2, 5200, 0],
+      [[968, 1692, 1076, 1848], 3, 3900, 0.4],
+      [[976, 2988, 1060, 3708], 1, 4600, 0.7],
+    ].map(([box, deg, ms, at]) => ({
+      name: `caution-tape-${box[1]}`,
+      src: "caution-tape",
+      box,
+      sway: { deg, ms, at },
+    })),
+  ],
+  side: null,
+  /** No menu highlight to match: the caution tape. */
+  footerButton: { bg: "#e9d684", text: "#102030" },
+  text: {
+    name: "text-space",
+    box: [135, 413, 979, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the painted box; the pond below is the ending. */
+  textEndY: 3691,
+}
+
+/** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
+export const ENGINEERING_SCENE = {
+  header: "Engineering",
+  boxTitle: "Overview",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/engineering/",
+  plate: [1110, 4000],
+  background: "#fee7c5",
+  skyBottom: 400,
+  /** The mountain's dark brown, on the pale sunset. */
+  headerColor: "#3e3128",
+  accent: "#b04a38",
+  layers: [
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // The rope runs up behind the gear, so it swings from under it.
+    {
+      name: "rope-bucket-only",
+      box: [960, 850, 1110, 2462],
+      swing: { pivot: [1027, 857], deg: 2, hit: [965, 2280, 1100, 2462] },
+    },
+    { name: "gear-only", box: [985, 816, 1110, 1130] },
+  ],
+  side: null,
+  /** No menu highlight to match: the girders' red. */
+  footerButton: { bg: "#b04a38", text: "#ffffff" },
+  text: {
+    name: "text-space",
+    box: [135, 413, 979, 3691],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /** Bottom of the painted box; the quarry below is the ending. */
+  textEndY: 3691,
+}
+
+/**
+ * Outreach: an autumn forest. The squirrel on the box's right edge slides
+ * down it with the reader, leaves drift across on the wind (left to right)
+ * and an acorn rolls down the log at the bottom. Hovered (tapped), each
+ * squirrel gets bonked on the head by an acorn from the top of the window.
+ */
+export const OUTREACH_SCENE = {
+  header: "Outreach",
+  hideIntro: true,
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/outreach/",
+  plate: [1110, 4000],
+  background: "#3d4423",
+  skyBottom: 400,
+  /** Cream on the sunlit canopy, lifted off it with a dark shadow. */
+  headerColor: "#fff2d6",
+  headerShadow:
+    "0 0.06em 0 rgba(30, 36, 14, 0.6), 0 0.1em 0.45em rgba(0, 0, 0, 0.45)",
+  accent: "#a8642c",
+  layers: [
+    { name: "background", box: [0, 0, 1110, 4000] },
+    // The leaves on the left blow right, in behind the box; the painted
+    // ones and a few more along the page.
+    ...[
+      [[26, 2210, 238, 2318], null, [-268, -40], [334, 100], 9000, 0],
+      [[186, 2322, 310, 2414], null, [-340, -20], [174, 140], 8000, 0.45],
+      [[226, 2682, 358, 2758], null, [-388, 0], [134, 90], 8500, 0.75],
+      [[26, 1300, 238, 1408], [26, 2210, 238, 2318], [-268, 0], [334, 120], 10000, 0.2],
+      [[186, 3000, 310, 3092], [186, 2322, 310, 2414], [-340, 0], [174, 100], 9000, 0.6],
+      [[226, 1000, 358, 1076], [226, 2682, 358, 2758], [-388, 0], [134, 80], 9500, 0.1],
+    ].map(([box, from, a, b, ms, at]) => ({
+      name: `leaf-1-${box[0]}-${box[1]}`,
+      src: "leaf-1",
+      box,
+      ...(from && { from }),
+      wind: { from: a, to: b, ms, at },
+    })),
+    {
+      name: "branch-squirrel",
+      box: [84, 1636, 348, 1916],
+      bonk: { head: [282, 1738], acorn: OUTREACH_ACORN },
+    },
+    // Rolling slowly down the log (it slopes down to the left), behind the
+    // bottom squirrel's feet, from off the window's right to off its left.
+    {
+      name: "rolling-acorn",
+      src: "drop-acorn",
+      from: OUTREACH_ACORN.box,
+      box: [556, 3652, 644, 3740],
+      wind: {
+        from: [550, -94],
+        to: [-700, 119],
+        ms: 18000,
+        at: 0.3,
+        bob: 0,
+        wobble: 0,
+        // Rolling, not sliding: its turn is the distance over its radius.
+        spin: -1628,
+      },
+    },
+    {
+      name: "bottom-squirrel",
+      box: [4, 3524, 292, 3862],
+      bonk: { head: [178, 3562], acorn: OUTREACH_ACORN },
+    },
+    // The green leaves on the right: some come out from behind the box and
+    // blow off the window, some cross from one side of the window to the
+    // other (the small ones over the box, under its text and the sketchbook;
+    // the big ones behind it, so they don't sweep over the section menu).
+    ...[
+      [[996, 3162, 1108, 3278], [-133, -20], [124, 80], 4500, 0],
+      [[1050, 2970, 1108, 3100], [-133, 0], [70, 60], 4000, 0.5],
+      [[948, 3036, 996, 3092], [-21, -10], [172, 70], 4500, 0.3],
+      [[972, 3262, 1052, 3388], [-77, 0], [148, 90], 4200, 0.7],
+    ].map(([box, a, b, ms, at]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 90 },
+    })),
+    ...[
+      [[754, 3162, 974, 3334], [-994, -40], [371, 60], 22000, 0, false],
+      [[730, 3410, 830, 3500], [-850, -30], [395, 50], 20000, 0.5, false],
+      [[676, 3340, 780, 3390], [-800, -20], [449, 70], 21000, 0.25, true],
+      [[586, 3402, 662, 3446], [-682, -30], [539, 40], 19000, 0.75, true],
+    ].map(([box, a, b, ms, at, over]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 200 },
+      ...(over && { front: "bottom" }),
+    })),
+    // Hugging the box's right edge (its paw and head on it), a third
+    // smaller than painted; it slides down with the reader from Promo Video
+    // to Road to Jamboree (see SlideLayer). Its outline (traced 4 plate px above its top, every
+    // 4 columns) runs over its ears and raised paw.
+    {
+      name: "slide-squirrel",
+      from: [884, 1176, 1106, 2044],
+      box: [952, 1176, 1099, 1749],
+      slide: {
+        outline: [
+          [884, 1640], [888, 1640], [892, 1653], [896, 1650], [900, 1650], [904, 1649],
+          [908, 1649], [912, 1602], [916, 1590], [920, 1586], [924, 1515], [928, 1518],
+          [932, 1522], [936, 1525], [940, 1525], [944, 1523], [948, 1528], [952, 1534],
+          [956, 1534], [960, 1537], [964, 1543], [968, 1550], [972, 1560], [976, 1559],
+          [980, 1557], [984, 1555], [988, 1554], [992, 1554], [996, 1558], [1000, 1574],
+          [1004, 1575], [1008, 1509], [1012, 1506], [1016, 1503], [1020, 1500], [1024, 1500],
+          [1028, 1501], [1032, 1505], [1036, 1507], [1040, 1518], [1044, 1700], [1048, 1700],
+          [1052, 1700], [1056, 1700], [1060, 1700], [1064, 1700], [1068, 1700], [1072, 1700],
+          [1076, 1700], [1080, 1700], [1084, 1700], [1088, 1700], [1092, 1700], [1096, 1700],
+          [1100, 1700], [1106, 1700],
+        ],
+        view: "16vh",
+        between: ["promo-video", "road-to-jamboree-series"],
+      },
+      bonk: {
+        head: [955, 1530],
+        // Where it's off the box, so the box's text keeps the pointer.
+        hit: [1000, 1500, 1106, 2044],
+        acorn: OUTREACH_ACORN,
+      },
+      front: "top",
+    },
+  ],
+  side: {
+    name: "small-block",
+    box: [135, 409, 291, 1226],
+    caps: [4, 4],
+    navTop: 40,
+    linkPadY: 7,
+    linkSize: 11.5,
+    indicator: { fill: "#a8642c", box: [136, 456, 290, 518] },
+    /** The highlight's colour, for UI that matches it (footer button). */
+    highlightColor: "#a8642c",
+    /** The acorn sticker rides on the highlight's left end, drawn smaller. */
+    indicatorIcon: {
+      name: "tab-acorn",
+      from: [72, 448, 208, 584],
+      box: [98, 453, 162, 517],
+    },
+    linkIndent: 20,
+    linkColor: "#33401f",
+    activeLinkColor: "#ffffff",
+    stripColor: "#efe3c8",
+  },
+  text: {
+    name: "big-block",
+    box: [339, 404, 988, 3693],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /**
+   * Above the painted box's bottom (3693), so the ending shows the bottom
+   * squirrel and its acorn whole, under the box and the section menu that
+   * follows it down.
+   */
+  textEndY: 3420,
+}
+
+/**
+ * Project Description: a night sky with two comets (the bottle and Gemy)
+ * flying over the box, and the CN Tower rocket hovering over a planet below.
+ * Comets and rocket burst into fireworks when clicked.
+ */
+export const PROJECT_SCENE = {
+  header: "Project",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/project/",
+  plate: [918, 4000],
+  background: "#111926",
+  skyBottom: 256,
+  /** The box's cream, glowing like the planets. */
+  headerColor: "#f1e6d4",
+  headerShadow:
+    "0 0 0.35em rgba(80, 130, 255, 0.55), 0 0.08em 0.3em rgba(0, 0, 0, 0.6)",
+  accent: "#2f4fa0",
+  layers: [
+    { name: "project-back", box: [0, 0, 918, 4000] },
+    // Flying through the sky head first, along their tails; clicked, they
+    // burst into fireworks from their heads.
+    {
+      name: "project-gemy",
+      box: [113, 101, 603, 224],
+      fly: {
+        slope: 0.17,
+        ms: 34000,
+        delayMs: 11000,
+        head: [173, 178],
+        colour: "#3fd94a",
+      },
+    },
+    {
+      name: "project-bottle",
+      box: [321, 110, 793, 256],
+      fly: {
+        slope: 0.24,
+        ms: 42000,
+        delayMs: 30000,
+        head: [360, 209],
+        colour: "#4f86f0",
+      },
+    },
+    // Hovers on its trail; rattles when hovered, bursts when clicked.
+    {
+      name: "cn-tower-rocket",
+      box: [418, 2070, 492, 2364],
+      rocket: {
+        trail: "project-smoke-rocket",
+        trailBox: [418, 2360, 495, 3620],
+        hit: [395, 2050, 515, 2380],
+        head: [455, 2190],
+        colour: "#6f9cff",
+      },
+    },
+  ],
+  side: null,
+  /** No menu highlight to match: the planet's orange. */
+  footerButton: { bg: "#e2662c", text: "#111926" },
+  text: {
+    name: "project-box",
+    box: [63, 256, 864, 2001],
+    // The speckled edges reach 68 (top) and 105 (bottom) plate px in, so
+    // they stay out of the stretched middle.
+    caps: [75, 110],
+    minH: 1500,
+    // Clear of the speckled edges (on top of the box's usual padding).
+    inset: [50, 50, 80, 36],
+  },
+  /** Bottom of the painted box; the rocket and planet below are the ending. */
+  textEndY: 2001,
+}
+
+/**
+ * Wiki: two fire dragons in a volcano. Hovered (tapped), a dragon glows,
+ * fire spreads across it from its head and its markings light up. Painted on a
+ * 451×1476 canvas (positions below); the sharper files are the same canvas
+ * scaled up, so they line up as is.
+ */
+/** The Wiki's sharper dragons and fire, on the same canvas at 1222×4000. */
+const WIKI_HQ = "https://static.igem.wiki/teams/6187/wiki/wiki/higher-qual/"
+
+export const WIKI_SCENE = {
+  header: "Wiki",
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/wiki/",
+  plate: [451, 1476],
+  /**
+   * Shows through the small gaps between the painting's strokes (mostly in
+   * the lava): the dark of its outlines, so they read as painted, not holes.
+   */
+  background: "#211619",
+  skyBottom: 156,
+  /** Firelight on the smoky sky. */
+  headerColor: "#ffe7c2",
+  headerShadow:
+    "0 0 0.35em rgba(240, 96, 0, 0.65), 0 0.08em 0.3em rgba(0, 0, 0, 0.6)",
+  accent: "#b8430e",
+  layers: [
+    { name: "sky", src: `${WIKI_HQ}skygood.avif`, box: [0, 0, 451, 1223] },
+    {
+      name: "mountains",
+      src: `${WIKI_HQ}mountainsgood.avif`,
+      box: [0, 0, 451, 1476],
+    },
+    {
+      name: "dragon1",
+      src: `${WIKI_HQ}dragon1good.avif`,
+      box: [300, 36, 451, 540],
+      dragon: {
+        glow: "dragon1glow",
+        glowBox: [270, 0, 451, 548],
+        fire: `${WIKI_HQ}fire1good.avif`,
+        fireBox: [264, 0, 451, 250],
+        from: [395, 70],
+        reach: 240,
+        // A few of its neck markings were drawn on dragon 2's highlight.
+        highlights: [
+          { name: `${WIKI_HQ}dragon1higlight.avif`, box: [330, 25, 451, 192] },
+          { name: `${WIKI_HQ}dragon2higlight.avif`, box: [400, 170, 451, 206] },
+        ],
+        hits: [[300, 30, 451, 210]],
+      },
+    },
+    {
+      name: "dragon2",
+      src: `${WIKI_HQ}dragon2good.avif`,
+      box: [0, 537, 451, 1197],
+      dragon: {
+        glow: "dragon2glow",
+        glowBox: [0, 633, 451, 1195],
+        fire: `${WIKI_HQ}fire2good.avif`,
+        fireBox: [0, 588, 451, 1202],
+        tail: `${WIKI_HQ}dragon2tailgood.avif`,
+        // Beside the box it's drawn over the box's end instead (text.front).
+        tailNarrowOnly: true,
+        tailBox: [0, 896, 451, 1152],
+        from: [58, 760],
+        reach: 640,
+        highlights: [
+          { name: `${WIKI_HQ}dragon2higlight.avif`, box: [0, 600, 451, 1120] },
+        ],
+        // Where it shows round the boxes: head (left) and coil (right).
+        hits: [
+          [0, 680, 136, 880],
+          [392, 740, 451, 892],
+        ],
+        // Along the tail, where it's painted (lowered with it over the box).
+        tailHits: [
+          [0, 1085, 136, 1160],
+          [136, 1030, 200, 1105],
+          [200, 1005, 260, 1095],
+          [260, 980, 330, 1088],
+          [330, 945, 392, 1075],
+          [392, 910, 451, 1052],
+        ],
+      },
+    },
+  ],
+  side: {
+    // A plain box (crisp at any size), a shade deeper than the text box's
+    // peach so the two read apart, as on the other pages.
+    fill: "#e6c4ab",
+    radius: "0.6rem",
+    box: [55, 160, 121, 594],
+    navTop: 16,
+    navBottom: 6,
+    linkPadY: 7,
+    linkSize: 11.5,
+    /** No highlight is painted for this page: a flat one in the fire's orange. */
+    indicator: { fill: "#f39a3d", box: [55, 178, 121, 203] },
+    highlightColor: "#f39a3d",
+    /**
+     * A glowing dragon scale rides on its left end (three layers, top first),
+     * a bit taller than the bar and clear of the titles; the list leaves
+     * room under its last title for it (navBottom).
+     */
+    indicatorIcon: {
+      layers: [
+        `${WIKI_HQ}layer-29.avif`,
+        `${WIKI_HQ}layer-28.avif`,
+        `${WIKI_HQ}layer-27.avif`,
+      ],
+      from: [24, 167, 71, 217],
+      box: [38.5, 179.3, 59.5, 201.7],
+    },
+    linkColor: "#4a2418",
+    activeLinkColor: "#2a120a",
+    stripColor: "#f6e6da",
+  },
+  text: {
+    fill: "#f1dece",
+    radius: "0.6rem",
+    box: [136, 156, 392, 1047],
+    minH: 700,
+    // The lower dragon's tail, hung a little lower than painted, comes out
+    // over the box's bottom corner, below the last text; its glow, fire and
+    // markings below \`line\` (just above the tail) come with it.
+    front: {
+      dragon: "dragon2",
+      line: [
+        [0, 1067],
+        [451, 872],
+      ],
+      dy: 50,
+    },
+    // Room under the text for the tail (it reaches ~70 plate px up the box).
+    inset: [0, 0, 56, 0],
+  },
+  /** Bottom of the box; the lava below is the ending. */
+  textEndY: 1047,
 }

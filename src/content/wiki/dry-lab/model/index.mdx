@@ -102,27 +102,113 @@ From each family we search outward, first into the NCBI protein database and the
 
 </Placeholder>
 
-<Placeholder label="Placeholder figure">
+<DatasetFlowchartFigure
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/needleman/g25.avif"
+  alt="Flowchart of how the PETadex corpus is built: 609 PETadex-PAZy proteins are clustered at 90% identity into 411 nr query centroids; a DIAMOND blastp search of NCBI nr gives 7,825,535 non-redundant raw hits, which HMMsearch filters to 6,857,582 PETadex-nr proteins; these are clustered into 2,740,458 Logan query centroids, searched against Logan with DIAMOND blastx and filtered with HMMsearch into PETadex-Logan. Bars beside each step sketch catalytic domains, off-target, partial and complete hits."
+/>
 
-Corpus funnel: from the known reference enzymes to the full candidate corpus.
-
-</Placeholder>
+<DatasetFlowchart />
 
 ### Plasticome Reference Curation
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~120 words of the Dataset Generation budget.
+  Notebooks 76, 70. Page Tree §1.1 [M].
+
+  This is the "495 known enzymes" the whole corpus grows from, so it has to
+  establish that the seed set is trustworthy before anything downstream can
+  be. Lead with that, not with the tooling.
+
+  - Why curate at all: no single database is complete, and PAZy and PlasticDB
+    disagree on both membership and sequence
+  - PAZy pulled through its API; PlasticDB reconciled against it
+  - Identity resolved by MD5 matching cascades, since accessions alone miss
+    the same sequence deposited twice
+  - Union with Plasticome v1.1, every entry tagged with its source
+  - The Erickson hand-curation, and DOI backfill for entries that arrived
+    without a citation
+  - Close on what came out: the reference set, and what "reference" means
+    here (reported activity, not activity we measured)
+
+  Numbers owed: seed count. Narrative §4 flags the baseline as contested —
+  brain dump says both ~2,000 known and PAZy ~495, and the narrative uses
+  ~500. The flowchart above says 609 PETadex-PAZy proteins, which is a third
+  figure again. RESOLVE before writing: these cannot all be the same
+  quantity, and this section is where a judge will notice.
+*/}
+
 Placeholder: PAZy pull, PlasticDB reconciliation, MD5 cascades, DOI backfill.
+
+### CATH Assignment
+
+*Owner: TBD*
+
+Placeholder: CATH fold assignment of the 609 reference proteins by Foldseek, Gene3D and Pfam; 606 of 609 annotated.
 
 ### Component Assignment
 
 *Owner: Dennis*
+
+{/*
+  OUTLINE — not rendered. ~120 words.
+  Notebooks 47/47/47/48. Page Tree §1.2 [M].
+
+  Why this exists: the model searches outward from families, not from
+  individual enzymes, so how the seed set is partitioned decides what gets
+  searched for. Say that in the first line to keep the section tied to the
+  model.
+
+  - USEARCH all-pairs global alignment, threshold ≥30% aaid and e < 1e-5
+  - Connected-component recomputation rather than best-hit assignment, and
+    why: best-hit fragments families that are genuinely continuous
+  - Output: 412 centroids forming 46 components
+    [Page Tree §1.2. Verify the 46; the 412 is settled — see below]
+
+  411 vs 412 IS RESOLVED (2026-10-13). Both numbers are right and they
+  count different things, so write 412 here without hedging:
+    - 412 centroids came out of component assignment, and all 412 were
+      submitted to the DIAMOND nr search
+    - one of them recovered nothing that another centroid did not also
+      recover at a higher score, so only 411 have uniquely attributed hits
+    - 411 is therefore a result of the nr search under best-hit
+      attribution, NOT an output of this section
+  Keep this section at 412 and let NCBI-nr Homology Expansion below own
+  the 412 -> 411 sentence. Do not describe the dropped centroid as having
+  "no hits": it had hits, they were all claimed by a better-scoring query.
+  - The USEARCH/DIAMOND 2x2 factorial: what was varied, and what it showed
+    about how sensitive the partition is to the aligner choice. This is the
+    part worth writing properly — it is a check on the method, not a step
+
+  Numbers owed: centroid and component counts, 2x2 outcome.
+*/}
 
 Placeholder: USEARCH all-pairs, ≥30% aaid, connected components, USEARCH/DIAMOND 2×2.
 
 ### NCBI-nr Homology Expansion
 
 *Owner: Thomas*
+
+{/*
+  NOTE, not a full outline — this section still needs one from its owner.
+
+  This section owns the 412 -> 411 drop (resolved 2026-10-13). All 412
+  centroids from Component Assignment above were searched against nr; one
+  recovered no sequence that another centroid did not also recover at a
+  higher score, leaving 411 centroids with uniquely attributed hits.
+
+  Two things to get right:
+    - do not write that the dropped centroid "returned no hits". It
+      returned hits; every one of them was claimed by a better-scoring
+      query under best-hit attribution
+    - Component Assignment above says 412 and stays at 412. 411 belongs
+      here, as a property of the search, not of the clustering
+
+  The corpus flowchart labels its node "411 nr query centroids", which
+  reads as though 411 were the queries. 412 were. Fix the label when the
+  figure is next revised.
+*/}
 
 Placeholder: DIAMOND, 7.83M sequences at E ≤ 1e-5.
 
@@ -141,6 +227,29 @@ Placeholder: HMMs against Logan, the PETadex-Logan corpus.
 ### Clustering and Corpus Structure
 
 *Owner: Dennis / Thomas*
+
+{/*
+  OUTLINE — not rendered. ~100 words.
+  Notebooks 51, 107. Page Tree §1.6 [S].
+
+  Framing: this is what makes the corpus usable rather than merely large.
+  Every downstream section depends on it — embedding runs on centroids,
+  sampling is stratified over clusters, the Atlas plots them — so this
+  section is load-bearing for the page even though it is marked [S].
+
+  - Clustering at 30 / 60 / 90% identity, and what each level is for:
+    90% for redundancy removal, 30% for family-level structure
+  - Cluster quantification (51): size distribution, how much of the corpus
+    sits in a few large clusters
+  - Sample density distribution (107)
+  - One line forward: the 30% centroids are what Embedding Controls below
+    actually plots, and the 90% catalytic centroids are what PlasticESM was
+    trained on. Say it here so the two sections do not read as disconnected
+
+  Numbers owed: centroid counts per level, largest-cluster share.
+  Note 64,730 family centroids appears in Page Tree §4.4 for the Atlas —
+  check whether that is the same set as the 30% centroids named here.
+*/}
 
 Placeholder: 30/60/90% centroids, cluster quantification, sample density.
 
@@ -174,24 +283,58 @@ Placeholder: temperature, pH, environment, organism, habitat, salinity.
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~100 words.
+  Page Tree §2.2 [S]. Sits directly after §2.1 and depends on it.
+
+  The honest point of this section: metadata coverage is not the same thing
+  as metadata signal. A BioSample can carry fields that are only the
+  submission form's template, and counting those as annotation overstates
+  what the model can see. That distinction is the section.
+
+  - Profile universe: BioSamples with real signal out of the full set
+    [Page Tree §2.2: 2,744,599 of 6,796,722 — unverified. Note the
+    flowchart above uses 2,740,458 for Logan query centroids, a different
+    quantity with a confusingly similar value. Do not let these collide
+    in the prose]
+  - Form-template-only samples excluded, and how they were identified
+  - What the profiles are then used for: stratifying sampling, so the
+    sequences we look at are not all from one kind of environment
+  - Tie to the model in one line: this is why the metadata feature block in
+    Activity Prediction has the coverage it has
+
+  Cross-reference, do not repeat: §2.1 above owns the BacDive temperature
+  and pH propagation and the unweighted-means caveat. This section owns
+  only the profile universe and the sampling use.
+*/}
+
 Placeholder: 2.74M of 6.80M with real signal, stratified sampling.
 
 ### Localization and Signal Peptides
 
-SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, which act as a more promising subset for degradation activity. Accounting for secreted enzymes also  produces mature-protein sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after complete folding respectively. SignalP classifies conventional Sec signal peptides (SP), Sec-dependent lipoproteins (LIPO), twin-arginine Tat substrates (TAT), Tat-dependent lipoproteins (TATLIPO), and short type III pilin-like signals (PILIN). SignalP’s fast model in “Other” mode was used for throughput and preservation of all six signal peptide classifications. Benchmarking demonstrated that these parameters preserved sufficient accuracy in comparison to the slow model. It notably preserves accuracy in predicting the signal peptide cleavage site of eukaryotic sequences as well, despite not using the designated “Euk” mode.
+SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, to support enzyme selection for in vitro activity testing and to produce cleaved mature sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after they complete folding respectively. SignalP classifies 5 signal peptide classes within the two pathways (SP, LIPO, TAT, TATLIPO, and PILIN). Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide, within which 92.21% of the enzymes have Sec routing and 7.79% have Tat. 90% identity enzyme clusters had on average 93.1% agreement on whether its member sequences is signal peptide-positive, and 98.3% of these positive members shared the same signal peptide class. The gap in agreement within 90% clusters is most likely due to missing N-termini from sequence fragmentation, making SignalP a useful quality check on the database. Alpha/Beta Hydrolases had a below-average percentage of signal peptide-positive sequences (10.6%) but contributed 44% of all predicted secreted ORFs.
 
-Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide: 77.47% SP, 14.74% LIPO, 6.52% TAT, 1.27% TATLIPO, and 0.0005% PILIN, corresponding to 92.21% Sec and 7.79% Tat routing. Modal signal lengths were 28, 22, 52, 63, and 8 aa, respectively. Signal type was highly conserved at 90% identity, but became less homogeneous in large 30%-identity clusters, consistent with secretion strategy diverging across broader protein families. Secretion frequency also varied strongly by catalytic fold, from 45.9% in cupredoxins to 1.2% in L-amino peptidases. Alpha/Beta Hydrolases had a below-average secretion rate of 10.6%, but nevertheless contributed 44% of all predicted secreted ORFs.
+To-Do: Repeat the pipeline on the updated database.
 
-<Figure
-  src="/images/drylab/signalp_composite.svg"
-  alt="Three panels: (A) log-scale bar chart of PETadex ORFs per signal peptide class, dominated by Sec/SPI; (B) secretion rate by catalytic fold family, from 45.9% in cupredoxins to 1.2% in L-amino peptidases against a 13.85% database average; (C) share of clusters with at least 90% one signal type, falling with cluster size most steeply at 30% identity."
-/>
+<Figure src="/figures/dry-lab-model/signalp-composite.png" alt="SignalP composite figure" width="100%" />
+
+**Figure caption.** (A) The biological significance of the secretion pathways and signal peptide classes. (B) ORFs per signal peptide class (log scale). (C) Percentage of ORFs in each catalytic fold family with a predicted signal peptide; dashed line = database-wide rate (13.85%). (D) Agreement within clusters at 90, 60 and 30% sequence identity (singletons removed): % of secreted members matching their cluster’s majority signal type and % of all members matching their cluster’s majority signal peptide presence/absence call.
+
 
 ### Domain Annotation
 
 *Owner: Nino*
 
-Placeholder: InterProScan, Foldseek vs TED50, CATH assignment.
+Using the complete sequences from the input domains, InterProScan is used to determine
+all domains located within the sequence. Then, using PETadex HMMs, HMMer (a tool that
+searches through protein sequences to find domains corresponding to inputted HMMs)
+searches through the sequences to determine the location of PET-relevant domains in the
+sequences.
+Now the coordinates of the HMMer results are overlayed on the Interproscan results, and
+any domains that hit in both HMMer and Interproscan results are NOT accessory domains,
+so they are filtered out. Two resulting datasets are outputted. One dataset containing all its
+(including overlapping hits) from interproscan and HMMer and another dataset containing
+only accessory domains.
 
 ### Novel Accessory Domains
 
@@ -207,20 +350,13 @@ Placeholder: AFDB, ESMFold2, Narval ESM3 folding, confidence metrics.
 
 ### Biochemical Properties and Ancestral Reconstruction
 
-Six sequence-derived properties were calculated using Biopython Proparam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. SignalP-positive ORFs were analyzed both before and after signal-peptide cleavage to represent both their precursor and mature forms. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885, with the overall GRAVY distribution characteristic of predominantly soluble rather than strongly hydrophobic proteins. 
+Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly-sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
 
-For secreted peptides, signal-peptide removal decreased GRAVY in 96.6% and pI in 86.6%, with strong  GRAVY decrease for Sec-associated SP and LIPO classes and minimal decrease for Tat classes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). GRAVY showed the largest separation among catalytic families, spanning −0.485 to +0.085. L-amino peptidases were distinctive as the most hydrophobic, most stable, least aromatic, and least frequently secreted family (1.2%).
+To-Do: Repeat the pipeline on the updated database.
 
-<Figure
-  src="/images/drylab/biochem_composite.svg"
-  alt="(A) Box plots of sequence length, molecular weight, isoelectric point, GRAVY, instability index and aromaticity for ten catalytic fold families; (B) density plots of GRAVY against instability index for all ORFs and for mature secreted ORFs."
-/>
+<Figure src="/figures/dry-lab-model/biochemical-properties-composite.png" alt="Biochemical properties composite figure" width="100%" />
 
-<Placeholder label="Placeholder demo">
-
-Sequence record card: one candidate enzyme with every annotation layer stacked.
-
-</Placeholder>
+**Figure X.** (A) Box-and-whisker distributions of the biochemical properties by catalytic fold family; dashed line = database median. (B) GRAVY vs instability index for 90% identity cluster representatives (top, all ORFs) and for secreted 90% Cluster representatives specifically (bottom, mature sequences). (C) Property Distributions of PETadex and NCBI; medians written as PETadex | NCBI.
 
 ## Activity Data Extraction
 
@@ -270,23 +406,18 @@ An initial run of this pipeline on ~4k papers yielded 27,244 experiments, 31,441
 
 ### Schema Design and Extraction Protocol
 
-In addition to an automated scraping pipeline, manual scraping was completed on a 60+ plastic degrading literature papers, entailing over 450 human hours. 20+ scrapers extracted data by filling out an interactive, standardized html schema as they read. This schema included the paper’s enzymes, variables, experiment setup, and every single activity point. The schema then formats their data into structured CSVs. The data acts as a ground truth to benchmark the capacity of LLMs in performing accurate data extraction from literature, as well as organizing data in a more readily filterable and interpretable form to support future endeavours for plastic researchers.
-Guiding Principles & Schema Logistics
-Standardization: The schema standardizes variables, plastic substrates, units, and additional specifications such as substrate pretreatment through predefined selections. An “Other” option preserves flexibility, while the remaining standardization improves data consistency, quantification, and transferability to LLM guidelines.
+In addition to an automated scraping pipeline, 20+ scrapers spent 450+ hours manually extracting data from 60+ plastic-degradation papers, formatting the data through a standardized interactive HTML schema. The schema captures each paper’s enzymes, experimental variables, setup, and individual activity measurements, then exports the data into structured CSVs. This manually curated dataset provides ground truth for benchmarking LLM-based literature extraction and creates a more filterable resource for future plastic-degradation research.
 
-Structure & Traceability: When using the schema, scrapers begin by filling out a paper’s basic information and summary. They then navigate to an enzyme section for inputting entries of all plastic degrading enzymes tested within the paper, defining an Enzyme ID (name used within the paper) and its sequence. They are then able to add Experiments within a paper, defined as containing a single dependent plastic degradation activity metric and one or more independent variables. A unique Experiment ID is autogenerated for each. Finally, scrapers fill in a data table for each Experiment containing all the recorded degradation activity measured by the experiment alongside its associated independent variable values and Enzyme ID. The tree-like organization of the schema allows for intuitive decomposition of the paper into its critical data insights, and ensures that each datapoint can be traced via the IDs to their origin in case of future backsourcing.
+The schema was created under 3 guiding principles: 1) Standardization in variables, experiment conditions, and units via dropdown selections to support effective data analysis and transferability to LLM guidelines. 2) Structure & Traceability, where autogenerated experiment and enzyme IDs let every extracted data point be backsourced. 3) Guardrailing with built-in error checks to reduce human errors and missing data entries.
 
-Guardrailing: Systematic checks detect issues such as invalid enzyme sequences, incomplete rows, and missing required information, while dropdowns constrain entries to valid options. Widgets and pop-ups guide scrapers between sections, reducing common entry errors and simplifying the scraping workflow.
+Every paper was also independently extracted by two or more scrapers, with 78% of the corresponding raw un-reconciled data agreeing within 10%, which supports the schema's strength as an organizer. However, a non-trivial portion of data entries have no matches between pairs of scrapers as a result of scraper(s) overlooking sections of the papers. This showcases how even non-automated pipelines for data extraction are fallible to errors, lending strength to the potential benefits of a rigorous LLM-based model
 
-Results
-Current trends and results within the data are shown.
+To-Do: Manually reconcile discrepancies between scrapers to create a finalized ground truth for each double-scraped paper.
 
-<Figure
-  src="/images/drylab/human scraping composite figure.svg"
-  alt="Figure showing human scarping results"
-/>
+<Figure src="/figures/dry-lab-model/human-scraping-composite.png" alt="Human scraping composite figure" width="100%" />
 
-Most papers have also been independently extracted by two or more scrapers, and ongoing manual reconciliation efforts are being made to reconcile inconsistencies between scrapers to increase the confidence and quality of the data.
+**Figure X.** (A) Project workflow. (B) Most common substrates amongst the 61 scraped papers. (C) Most common independent variables and (D) Most common quantities measured in experiments (372 experiments tallied). (E) Melting temperature distribution of wild-type and engineered enzymes. (F) Optimum temperature distribution (G) Optimum pH distribution, split by PET-related vs other substrates; dashed line = median. (H) Agreement between scrapers (pre-reconciliation) on comparable experiment data entries.
+
 
 ### Human vs LLM Agreement
 
@@ -295,6 +426,26 @@ Finally when checking 26 LLM extracted papers against 26 double-human verified p
 ### Kinetics Dataset
 
 *Owner: Dennis*
+
+{/*
+  OUTLINE — not rendered. ~80 words. Keep it short.
+
+  Page Tree §5.4 [S]. Source file plastic_kinetics_published_full.csv.
+
+  WORD BUDGET WARNING: Activity Data Extraction has a 400-word target and
+  the three written subsections above it already run to roughly 1,460
+  (MVP Build Plan §0 follow-ups). This section should be the shortest on the
+  page, and the trimming owed is on those three, not here.
+
+  - What it is: published kinetics assembled as a labelled table, separate
+    from the paper-extraction pipeline above
+    [Page Tree §5.4: 464 rows x 18 columns — unverified]
+  - The polymer library it is encoded against [20 entries, unverified]
+  - Class vs Substrate encoding, and why both are kept: the model can learn
+    at polymer-class level where per-substrate data is too thin
+  - One line on its role: this is the quantitative label set, where the
+    extraction pipeline above supplies the binary one
+*/}
 
 Placeholder: 464 records, 20-polymer library.
 
@@ -307,12 +458,14 @@ Agreement between human and language-model extraction.
 ## Machine Learning
 
 {/*
-  ~700 words. Answers Q1 and Q2. Figures: architecture; controls result.
-  Lead with the controls, not the architecture: does the embedding space
+  ~700 words. Answers Q1 and Q2. Figures: data flow; architecture; controls
+  result.
+  Open with the datasets: what the model learns from and where to get it.
+  Then the controls, before the architecture: does the embedding space
   encode anything beyond taxonomy?
-  Must cover: domain-adapted ESM-LoRA (PlasticESM), how it was built and
-  whether it works (its release is documented on the Software page);
-  embedding the corpus; embedding controls.
+  Must cover: the datasets (linked on Hugging Face); domain-adapted ESM-LoRA
+  (PlasticESM), how it was built and whether it works (its release is
+  documented on the Software page); embedding the corpus; embedding controls.
   Should cover: activity prediction (PETai).
   Kept off the wiki for now: manifold method comparison; embedding search
   hit characterization.
@@ -320,11 +473,23 @@ Agreement between human and language-model extraction.
 
 <Placeholder>
 
-Before trusting any prediction, we tested whether the model's internal representation of a sequence carries information beyond which organism it came from. This section opens with those controls and what they showed.
-
-The representation comes from a protein language model that we adapted to plastic-degrading enzyme families and then used to embed the corpus. An activity classifier trained on the labelled sequences sits on top of it. We compare the adapted model against its unadapted base, and test whether adding annotation features improves on sequence alone.
+This section opens with the data the model learns from. Before trusting any prediction, we then tested whether the model's internal representation of a sequence carries information beyond which organism it came from. The representation comes from a protein language model that we adapted to plastic-degrading enzyme families and then used to embed the corpus. An activity classifier trained on the labelled sequences sits on top of it. We compare the adapted model against its unadapted base, and test whether adding annotation features improves on sequence alone.
 
 </Placeholder>
+
+### Datasets
+
+{/*
+  Overview tier: the figure and two sentences. The full write-up is the
+  Methods sub-page, src/content/wiki/dry-lab/model/datasets/, and the
+  sources for every number are listed in its writer notes.
+*/}
+
+The model learns from two datasets. The PETadex corpus supplies the candidates it scores, and the PETai activity labels supply the targets it learns to predict. Both are open on Hugging Face (labelled 🤗 where they are on Hugging Face).
+
+<ModelDatasets />
+
+<MethodsLink href="/dry-lab/model/datasets/">What each dataset holds, how the labelled sequences were split, how far they sit from the candidates, and how to download everything.</MethodsLink>
 
 ### Embedding Controls
 
@@ -332,14 +497,14 @@ Using the ESMC-XXXM Protein Language Model (PLM), we generated embeddings for X 
 
 
 <Figure
-  src="/images/drylab/umap_cath.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-cath.avif"
   alt="UMAPed enzymes, coloured by CATH domain"
 />
 
 Noticing apparent clusters by CATH domains in the UMAP (See Figure 1), we ran further analysis to characterize these clusters, and investigate outliers. Silhouette scores found that most CATH domains were indeed highly clustered, minus Alpha/Beta Hydrolases, but since these make up ~⅔ of the PETadex, we would not expect them to be as tightly clustered. The distribution of silhouette scores per CATH domain is shown in Figure 2.
 
 <Figure
-  src="/images/drylab/silhouette.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/silhouette.avif"
   alt="Silhouette scores per CATH domain"
 />
 
@@ -354,7 +519,7 @@ Generate positive / real-world controls (random UniProt proteins, real-sequence 
 Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in Figure 3. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
 
 <Figure
-  src="/images/drylab/umap_controls.png"
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-controls.avif"
   alt="UMAP of PETadex enzymes against controls"
 />
 
@@ -368,11 +533,74 @@ Placeholder: PlasticESM, ESMC-300M, 18.17M catalytic centroids.
 
 *Owner: Dennis*
 
+{/*
+  OUTLINE — not rendered. ~150 words.
+  Notebooks 13, 32. Page Tree §3.2 [M].
+
+  Careful with the framing here. MVP Build Plan §2 is explicit that scale is
+  not impressive on its own, which is why Embedding Controls leads the
+  section. So this subsection should read as "how the representation was
+  computed at this scale", not as a boast about the number of sequences.
+  The controls above have already earned the reader's trust; do not spend it.
+
+  - ESM-2 embeddings across the corpus, computed on Narval
+    [Page Tree §3.2: ~300M sequences — but Narrative §4 lists this as the
+    single most contested number on the project: 215.7M, 216.7M, 300M and
+    ~307M ORFs all appear in different sources. The Overview already
+    published "over 300 million". RESOLVE and cite Numbers.md. This is the
+    headline figure of the whole project and it must match everywhere]
+  - ESM-C 600M per-residue embeddings, and what per-residue buys over
+    per-sequence
+  - The embedding landscape (13, 32)
+  - Practical cost: why this needed an HPC allocation, briefly. One sentence
+  - Relationship to Clustering above: what was embedded in full and what was
+    embedded at centroid level only. Be exact, since the controls section
+    plots centroids and a reader may conflate the two
+*/}
+
 Placeholder: ESM-2 across ~300M sequences, ESM-C per-residue.
 
 ### Activity Prediction
 
 *Owner: Dennis / Purav*
+
+{/*
+  OUTLINE — not rendered. ~250 words, the longest of the ML subsections.
+  Notebook 61. Page Tree §3.4 [S] — but see the note below: this is marked
+  [S] in the tree and is nonetheless the section ballot Q2 depends on.
+
+  THIS SECTION CARRIES THE PRIZE. MVP Build Plan §2 puts the Q2 answer as
+  "PETai's ranking became the library wet lab ordered". §2 of the page
+  states it up front; this is where it is substantiated. If anything on the
+  page gets written properly, it is this and Embedding Controls.
+
+  Order to write in:
+
+  1. What PETai is: a binary activity classifier on PlasticESM embeddings
+  2. The sequence-alone baseline FIRST, then what each added feature block
+     does to it — metadata, structural, annotation blocks probed as
+     additions. Report the ablation honestly, including blocks that did not
+     help. A feature block that added nothing is a result
+  3. Multiple label definitions run in parallel, and why: "active" is not
+     one thing across papers with different assays and substrates
+  4. Where the inactives came from (pulled from the labelled pool) and that
+     they are thin — Limitations below already commits to saying so, so
+     flag it here and let Limitations carry the weight
+  5. Variant generation (61)
+  6. Close the loop: ranking -> wet lab library -> results as new labels.
+     This is the DBTL figure slot in §2, so refer to it rather than
+     redrawing the loop in prose
+
+  Numbers owed: label counts per definition, baseline and per-block
+  performance, how many candidates the ranking handed to wet lab.
+
+  Open question for the owners: does the page claim the wet lab round
+  validated PETai, or only that PETai chose the library? Narrative §3 left
+  "discovering and validating" vs "discovering and prioritizing" unresolved
+  and defaulted to prioritizing. Keep this section consistent with whatever
+  that resolves to — and note the 2-of-161 FAST-PETase screen was a RANDOM
+  screen, so it is not PETai validation and must not be presented as such.
+*/}
 
 Placeholder: PETai classifier, feature-block ablation, parallel label definitions.
 

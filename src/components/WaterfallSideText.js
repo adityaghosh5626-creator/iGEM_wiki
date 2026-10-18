@@ -1,18 +1,14 @@
 import React, { useLayoutEffect, useRef } from "react"
 import styled, { css, keyframes } from "styled-components"
 import { ExplainTerm } from "./ExplainTermPopover.js"
-import { artFont, artPx, inputCopyCss, phone } from "./artScale.js"
+import { artFont, artPx, inputCopyCss, phone, phoneSize } from "./artScale.js"
 
-/** Used for popover accessibility; visible copy lives in the textbox image asset. */
+/** The popovers' text (drawn as text, in a box like the artwork's: `plain`). */
 export const PETASE_EXPLANATION =
-  "PETase breaks the chemical bonds in PET to free a compound called MHET. A second enzyme, MHETase, then cleaves this into environmentally friendly products (ethylene glycol and terephthalic acid)."
+  "Specialized enzymes like PETases, MHETases, and engineered LCC cutinases cut the chemical bonds that hold PET together. PET is the plastic in most drink bottles and polyester fibres. These enzymes break the PET down into smaller pieces and finally into its two monomers, terephthalic acid and ethylene glycol, which can be recovered and used to make new plastic."
 
-/** Used for popover accessibility; visible copy lives in the textbox image asset. */
-const CANCER_TEXTBOX_IMG =
-  "https://static.igem.wiki/teams/6187/wiki/homepage-components/text-boxes/text-box-3-1.avif"
-
-const CANCER_EXPLANATION =
-  "Microplastics can damage cells and trigger cancer-associated mechanisms."
+const MICROPLASTICS_EXPLANATION =
+  "Plastic particles have been detected in human blood (Leslie et al., 2022) and lung tissue (Jenner et al., 2022). In a 2024 study of 257 patients after carotid surgery, those with microplastics in plaque had a higher risk of heart attack, stroke or death over 34 months (Marfella et al., NEJM). These are still associations, and further research is being conducted on the extent to the impacts of microplastic pollution."
 
 const EXCLAMATION_SRC =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/exclamation.avif"
@@ -23,7 +19,7 @@ export const WATERFALL_TEXT_LEFT_PCT = 5
 /** Vertical offset from the top of the waterfall band (%). */
 export const WATERFALL_TEXT_TOP_PCT = 52
 
-/** Vertical offset for right-side copy (hint + bang sit above the sentence). */
+/** Vertical offset for right-side copy. */
 export const WATERFALL_TEXT_RIGHT_TOP_PCT = 61
 
 /**
@@ -38,6 +34,8 @@ export const WATERFALL_TEXT_WIDTH_PCT = 30
  */
 export const WATERFALL_BODY_PX = 29.52
 const WATERFALL_BANG_WIDTH = artPx(68)
+/** The popup hint's smallest size (px), under the art copy's floor. */
+const HINT_FONT_MIN_PX = 9
 
 /** Viewport px from top where faded copy reaches full opacity. */
 export const WATERFALL_TEXT_FADE_FULL_AT_PX = 150
@@ -107,7 +105,10 @@ function useViewportTopFade(mountRef) {
     }
 
     update()
-    window.addEventListener("scroll", schedule, { passive: true, capture: true })
+    window.addEventListener("scroll", schedule, {
+      passive: true,
+      capture: true,
+    })
     window.addEventListener("resize", schedule, { passive: true })
     return () => {
       if (raf) cancelAnimationFrame(raf)
@@ -132,38 +133,60 @@ export function WaterfallSideText() {
     <>
       <TextMount ref={leftRef} $side="left">
         <Body>
-          The world produces over 400 million tonnes of plastic each year, and as they degrade, it
-          breaks down into microplastics that can infiltrate our bodies.
+          The world produces over 400 million tonnes of plastic each year
+          <span className="wide-copy">. As it degrades, it breaks into </span>
+          <span className="phone-copy">, which degrade into </span>
+          <ExplainTerm
+            term="microplastics"
+            explanation={MICROPLASTICS_EXPLANATION}
+            plain
+          />
+          <span className="wide-copy">
+            , fragments smaller than 5 millimetres.
+          </span>
+          <span className="phone-copy">.</span>
         </Body>
+        <PopupHintBlock />
       </TextMount>
 
       <TextMount ref={rightRef} $side="right">
-        <PopupHint>
-          <BangHover aria-hidden>
-            <BangImg src={EXCLAMATION_SRC} alt="" />
-          </BangHover>
-          <HintText>
-            <span className="hover-copy">
-              Hover red underlined words for a popup, click to pin it open /
-              close.
-            </span>
-            <span className="touch-copy">
-              Tap red underlined words for a popup, tap again to close.
-            </span>
-          </HintText>
-        </PopupHint>
         <Body $side="right">
-          These microplastics damage cells and cause{" "}
-          <ExplainTerm
-            term="cancer-associated mechanisms"
-            explanation={CANCER_EXPLANATION}
-            imageSrc={CANCER_TEXTBOX_IMG}
-            imageAlt="cancer-associated mechanisms"
-          />
-          .
+          <span className="wide-copy">
+            The discarded water bottle would turn into microplastics that come
+            back to us. Microplastics have been found in human blood, lungs and
+            arteries.
+          </span>
+          <span className="phone-copy">
+            The water bottle would turn into microplastics that have been found
+            in human blood, lungs, and arteries.
+          </span>
         </Body>
       </TextMount>
     </>
+  )
+}
+
+/** How to open the red underlined words: under the left bank's lines, where there's room. */
+function PopupHintBlock() {
+  return (
+    <PopupHint>
+      <BangHover aria-hidden>
+        <BangImg src={EXCLAMATION_SRC} alt="" />
+      </BangHover>
+      <HintText>
+        <span className="hover-copy">
+          Hover red underlined words for a popup, click to pin it open / close.
+        </span>
+        <span className="touch-copy">
+          <span className="wide-copy">
+            Tap red underlined words for a popup, tap again to close.
+          </span>
+          <span className="phone-copy">
+            Tap red words for a popup, and again to close.
+          </span>
+        </span>
+      </HintText>
+    </PopupHint>
   )
 }
 
@@ -183,6 +206,21 @@ const TextMount = styled.div`
   mask-repeat: no-repeat;
   -webkit-mask-repeat: no-repeat;
 
+  /* Phones get shorter copy. */
+  .phone-copy {
+    display: none;
+  }
+
+  ${phone} {
+    .wide-copy {
+      display: none;
+    }
+
+    .phone-copy {
+      display: inline;
+    }
+  }
+
   ${({ $side }) =>
     $side === "left"
       ? css`
@@ -192,9 +230,13 @@ const TextMount = styled.div`
           padding-right: 2%;
           padding-left: 2%;
 
-          /* Phones: fits the left bank, clear of the falls. */
+          /* Phones: fits the left bank, clear of the falls, well under the
+             dark sewer mouth (its copy's shorter, so the popup hint under it
+             still stays on the bank). */
           ${phone} {
-            width: 36%;
+            top: ${WATERFALL_TEXT_TOP_PCT + 2}%;
+            left: 4%;
+            width: 34%;
           }
         `
       : css`
@@ -203,11 +245,13 @@ const TextMount = styled.div`
           right: 3%;
           width: ${artPx(416)};
 
-          /* Narrow enough to stay on the bank, clear of the stream. */
+          /* Only on the bank (from 65% across), clear of the falls and the
+             edge, and well under the yellow pipe. */
           ${phone} {
-            top: ${WATERFALL_TEXT_RIGHT_TOP_PCT - 1}%;
-            width: 37%;
-            right: 1%;
+            top: ${WATERFALL_TEXT_RIGHT_TOP_PCT + 2}%;
+            width: 29%;
+            right: 3%;
+            padding-left: 0;
           }
           padding-left: 2%;
           padding-right: 0;
@@ -226,7 +270,7 @@ const Body = styled.p`
   overflow: visible;
 
   ${phone} {
-    font-size: 0.7rem;
+    font-size: ${({ $side }) => phoneSize($side === "right" ? 0.62 : 0.7)};
   }
 `
 
@@ -254,11 +298,15 @@ const PopupHint = styled.span`
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: ${artPx(7.2)};
-  margin: 0 auto ${artPx(8.8)};
+  margin: ${artPx(16)} 0 0;
   width: 100%;
   max-width: 100%;
+
+  ${phone} {
+    margin-top: 0.3em;
+  }
 `
 
 const BangHover = styled.span`
@@ -291,13 +339,14 @@ const HintText = styled.span`
   text-align: left;
   color: #e63946;
   font-family: var(--font-body);
-  ${artFont(18)}
+  /* Less important than the lines around it, so it may shrink below their floor. */
+  font-size: max(${HINT_FONT_MIN_PX}px, ${artPx(18)});
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.3;
   overflow-wrap: break-word;
 
   ${phone} {
-    font-size: 0.6rem;
+    font-size: ${phoneSize(0.55)};
   }
 
   ${inputCopyCss}

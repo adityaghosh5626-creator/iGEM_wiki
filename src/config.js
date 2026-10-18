@@ -4,7 +4,7 @@
  */
 
 const config = {
-  apiUrl: process.env.GATSBY_API_URL || 'http://localhost:3001/api',
+  apiUrl: process.env.GATSBY_API_URL || "https://api.petadex.net/api",
 }
 
 export default config

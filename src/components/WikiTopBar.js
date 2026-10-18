@@ -25,7 +25,8 @@ export const wikiNav = [
   ]},
   { label: "Hardware", children: [
     { to: "/hardware/", label: "Overview" },
-    { to: "/hardware/parts/", label: "Parts" },
+    { to: "/hardware/motivation/", label: "Motivation" },
+    { to: "/hardware/past-iterations/", label: "Past Iterations" },
     { to: "/hardware/notebook/", label: "Notebook" },
     { to: "/hardware/results/", label: "Results" },
   ]},
@@ -34,13 +35,16 @@ export const wikiNav = [
   { to: "/entrepreneurship/", label: "Entrepreneurship" },
   { label: "Team", children: [
     { to: "/contribution/", label: "Contribution" },
-    { to: "/education/", label: "Education Toolkit" },
     { to: "/team/", label: "Meet the Team" },
     { to: "/team/attributions/", label: "Attributions" },
   ]},
 ]
 
-const MOBILE_NAV_BREAKPOINT = "900px"
+/** Below this the links don't fit on one line beside the logo, so the menu button takes over. */
+const MOBILE_NAV_BREAKPOINT = "1080px"
+
+/** The PetaBite wordmark in the wiki colourway (Cindy's logo, intact frame). */
+const LOGO_SRC = "https://static.igem.wiki/teams/6187/wiki/outreach/photos/petabite-logo-web.avif"
 
 export function WikiTopBar({ sticky = false }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -81,9 +85,9 @@ export function WikiTopBar({ sticky = false }) {
   return (
     <TopBar $sticky={sticky}>
       <NavInner>
-        <LogoPlaceholder to="/" aria-label="iGEM Toronto 2026 — Home" onClick={closeMenu}>
-          <LogoWord>PetaBite</LogoWord>
-        </LogoPlaceholder>
+        <LogoLink to="/" aria-label="PetaBite, iGEM Toronto 2026 home page" onClick={closeMenu}>
+          <LogoImg src={LOGO_SRC} alt="" />
+        </LogoLink>
 
         <DesktopNav aria-label="Wiki sections">
           {wikiNav.slice(1).map(({ to, label, children }) =>
@@ -169,25 +173,32 @@ const TopBar = styled.header`
 const NavInner = styled.div`
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0.8rem var(--page-padding);
+  /* Room for the logo's hanging letters once it's nudged down (LogoImg). */
+  padding: 1rem var(--page-padding);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
 `
 
-const LogoPlaceholder = styled(Link)`
+const LogoLink = styled(Link)`
+  display: flex;
+  align-items: center;
   text-decoration: none;
   flex-shrink: 0;
 `
 
-const LogoWord = styled.span`
-  color: var(--color-text);
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.01em;
+/**
+ * Taller than the nav links; the negative margin lets it use the bar's padding.
+ * Nudged down so its hexagon row, not its box, lines up with the links (the
+ * B and e hang below the rest of the word).
+ */
+const LogoImg = styled.img`
+  display: block;
+  height: 3.9rem;
+  width: auto;
+  margin: -0.65rem 0;
+  transform: translateY(0.3rem);
 `
 
 const DesktopNav = styled.nav`

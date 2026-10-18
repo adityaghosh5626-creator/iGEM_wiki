@@ -5,8 +5,8 @@ const Nav = styled.nav`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: calc(100vh - 180px);
+  gap: 0.6rem;
+  max-height: calc(100vh - 16rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 `
@@ -16,12 +16,13 @@ const Item = styled.button`
   border: none;
   text-align: left;
   cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  padding: 2px;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  padding: 0.15rem;
   border-left: 3px solid ${p => p.$active ? "var(--color-accent)" : "var(--color-border)"};
   color: ${p => p.$active ? "var(--color-accent)" : "var(--color-muted)"};
-  padding-left: ${p => p.$level === "H3" ? "16px" : "8px"};
+  padding-left: ${p => p.$level === "H3" ? "1rem" : "0.5rem"};
   font-weight: ${p => p.$active ? 600 : 400};
   transition: color 0.15s, border-color 0.15s;
   &:hover { color: var(--color-accent) !important; border-left-color: var(--color-accent) !important; }
@@ -34,7 +35,10 @@ const TableOfContents = () => {
   useEffect(() => {
     const scan = () => {
       const root = document.getElementById("page-content") || document.body
-      const els = Array.from(root.querySelectorAll("h2, h3"))
+      // Not headings inside dropdowns or self-contained pieces (the sketchbook).
+      const els = Array.from(root.querySelectorAll("h2, h3")).filter(
+        el => !el.closest("details, [data-nav-skip]")
+      )
       els.forEach((el, i) => { if (!el.id) el.id = `heading-${i}` })
       setHeadings(els.map(el => ({ id: el.id, text: el.textContent, level: el.tagName })))
     }
@@ -45,7 +49,9 @@ const TableOfContents = () => {
 
   useEffect(() => {
     const root = document.getElementById("page-content") || document.body
-    const observedHeadings = Array.from(root.querySelectorAll("h2, h3"))
+    const observedHeadings = headings
+      .map(h => document.getElementById(h.id))
+      .filter(Boolean)
     const observer = new IntersectionObserver(
       entries => {
         const visible = entries

@@ -3,24 +3,24 @@ import styled from "styled-components"
 import { formatWeekRange } from "../../data/contributionCalendar/calendarUtils.js"
 import { CONTRIBUTION_WEEKS } from "../../data/contributionCalendar/weeks.js"
 
-export function WeekNav({ selectedWeekId, onSelect }) {
+export function WeekNav({ selectedWeekId, onSelect, weeks = CONTRIBUTION_WEEKS }) {
   const listboxId = useId()
   const rootRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const index = CONTRIBUTION_WEEKS.findIndex((w) => w.id === selectedWeekId)
-  const current = CONTRIBUTION_WEEKS[index >= 0 ? index : 0]
+  const index = weeks.findIndex((w) => w.id === selectedWeekId)
+  const current = weeks[index >= 0 ? index : 0]
   const label = current ? formatWeekRange(current.start, current.end) : "Select week"
 
   const goPrev = useCallback(() => {
-    if (index > 0) onSelect(CONTRIBUTION_WEEKS[index - 1].id)
-  }, [index, onSelect])
+    if (index > 0) onSelect(weeks[index - 1].id)
+  }, [index, weeks, onSelect])
 
   const goNext = useCallback(() => {
-    if (index < CONTRIBUTION_WEEKS.length - 1) {
-      onSelect(CONTRIBUTION_WEEKS[index + 1].id)
+    if (index < weeks.length - 1) {
+      onSelect(weeks[index + 1].id)
     }
-  }, [index, onSelect])
+  }, [index, weeks, onSelect])
 
   const pickWeek = useCallback(
     (id) => {
@@ -80,7 +80,7 @@ export function WeekNav({ selectedWeekId, onSelect }) {
 
         {open && (
           <WeekDropdown id={listboxId} role="listbox" aria-label="Choose week">
-            {CONTRIBUTION_WEEKS.map((w) => (
+            {weeks.map((w) => (
               <WeekOption
                 key={w.id}
                 type="button"
@@ -99,7 +99,7 @@ export function WeekNav({ selectedWeekId, onSelect }) {
       <ArrowBtn
         type="button"
         onClick={goNext}
-        disabled={index >= CONTRIBUTION_WEEKS.length - 1}
+        disabled={index >= weeks.length - 1}
         aria-label="Next week"
       >
         ›

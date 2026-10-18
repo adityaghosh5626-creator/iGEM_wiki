@@ -82,26 +82,59 @@ LOBSTER on one enzyme cluster: adjust the degeneracy and see the fragment librar
 ## Sharded DIAMOND search
 
 {/*
-  Demo D2 (MVP). ~500 words.
-  Covers: what the search is for; architecture (sharded database, serverless
-  fan-out, object-store-backed shards, persistent and shareable result
-  URLs); how to run a search on petadex.net.
-  Demo: 3 to 5 precomputed queries, IsPETase and LCC among them, real hit
-  table, sortable and filterable, under 300 KB. Present it as a real result
-  from the live tool, not as live search, and link out to petadex.net.
+  Overview tier: figures first, a sentence or two each. The full write-up is
+  the Methods sub-page, src/content/wiki/dry-lab/software/diamond-search/,
+  and the sources for every number are listed in its writer notes.
+
+  Assets are served locally from static/figures/diamond-search/ for now.
+  Upload them to drylab-page/figures/ on tools.igem.org/uploads, then
+  replace "/figures/diamond-search/" in both DIAMOND pages with
+  "https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/" and
+  delete the static/ copies:
+    - diamond-search-logo.avif, from
+      petadex-sequence-search/assets/diamond-logo-web.png
+    - diamond-search-architecture.svg, from
+      dennis-scratch/diamond_sharded-architecture.svg
+      (= petadex-sequence-search/infra/architecture.svg)
+    - diamond-search-temporal.svg, the README's Mermaid "Temporal view"
+      rendered with mermaid-cli (neutral theme), with its stale labels
+      updated: 32 workers, shard_N.fa.zst, ~40 s fan-out
+
+  Demo D2 (MVP), still to build: 3 to 5 precomputed queries, IsPETase and LCC
+  among them, real hit table, sortable and filterable, under 300 KB. Present
+  it as a real result from the live tool, not as live search, and link out
+  to petadex.net. IsPETase and FAST-PETase results already exist in S3 under
+  results/regen_example_ispetase and results/regen_example_fast_petase.
 */}
 
-<Placeholder>
+<DiamondSearchHero logoSrc="/figures/diamond-search/diamond-search-logo.avif" />
 
-The search tool lets anyone compare a protein sequence against our full corpus from a web browser. The database is split into shards that are searched in parallel and merged, so a query over the whole corpus returns in under a minute, and each result has a permanent link that can be shared.
+Researchers often come to our database and ask a simple question.
 
-This section will explain how the search is built and how to use it.
+> I have this novel enzyme here that I know nothing about. Can you tell me what it is?
 
-</Placeholder>
+We can tell what it is by looking at the enzymes that are similar to it using the entirety of the PETadex corpus. We've built this into a lightweight tool in the web-browser, no installs and less than a minute runtime.
+
+<ArchitectureFigure
+  src="/figures/diamond-search/diamond-search-architecture.svg"
+  alt="Architecture of the sharded DIAMOND search. The petadex.net search page sends the query to an orchestrator Lambda, which parses it, reads the current database version and shard manifest from S3, returns a job ID at once and starts a Step Functions Map. The Map runs one worker Lambda per shard in parallel; each downloads its shard from S3, runs diamond blastp and writes its hits to S3. An aggregator Lambda merges the shard results, ranks them by bit score, adds metadata from RDS and writes the result, which the web page polls for."
+  caption="The database is split into shards that are all searched at the same time, then merged into one ranked list. Click a component to read how it works."
+  width="34rem"
+  sectionsPath="/dry-lab/software/diamond-search/"
+/>
+
+Nothing runs between searches, so the tool costs almost nothing while it waits for a query. When one arrives, a coordinator starts one worker per shard, and a final step merges their hits.
+
+<Figure
+  src="/figures/diamond-search/diamond-search-temporal.svg"
+  alt="Sequence diagram of one search over time. The web app sends the search to the orchestrator, which reads the database version and manifest from S3, starts Step Functions and returns a job ID within about a second, after which the web app starts polling. Step Functions then invokes all 32 workers in parallel; each downloads its shard, runs diamond blastp and writes its hits to S3, taking about 40 seconds. Once every part has landed, the aggregator reads all 32 parts, merges, sorts and enriches them, and writes the result and index, which the web app's poll finds."
+  caption="One search over time. The page gets a job ID within a second and shows results when the fan-out and merge finish, usually in under a minute."
+  width="100%"
+/>
+
+<MethodsLink>How the database is split, why the merged ranking is exact, how results are versioned and cached, and how we measured all of this.</MethodsLink>
 
 *Owner: Dennis*
-
-Placeholder: 32-shard zstd, Lambda fan-out, ~44 s end to end, shareable URLs.
 
 <Placeholder label="Placeholder demo">
 

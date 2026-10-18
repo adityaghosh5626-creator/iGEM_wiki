@@ -20,6 +20,12 @@ const legacyAssets = [
   "payload-media/campus.jpeg",
   "images/petadex-petase.png",
   "homepage/world-map-reference.png",
+  // Only used by the Dry Lab issue pages, which the iGEM build leaves out
+  // until their images move to static.igem.wiki.
+  "figures/dry-lab-issue-107/petadex-sequence-density.svg",
+  "figures/dry-lab-issue-107/logan-biosample-distribution.svg",
+  "figures/dry-lab-issue-107/petase-density-normalized.svg",
+  "images/dry-lab/260529/umap.png",
 ]
 
 const removeGlobs = [

@@ -1,5 +1,6 @@
 import { fileURLToPath } from "url"
 import path from "path"
+import { USE_PAYLOAD_EXPORTS } from "./content-source.config.mjs"
 import rehypeAutolinkHeadings from "rehype-autolink-headings"
 import rehypeWikiCitations from "./plugins/rehype-wiki-citations.mjs"
 import rehypeSlug from "rehype-slug"
@@ -32,6 +33,7 @@ const config = {
       options: {
         name: `wiki`,
         path: `${__dirname}/src/content/wiki`,
+        ignore: USE_PAYLOAD_EXPORTS ? [] : [`**/_payload-export/**`],
       },
     },
     `gatsby-transformer-csv`,

@@ -1,6 +1,9 @@
 import fs from "fs"
 import path from "path"
+import { fileURLToPath } from "url"
 import rehypeCitation from "rehype-citation"
+
+const ieeeStylePath = fileURLToPath(new URL("./styles/ieee.csl", import.meta.url))
 
 function frontmatterBibliography(file) {
   const sources = [
@@ -44,7 +47,7 @@ export default function rehypeWikiCitations(options = {}) {
     if (!bibliography) return tree
 
     const transform = rehypeCitation({
-      csl: "vancouver",
+      csl: path.relative(bibliography.path, ieeeStylePath),
       linkCitations: true,
       ...options,
       ...bibliography,

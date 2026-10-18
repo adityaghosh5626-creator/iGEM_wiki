@@ -6,8 +6,8 @@ import React, {
   useState,
 } from "react"
 import { Link, navigate } from "gatsby"
-import styled from "styled-components"
-import { inputCopyCss, phone } from "./artScale.js"
+import styled, { keyframes } from "styled-components"
+import { inputCopyCss, phone, phoneSize } from "./artScale.js"
 import { PlateImg, drawPlateRegion } from "./PlateImg.js"
 
 const CDN =
@@ -702,17 +702,30 @@ const EndingPetamonBottle = forwardRef(function EndingPetamonBottle(_, ref) {
               </InfoGo>
             </Info>
           ) : (
-            <Hint aria-hidden={!ready}>
-              <HintBang src={HINT_BANG_SRC} alt="" />
-              <span className="hover-copy">
-                Hover over a piece to meet its petamon — click to visit their
-                page.
-              </span>
-              <span className="touch-copy">
-                Tap a piece to meet its petamon — tap again to visit their
-                page.
-              </span>
-            </Hint>
+            <>
+              <Hint aria-hidden={!ready}>
+                <HintBang src={HINT_BANG_SRC} alt="" />
+                <span className="hover-copy">
+                  Hover over a piece to meet its petamon, then click to visit
+                  their page.
+                </span>
+                <span className="touch-copy">
+                  Tap a piece to meet its petamon, then tap again to visit
+                  their page.
+                </span>
+              </Hint>
+              {/* A quiet nudge, a beat later: there's more to find. */}
+              <Whisper aria-hidden={!ready}>
+                <span className="hover-copy">
+                  psst… the petamons on every page are up to something too.
+                  Hover over anything that looks alive.
+                </span>
+                <span className="touch-copy">
+                  psst… the petamons on every page are up to something too.
+                  Tap anything that looks alive.
+                </span>
+              </Whisper>
+            </>
           )}
         </Under>
         {PIECES.map(piece => (
@@ -818,7 +831,7 @@ const Hint = styled.p`
   gap: 1.2cqw;
   margin: 0;
   color: #ff6b75;
-  font-size: max(0.8rem, 2.5cqw);
+  font-size: max(${phoneSize(0.8)}, 2.5cqw);
   font-weight: 700;
   line-height: 1.3;
 `
@@ -846,7 +859,7 @@ const Label = styled(Link)`
 const LabelName = styled.span`
   display: block;
   font-family: var(--font-body);
-  font-size: max(0.9rem, 3.4cqw);
+  font-size: max(${phoneSize(0.9)}, 3.4cqw);
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
@@ -871,7 +884,7 @@ const LabelBlurb = styled.span`
   margin-top: 0.5cqw;
   color: #fff;
   font-family: var(--font-body);
-  font-size: max(0.75rem, 1.9cqw);
+  font-size: max(${phoneSize(0.75)}, 1.9cqw);
   font-weight: 500;
   line-height: 1.35;
 `
@@ -880,7 +893,7 @@ const LabelGo = styled.span`
   display: block;
   margin-top: 0.5cqw;
   font-family: var(--font-body);
-  font-size: max(0.7rem, 1.7cqw);
+  font-size: max(${phoneSize(0.7)}, 1.7cqw);
   font-weight: 700;
 `
 
@@ -896,7 +909,7 @@ const Info = styled.div`
 
 const InfoTeam = styled.p`
   margin: 0;
-  font-size: max(1.1rem, 4.4cqw);
+  font-size: max(${phoneSize(1.1)}, 4.4cqw);
   font-weight: 800;
   line-height: 1.15;
 `
@@ -904,19 +917,48 @@ const InfoTeam = styled.p`
 const InfoBlurb = styled.p`
   margin: 0.6cqw 0 0;
   color: #fff;
-  font-size: max(0.85rem, 2.7cqw);
+  font-size: max(${phoneSize(0.85)}, 2.7cqw);
   font-weight: 500;
   line-height: 1.35;
 `
 
 const InfoGo = styled.p`
   margin: 0.9cqw 0 0;
-  font-size: max(0.8rem, 2.3cqw);
+  font-size: max(${phoneSize(0.8)}, 2.3cqw);
   font-weight: 700;
 `
 
+const whisperIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.7;
+  }
+`
+
+/** Small and faint, fading in a few seconds after the hint. */
+const Whisper = styled.p`
+  margin: 0.9cqw auto 0;
+  max-width: 64cqw;
+  color: #fff;
+  font-size: max(${phoneSize(0.68)}, 1.7cqw);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0;
+  animation: ${whisperIn} 1.6s ease 4s forwards;
+  ${inputCopyCss}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 0.7;
+  }
+`
+
 const HintBang = styled.img`
-  width: max(1.4rem, 4.4cqw);
+  width: max(${phoneSize(1.4)}, 4.4cqw);
   height: auto;
   flex: 0 0 auto;
 `

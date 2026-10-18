@@ -7,16 +7,16 @@ import {
   weekIdForDate,
 } from "../../data/contributionCalendar/calendarUtils.js"
 import {
-  SUBTEAM_BY_ID,
+  MILESTONE_TRACK_BY_ID,
   trackColor,
   trackTextColor,
 } from "../../data/subteamTracks.js"
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-function MilestoneLabel({ ms, lines }) {
+function MilestoneLabel({ ms, lines, trackById, more = 0 }) {
   const [open, setOpen] = useState(false)
-  const track = SUBTEAM_BY_ID[ms.subteamId]
+  const track = trackById[ms.subteamId]
   const dateLabel = formatDayShort(ms.date)
   const aria = `${dateLabel}${track ? `, ${track.label}` : ""}: ${ms.label}`
 
@@ -34,6 +34,7 @@ function MilestoneLabel({ ms, lines }) {
         tabIndex={0}
         aria-label={aria}
       >
+        {more > 0 ? <MoreCount>+{more}</MoreCount> : null}
         {ms.label}
       </MilestoneBadge>
       {open && (
@@ -54,8 +55,11 @@ export function VintageMonthGrid({
   selectedWeekId,
   onSelectWeek,
   milestonesByDate,
+  months = CONTRIBUTION_MONTHS,
+  trackById = MILESTONE_TRACK_BY_ID,
+  fit = false,
 }) {
-  const month = CONTRIBUTION_MONTHS.find((m) => m.key === monthKey)
+  const month = months.find((m) => m.key === monthKey)
   const rows = useMemo(() => {
     if (!month) return []
     return getMonthGrid(month.year, month.monthIndex)
@@ -64,15 +68,15 @@ export function VintageMonthGrid({
   if (!month) return null
 
   return (
-    <GridWrap>
-      <WeekdayRow>
+    <GridWrap $fit={fit}>
+      <WeekdayRow $fit={fit}>
         {WEEKDAYS.map((d) => (
           <Weekday key={d}>{d}</Weekday>
         ))}
       </WeekdayRow>
 
       {rows.map((row, rowIdx) => (
-        <WeekRow key={rowIdx}>
+        <WeekRow key={rowIdx} $fit={fit}>
           {row.map((cell, colIdx) => {
             const { ymd, inMonth } = cell
             const weekId = weekIdForDate(ymd)
@@ -83,6 +87,7 @@ export function VintageMonthGrid({
             return (
               <Cell
                 key={ymd}
+                $fit={fit}
                 $inBand={isSelected}
                 $outOfMonth={!inMonth}
                 role="button"
@@ -97,6 +102,7 @@ export function VintageMonthGrid({
                 }}
               >
                 <DayNum
+                  $fit={fit}
                   $sunday={colIdx === 0}
                   $inBand={isSelected}
                   $outOfMonth={!inMonth}
@@ -104,14 +110,27 @@ export function VintageMonthGrid({
                   {dayNum}
                 </DayNum>
                 <MilestoneSlot>
-                  {/* A lone milestone gets two lines; two share the space. */}
-                  {milestones.slice(0, 2).map((ms) => (
-                    <MilestoneLabel
-                      key={`${ymd}-${ms.label}`}
-                      ms={ms}
-                      lines={milestones.length > 1 ? 1 : 2}
-                    />
-                  ))}
+                  {/* A lone milestone gets two lines; two share the space.
+                      Fit mode's short cells hold one line, with a count of
+                      the rest (all of them are in the week details). */}
+                  {fit
+                    ? milestones.slice(0, 1).map((ms) => (
+                        <MilestoneLabel
+                          key={`${ymd}-${ms.label}`}
+                          ms={ms}
+                          trackById={trackById}
+                          lines={1}
+                          more={milestones.length - 1}
+                        />
+                      ))
+                    : milestones.slice(0, 2).map((ms) => (
+                        <MilestoneLabel
+                          key={`${ymd}-${ms.label}`}
+                          ms={ms}
+                          trackById={trackById}
+                          lines={milestones.length > 1 ? 1 : 2}
+                        />
+                      ))}
                 </MilestoneSlot>
               </Cell>
             )
@@ -120,8 +139,9 @@ export function VintageMonthGrid({
       ))}
       {/* Every month takes six rows of room, so changing month doesn't
           change the calendar's height (or move the page). */}
-      {Array.from({ length: Math.max(0, 6 - rows.length) }, (_, i) => (
-        <RowSpacer key={`spacer-${i}`} aria-hidden />
+      {/* Fit mode has a fixed height already: the rows share it. */}
+      {!fit && Array.from({ length: Math.max(0, 6 - rows.length) }, (_, i) => (
+        <RowSpacer key={`spacer-${i}`} $fit={fit} aria-hidden />
       ))}
     </GridWrap>
   )
@@ -133,6 +153,15 @@ const GridWrap = styled.div`
   width: 100%;
   padding-inline: clamp(0.25rem, 1vw, 0.75rem);
   box-sizing: border-box;
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-inline: 0;
+  `}
 `
 
 const WeekdayRow = styled.div`
@@ -140,6 +169,16 @@ const WeekdayRow = styled.div`
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: clamp(6px, 0.9vw, 10px);
   margin-bottom: 8px;
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    margin-bottom: 2px;
+
+    > * {
+      padding: 0.1rem 0;
+    }
+  `}
 `
 
 const Weekday = styled.div`
@@ -157,11 +196,27 @@ const WeekRow = styled.div`
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: clamp(6px, 0.9vw, 10px);
   margin-bottom: clamp(6px, 0.9vw, 10px);
+  /* Fit: the six rows share the height that's left. */
+  ${({ $fit }) =>
+    $fit &&
+    `
+    flex: 1 1 0;
+    min-height: 0;
+    margin-bottom: 4px;
+  `}
 `
 
 const RowSpacer = styled.div`
   min-height: clamp(5.25rem, 9vw, 7rem);
   margin-bottom: clamp(6px, 0.9vw, 10px);
+  /* Fit: the six rows share the height that's left. */
+  ${({ $fit }) =>
+    $fit &&
+    `
+    flex: 1 1 0;
+    min-height: 0;
+    margin-bottom: 4px;
+  `}
 `
 
 const Cell = styled.div`
@@ -202,6 +257,13 @@ const Cell = styled.div`
     outline-offset: -2px;
     z-index: 1;
   }
+
+  ${({ $fit }) =>
+    $fit &&
+    `
+    min-height: 0;
+    padding: 0.3rem 0.35rem;
+  `}
 `
 
 const DayNum = styled.span`
@@ -216,6 +278,8 @@ const DayNum = styled.span`
     if ($inBand) return "var(--cal-ink, #06202b)"
     return $sunday ? "var(--cal-sunday, #c44)" : "var(--cal-ink, #06202b)"
   }};
+
+  ${({ $fit }) => $fit && `font-size: clamp(0.9rem, 1.6vw, 1.15rem);`}
 `
 
 const MilestoneSlot = styled.div`
@@ -268,6 +332,13 @@ const MilestoneBadge = styled.span`
     outline: 2px solid var(--cal-accent, #2d9194);
     outline-offset: 1px;
   }
+`
+
+/** "+1" on a fit-mode badge standing in for more than one milestone. */
+const MoreCount = styled.span`
+  float: right;
+  margin-left: 3px;
+  opacity: 0.8;
 `
 
 const MilestoneTooltip = styled.div`

@@ -87,3 +87,6 @@ tmp/
 # Local scratch copies of CDN images (measurement / conversion)
 .tmp-bubbles/
 .tmp-*/
+
+# Personal scratch space
+dennis-scratch/

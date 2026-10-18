@@ -1,0 +1,70 @@
+---
+    title: 260818_issue107_sample_density_plot
+    section: "Dry Lab"
+    path: "/dry-lab/issue/107/"
+    navTitle: "Issue 107"
+    order: 20
+    description: ""
+    owners: ["Dry Lab"]
+    updated: "2026-05-16"
+    status: "draft"
+---
+    
+## PETadex vs Logan sampling density plot
+
+Lead     : `Oscar Heath / baleinegris`
+
+Issue    : [Github Issue #107](https://github.com/petadex/igem-toronto/issues/107) — _PETadex vs Logan sampling density plot_
+
+Start    : `2026-08-18`
+
+Complete : `2026-08-18`
+
+Files    : `~/resources/260818_issue107_XXX/` — data fetching + normalization logic
+
+PostGres tables : `petadex.sra_metadata, petadex.logan_catalytic_orfs, logan.biosample_geographical_location`
+
+## Introduction
+
+Jessica Shen already made a plot of raw amounts of PETadex sequences and where they came from, which is this:
+
+<Figure src="/figures/dry-lab-issue-107/petadex-sequence-density.svg" alt="PETadex sequence counts by location (Jessica Shen's plot)" width="100%" />
+
+We are concerned that this plot just shows us where sampling is happening, and is not PETase specific. We want to remake this plot, normalized by the number of Logan Biosamples to see if we can identify areas with abnormally high amounts of PETases for the amount of sampling being done.
+
+## Objectives
+
+1. Pull all PETadex orfs with their coords from `petadex.sra_metadata` and `petadex.logan_catalytic_orfs`, as well as all Logan biosamples from `logan.biosample_geographical_location`
+2. Map all longitude-latitude coordinates to x-y coordinates using Mollweide projection
+3. Split Earth into a grid, and count all orfs and all biosamples per grid box
+4. Plot the amount of PETadex samples per grid box, normalized by amount 
+
+---
+
+## Materials and Methods
+
+### Inputs
+
+```bash
+resources/260818_issue107_sample_density_plot/fetch_data.ipynb --fetches data from PostGres
+```
+
+## Results & Discussion
+
+<Figure src="/figures/dry-lab-issue-107/petadex-sequence-density.svg" alt="Density of PETases in PETadex, by sequence counts" width="100%" />
+<br />
+Density of PETases in PETadex, by sequence counts
+<br />
+<Figure src="/figures/dry-lab-issue-107/logan-biosample-distribution.svg" alt="Distribution of Logan biosamples" width="100%" />
+<br />
+Distribution of Logan Biosamples
+<br />
+
+<Figure src="/figures/dry-lab-issue-107/petase-density-normalized.svg" alt="PETase sequences normalized by Logan biosamples" width="100%" />
+<br />
+Distribution of PETase sequences, normalized by number of Logan Biosamples
+
+
+
+
+

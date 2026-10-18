@@ -1,3 +1,4 @@
+import { USE_PAYLOAD_EXPORTS } from "../content-source.config.mjs"
 import { spawn } from "child_process"
 import fs from "fs"
 import path from "path"
@@ -7,6 +8,11 @@ import process from "process"
 // (down, paused database, etc.). In that case we fall back to the committed
 // export in src/content/wiki/_payload-export instead of failing the build.
 // Set PAYLOAD_SYNC_STRICT=1 to make an unreachable CMS fatal again.
+if (!USE_PAYLOAD_EXPORTS) {
+  console.log("Payload is disabled in content-source.config.mjs; skipping CMS sync/export.")
+  process.exit(0)
+}
+
 const EXIT_CMS_UNREACHABLE = 2
 const strict = process.env.PAYLOAD_SYNC_STRICT === "1"
 const committedExportRoot = path.join(process.cwd(), "src", "content", "wiki", "_payload-export")

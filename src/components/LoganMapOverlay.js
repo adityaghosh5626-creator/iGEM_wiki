@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { withPrefix } from "gatsby"
 import styled from "styled-components"
 import snapshot from "../data/logan-map-locations.json"
 
@@ -22,7 +21,7 @@ export const LOGAN_MAP_CAL = {
 
 const MERCATOR_LIMIT = 85.051129
 /** OSM web-mercator zoom-0 tile, used only when `?mapCalibrate=1`. */
-const WORLD_TILE_SRC = "/homepage/world-map-reference.png"
+const WORLD_TILE_SRC = "https://static.igem.wiki/teams/6187/wiki/homepage-components/world-map-reference.avif"
 const PIN_SRC =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/pin.avif"
 /**
@@ -391,7 +390,7 @@ export default function LoganMapOverlay() {
           }}
         >
           <CalibrateImg
-            src={withPrefix(WORLD_TILE_SRC)}
+            src={WORLD_TILE_SRC}
             alt=""
             style={{ height: crop.imgHeight, top: crop.imgTop }}
           />

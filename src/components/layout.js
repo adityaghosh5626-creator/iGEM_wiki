@@ -20,6 +20,8 @@ const WikiLayout = ({
    * it matches the page's own menu highlight. The site accent otherwise.
    */
   footerButton = null,
+  /** The page shows a contents list down the left (see TOCWrapper). */
+  withToc = false,
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false)
 
@@ -48,7 +50,7 @@ const WikiLayout = ({
         {hideSiteChrome || fullBleed ? (
           <MainFullBleed>{children}</MainFullBleed>
         ) : (
-          <Main $wideSideTabs={wideSideTabs}>
+          <Main $wideSideTabs={wideSideTabs} $withToc={withToc}>
             {pageTitle && (
               <PageHeader>
                 {sectionLabel && <SectionLabel>{sectionLabel}</SectionLabel>}
@@ -106,6 +108,18 @@ const WikiLayout = ({
                 <MetaLink href="https://gitlab.igem.org/2026/toronto" target="_blank" rel="noopener noreferrer">
                   Source on GitLab
                 </MetaLink>
+                <MetaSep aria-hidden>·</MetaSep>
+                {/* Third-party assets are credited with their licence. */}
+                <span>
+                  Set in{" "}
+                  <MetaLink href="https://github.com/googlefonts/dm-fonts" target="_blank" rel="noopener noreferrer">
+                    DM Sans
+                  </MetaLink>{" "}
+                  by The DM Sans Project Authors,{" "}
+                  <MetaLink href="https://openfontlicense.org/" target="_blank" rel="noopener noreferrer">
+                    SIL Open Font License 1.1
+                  </MetaLink>
+                </span>
               </FooterMeta>
             </FooterInner>
         </Footer>
@@ -147,9 +161,12 @@ const ScrollTopButton = styled.button`
   cursor: pointer;
   transition: transform 0.15s ease, background-color 0.2s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    background: var(--color-surface);
+  /* A phone tap would leave it lifted (sticky hover). */
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      background: var(--color-surface);
+    }
   }
 
   &:focus-visible {
@@ -174,6 +191,16 @@ const Main = styled.main`
     `
     max-width: none;
     width: 100%;
+  `}
+
+  /* Too narrow for the contents list to sit in the margin: the page moves
+     over to leave it a column. */
+  ${({ $withToc }) =>
+    $withToc &&
+    `
+    @media (min-width: 860px) and (max-width: 1423px) {
+      padding-left: 14rem;
+    }
   `}
 `
 

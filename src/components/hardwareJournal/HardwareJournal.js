@@ -3,8 +3,15 @@ import styled from "styled-components"
 import {
   HARDWARE_JOURNAL_ENTRIES,
   journalHashForDate,
-  parseJournalHash,
 } from "../../data/hardwareJournalEntries.js"
+
+/** Entry id from a `#journal-YYYY-MM-DD` hash, if it's one of `entries`. */
+function entryIdFromHash(hash, entries) {
+  const raw = (hash || "").replace(/^#/, "")
+  if (!raw.startsWith("journal-")) return null
+  const id = raw.slice("journal-".length)
+  return entries.some((entry) => entry.id === id) ? id : null
+}
 
 function formatEntryDate(ymd) {
   const parsed = new Date(`${ymd}T12:00:00`)
@@ -31,7 +38,9 @@ function JournalEntryPanel({ entry }) {
 
   return (
     <EntryArticle id={journalHashForDate(entry.id)} aria-labelledby={`journal-heading-${entry.id}`}>
-      <EntryHeading id={`journal-heading-${entry.id}`}>{formatEntryDate(entry.date)}</EntryHeading>
+      <EntryHeading id={`journal-heading-${entry.id}`} data-nav-label={entry.label}>
+        {formatEntryDate(entry.date)}
+      </EntryHeading>
       <FieldBlock label="Goal">{entry.goal}</FieldBlock>
       <FieldBlock label="Work completed">{entry.workCompleted}</FieldBlock>
       <FieldBlock label="Result">{entry.result}</FieldBlock>
@@ -72,9 +81,16 @@ function JournalEntryPanel({ entry }) {
   )
 }
 
-export function HardwareJournal() {
+/**
+ * A dated notebook (newest first): a date list beside the entries, each with
+ * goal / work / result / next step, deliverables, figures and links. Used by
+ * the Hardware and Wet Lab notebooks, each with its own entries. With
+ * `sideNav`, the page's own section menu lists the dates (each heading's
+ * `data-nav-label`) instead of the date list here.
+ */
+export function NotebookJournal({ entries, intro, sideNav = false }) {
   const readyRef = useRef(false)
-  const firstId = HARDWARE_JOURNAL_ENTRIES[0]?.id ?? null
+  const firstId = entries[0]?.id ?? null
   const [activeId, setActiveId] = useState(firstId)
 
   const scrollToEntry = useCallback((id, { updateHash = true, behavior = "smooth" } = {}) => {
@@ -94,7 +110,7 @@ export function HardwareJournal() {
     if (typeof window === "undefined") return undefined
 
     readyRef.current = false
-    const hashId = parseJournalHash(window.location.hash)
+    const hashId = entryIdFromHash(window.location.hash, entries)
     // Only a link to an entry scrolls here; otherwise the page opens at its
     // top (the journal is one section of the notebook page).
     const timer = window.setTimeout(() => {
@@ -107,7 +123,7 @@ export function HardwareJournal() {
     }, 50)
 
     const onHashChange = () => {
-      const id = parseJournalHash(window.location.hash)
+      const id = entryIdFromHash(window.location.hash, entries)
       if (id) {
         scrollToEntry(id, { updateHash: false })
       }
@@ -119,15 +135,17 @@ export function HardwareJournal() {
       window.removeEventListener("hashchange", onHashChange)
       readyRef.current = false
     }
-  }, [scrollToEntry])
+  }, [scrollToEntry, entries])
 
   useEffect(() => {
-    const entries = HARDWARE_JOURNAL_ENTRIES.map((entry) => ({
-      id: entry.id,
-      el: document.getElementById(journalHashForDate(entry.id)),
-    })).filter((item) => item.el)
+    const targets = entries
+      .map((entry) => ({
+        id: entry.id,
+        el: document.getElementById(journalHashForDate(entry.id)),
+      }))
+      .filter((item) => item.el)
 
-    if (entries.length === 0) return undefined
+    if (targets.length === 0) return undefined
 
     const observer = new IntersectionObserver(
       (observed) => {
@@ -139,41 +157,40 @@ export function HardwareJournal() {
 
         if (visible.length === 0) return
 
-        const topEntry = entries.find((item) => item.el === visible[0].target)
+        const topEntry = targets.find((item) => item.el === visible[0].target)
         if (topEntry) setActiveId(topEntry.id)
       },
       { rootMargin: "-20% 0px -55% 0px", threshold: 0 }
     )
 
-    entries.forEach(({ el }) => observer.observe(el))
+    targets.forEach(({ el }) => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }, [entries])
 
   return (
-    <JournalRoot data-nav-skip>
-      <Intro>
-        Chronological hardware design notes from team meetings, newest first. Scroll through
-        each entry below, or use the date list to jump to a session.
-      </Intro>
-      <JournalLayout>
-        <DateNav role="navigation" aria-label="Journal entries by date">
-          {HARDWARE_JOURNAL_ENTRIES.map((entry) => {
-            const selected = entry.id === activeId
-            return (
-              <DateButton
-                key={entry.id}
-                type="button"
-                $selected={selected}
-                aria-current={selected ? "true" : undefined}
-                onClick={() => scrollToEntry(entry.id)}
-              >
-                {entry.label}
-              </DateButton>
-            )
-          })}
-        </DateNav>
+    <JournalRoot data-nav-skip={sideNav ? undefined : ""}>
+      <Intro>{intro}</Intro>
+      <JournalLayout $single={sideNav}>
+        {!sideNav && (
+          <DateNav role="navigation" aria-label="Journal entries by date">
+            {entries.map((entry) => {
+              const selected = entry.id === activeId
+              return (
+                <DateButton
+                  key={entry.id}
+                  type="button"
+                  $selected={selected}
+                  aria-current={selected ? "true" : undefined}
+                  onClick={() => scrollToEntry(entry.id)}
+                >
+                  {entry.label}
+                </DateButton>
+              )
+            })}
+          </DateNav>
+        )}
         <EntryFeed>
-          {HARDWARE_JOURNAL_ENTRIES.map((entry, index) => (
+          {entries.map((entry, index) => (
             <EntryBlock key={entry.id}>
               {index > 0 && <EntryDivider aria-hidden />}
               <JournalEntryPanel entry={entry} />
@@ -182,6 +199,15 @@ export function HardwareJournal() {
         </EntryFeed>
       </JournalLayout>
     </JournalRoot>
+  )
+}
+
+export function HardwareJournal() {
+  return (
+    <NotebookJournal
+      entries={HARDWARE_JOURNAL_ENTRIES}
+      intro="Chronological hardware design notes from team meetings, newest first. Scroll through each entry below, or use the date list to jump to a session."
+    />
   )
 }
 
@@ -206,7 +232,8 @@ const JournalLayout = styled.div`
   align-items: start;
 
   @media (min-width: 721px) {
-    grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
+    grid-template-columns: ${({ $single }) =>
+      $single ? "minmax(0, 1fr)" : "minmax(9rem, 11rem) minmax(0, 1fr)"};
   }
 `
 

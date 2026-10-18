@@ -492,7 +492,7 @@ export function BioreactorSimulator() {
       <GraphCard>
         <GraphTitle>
           OD<sub>600</sub> vs Time
-          <GraphSub> — bacterial growth at {temp}°C · pH {ph}{stirring ? " · stirring" : ""}</GraphSub>
+          <GraphSub> · bacterial growth at {temp}°C · pH {ph}{stirring ? " · stirring" : ""}</GraphSub>
         </GraphTitle>
         <canvas
           ref={graphRef}

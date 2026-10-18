@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   build:
+    # Opt in only when restoring the Payload integration.
+    if: ${{ vars.PAYLOAD_ENABLED == 'true' }}
     name: Sync and build wiki
     runs-on: ubuntu-latest
     env:
@@ -34,7 +36,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci && npm --prefix cms/payload-app ci
+        run: npm ci
 
       - name: Sync from hosted Payload
         env:

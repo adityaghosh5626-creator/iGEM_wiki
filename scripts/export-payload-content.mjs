@@ -1,3 +1,4 @@
+import { USE_PAYLOAD_EXPORTS } from "../content-source.config.mjs"
 import fs from "fs"
 import path from "path"
 import process from "process"
@@ -7,6 +8,11 @@ import {
   renderBlock,
   routePartsForExport,
 } from "./lib/payload-mdx-render.mjs"
+
+if (!USE_PAYLOAD_EXPORTS) {
+  console.log("Payload is disabled in content-source.config.mjs; skipping CMS sync/export.")
+  process.exit(0)
+}
 
 const root = process.cwd()
 const outputRoot = path.join(root, "src", "content", "wiki", "_payload-export")

@@ -2,13 +2,38 @@ import React from "react"
 import { Link } from "gatsby"
 import styled from "styled-components"
 import {
-  SUBTEAM_BY_ID,
+  MILESTONE_TRACK_BY_ID,
   SUBTEAM_TRACKS,
   trackColor,
 } from "../../data/subteamTracks.js"
 import { formatDayShort } from "../../data/contributionCalendar/calendarUtils.js"
+import { useLinkTarget } from "../mdx/linkTarget.js"
 
-export function WeekDetailPanel({ week, activeIds }) {
+/** Links to the wiki sections an entry is written up in: `see` is [label, href] pairs. */
+function SeeLinks({ see, lead = "Read more:" }) {
+  const linkTarget = useLinkTarget()
+  if (!see?.length) return null
+  return (
+    <SeeRow>
+      <SeeLead>{lead}</SeeLead>
+      {see.map(([label, href]) => (
+        <SeeLink key={href} to={href} {...linkTarget}>
+          {label} →
+        </SeeLink>
+      ))}
+    </SeeRow>
+  )
+}
+
+export function WeekDetailPanel({
+  week,
+  activeIds,
+  tracks = SUBTEAM_TRACKS,
+  trackById = MILESTONE_TRACK_BY_ID,
+  overviewLabel = "Team overview",
+  hint = "Turn on a subteam above to see its progress this week.",
+}) {
+  const linkTarget = useLinkTarget()
   if (!week) {
     return (
       <PanelRoot>
@@ -20,8 +45,10 @@ export function WeekDetailPanel({ week, activeIds }) {
   return (
     <PanelRoot>
       <OverviewCard>
-        <OverviewLabel>Team overview</OverviewLabel>
+        <OverviewLabel>{overviewLabel}</OverviewLabel>
         <p>{week.overview}</p>
+        <SeeLinks see={week.see} />
+        {week.source ? <SourceNote>{week.source}</SourceNote> : null}
       </OverviewCard>
 
       {/* In full here: the calendar cells only have room for a few words. */}
@@ -32,7 +59,7 @@ export function WeekDetailPanel({ week, activeIds }) {
             {[...week.milestones]
               .sort((a, b) => a.date.localeCompare(b.date))
               .map((ms) => {
-              const track = SUBTEAM_BY_ID[ms.subteamId]
+              const track = trackById[ms.subteamId]
               return (
                 <MilestoneItem key={`${ms.date}-${ms.label}`}>
                   <MilestoneDot
@@ -44,7 +71,13 @@ export function WeekDetailPanel({ week, activeIds }) {
                       {formatDayShort(ms.date)}
                       {track ? ` · ${track.label}` : ""}
                     </MilestoneMeta>
-                    {ms.label}
+                    {ms.see ? (
+                      <MilestoneLink to={ms.see[1]} {...linkTarget} title={`On the wiki: ${ms.see[0]}`}>
+                        {ms.label} →
+                      </MilestoneLink>
+                    ) : (
+                      ms.label
+                    )}
                   </span>
                 </MilestoneItem>
               )
@@ -54,25 +87,36 @@ export function WeekDetailPanel({ week, activeIds }) {
       )}
 
       <SubteamList>
-        {SUBTEAM_TRACKS.filter((t) => activeIds.has(t.id)).map((track) => {
+        {tracks.filter((t) => activeIds.has(t.id)).map((track) => {
           const content = week.subteams[track.id]
           if (!content) return null
           const href = content.link || track.href
+          if (content.quiet) {
+            return (
+              <QuietBlock key={track.id} $accent={trackColor(track)}>
+                <strong>{track.label}</strong> {content.summary}
+              </QuietBlock>
+            )
+          }
           return (
             <SubteamBlock key={track.id} $accent={trackColor(track)}>
               <SubteamHeader>{track.label}</SubteamHeader>
               <Summary>{content.summary}</Summary>
               {content.detail ? <Detail>{content.detail}</Detail> : null}
-              <ReadMore to={href}>
-                Read more on {track.label} →
-              </ReadMore>
+              {content.see?.length ? (
+                <SeeLinks see={content.see} />
+              ) : (
+                <ReadMore to={href} {...linkTarget}>
+                  Read more on {track.label} →
+                </ReadMore>
+              )}
             </SubteamBlock>
           )
         })}
       </SubteamList>
 
       {activeIds.size === 0 && (
-        <Hint>Turn on a subteam above to see its progress this week.</Hint>
+        <Hint>{hint}</Hint>
       )}
     </PanelRoot>
   )
@@ -109,6 +153,16 @@ const OverviewLabel = styled.p`
     font-weight: 600;
     color: var(--cal-accent, #2d9194);
     margin-bottom: var(--space-xs);
+  }
+`
+
+/** Where the week's write-up comes from (meeting minutes, or reconstructed). */
+const SourceNote = styled.p`
+  &&& {
+    margin-top: var(--space-xs);
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: var(--cal-muted, var(--color-muted));
   }
 `
 
@@ -162,7 +216,25 @@ const SubteamBlock = styled.article`
   border-radius: 0 6px 6px 0;
 `
 
-const SubteamHeader = styled.h3`
+/** A track with nothing this week: one muted line. */
+const QuietBlock = styled.p`
+  &&& {
+    margin: 0;
+    padding: 0.4rem var(--space-md);
+    border-left: 4px solid ${({ $accent }) => $accent};
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--cal-muted, var(--color-muted));
+  }
+
+  strong {
+    color: var(--cal-ink, var(--color-text));
+    font-weight: 700;
+  }
+`
+
+/** Not a heading: the page's section menu lists every h3. */
+const SubteamHeader = styled.p`
   &&& {
     font-family: var(--font-body);
     font-size: 0.95rem;
@@ -211,6 +283,50 @@ const ReadMore = styled(Link)`
   &:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+`
+
+const SeeRow = styled.p`
+  &&& {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.75rem;
+    margin: var(--space-xs) 0 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+`
+
+const SeeLead = styled.span`
+  color: var(--cal-muted, var(--color-muted));
+  font-weight: 600;
+`
+
+const SeeLink = styled(Link)`
+  &&& {
+    font-weight: 600;
+    color: var(--cal-accent, #2d9194);
+    text-decoration: none;
+    background: none;
+    border-bottom: 1px solid transparent;
+  }
+
+  &&&:hover {
+    border-bottom-color: var(--cal-accent, #2d9194);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+`
+
+const MilestoneLink = styled(SeeLink)`
+  &&& {
+    font-weight: 500;
+    color: var(--cal-ink, var(--color-text));
+    border-bottom-color: color-mix(in srgb, var(--cal-accent, #2d9194) 45%, transparent);
   }
 `
 

@@ -2,23 +2,23 @@ import React, { useCallback, useEffect, useId, useRef, useState } from "react"
 import styled from "styled-components"
 import { CONTRIBUTION_MONTHS } from "../../data/contributionCalendar/calendarUtils.js"
 
-export function MonthNav({ selectedKey, onSelect }) {
+export function MonthNav({ selectedKey, onSelect, months = CONTRIBUTION_MONTHS }) {
   const listboxId = useId()
   const rootRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const index = CONTRIBUTION_MONTHS.findIndex((m) => m.key === selectedKey)
-  const current = CONTRIBUTION_MONTHS[index >= 0 ? index : 0]
+  const index = months.findIndex((m) => m.key === selectedKey)
+  const current = months[index >= 0 ? index : 0]
 
   const goPrev = useCallback(() => {
-    if (index > 0) onSelect(CONTRIBUTION_MONTHS[index - 1].key)
-  }, [index, onSelect])
+    if (index > 0) onSelect(months[index - 1].key)
+  }, [index, months, onSelect])
 
   const goNext = useCallback(() => {
-    if (index < CONTRIBUTION_MONTHS.length - 1) {
-      onSelect(CONTRIBUTION_MONTHS[index + 1].key)
+    if (index < months.length - 1) {
+      onSelect(months[index + 1].key)
     }
-  }, [index, onSelect])
+  }, [index, months, onSelect])
 
   const pickMonth = useCallback(
     (key) => {
@@ -64,7 +64,7 @@ export function MonthNav({ selectedKey, onSelect }) {
           aria-controls={listboxId}
         >
           {current.label}
-          <YearSpan>2026</YearSpan>
+          <YearSpan>{current.year}</YearSpan>
           <Chevron $open={open} aria-hidden>
             ▾
           </Chevron>
@@ -72,7 +72,7 @@ export function MonthNav({ selectedKey, onSelect }) {
 
         {open && (
           <MonthDropdown id={listboxId} role="listbox" aria-label="Choose month">
-            {CONTRIBUTION_MONTHS.map((m) => (
+            {months.map((m) => (
               <MonthOption
                 key={m.key}
                 type="button"
@@ -82,6 +82,7 @@ export function MonthNav({ selectedKey, onSelect }) {
                 onClick={() => pickMonth(m.key)}
               >
                 {m.label}
+                {m.year !== 2026 ? ` ${m.year}` : ""}
               </MonthOption>
             ))}
           </MonthDropdown>
@@ -91,7 +92,7 @@ export function MonthNav({ selectedKey, onSelect }) {
       <ArrowBtn
         type="button"
         onClick={goNext}
-        disabled={index >= CONTRIBUTION_MONTHS.length - 1}
+        disabled={index >= months.length - 1}
         aria-label="Next month"
       >
         ›

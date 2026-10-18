@@ -1,10 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import { createPortal } from "react-dom"
 import styled from "styled-components"
+import { PopupClose } from "../PopupClose"
 import {
   DESIGN_SKETCHBOOK_PAGES,
   DESIGN_SKETCHBOOK_SECTIONS,
   PAGE_FLIP_ATTRIBUTION,
-  getSectionStartIndex,
+  buildSketchbookPages,
+  continuedTitle,
   getTocSections,
 } from "../../data/designSketchbookPages.js"
 
@@ -12,6 +22,11 @@ import {
 
 const COVER_BOARD = "#4a3426"
 const PAPER = "#f5f0e6"
+const PAPER_ART = "https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/paper-open.avif"
+// The 2360×1640 canvas contains a spread at [476, 433, 1566, 1488].
+// Show one 545×1055 half per leaf, excluding the transparent margins.
+const PAPER_LEFT = `${476 / (2360 - 545) * 100}%`
+const PAPER_RIGHT = `${1021 / (2360 - 545) * 100}%`
 /** How far the static hardcover peeks past the paper on each outer edge. */
 const COVER_OVERHANG_PX = 14
 
@@ -21,9 +36,11 @@ const FLIP_SETTINGS = {
   width: 490,
   height: 950,
   size: "stretch",
-  minWidth: 300,
+  // Narrow enough that the book plus its tab rails fits a phone screen.
+  minWidth: 220,
   maxWidth: 800,
-  minHeight: 580,
+  // Low enough that the height cap on BookHost (not this) decides on short screens.
+  minHeight: 320,
   maxHeight: 1500,
   showCover: true,
   drawShadow: true,
@@ -35,13 +52,145 @@ const FLIP_SETTINGS = {
 
 const FLIP_WAIT_MS = FLIP_SETTINGS.flippingTime + 80
 
+/**
+ * A section's photo moves to its own page when, beside the text, it would be
+ * shrunk below this share of the page's height (or its own size, if smaller).
+ */
+const MIN_PHOTO_SHARE = 0.4
+/** The page's padding and text get remeasured this long after a resize. */
+const RESIZE_SETTLE_MS = 200
+
+/** Each section's first page, whose photo's shape is read as it loads. */
+const SPREAD_PAGES = DESIGN_SKETCHBOOK_PAGES.filter((p) => p.variant === "spread")
+/** The pages with text, which are measured so none ever has to scroll. */
+const TEXT_PAGES = DESIGN_SKETCHBOOK_PAGES.filter(
+  (p) => ["spread", "notes", "aside"].includes(p.variant) && typeof p.body === "string" && p.body
+)
+/** Kept clear under a page's text when it's measured (px), for rounding. */
+const FIT_SLACK_PX = 6
+/** A run-on page ends on a full stop if one ends in this last share of it. */
+const SENTENCE_REACH = 0.4
+
+/** A notes page's small heading: its section, then its own title. */
+function pageLabel(page, title = page.title) {
+  const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === page.sectionId)
+  return section ? `${section.label} / ${title}` : title
+}
+
 function prefersReducedMotion() {
   if (typeof window === "undefined" || !window.matchMedia) return false
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
+/**
+ * Pictures open bigger when clicked (or Enter on them): see the root's
+ * capture listeners, since page-flip moves the pages out of React's tree and
+ * would otherwise take the press as a page turn.
+ */
+const ZOOM_SELECTOR = "[data-zoom-src]"
+const zoomProps = (src, alt) => ({
+  "data-zoom-src": src,
+  "data-zoom-alt": alt || "",
+  role: "button",
+  tabIndex: 0,
+  "aria-label": alt ? `Enlarge: ${alt}` : "Enlarge picture",
+})
+
+/** A picture enlarged over the page, closed with its ✕, Escape or a click outside. */
+function SketchZoom({ zoom, onClose }) {
+  const closeRef = useRef(null)
+  useEffect(() => {
+    if (!zoom) return undefined
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    closeRef.current?.querySelector("button")?.focus()
+    const { overflow } = document.documentElement.style
+    document.documentElement.style.overflow = "hidden"
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      document.documentElement.style.overflow = overflow
+    }
+  }, [zoom, onClose])
+  if (!zoom || typeof document === "undefined") return null
+  return createPortal(
+    <ZoomBackdrop role="dialog" aria-modal="true" aria-label={zoom.alt || "Enlarged picture"} onClick={onClose}>
+      <ZoomFigure ref={closeRef} onClick={(event) => event.stopPropagation()}>
+        <ZoomImage src={zoom.src} alt={zoom.alt} />
+        <ZoomClose onClose={onClose} />
+      </ZoomFigure>
+    </ZoomBackdrop>,
+    document.body,
+  )
+}
+
+/**
+ * A page's `images` ({ src, alt }) in a grid that fills what's left of the
+ * page, `cols` across (up to three by default), each kept whole; one caption.
+ * An image with `crop` [x0, y0, x1, y1] (of its `size` [w, h]) shows just
+ * that part, e.g. one piece of a tall picture split side by side; it still
+ * enlarges whole.
+ */
+function GalleryFigure({ page }) {
+  const n = page.images.length
+  const cols = page.cols || Math.min(n, 3)
+  return (
+    <GalleryWrap>
+      <GalleryGrid
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
+        }}
+      >
+        {page.images.map((image) =>
+          image.crop ? (
+            <GalleryCrop
+              key={`${image.src}:${image.crop}`}
+              viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              preserveAspectRatio="xMidYMin meet"
+              {...zoomProps(image.src, image.alt)}
+            >
+              {/* Its own viewport clips the picture to the crop (the
+                  outer one shows past it where the cell is roomier). */}
+              <svg
+                x={image.crop[0]}
+                y={image.crop[1]}
+                width={image.crop[2] - image.crop[0]}
+                height={image.crop[3] - image.crop[1]}
+                viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              >
+                <image href={image.src} width={image.size[0]} height={image.size[1]} />
+              </svg>
+            </GalleryCrop>
+          ) : (
+            <GalleryImage
+              key={image.src}
+              src={image.src}
+              alt={image.alt || ""}
+              loading="lazy"
+              {...zoomProps(image.src, image.alt)}
+            />
+          ),
+        )}
+      </GalleryGrid>
+      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+    </GalleryWrap>
+  )
+}
+
 function SketchPageContent({ page }) {
   if (page.variant === "cover" || page.variant === "back") {
+    if (page.coverImage) {
+      const [width, height] = page.coverCanvas || [1, 1]
+      const [x0, y0, x1, y1] = page.coverCrop || [0, 0, width, height]
+      return <CoverArtwork role="img" aria-label={page.coverAlt || page.title}
+        style={{
+          backgroundImage: `url("${page.coverImage}")`,
+          backgroundSize: `${width / (x1 - x0) * 100}% ${height / (y1 - y0) * 100}%`,
+          backgroundPosition: `${width === x1 - x0 ? 0 : x0 / (width - (x1 - x0)) * 100}% ${height === y1 - y0 ? 0 : y0 / (height - (y1 - y0)) * 100}%`,
+        }} />
+    }
     return (
       <SketchPageInner $variant={page.variant}>
         <CoverPlate>
@@ -66,6 +215,7 @@ function SketchPageContent({ page }) {
               <TocButton
                 type="button"
                 $color={section.color}
+            $crop={section.tabCrop}
                 data-toc-section={section.id}
               >
                 <TocSwatch $color={section.color} aria-hidden />
@@ -81,14 +231,56 @@ function SketchPageContent({ page }) {
     )
   }
 
+  // A section's extra pages are labelled small in its tab colour, so they
+  // don't read as a new section.
+  const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === page.sectionId)
+  const label = section && (
+    <SketchLabel style={{ "--label-color": section.color }}>
+      {section.label} / {page.title}
+    </SketchLabel>
+  )
+
+  if (page.variant === "aside") {
+    return (
+      <SketchPageInner $variant="aside">
+        {label}
+        {page.body && <SketchBody>{page.body}</SketchBody>}
+      </SketchPageInner>
+    )
+  }
+
   if (page.variant === "notes") {
     return (
       <SketchPageInner $variant="notes">
-        <SketchTitle>{page.title}</SketchTitle>
+        {label}
         {page.body && <SketchBody>{page.body}</SketchBody>}
-        <SketchPlaceholder aria-hidden={false}>
-          <SketchPlaceholderLabel>Notes / image slot</SketchPlaceholderLabel>
-        </SketchPlaceholder>
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : page.imageSrc ? (
+          <SketchFigure>
+            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
+            {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+          </SketchFigure>
+        ) : (
+          <SketchPlaceholder aria-hidden={false}>
+            <SketchPlaceholderLabel>Notes / image slot</SketchPlaceholderLabel>
+          </SketchPlaceholder>
+        )}
+      </SketchPageInner>
+    )
+  }
+
+  if (page.variant === "image") {
+    return (
+      <SketchPageInner $variant="image">
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : (
+        <SketchFigure $alone>
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
+          {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+        </SketchFigure>
+        )}
       </SketchPageInner>
     )
   }
@@ -101,7 +293,7 @@ function SketchPageContent({ page }) {
       {page.body && <SketchBody>{page.body}</SketchBody>}
       {showMedia && page.imageSrc && (
         <SketchFigure>
-          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
       )}
@@ -122,6 +314,29 @@ export function DesignSketchbook() {
   const pageFlipRef = useRef(null)
   const flipRunIdRef = useRef(0)
   const [ready, setReady] = useState(false)
+  /**
+   * How the pages fit at this size (buildSketchbookPages): pages whose photo
+   * has its own page, and where text runs on to more pages.
+   */
+  const [fit, setFit] = useState({ split: [], breaks: {} })
+  /** Whether two pages show at once. */
+  const [landscape, setLandscape] = useState(true)
+  /** One page's size in px, to measure the pages against. */
+  const [pageBox, setPageBox] = useState(null)
+  /** Height / width of each section's photo, as they load. */
+  const [photoRatios, setPhotoRatios] = useState({})
+  /** Set once the web fonts are in, so the pages are measured in them. */
+  const [fontsReady, setFontsReady] = useState(false)
+  const pages = useMemo(
+    () => buildSketchbookPages({ ...fit, pairs: landscape }),
+    [fit, landscape]
+  )
+  const pagesRef = useRef(pages)
+  pagesRef.current = pages
+  const layoutKey = `${landscape ? "pairs" : "single"}:${JSON.stringify(fit)}`
+  /** Page to reopen at when the book is rebuilt with a new layout. */
+  const resumePageIdRef = useRef(null)
+  const measureRef = useRef(null)
   const [pageIndex, setPageIndex] = useState(0)
   const [spreadIndex, setSpreadIndex] = useState(0)
   const [pageCount, setPageCount] = useState(DESIGN_SKETCHBOOK_PAGES.length)
@@ -155,65 +370,23 @@ export function DesignSketchbook() {
 
     const stageRect = stage.getBoundingClientRect()
 
-    const isVisibleFace = (el) => {
-      if (!el) return false
-      const r = el.getBoundingClientRect()
-      if (r.width < 2 || r.height < 2) return false
-      const style = window.getComputedStyle(el)
-      return style.display !== "none" && style.visibility !== "hidden"
+    // Use the library's stable layout, never a rotating page's bounding box.
+    const flip = pageFlipRef.current
+    const rect = flip?.getBoundsRect?.()
+    if (!rect?.pageWidth || !rect?.height) return
+    const hostRect = host.getBoundingClientRect()
+    const currentIndex = flip.getCurrentPageIndex()
+    const lastIndex = Math.max(0, flip.getPageCount() - 1)
+    const portrait = flip.getOrientation?.() === "portrait"
+    const single = portrait || currentIndex === 0 || currentIndex === lastIndex
+    const leftOffset = portrait || currentIndex === 0 ? rect.pageWidth : 0
+    const useRect = {
+      left: hostRect.left + rect.left + leftOffset,
+      top: hostRect.top + rect.top,
+      width: single ? rect.pageWidth : rect.width,
+      height: rect.height,
     }
-
-    let nodes = [...host.querySelectorAll(".stf__item.--simple")].filter(isVisibleFace)
-
-    // Closed cover sits on the right; the back cover sits on the left. Never
-    // union leftover hover faces into a two-page hardcover.
-    const currentIndex = pageFlipRef.current?.getCurrentPageIndex?.() ?? 0
-    const lastIndex = Math.max(0, (pageFlipRef.current?.getPageCount?.() ?? 1) - 1)
-    if (currentIndex === 0) {
-      const cover =
-        nodes.find((el) => el.classList.contains("--right")) ||
-        [...host.querySelectorAll(".stf__item.--right")].find(isVisibleFace) ||
-        host.querySelector("[data-density='hard']")
-      if (cover) nodes = [cover]
-    } else if (currentIndex === lastIndex) {
-      const back =
-        nodes.find((el) => el.classList.contains("--left")) ||
-        [...host.querySelectorAll(".stf__item.--left")].find(isVisibleFace)
-      if (back) nodes = [back]
-    } else if (!nodes.length) {
-      nodes = [...host.querySelectorAll(".stf__item")].filter(isVisibleFace)
-    }
-
-    let bookLeft = Infinity
-    let bookTop = Infinity
-    let bookRight = -Infinity
-    let bookBottom = -Infinity
-    nodes.forEach((el) => {
-      const r = el.getBoundingClientRect()
-      bookLeft = Math.min(bookLeft, r.left)
-      bookTop = Math.min(bookTop, r.top)
-      bookRight = Math.max(bookRight, r.right)
-      bookBottom = Math.max(bookBottom, r.bottom)
-    })
-
-    let useRect
-    if (bookLeft < Infinity) {
-      useRect = {
-        left: bookLeft,
-        top: bookTop,
-        right: bookRight,
-        bottom: bookBottom,
-        height: bookBottom - bookTop,
-        width: bookRight - bookLeft,
-      }
-    } else {
-      const fallback = host.querySelector(".stf__wrapper") || host
-      useRect = fallback.getBoundingClientRect()
-    }
-
-    if (useRect.height < 40) {
-      useRect = host.getBoundingClientRect()
-    }
+    useRect.right = useRect.left + useRect.width
 
     // Tabs start below the notebook top so the page edge leads the tab stack.
     const faceTop = Math.max(0, useRect.top - stageRect.top)
@@ -234,7 +407,7 @@ export function DesignSketchbook() {
     setReducedMotion(prefersReducedMotion())
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!ready) return undefined
     measureTabAnchor()
     const raf = window.requestAnimationFrame(() => {
@@ -268,17 +441,29 @@ export function DesignSketchbook() {
 
   const activeSectionId = useMemo(() => {
     if (selectedSectionId) return selectedSectionId
-    return DESIGN_SKETCHBOOK_PAGES[pageIndex]?.sectionId || null
-  }, [pageIndex, selectedSectionId])
+    return pages[pageIndex]?.sectionId || null
+  }, [pageIndex, pages, selectedSectionId])
 
-  /** Landscape spread index for a section start page (cover=0, toc=1, sections from 2…). */
-  const getSectionSpreadIndex = useCallback((sectionId) => {
-    const start = getSectionStartIndex(sectionId)
-    if (start < 0) return -1
-    // With showCover: spread 0 = [0], then pairs [1,2], [3,4], …
-    if (start === 0) return 0
-    return Math.floor((start - 1) / 2) + 1
-  }, [])
+  const getSectionStartIndex = useCallback(
+    (sectionId) => {
+      const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === sectionId)
+      return section ? pages.findIndex((p) => p.id === section.startPageId) : -1
+    },
+    [pages]
+  )
+
+  /** Spread index of a section's first page (one page per spread when single). */
+  const getSectionSpreadIndex = useCallback(
+    (sectionId) => {
+      const start = getSectionStartIndex(sectionId)
+      if (start < 0) return -1
+      if (!landscape) return start
+      // With showCover: spread 0 = [0], then pairs [1,2], [3,4], …
+      if (start === 0) return 0
+      return Math.floor((start - 1) / 2) + 1
+    },
+    [getSectionStartIndex, landscape]
+  )
 
   const { rightSections, leftSections } = useMemo(() => {
     if (pageIndex === 0) {
@@ -395,12 +580,185 @@ export function DesignSketchbook() {
       setSelectedSectionId(sectionId)
       flipToPageAnimated(index)
     },
-    [flipToPageAnimated]
+    [flipToPageAnimated, getSectionStartIndex]
   )
+
+  /** One page's size and whether two show at once, as page-flip laid them out. */
+  const readPageBox = useCallback((flip) => {
+    const rect = flip?.getBoundsRect?.()
+    if (!rect?.pageWidth || !rect?.height) return
+    const w = Math.round(rect.pageWidth)
+    const h = Math.round(rect.height)
+    setPageBox((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }))
+    setLandscape(flip.getOrientation?.() !== "portrait")
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    SPREAD_PAGES.forEach((page) => {
+      if (!page.imageSrc) return
+      const img = new Image()
+      img.onload = () => {
+        if (cancelled || !img.naturalWidth) return
+        const ratio = img.naturalHeight / img.naturalWidth
+        setPhotoRatios((prev) => ({ ...prev, [page.sectionId]: ratio }))
+      }
+      img.src = page.imageSrc
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    document.fonts?.ready.then(() => {
+      if (!cancelled) setFontsReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Lay each page with text out at the current page size (off screen, text
+  // and caption only). Its photo gets its own page if the room left would
+  // shrink it too far, and text that still doesn't fit runs on over more
+  // pages, broken where a probe page fills up, so no page ever scrolls.
+  useLayoutEffect(() => {
+    const layer = measureRef.current
+    if (!layer || !pageBox) return
+    const probeInner = layer.querySelector("[data-measure-probe]")?.firstElementChild
+    const probeLabel = probeInner?.querySelector("[data-probe-label]")
+    const probeBody = probeInner?.querySelector("[data-probe-body]")
+    if (!probeInner || !probeLabel || !probeBody) return
+    const contentBox = (inner) => {
+      const style = window.getComputedStyle(inner)
+      const padTop = parseFloat(style.paddingTop) || 0
+      const padBottom = parseFloat(style.paddingBottom) || 0
+      return {
+        top: inner.getBoundingClientRect().top + padTop,
+        height: inner.clientHeight - padTop - padBottom,
+        width:
+          inner.clientWidth -
+          (parseFloat(style.paddingLeft) || 0) -
+          (parseFloat(style.paddingRight) || 0),
+      }
+    }
+    const split = []
+    const breaks = {}
+    layer.querySelectorAll("[data-measure-page]").forEach((clone) => {
+      const page = TEXT_PAGES.find((p) => p.id === clone.getAttribute("data-measure-page"))
+      const inner = clone.firstElementChild
+      const body = inner?.querySelector("[data-measure-body]")
+      if (!page || !body) return
+      const box = contentBox(inner)
+      const bodyRect = body.getBoundingClientRect()
+      const headH = bodyRect.top - box.top
+      const figure = inner.querySelector("figure")
+      const figureH = figure ? figure.getBoundingClientRect().bottom - bodyRect.bottom : 0
+      const hasPhoto = Boolean(page.imageSrc || page.images?.length)
+      if (hasPhoto) {
+        const photoW = Math.min(box.width, 28 * 16)
+        const ratio = page.variant === "spread" ? photoRatios[page.sectionId] ?? 1 : 1
+        const left = box.height - headH - bodyRect.height - figureH
+        if (left >= Math.min(photoW * ratio, MIN_PHOTO_SHARE * box.height)) return
+        split.push(page.id)
+      } else if (headH + bodyRect.height <= box.height - FIT_SLACK_PX) {
+        return
+      }
+      // Its text on its own: run it on over as many pages as it needs.
+      probeLabel.textContent = pageLabel(page, continuedTitle(page))
+      const probeBox = contentBox(probeInner)
+      const runOnRoom =
+        probeBox.height - (probeBody.getBoundingClientRect().top - probeBox.top) - FIT_SLACK_PX
+      const words = page.body.split(/\s+/).filter(Boolean)
+      const cuts = []
+      let from = 0
+      let room = box.height - headH - FIT_SLACK_PX
+      const fits = (n) => {
+        probeBody.textContent = words.slice(from, from + n).join(" ")
+        return probeBody.getBoundingClientRect().height <= room
+      }
+      while (from < words.length && !fits(words.length - from)) {
+        let lo = 1
+        let hi = words.length - from - 1
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1
+          if (fits(mid)) lo = mid
+          else hi = mid - 1
+        }
+        let n = lo
+        for (let k = n; k > Math.floor(n * (1 - SENTENCE_REACH)); k -= 1) {
+          if (/[.!?…:]["”’)]?$/.test(words[from + k - 1])) {
+            n = k
+            break
+          }
+        }
+        from += n
+        cuts.push(from)
+        room = runOnRoom
+      }
+      probeBody.textContent = ""
+      if (cuts.length) breaks[page.id] = cuts
+    })
+    split.sort()
+    const next = { split, breaks }
+    setFit((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+  }, [pageBox, photoRatios, fontsReady])
 
   const sketchRootRef = useRef(null)
   const goToSectionRef = useRef(goToSection)
   goToSectionRef.current = goToSection
+
+  const [zoom, setZoom] = useState(null)
+  const zoomFromRef = useRef(null)
+  const closeZoom = useCallback(() => {
+    setZoom(null)
+    zoomFromRef.current?.focus?.()
+  }, [])
+
+  // Pictures enlarge on click, Enter or Space. Pressing one mustn't reach
+  // page-flip (it would turn the page), so presses on them stop here.
+  useEffect(() => {
+    const root = sketchRootRef.current
+    if (!root) return undefined
+    const zoomTarget = (event) => {
+      const target = event.target instanceof Element ? event.target : null
+      const img = target?.closest?.(ZOOM_SELECTOR)
+      return img && root.contains(img) ? img : null
+    }
+    const open = (img) => {
+      zoomFromRef.current = img
+      setZoom({ src: img.getAttribute("data-zoom-src"), alt: img.getAttribute("data-zoom-alt") })
+    }
+    const onPress = (event) => {
+      if (zoomTarget(event)) event.stopPropagation()
+    }
+    const onClick = (event) => {
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const onKey = (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const presses = ["mousedown", "touchstart", "pointerdown"]
+    presses.forEach((type) => root.addEventListener(type, onPress, true))
+    root.addEventListener("click", onClick, true)
+    root.addEventListener("keydown", onKey, true)
+    return () => {
+      presses.forEach((type) => root.removeEventListener(type, onPress, true))
+      root.removeEventListener("click", onClick, true)
+      root.removeEventListener("keydown", onKey, true)
+    }
+  }, [])
 
   // TOC buttons live inside page-flip's reparented DOM — use capture delegation.
   useEffect(() => {
@@ -426,13 +784,21 @@ export function DesignSketchbook() {
 
     let cancelled = false
     let flipInstance = null
+    // The pages this book is built from (the layout can change under it).
+    const instancePages = pagesRef.current
+    let resizeTimer = 0
+    const onResize = () => {
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(() => readPageBox(flipInstance), RESIZE_SETTLE_MS)
+    }
+    window.addEventListener("resize", onResize)
 
     const init = async () => {
       const host = bookHostRef.current
       if (!host) return
 
-      const pages = host.querySelectorAll("[data-sketch-page]")
-      if (!pages.length) return
+      const pageEls = host.querySelectorAll("[data-sketch-page]")
+      if (!pageEls.length) return
 
       try {
         const { PageFlip } = await import("page-flip")
@@ -448,7 +814,7 @@ export function DesignSketchbook() {
           const collection = flipInstance.getPageCollection?.()
           if (collection) setSpreadIndex(collection.getCurrentSpreadIndex())
           if (navigatingRef.current) return
-          setSelectedSectionId(DESIGN_SKETCHBOOK_PAGES[nextIndex]?.sectionId || null)
+          setSelectedSectionId(instancePages[nextIndex]?.sectionId || null)
         })
 
         flipInstance.on("changeState", (e) => {
@@ -477,21 +843,44 @@ export function DesignSketchbook() {
             ) {
               flipInstance.update()
             }
-            window.requestAnimationFrame(() => measureTabAnchor())
+            measureTabAnchor()
           }
         })
 
-        flipInstance.loadFromHTML(pages)
+        flipInstance.loadFromHTML(pageEls)
         // Hover-fold on hard covers leaves a board drawn across the empty half.
         const origUserMove = flipInstance.userMove.bind(flipInstance)
         flipInstance.userMove = (pos, isTouch) => {
           const idx = flipInstance.getCurrentPageIndex()
           const last = flipInstance.getPageCount() - 1
           if (!isTouch && (idx === 0 || idx === last)) return
+          // Hover (not a drag) over the leaf beside a cover would preview that
+          // hard cover turning, which the static hardcover can't follow: the
+          // right half of the last spread and the left half of the first.
+          if (!isTouch && !flipInstance.isUserTouch) {
+            const rect = flipInstance.getBoundsRect?.()
+            const onRight = rect ? pos.x >= rect.left + rect.width / 2 : true
+            if ((onRight && idx >= last - 2) || (!onRight && idx <= 2)) return
+          }
           origUserMove(pos, isTouch)
         }
         setPageCount(flipInstance.getPageCount())
+        // Rebuilt for a new layout: reopen where the reader was (a page that's
+        // gone, like a photo moved back beside its text, means its section).
+        const resumeId = resumePageIdRef.current
+        resumePageIdRef.current = null
+        if (resumeId) {
+          let resumeAt = instancePages.findIndex((p) => p.id === resumeId)
+          if (resumeAt < 0) {
+            const sectionId = DESIGN_SKETCHBOOK_SECTIONS.find((s) =>
+              resumeId.startsWith(s.id)
+            )?.id
+            resumeAt = instancePages.findIndex((p) => p.id === sectionId)
+          }
+          if (resumeAt > 0) flipInstance.turnToPage(resumeAt)
+        }
         syncIndicesFromFlip(flipInstance)
+        readPageBox(flipInstance)
         const hardTop = flipInstance.getBoundsRect?.()?.top
         if (typeof hardTop === "number") {
           host.style.setProperty("--sketch-hard-top", `${Math.max(0, hardTop)}px`)
@@ -506,6 +895,12 @@ export function DesignSketchbook() {
 
     return () => {
       cancelled = true
+      window.removeEventListener("resize", onResize)
+      window.clearTimeout(resizeTimer)
+      if (pageFlipRef.current) {
+        resumePageIdRef.current =
+          instancePages[pageFlipRef.current.getCurrentPageIndex()]?.id ?? null
+      }
       flipRunIdRef.current += 1
       navigatingRef.current = false
       window.clearTimeout(timer)
@@ -520,7 +915,7 @@ export function DesignSketchbook() {
       setFlipState("read")
       setFlipDirection(null)
     }
-  }, [reducedMotion])
+  }, [reducedMotion, layoutKey, readPageBox])
 
   const goPrev = (event) => {
     event?.preventDefault()
@@ -577,13 +972,14 @@ export function DesignSketchbook() {
     (pageIndex >= lastPage ||
       (pageIndex >= lastPage - 2 && pageIndex < lastPage && flipDirection === 0))
   const showHardcoverCase =
+    bookOpen && pageIndex < lastPage &&
     tabAnchor.bookWidth > 0 &&
     tabAnchor.faceHeight > 0 &&
     !flippingFrontCover &&
     !flippingBackCover
   // Back cover: treat like a closed board so left stubs tuck under the brown.
   const onBackCover =
-    DESIGN_SKETCHBOOK_PAGES[pageIndex]?.variant === "back" ||
+    pages[pageIndex]?.variant === "back" ||
     (pageIndex > 0 && pageIndex >= lastPage)
 
   const renderRightTabs = (mode, { embedded = false } = {}) => (
@@ -605,6 +1001,7 @@ export function DesignSketchbook() {
             aria-selected={selected}
             title={section.progress}
             $color={section.color}
+            $crop={section.tabCrop}
             $active={selected && mode === "open"}
             $mode={mode}
             $compact={false}
@@ -640,6 +1037,7 @@ export function DesignSketchbook() {
             aria-label={`Go back to ${section.label}`}
             title={`${section.label}: ${section.progress}`}
             $color={section.color}
+            $crop={section.tabCrop}
             $active={false}
             $mode="open"
             $compact
@@ -653,26 +1051,28 @@ export function DesignSketchbook() {
 
   if (reducedMotion) {
     return (
-      <SketchbookRoot ref={sketchRootRef}>
+      <SketchbookRoot ref={sketchRootRef} data-nav-skip="">
         {renderRightTabs("open")}
         <ReducedMotionList aria-label="Design sketchbook pages">
-          {DESIGN_SKETCHBOOK_PAGES.map((page) => (
+          {DESIGN_SKETCHBOOK_PAGES.map((page, index) => (
             <ReducedMotionPage
               key={page.id}
               id={`sketch-${page.id}`}
               $variant={page.variant}
+               $paperX={index % 2 ? PAPER_LEFT : PAPER_RIGHT}
             >
               <SketchPageContent page={page} />
             </ReducedMotionPage>
           ))}
         </ReducedMotionList>
+        <SketchZoom zoom={zoom} onClose={closeZoom} />
         <AttributionFooter />
       </SketchbookRoot>
     )
   }
 
   return (
-    <SketchbookRoot ref={sketchRootRef}>
+    <SketchbookRoot ref={sketchRootRef} data-nav-skip="">
       <BookStage
         ref={bookStageRef}
         style={{
@@ -683,7 +1083,7 @@ export function DesignSketchbook() {
           "--sketch-face-top": `${tabAnchor.faceTop}px`,
           "--sketch-face-height": `${tabAnchor.faceHeight}px`,
         }}
-        aria-label="Design team sketchbook — drag corners or use controls to flip pages"
+        aria-label="Design team sketchbook. Drag a corner or use the buttons to turn pages."
       >
         {renderLeftStubs()}
         {renderRightTabs(bookOpen ? "open" : "closed", { embedded: true })}
@@ -695,16 +1095,19 @@ export function DesignSketchbook() {
         />
         {onBackCover && showHardcoverCase && <BackCoverEdgeMask aria-hidden />}
         <BookHost
+          key={layoutKey}
           ref={bookHostRef}
           className="stf__parent"
           $closed={!bookOpen || onBackCover}
         >
-          {DESIGN_SKETCHBOOK_PAGES.map((page) => (
+          {pages.map((page, index) => (
             <SketchPage
               key={page.id}
+               $paperX={index % 2 ? PAPER_LEFT : PAPER_RIGHT}
               data-sketch-page
               data-density={page.density}
               $hard={page.density === "hard"}
+              $artwork={Boolean(page.coverImage)}
               className="design-sketchbook-page"
             >
               <SketchPageContent page={page} />
@@ -712,6 +1115,54 @@ export function DesignSketchbook() {
           ))}
         </BookHost>
       </BookStage>
+
+      {pageBox && (
+        <MeasureLayer ref={measureRef} aria-hidden>
+          {TEXT_PAGES.map((page) => (
+            <SketchPage
+              key={page.id}
+              data-measure-page={page.id}
+              style={{ width: pageBox.w, height: pageBox.h }}
+            >
+              {page.variant === "spread" ? (
+                <SketchPageInner $variant="spread">
+                  <SketchTitle>{page.title}</SketchTitle>
+                  {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.imageSrc && (
+                    <SketchFigure>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </SketchFigure>
+                  )}
+                </SketchPageInner>
+              ) : (
+                <SketchPageInner $variant={page.variant}>
+                  <SketchLabel>{pageLabel(page)}</SketchLabel>
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.images ? (
+                    <GalleryWrap style={{ flex: "none" }}>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </GalleryWrap>
+                  ) : (
+                    page.imageSrc && (
+                      <SketchFigure>
+                        {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                      </SketchFigure>
+                    )
+                  )}
+                </SketchPageInner>
+              )}
+            </SketchPage>
+          ))}
+          {/* A run-on page, filled word by word to find where each breaks. */}
+          <SketchPage data-measure-probe style={{ width: pageBox.w, height: pageBox.h }}>
+            <SketchPageInner $variant="aside">
+              <SketchLabel data-probe-label />
+              <SketchBody data-probe-body />
+            </SketchPageInner>
+          </SketchPage>
+        </MeasureLayer>
+      )}
 
       <Controls>
         <ControlButton
@@ -741,9 +1192,11 @@ export function DesignSketchbook() {
 
       <Hint>
         Named tabs sit on the right. After you pass a section, its tab moves to the left as a
-        color stub — tap to flip back. Open the cover for the table of contents.
+        color stub; tap it to flip back. Open the cover for the table of contents. Click any
+        picture in the book to enlarge it.
       </Hint>
 
+      <SketchZoom zoom={zoom} onClose={closeZoom} />
       <AttributionFooter />
     </SketchbookRoot>
   )
@@ -757,7 +1210,7 @@ function AttributionFooter() {
       <a href={url} target="_blank" rel="noopener noreferrer">
         {name}
       </a>{" "}
-      ({license}) — {author}, via{" "}
+      ({license}) by {author}, via{" "}
       <a
         href="https://www.npmjs.com/package/page-flip"
         target="_blank"
@@ -772,23 +1225,17 @@ function AttributionFooter() {
 
 export default DesignSketchbook
 
+/**
+ * The text box's full width: open, the two pages span it; shut, the cover
+ * sits where its page does (the right half), its tabs just past the box.
+ */
 const SketchbookRoot = styled.div`
+  position: relative;
+  z-index: 0;
   width: 100%;
   max-width: none;
   margin: var(--space-lg) 0;
   overflow: visible;
-
-  /*
-   * Side PageTabs leave an ~11–14rem rail for the tab list. Pull the book into
-   * that column so it can use the full article width (and grow taller with it).
-   */
-  @media (min-width: 721px) {
-    width: calc(100% + 14rem + var(--space-xl));
-    max-width: calc(100% + 14rem + var(--space-xl));
-    margin-left: calc(-14rem - var(--space-xl));
-    position: relative;
-    z-index: 0;
-  }
 `
 
 /* How far closed tabs tuck under the outer hardcover rim. */
@@ -839,7 +1286,7 @@ const TabRail = styled.div`
       }
     );
     right: auto;
-    width: ${$mode === "open" ? "7.75rem" : "6.5rem"};
+    width: ${$mode === "open" ? "11rem" : "8.2rem"};
     height: auto;
     justify-content: flex-start;
     gap: 0.4rem;
@@ -864,7 +1311,8 @@ const TabRail = styled.div`
     ${({ $embedded, $side, $mode }) =>
       $embedded && $side === "right"
         ? `
-      width: ${$mode === "open" ? "6.5rem" : "5.25rem"};
+      /* Keep the artwork's roughly 3.49:1 proportions on phones too. */
+      width: 7rem;
     `
         : $embedded && $side === "left"
           ? `
@@ -880,11 +1328,15 @@ const TabRail = styled.div`
 
 const SectionTab = styled.button`
   appearance: none;
-  border: 1px solid color-mix(in srgb, ${({ $color }) => $color} 55%, #222);
-  background: ${({ $color, $active }) =>
-    $active
-      ? `color-mix(in srgb, ${$color} 90%, #fff)`
-      : `color-mix(in srgb, ${$color} 74%, #f5f0e6)`};
+  border: 0;
+  background-color: transparent;
+  background-image: url("https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/tabs.avif");
+  background-repeat: no-repeat;
+  ${({ $crop }) => {
+    const [x0, y0, x1, y1] = $crop
+    return `background-size: ${2360 / (x1 - x0) * 100}% ${1640 / (y1 - y0) * 100}%;
+      background-position: ${x0 / (2360 - (x1 - x0)) * 100}% ${y0 / (1640 - (y1 - y0)) * 100}%;`
+  }}
   color: #1a1a1a;
   cursor: pointer;
   text-align: left;
@@ -933,7 +1385,7 @@ const SectionTab = styled.button`
   `}
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, ${({ $color }) => $color} 92%, #fff);
+    filter: brightness(1.08);
     ${({ $compact, $active, $mode }) =>
       $compact
         ? `transform: translateX(-3px);`
@@ -955,6 +1407,19 @@ const SectionTab = styled.button`
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
+
+  /* Narrow screens: name only (the progress line is hidden), up to two lines. */
+  ${({ $compact }) =>
+    $compact
+      ? ""
+      : `
+  @media (max-width: 720px) {
+    height: 2rem;
+    min-height: 2rem;
+    max-height: 2rem;
+    padding: 0.3rem 0.4rem;
+  }
+  `}
 `
 
 const SectionTabLabel = styled.span`
@@ -969,6 +1434,11 @@ const SectionTabLabel = styled.span`
 
 const SectionTabProgress = styled.span`
   display: -webkit-box;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
+
   font-family: var(--font-body);
   font-size: 0.58rem;
   line-height: 1.25;
@@ -987,14 +1457,12 @@ const BookStage = styled.div`
   height: auto;
   min-height: 0;
   overflow: visible;
-  /* Room for left overpassed stubs + right named tabs */
-  padding-left: 3.25rem;
-  padding-right: 5.5rem;
+  padding: 0;
   box-sizing: border-box;
 
   @media (max-width: 720px) {
     padding-left: 2.25rem;
-    padding-right: 4rem;
+    padding-right: 7.5rem;
   }
 `
 
@@ -1010,14 +1478,11 @@ const HardcoverCase = styled.div`
   border-radius: ${({ $back, $closed }) =>
     $back ? "7px 3px 3px 7px" : $closed ? "3px 7px 7px 3px" : "3px 7px 7px 3px"};
   box-shadow: 0 10px 24px rgba(34, 22, 14, 0.22);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent 46%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.035) 0 1px,
-      transparent 1px 4px
-    ),
-    ${COVER_BOARD};
+  /* Crop the transparent canvas to the open backing artwork. */
+  background-image: url("https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/cover-open.avif");
+  background-repeat: no-repeat;
+  background-size: ${2360 / 1147 * 100}% ${1640 / 1112 * 100}%;
+  background-position: ${447 / (2360 - 1147) * 100}% ${404 / (1640 - 1112) * 100}%;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity ${({ $visible }) => ($visible ? "0.35s ease" : "0s")};
 `
@@ -1079,11 +1544,32 @@ const BookHost = styled.div`
   .stf__block {
     perspective: 8000px !important;
   }
+
+  /*
+   * Never taller than the screen. StPageFlip sizes the wrapper from its width
+   * (padding-bottom); here it gets the same shape but a capped height, leaving
+   * room for the covers and the Previous / Next buttons. The pages then shrink
+   * to that height, keeping their shape, and stay centered.
+   */
+  .stf__wrapper {
+    padding-bottom: 0 !important;
+    aspect-ratio: ${FLIP_SETTINGS.width * 2} / ${FLIP_SETTINGS.height};
+    max-height: max(20rem, calc(100svh - 10rem));
+  }
+
+  .stf__wrapper.--portrait {
+    aspect-ratio: ${FLIP_SETTINGS.width} / ${FLIP_SETTINGS.height};
+  }
 `
 
 const SketchPage = styled.div`
-  background: ${({ $hard }) => ($hard ? COVER_BOARD : PAPER)};
-  border: 1px solid
+  --paper-x: ${({ $paperX }) => $paperX || PAPER_LEFT};
+  &.--left { --paper-x: ${PAPER_LEFT}; }
+  &.--right { --paper-x: ${PAPER_RIGHT}; }
+  /* Page text and padding scale with the page (cqw), which shrinks on short screens. */
+  container-type: inline-size;
+  background: ${({ $hard, $artwork }) => ($artwork ? "transparent" : $hard ? COVER_BOARD : PAPER)};
+  border: ${({ $artwork }) => $artwork ? "0" : "1px"} solid
     ${({ $hard }) =>
       $hard ? "rgba(34, 34, 34, 0.22)" : "rgba(34, 34, 34, 0.08)"};
   box-sizing: border-box;
@@ -1094,13 +1580,18 @@ const SketchPageInner = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: ${({ $variant }) =>
-    $variant === "cover" || $variant === "back" ? "center" : "flex-start"};
+    $variant === "cover" || $variant === "back" || $variant === "image"
+      ? "center"
+      : "flex-start"};
   align-items: ${({ $variant }) =>
     $variant === "cover" || $variant === "back" ? "center" : "flex-start"};
   text-align: ${({ $variant }) =>
     $variant === "cover" || $variant === "back" ? "center" : "left"};
   box-sizing: border-box;
-  padding: clamp(1.25rem, 4vw, 2rem);
+  padding: clamp(0.85rem, 7.4cqw, 2rem);
+  /* Never scrolls: text that wouldn't fit runs on to more pages (see the
+     layout effect that measures them). */
+  overflow: hidden;
   height: 100%;
   min-height: 100%;
   width: 100%;
@@ -1119,10 +1610,20 @@ const SketchPageInner = styled.div`
       ${COVER_BOARD};
   `
       : `
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent 55%),
-      ${PAPER};
+    background-color: ${PAPER};
+    background-image: url("${PAPER_ART}");
+    background-repeat: no-repeat;
+    background-size: ${2360 / 545 * 100}% ${1640 / 1055 * 100}%;
+    background-position: var(--paper-x, ${PAPER_LEFT}) ${433 / (1640 - 1055) * 100}%;
   `}
+`
+
+const CoverArtwork = styled.div`
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  user-select: none;
 `
 
 const CoverPlate = styled.div`
@@ -1146,31 +1647,53 @@ const SketchCoverMark = styled.span`
   opacity: 0.45;
 `
 
+/**
+ * Doubled class (&&): the article's own h3 / p rules (a 4rem top margin, a
+ * fixed size) would otherwise reach into the pages and push them down.
+ */
 const SketchTitle = styled.h3`
-  font-family: var(--font-display);
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 var(--space-sm);
-  line-height: 1.2;
+  && {
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 6.5cqw, 1.75rem);
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--space-sm);
+    line-height: 1.2;
+  }
+`
+
+const SketchLabel = styled.p`
+  && {
+    margin: 0 0 var(--space-sm);
+    color: var(--label-color);
+    font-family: var(--font-body);
+    font-size: clamp(0.68rem, 3.1cqw, 0.82rem);
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
 `
 
 const SketchSubtitle = styled.p`
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-  margin: 0 0 var(--space-md);
+  && {
+    font-family: var(--font-body);
+    font-size: clamp(0.7rem, 3cqw, 0.8rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin: 0 0 var(--space-md);
+  }
 `
 
 const SketchBody = styled.p`
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: var(--color-muted);
-  margin: 0;
-  max-width: 36rem;
+  && {
+    font-family: var(--font-body);
+    font-size: clamp(0.75rem, 3.5cqw, 0.95rem);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 36rem;
+  }
 `
 
 const TocList = styled.ul`
@@ -1230,14 +1753,14 @@ const TocText = styled.span`
 
 const TocLabel = styled.span`
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: clamp(0.78rem, 3.3cqw, 0.9rem);
   font-weight: 700;
   color: var(--color-text);
 `
 
 const TocProgress = styled.span`
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
@@ -1271,29 +1794,126 @@ const SketchPlaceholderLabel = styled.span`
   color: var(--color-muted);
 `
 
+/** Takes the room left under the text; a tall image shrinks to fit the page. */
+const GalleryWrap = styled.figure`
+  margin: var(--space-sm) 0 0;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+`
+
+const GalleryGrid = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 0.5rem;
+`
+
+/** Pictures that enlarge when clicked (zoomProps). */
+const zoomable = `
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent, #6b7fe6);
+    outline-offset: 2px;
+  }
+`
+
+const GalleryImage = styled.img`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** A gallery image's `crop`, fitted in its cell like the others. */
+const GalleryCrop = styled.svg`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** Centred on the page (it's narrower than a wide page). */
 const SketchFigure = styled.figure`
-  margin: var(--space-md) 0 0;
+  margin: ${({ $alone }) => ($alone ? "0" : "var(--space-md) 0 0")};
+  align-self: center;
   width: 100%;
   max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
 `
 
 const SketchImage = styled.img`
+  ${zoomable}
   display: block;
   width: 100%;
   height: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center top;
   border-radius: 4px;
-  border: 1px solid rgba(34, 34, 34, 0.12);
+  /* Follows the picture rather than its box, which is wider once it shrinks. */
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
 `
 
 const SketchCaption = styled.figcaption`
+  flex-shrink: 0;
   margin-top: 0.4rem;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
 
+/** Off-screen copies of the pages, laid out only to be measured. */
+const MeasureLayer = styled.div`
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+
+  > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+`
+
+/** Same side padding as BookStage, so the controls and notes below center on the book. */
+const underBook = `
+  box-sizing: border-box;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+
+  /* Doubled class: beats the article's \`p { max-width: 48rem }\`. */
+  && {
+    max-width: none;
+  }
+
+  @media (max-width: 720px) {
+    padding-left: 2.25rem;
+    padding-right: 7.5rem;
+  }
+`
+
 const Controls = styled.div`
+  ${underBook}
   position: relative;
   z-index: 6;
   display: flex;
@@ -1342,6 +1962,7 @@ const PageIndicator = styled.p`
 `
 
 const Hint = styled.p`
+  ${underBook}
   position: relative;
   z-index: 6;
   font-size: 0.75rem;
@@ -1351,6 +1972,7 @@ const Hint = styled.p`
 `
 
 const Attribution = styled.p`
+  ${underBook}
   font-size: 0.7rem;
   color: var(--color-muted);
   text-align: center;
@@ -1371,8 +1993,47 @@ const ReducedMotionList = styled.div`
 `
 
 const ReducedMotionPage = styled.div`
+  --paper-x: ${({ $paperX }) => $paperX || PAPER_LEFT};
+  ${({ $variant }) => ($variant === "cover" || $variant === "back") && `aspect-ratio: ${FLIP_SETTINGS.width} / ${FLIP_SETTINGS.height};`}
   border: 1px solid var(--color-border);
+  ${({ $variant }) => ($variant === "cover" || $variant === "back") && "border: 0; border-radius: 0;"}
   border-radius: 6px;
   overflow: hidden;
   min-height: 10rem;
+`
+
+const ZoomBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px);
+  background: rgba(28, 20, 14, 0.82);
+  cursor: zoom-out;
+`
+
+const ZoomFigure = styled.figure`
+  position: relative;
+  margin: 0;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  cursor: default;
+`
+
+/** As big as the screen allows, on the sketchbook's paper. */
+const ZoomImage = styled.img`
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(calc(100vw - 2 * clamp(16px, 4vw, 48px)), 1400px);
+  max-height: calc(100vh - 2 * clamp(28px, 5vw, 56px));
+  object-fit: contain;
+  border-radius: 6px;
+  background: ${PAPER};
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+`
+
+const ZoomClose = styled(PopupClose)`
+  top: -0.8em;
+  right: -0.8em;
 `

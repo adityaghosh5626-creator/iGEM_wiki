@@ -1,0 +1,317 @@
+### Main Function(s) + Requirements
+
+<br />
+Some microorganisms need temperatures above the ambient to survive and function.
+The temperature control system regulates the temperature of the bioreactor to
+allow these microorganisms to thrive. More specifically, the requirements for
+this subsystem include:
+<br />
+
+| Requirement                                                                                                                                                                                  | Priority | Why?                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Minimize temperature fluctuations once target is reached**<br /><br />Metrics: ±1.5°C total accuracy (±1°C control accuracy and ±0.5°C temperature probe accuracy)                         | High     | Temperature fluctuations can reduce bacterial vitality and affect experiment results.<br />Extreme overheating can denature proteins and kill bacteria.                                                                                                                                    |
+| **Minimize time to achieve temperature** <br /><br />Metrics: Raises temperature from 25°C to 37°C in 1 hour <br /> <br />Constraints: N/A                                                   | Medium   | Criteria is based on what we saw while building a similar device, the pioreactor. <br /> <br />Additionally out of consideration for user-friendliness, we want to make sure that the bioreactor is as efficient as possible and can hit target temperatures asap to expedite experiments. |
+| **Maximise heat range** <br /><br /> Metrics & Criteria: minimum range is at least 20-40C <br /><br />Constraints: Temperature range cannot melt surrounding components (estimate to be 70C) | Low      | The bioreactor should be able to characterise enzyme performance at a range of different temperatures because in the real world, climates are highly variable. Ideally, 70°C should be achieved to simulate extreme environments.                                                          |
+
+<br />
+To achieve this, we selected a feedback loop that consists of a heater, a
+temperature probe, and a switch, where the heater is switched on and off by the
+microcontroller based on probe feedback to maintain a target temperature.
+
+### BoM
+
+<br />
+
+| Component                    | Purpose                                              | Cost (USD) | Sourcing      |
+| ---------------------------- | ---------------------------------------------------- | ---------- | ------------- |
+| FIT0845                      | Heater                                               | 3.66       | Digikey       |
+| DFR0198                      | Temperature sensing                                  | 10.78      | Digikey       |
+| SRSZ-05VDC-SH                | Relay                                                | 4.91       | Home Hardware |
+| Adafruit 1467                | Thermal interface                                    | 1.52       | Digikey       |
+| Aluminum foil                | Reduce radiative heat loss                           | 0.06       | Dollarama     |
+| Heater mount (Onyx material) | Isolate heater from temperature-sensitive components | 1.45       | 3D printed    |
+
+<br />
+**The DFRobot positive temperature coefficient (PTC) heater** as the heater,
+chosen because:
+
+- Self-regulates heater temperature at 100°C without external components
+- Relatively low cost and is off-the-shelf
+- 5W heater power provides decent power to a small reactor
+- 5V operating voltage integrates well into the rest of the 5V system
+
+<br />
+**The DFRobot waterproof thermocouple** as the temperature probe, chosen because
+
+- Sensor is waterproof and can directly measure the temperature of liquid inside
+  the reactor
+- Can withstand 120°C, allowing autoclaving between runs
+- Has a digital interface, allowing easier and more reliable temperature readings
+- Is off-the-shelf
+
+<br />
+**A mechanical relay** as the switch, chosen because:
+
+- Capable of 3A current
+- Gives audible feedback during switching, good for testing
+  (Will be replaced by a MOSFET later)
+
+### Build, Assembly, Code
+
+#### Physical design
+
+Physically, the system is designed to be compact and modular, as illustrated by the following images.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-1.avif"
+    alt="Physical design diagram"
+    caption=" "
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-2.avif"
+    alt="Physical design photo"
+    caption=" "
+  />
+</ImageGrid>
+
+The heater is placed below the vial and provides heat through a layer of thermal interface material. It is mounted above the fan (which drives the stir bar), on top of a stand made from heat resistant Onyx material. The stand both protects the fan from the high temperature of the heater and acts as an insulator to reduce heat loss from the underside of the heater.
+
+<br />
+The thermocouple is mounted on the cap of the vial, with the probe section
+submerged in liquid to measure temperature. For the prototype, this is achieved
+through the use of a rubber band, but in later versions a custom cap will be
+created to mount the sensor.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-3.avif"
+  alt="Thermocouple in vail"
+  caption=" "
+  width={200}
+/>
+
+To reduce heat loss, the shell outside the vial is printed with low infill (5%) to help act as an insulator. It is also lined on the inside with a layer of aluminum foil to further reduce radiative heat loss.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-4.avif"
+  alt="Reduce heat lost"
+  caption=" "
+  width={200}
+/>
+
+#### Electrical design
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-5.avif"
+  alt="Circuit diagram"
+  caption=" "
+/>
+
+This circuit reads data from the temperature probe and controls the heater via a relay. The heater and temperature probe draws power directly from the USB-C power supply.
+
+#### Software
+
+The control loop uses the Arduino PID library, configured to work for a relay. Instead of driving PWM, the PID output drives the heater active for a certain percentage of each 5-second window, allowing the relay enough time to switch on and off.
+
+Temperature readings are done through the probe’s 1-Wire communication protocol, using the DS18B20 Arduino library.
+
+Complete software:
+(Will be pasted in once I figure out how to put code here)
+
+### Design of Experiments (DoE)
+
+#### Temperature sensor testing
+
+The accuracy of the temperature sensor is critical to the accuracy of the entire
+temperature control system. The thermocouple was tested by comparing its
+readings with known temperatures.
+
+Procedure:
+
+1.  Connect the temperature sensor to a microcontroller and write code to read data. Then, if a reliable thermometer is available (borrow from labs etc), compare temperature sensor readings with the thermometer in different conditions, including:
+
+        - Indoors
+        - Outdoors
+        - In contact with glass of cold or hot water
+        - In the cold room or fridge
+        - Near or in contact with the stove or hot food
+
+    If such thermometers are not available, use environments with known temperatures, including:
+
+        - Indoors with climate controls that have temperature readings
+        - In fridges that have temperature readings
+        - Near ice or boiling water
+        - In the cold room
+
+    In each case, calibrate the sensor if applicable.
+
+<br />
+#### Heater testing
+
+The power of the heater, combined with the thermal characteristics of the entire
+bioreactor, decides the maximum reachable temperature and the speed at which the
+liquid heats. This experiment tests for both variables under different water
+levels.
+
+<br />
+Procedure:
+
+    1. Fill the vial with specified amount of water (21°C), and place the vial into the bioreactor
+    2. Turn on the heater
+    3. Record the temperature reading every minute for 60 minutes
+    4. Repeat the experiment with a different water level
+
+<br />
+#### Control loop testing
+
+This test measures the control accuracy of the control loop based on the Arduino PID library.
+
+<br />
+Procedure:
+
+    1. Fill the vial with specified amount of water (21°C), and place the vial into the bioreactor
+    2. Turn on the control loop and set a target temperature of 35°C
+    3. Record the maximum temperature and minimum temperature (after reaching the target at least once) in 60 minutes
+    4. Repeat the experiment with a different water level
+
+### Metrics and Experimental Data
+
+Numerical proof of how the subsystem meets the required goals, any further data analysis, sources of error analysis, any significant figures?
+
+#### Heater Testing
+
+The experiment was performed with 10mL, 20mL, and 30mL water. The raw data was plotted against time and fitted to an exponential heating model (T = a\*exp(-bt) + c). Key parameters are tabulated below, with raw data available at [link].
+
+<DataTable caption="Heater testing results and exponential heating model parameters">
+  <table>
+    <thead>
+      <tr>
+        <th rowSpan={2} scope="col">
+          Water volume (mL)
+        </th>
+        <th rowSpan={2} scope="col">
+          Maximum Temperature in 1hr (°C)
+        </th>
+        <th rowSpan={2} scope="col">
+          Time to 37°C (min)
+        </th>
+        <th colSpan={3} scope="colgroup">
+          Parameters in exponential heating model
+        </th>
+      </tr>
+      <tr>
+        <th scope="col">a (°C)</th>
+        <th scope="col">
+          b (min<sup>−1</sup>)
+        </th>
+        <th scope="col">c (°C)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>10</td>
+        <td>62.25</td>
+        <td>7.56</td>
+        <td>-42.04</td>
+        <td>-0.06065</td>
+        <td>63.57</td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td>59.83</td>
+        <td>10.25</td>
+        <td>-34.59</td>
+        <td>-0.04799</td>
+        <td>62.14</td>
+      </tr>
+      <tr>
+        <td>30</td>
+        <td>54.44</td>
+        <td>14.79</td>
+        <td>-32.41</td>
+        <td>-0.03806</td>
+        <td>58.25</td>
+      </tr>
+    </tbody>
+  </table>
+</DataTable>
+
+Note #1: Since some experiments were started when the water was above 21°C, the exponential fit was extrapolated to find the time where T=21°C, and a corresponding offset in time was applied when finding the max. temp. in 1h and the time to 37°C. Offset values: 0 min for 10mL, -3.6 min for 20mL, and -3.7 min for 30mL.
+
+<br />
+Note #2: The parameter c represents the theoretical maximum temperature
+attainable at infinite time.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/tempv1-6.avif"
+  alt="Heating test graph"
+  caption="x: time (min), y: temperature (°C); red: 10mL, blue: 20mL, green: 30mL"
+/>
+
+#### Control Loop Testing
+
+The experiment was performed with 15mL and 30mL water. Since temperature is sampled up to 3Hz in this experiment, raw data and plots were not preserved. Instead, a script was used to automatically log the highest and lowest temperature after achieving the target temperature.
+
+<DataTable caption="Control accuracy after achieving 35°C">
+  <table>
+    <thead>
+      <tr>
+        <th rowSpan={2} scope="col">
+          Water volume (mL)
+        </th>
+        <th colSpan={2} scope="colgroup">
+          After achieving 35°C
+        </th>
+        <th rowSpan={2} scope="col">
+          Control accuracy (°C)
+        </th>
+        <th rowSpan={2} scope="col">
+          Probe accuracy (°C)
+        </th>
+        <th rowSpan={2} scope="col">
+          Total accuracy (°C)
+        </th>
+      </tr>
+      <tr>
+        <th scope="col">Lowest temperature (°C)</th>
+        <th scope="col">Highest temperature (°C)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>10</td>
+        <td></td>
+        <td></td>
+        <td>-0.06065</td>
+        <td
+          rowSpan={3}
+          style={{ verticalAlign: "middle", textAlign: "center" }}
+        >
+          ±0.5
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td></td>
+        <td></td>
+        <td>-0.04799</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>30</td>
+        <td></td>
+        <td></td>
+        <td>-0.03806</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</DataTable>
+
+### Next Steps
+
+In the next version, the control loop will be improved to allow less temperature
+fluctuations. In future versions (beyond V2), a MOSFET will replace the relay to
+allow silent operation, combined with an LED to indicate when the heater is
+active.
