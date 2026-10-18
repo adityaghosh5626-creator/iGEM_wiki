@@ -128,6 +128,9 @@ function SketchZoom({ zoom, onClose }) {
 /**
  * A page's `images` ({ src, alt }) in a grid that fills what's left of the
  * page, `cols` across (up to three by default), each kept whole; one caption.
+ * An image with `crop` [x0, y0, x1, y1] (of its `size` [w, h]) shows just
+ * that part, e.g. one piece of a tall picture split side by side; it still
+ * enlarges whole.
  */
 function GalleryFigure({ page }) {
   const n = page.images.length
@@ -140,15 +143,36 @@ function GalleryFigure({ page }) {
           gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
         }}
       >
-        {page.images.map((image) => (
-          <GalleryImage
-            key={image.src}
-            src={image.src}
-            alt={image.alt || ""}
-            loading="lazy"
-            {...zoomProps(image.src, image.alt)}
-          />
-        ))}
+        {page.images.map((image) =>
+          image.crop ? (
+            <GalleryCrop
+              key={`${image.src}:${image.crop}`}
+              viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              preserveAspectRatio="xMidYMin meet"
+              {...zoomProps(image.src, image.alt)}
+            >
+              {/* Its own viewport clips the picture to the crop (the
+                  outer one shows past it where the cell is roomier). */}
+              <svg
+                x={image.crop[0]}
+                y={image.crop[1]}
+                width={image.crop[2] - image.crop[0]}
+                height={image.crop[3] - image.crop[1]}
+                viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              >
+                <image href={image.src} width={image.size[0]} height={image.size[1]} />
+              </svg>
+            </GalleryCrop>
+          ) : (
+            <GalleryImage
+              key={image.src}
+              src={image.src}
+              alt={image.alt || ""}
+              loading="lazy"
+              {...zoomProps(image.src, image.alt)}
+            />
+          ),
+        )}
       </GalleryGrid>
       {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
     </GalleryWrap>
@@ -1807,8 +1831,20 @@ const GalleryImage = styled.img`
   filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
 `
 
+/** A gallery image's `crop`, fitted in its cell like the others. */
+const GalleryCrop = styled.svg`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** Centred on the page (it's narrower than a wide page). */
 const SketchFigure = styled.figure`
   margin: ${({ $alone }) => ($alone ? "0" : "var(--space-md) 0 0")};
+  align-self: center;
   width: 100%;
   max-width: 28rem;
   display: flex;
@@ -1825,7 +1861,7 @@ const SketchImage = styled.img`
   flex: 0 1 auto;
   min-height: 0;
   object-fit: contain;
-  object-position: left top;
+  object-position: center top;
   border-radius: 4px;
   /* Follows the picture rather than its box, which is wider once it shrinks. */
   filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));

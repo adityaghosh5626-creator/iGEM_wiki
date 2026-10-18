@@ -41,13 +41,17 @@ const POUR = { box: [425, 1850, 645, 2803], at: [0, -95] }
 const POUR_START_ROW = 2005
 /**
  * The bench's back edge (plate row): the axolotl is behind it, all but its
- * paws (and gill tips) over it, in these columns (canvas x).
+ * paws (and gill tips) over it, in these columns (canvas x) [left, right].
+ * A third column is where the right side starts on the edge, slanting in to
+ * `right` over PAW_SLANT_ROWS: round the magnifying glass's handle, which
+ * comes down over the edge right beside its body.
  */
 const BENCH_BACK_ROW = 1640
 const AXOLOTL_PAWS = [
-  [160, 264],
+  [160, 272, 276],
   [403, 510],
 ]
+const PAW_SLANT_ROWS = 10
 /** How far (plate px) the axolotl sinks behind the bench when it's hidden. */
 const AXOLOTL_SINK = 260
 
@@ -56,12 +60,15 @@ const axolotlClip = down => {
   const [x0, y0, x1, y1] = AXOLOTL.box
   const pct = (v, from, to) =>
     `${(((v - from) / (to - from)) * 100).toFixed(2)}%`
-  const edge = pct(BENCH_BACK_ROW - AXOLOTL.at[1], y0, y1)
+  const edgeRow = BENCH_BACK_ROW - AXOLOTL.at[1]
+  const edge = pct(edgeRow, y0, y1)
   const foot = `calc(${edge} + ${down} * (100% - ${edge}))`
+  const slant = `calc(${edge} + ${down} * (${pct(edgeRow + PAW_SLANT_ROWS, y0, y1)} - ${edge}))`
   const paws = AXOLOTL_PAWS.slice()
     .reverse()
-    .flatMap(([a, b]) => [
-      `${pct(b, x0, x1)} ${edge}`,
+    .flatMap(([a, b, top = b]) => [
+      `${pct(top, x0, x1)} ${edge}`,
+      `${pct(b, x0, x1)} ${slant}`,
       `${pct(b, x0, x1)} ${foot}`,
       `${pct(a, x0, x1)} ${foot}`,
       `${pct(a, x0, x1)} ${edge}`,

@@ -449,6 +449,8 @@ export const HARDWARE_SCENE = {
       name: "turtle-1",
       box: [76, 1815, 426, 2392],
       hit: [125, 1865, 315, 2150],
+      // Just it and its halo shiver: glints on the pipes stay put.
+      jolt: [118, 1858, 388, 2166],
       zap: { name: "zapzap", box: [122, 1830, 352, 2133] },
     },
     // The turtle lying in the pool does the same with its own lightning.
@@ -557,7 +559,8 @@ export const WET_LAB_SCENE = {
       name: "11-swimming-right-glow",
       from: [829, 1480, 1110, 1720],
       box: [829, 640, 1110, 880],
-      peek: { plain: "10-swimming-right", dx: -58 },
+      // Its glow runs off the page's edge: faded there, as it slides in.
+      peek: { plain: "10-swimming-right", dx: -58, fadeX: [1088, 1110] },
     },
     // This one swims a lap: out the left edge, back in at the right edge to
     // peek, then left again behind the text box to its spot. Drawn lower
@@ -580,14 +583,16 @@ export const WET_LAB_SCENE = {
     indicator: { fill: "#f7e36b", box: [135, 456, 289, 517] },
     highlightColor: "#f7e36b",
     /**
-     * A homepage bubble rides on its left end, standing in until one is
-     * drawn; a soft glow keeps it from getting lost against the water.
+     * A bubble rides on its left end (painted on its own 946×4000 canvas); a
+     * soft glow keeps it from getting lost against the water.
      */
     indicatorIcon: {
-      name: "https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble3.avif",
-      box: [92, 461, 144, 508],
-      canvas: { size: [68, 61], crop: [0, 0, 68, 61] },
+      name: "bubble",
+      box: [89, 457, 147, 512],
+      canvas: { size: [946, 4000], crop: [458, 3090, 529, 3157] },
       glow: "rgba(255, 255, 255, 0.9)",
+      /** A little bigger than the other pages' icons in the labelled menu. */
+      railScale: 1.2,
     },
     linkColor: "#0b4a57",
     activeLinkColor: "#0b4a57",
@@ -759,7 +764,8 @@ export const CONTRIBUTION_SCENE = {
 
 /**
  * Attributions: a sunset over the Toronto skyline. No section list yet; the
- * box ends above the buildings, which (with the birds) are the ending.
+ * box runs down over the empty sunset to the dome's top, and the dome and the
+ * buildings round it (with the birds) are the ending.
  */
 export const ATTRIBUTIONS_SCENE = {
   header: "Attributions",
@@ -782,10 +788,10 @@ export const ATTRIBUTIONS_SCENE = {
   /** Not painted: a flat, faintly warm box on the sunset. */
   text: {
     fill: "#fffbf7",
-    box: [140, 412, 970, 3400],
+    box: [140, 412, 970, 3720],
     minH: 2000,
   },
-  textEndY: 3400,
+  textEndY: 3720,
 }
 
 /** Finance: one painting of snowy peaks with a mine cart of gold coins. */
@@ -837,8 +843,19 @@ export const SAFETY_SCENE = {
   accent: "#a8483a",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
-    // Strung either side of the box (the right-hand strands run behind it).
-    { name: "caution-tape", box: [0, 1664, 1072, 3712] },
+    // Strung either side of the box (the right-hand strands run behind it):
+    // each hanging strand sways in the wind from where it's tied, a little
+    // out of step with the others.
+    ...[
+      [[0, 1716, 120, 2300], 1.2, 5200, 0],
+      [[968, 1692, 1076, 1848], 3, 3900, 0.4],
+      [[976, 2988, 1060, 3708], 1, 4600, 0.7],
+    ].map(([box, deg, ms, at]) => ({
+      name: `caution-tape-${box[1]}`,
+      src: "caution-tape",
+      box,
+      sway: { deg, ms, at },
+    })),
   ],
   side: null,
   /** No menu highlight to match: the caution tape. */
@@ -952,8 +969,9 @@ export const OUTREACH_SCENE = {
       bonk: { head: [178, 3562], acorn: OUTREACH_ACORN },
     },
     // The green leaves on the right: some come out from behind the box and
-    // blow off the window, some cross over it, under its text (and the
-    // sketchbook), from one side of the window to the other.
+    // blow off the window, some cross from one side of the window to the
+    // other (the small ones over the box, under its text and the sketchbook;
+    // the big ones behind it, so they don't sweep over the section menu).
     ...[
       [[996, 3162, 1108, 3278], [-133, -20], [124, 80], 4500, 0],
       [[1050, 2970, 1108, 3100], [-133, 0], [70, 60], 4000, 0.5],
@@ -966,16 +984,16 @@ export const OUTREACH_SCENE = {
       wind: { from: a, to: b, ms, at, spin: 90 },
     })),
     ...[
-      [[754, 3162, 974, 3334], [-994, -40], [371, 60], 22000, 0],
-      [[730, 3410, 830, 3500], [-850, -30], [395, 50], 20000, 0.5],
-      [[676, 3340, 780, 3390], [-800, -20], [449, 70], 21000, 0.25],
-      [[586, 3402, 662, 3446], [-682, -30], [539, 40], 19000, 0.75],
-    ].map(([box, a, b, ms, at]) => ({
+      [[754, 3162, 974, 3334], [-994, -40], [371, 60], 22000, 0, false],
+      [[730, 3410, 830, 3500], [-850, -30], [395, 50], 20000, 0.5, false],
+      [[676, 3340, 780, 3390], [-800, -20], [449, 70], 21000, 0.25, true],
+      [[586, 3402, 662, 3446], [-682, -30], [539, 40], 19000, 0.75, true],
+    ].map(([box, a, b, ms, at, over]) => ({
       name: `leaf-2-${box[0]}-${box[1]}`,
       src: "leaf-2",
       box,
       wind: { from: a, to: b, ms, at, spin: 200 },
-      front: "bottom",
+      ...(over && { front: "bottom" }),
     })),
     // Hugging the box's right edge (its paw and head on it), a third
     // smaller than painted; it slides down with the reader from Promo Video

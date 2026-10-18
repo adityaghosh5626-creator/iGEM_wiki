@@ -11,7 +11,7 @@ import { WikiTopBar, WIKI_TOP_BAR_Z_INDEX } from "./WikiTopBar.js"
 import { WaterfallSideText, PETASE_EXPLANATION } from "./WaterfallSideText.js"
 import { SwipeInBox } from "./SwipeInBox.js"
 import { ExplainTerm } from "./ExplainTermPopover.js"
-import { HomePlaza, PetamonProvider } from "./HomePlaza.js"
+import { HomePlaza, PetamonProvider, usePetamonsMet } from "./HomePlaza.js"
 import EndingPetamonBottle from "./EndingPetamonBottle.js"
 import { HomeAutoplay } from "./HomeAutoplay.js"
 import { LabConstellation, WindowSky } from "./LabConstellation.js"
@@ -92,6 +92,12 @@ const ASSETS = {
   /** Turtle petamon on the front canvas (left edge, under the waterfall). */
   turtle:
     "https://static.igem.wiki/teams/6187/wiki/homepage-components/turtle.avif",
+  /**
+   * The same turtle upscaled 4× (Real-ESRGAN anime), cut to TURTLE_HQ_CROP:
+   * sharp at his size on screen. Until it's uploaded, the plate's shows.
+   */
+  turtleHq:
+    "https://static.igem.wiki/teams/6187/wiki/homepage-components/turtle-hq.avif",
   /** Foreground bushes — highest scenery layer (same 563×4000 canvas as front). */
   bush: "https://static.igem.wiki/teams/6187/wiki/homepage-components/wiki-front-page-bush.avif",
   /** Waterfall / sky section bottle (current homepage stage). */
@@ -123,6 +129,8 @@ const FRONT_ART_WIDTH = 563
 const BACK_CLIP_ASPECT = "1440 / 3239"
 /** Painted turtle box on the front canvas (px), padded. */
 const TURTLE_CROP = { x: 0, y: 1124, w: 130, h: 100 }
+/** The front canvas box (px) ASSETS.turtleHq covers. */
+const TURTLE_HQ_CROP = { x: 0, y: 1126, w: 132, h: 110 }
 /** Turtle size relative to how he's painted. */
 const TURTLE_SCALE = 0.8
 /** Turtle surfaces once his spot rises above this share of the view height. */
@@ -350,13 +358,14 @@ const SECTION4_STORY = [
     phoneAt: [SECTION4_PHONE_STORY_ROW, 4, 60],
     text: "We also designed a novel algorithm to optimize the DNA library to order to capture more constellations of proteins.",
   },
-  // The Wet Lab shelf: on the wall right of it, centred on the bench (`mid`:
+  // The Wet Lab shelf: on the wall right of it, centred between the top of
+  // the dark window behind the axolotl and the bench's bottom edge (`mid`:
   // the row is their middle), and under it on phones.
   {
     hold: 2,
     in: 0.02,
     out: [2, 0.3],
-    at: [1785, 69.5, 28],
+    at: [1695, 69.5, 28],
     mid: true,
     phoneAt: [2040, 4, 92],
     text: (
@@ -373,7 +382,7 @@ const SECTION4_STORY = [
     hold: 2,
     in: 0.32,
     out: [2, 0.58],
-    at: [1785, 69.5, 28],
+    at: [1695, 69.5, 28],
     mid: true,
     phoneAt: [2040, 4, 92],
     text: "In both, copper is embedded in PET and when an enzyme degrades the plastic, copper is released and switches on a promoter.",
@@ -382,7 +391,7 @@ const SECTION4_STORY = [
     hold: 2,
     in: 0.6,
     out: [3, 0],
-    at: [1785, 69.5, 28],
+    at: [1695, 69.5, 28],
     mid: true,
     phoneAt: [2040, 4, 92],
     text: "In the biosensor, that makes cells glow green and in the selection, it turns on antibiotic resistance, so only cells with a working enzyme grow into colonies.",
@@ -1009,7 +1018,7 @@ const LANDMARK_NUDGE_UP = 0.07
  */
 const BOTTLE_TOP_FRAC = 0.42 - LANDMARK_NUDGE_UP
 
-/** Pixels scroll must move back above the captured TP1 scrollY before bottle unpins. */
+/** How far (px) below the middle of the view the pinned bottle's spot must be (scrolled back up) before it unpins. */
 const BOTTLE_PIN_SCROLL_UP_LEAVE = 40
 
 /** FLIP duration (ms) for bottle pick-up / put-down when toggling sticky. */
@@ -1211,7 +1220,10 @@ const CRABS = [
     originY: 10.4,
     flapMs: 860,
     delayMs: 0,
-    /** Bobbing "!" above it (no message) so people notice the crabs react. */
+    /**
+     * Bobbing "!" above it (no message) so people notice the crabs react,
+     * till it's first scuttled (remembered like the petamons met).
+     */
     bang: true,
   },
   {
@@ -1261,7 +1273,8 @@ const SECTION3_ANIMALS = [
     static: true,
     src: `${SECTION3_CDN}/section-3-background-axolotl.avif`,
     xPct: 0,
-    yPct: 10,
+    // Lower than the others: down in the bushes rather than floating mid-air.
+    yPct: 13,
     revealOnArrive: true,
   },
   {
@@ -1453,15 +1466,24 @@ const CRAB_SCUTTLE_MS = 480
 /**
  * Hover scuttle: first enter sidesteps left, the next right, then left again.
  * Rotation is about the plate normal (CSS rotate / z) from +θ to −θ while moving.
+ * With `metId`, scuttling it counts as meeting it (its "!" goes, see CrabBang).
  */
-function CrabScuttle({ originX = 50, originY = 50, label = "Crab", children }) {
+function CrabScuttle({
+  originX = 50,
+  originY = 50,
+  label = "Crab",
+  metId,
+  children,
+}) {
   const [homeX, setHomeX] = useState(0)
   const [dir, setDir] = useState(-1)
   const [playing, setPlaying] = useState(false)
   const busyRef = useRef(false)
+  const { meet } = usePetamonsMet()
 
   const onEnter = () => {
     if (busyRef.current) return
+    if (metId) meet(metId)
     const reduce =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -1508,6 +1530,12 @@ function CrabScuttle({ originX = 50, originY = 50, label = "Crab", children }) {
   )
 }
 
+/** Its children (a "!") until petamon `id` has been met. */
+function UntilMet({ id, children }) {
+  const { met } = usePetamonsMet()
+  return met && !met.has(id) ? children : null
+}
+
 /**
  * Full-page wiki front compositing: Toronto parallax behind one tall front plate.
  *
@@ -1522,7 +1550,6 @@ export function HomeScrollPrototype() {
   const bottleTouchRef = useRef(null)
   const bottleFlipRef = useRef(null)
   const bottleTouchPinnedRef = useRef(false)
-  const bottlePinEnterScrollYRef = useRef(null)
   const flipUnpinFirstRef = useRef(null)
   const flipPinFirstRef = useRef(null)
   const flipCleanupRef = useRef(null)
@@ -1576,6 +1603,8 @@ export function HomeScrollPrototype() {
   const conditionRowRef = useRef(null)
   const [conditionShine, setConditionShine] = useState(false)
   const [turtleOut, setTurtleOut] = useState(false)
+  const turtleHqRef = useRef(null)
+  const [turtleHqReady, setTurtleHqReady] = useState(false)
   const endingHoldTrackRef = useRef(null)
   const endingHoldStickyRef = useRef(null)
   const endingHoldSpacerRef = useRef(null)
@@ -1677,6 +1706,12 @@ export function HomeScrollPrototype() {
     )
     io.observe(el)
     return () => io.disconnect()
+  }, [])
+
+  // The sharp turtle may have loaded before hydration (its onLoad missed).
+  useEffect(() => {
+    const img = turtleHqRef.current
+    if (img?.complete && img.naturalWidth > 0) setTurtleHqReady(true)
   }, [])
 
   // Turtle surfaces once his spot is well into view and stays out (floating)
@@ -1863,7 +1898,6 @@ export function HomeScrollPrototype() {
     skyBottleHiddenRef.current = false
     splashPlayedRef.current = false
     bottleTouchPinnedRef.current = false
-    bottlePinEnterScrollYRef.current = null
     applyBottleSinkVisual(1)
   }, [applyBottleSinkVisual])
 
@@ -1927,7 +1961,6 @@ export function HomeScrollPrototype() {
         else flipUnpinFirstRef.current = null
         hideSkyBottle()
         bottleTouchPinnedRef.current = false
-        bottlePinEnterScrollYRef.current = null
         setBottleTouchPinned(false)
         // Fall through — still run parallax / shore rematch this frame.
       }
@@ -2194,8 +2227,18 @@ export function HomeScrollPrototype() {
       }
 
       if (bottleTouchPinnedRef.current) {
-        const pin0 = bottlePinEnterScrollYRef.current
-        if (pin0 != null && y < pin0 - BOTTLE_PIN_SCROLL_UP_LEAVE) {
+        // Back above where it pins: judged by where its spot is on the page
+        // now, not by the scroll it pinned at. That goes stale when the page
+        // grows after (as its art loads, coming back to it), which left it
+        // pinned mid-screen over the sky at the top.
+        const slice = bottleSpot?.parentElement
+        const sliceRect = slice?.getBoundingClientRect()
+        const homeMidY = sliceRect
+          ? sliceRect.top +
+            BOTTLE_TOP_FRAC * sliceRect.height +
+            bottleSpot.offsetHeight / 2
+          : -Infinity
+        if (homeMidY > window.innerHeight / 2 + BOTTLE_PIN_SCROLL_UP_LEAVE) {
           const flip = bottleFlipRef.current
           if (flip) {
             flipUnpinFirstRef.current = flip.getBoundingClientRect()
@@ -2204,7 +2247,6 @@ export function HomeScrollPrototype() {
           }
           restoreSkyBottle()
           bottleTouchPinnedRef.current = false
-          bottlePinEnterScrollYRef.current = null
           setBottleTouchPinned(false)
         } else {
           // Fade from water ripple + shore approach (whichever clears the bottle first).
@@ -2255,7 +2297,6 @@ export function HomeScrollPrototype() {
           if (!nearBottom && bottleMidY <= viewMidY && br.bottom > 32) {
             if (flip) flipPinFirstRef.current = flip.getBoundingClientRect()
             else flipPinFirstRef.current = null
-            bottlePinEnterScrollYRef.current = y
             bottleTouchPinnedRef.current = true
             setBottleTouchPinned(true)
           }
@@ -3588,6 +3629,19 @@ export function HomeScrollPrototype() {
                         width: `${(FRONT_ART_WIDTH / TURTLE_CROP.w) * 100}%`,
                         left: `${(-TURTLE_CROP.x / TURTLE_CROP.w) * 100}%`,
                         top: `${(-TURTLE_CROP.y / TURTLE_CROP.h) * 100}%`,
+                        visibility: turtleHqReady ? "hidden" : undefined,
+                      }}
+                    />
+                    <TurtleHqImg
+                      ref={turtleHqRef}
+                      src={ASSETS.turtleHq}
+                      alt=""
+                      onLoad={() => setTurtleHqReady(true)}
+                      style={{
+                        width: `${(TURTLE_HQ_CROP.w / TURTLE_CROP.w) * 100}%`,
+                        left: `${((TURTLE_HQ_CROP.x - TURTLE_CROP.x) / TURTLE_CROP.w) * 100}%`,
+                        top: `${((TURTLE_HQ_CROP.y - TURTLE_CROP.y) / TURTLE_CROP.h) * 100}%`,
+                        visibility: turtleHqReady ? undefined : "hidden",
                       }}
                     />
                   </TurtleFloat>
@@ -3695,6 +3749,7 @@ export function HomeScrollPrototype() {
                           originX={crab.originX}
                           originY={crab.originY}
                           label={`Crab ${crab.id}`}
+                          metId={crab.bang ? `crab-${crab.id}` : undefined}
                         >
                           <CrabFlapper>
                             <CrabFrame
@@ -3713,14 +3768,16 @@ export function HomeScrollPrototype() {
                             />
                           </CrabFlapper>
                           {crab.bang && (
-                            <CrabBang
-                              style={{
-                                left: `${crab.originX}%`,
-                                top: `${crab.originY}%`,
-                              }}
-                            >
-                              <CrabBangImg src={CRAB_BANG_SRC} alt="" />
-                            </CrabBang>
+                            <UntilMet id={`crab-${crab.id}`}>
+                              <CrabBang
+                                style={{
+                                  left: `${crab.originX}%`,
+                                  top: `${crab.originY}%`,
+                                }}
+                              >
+                                <CrabBangImg src={CRAB_BANG_SRC} alt="" />
+                              </CrabBang>
+                            </UntilMet>
                           )}
                         </CrabScuttle>
                       </CrabMount>
@@ -4331,7 +4388,10 @@ export function HomeScrollPrototype() {
                     and to champion the idea of plastic-degrading enzymes for
                     microplastic cleanup.
                   </Section5OceanLine>
-                  <Section5Cta>Discover more about Petabite.</Section5Cta>
+                  <Section5Cta>
+                    Discover more about{" "}
+                    <Link to="/project/description/">Petabite</Link>.
+                  </Section5Cta>
                 </Section5TextStack>
               </Section5Root>
 
@@ -6723,6 +6783,8 @@ const TurtleWindow = styled.div`
 /**
  * Slides out from behind the page edge when the reader reaches the waterfall
  * (see turtleOut), and back behind it if they scroll up above his section.
+ * He eases in without overshooting: he's painted cut off at the page edge,
+ * so going past it would show that cut.
  */
 const TurtleSneak = styled.div`
   position: absolute;
@@ -6731,7 +6793,7 @@ const TurtleSneak = styled.div`
   transition: transform
     ${({ $out }) =>
       $out
-        ? "1100ms cubic-bezier(0.34, 1.35, 0.55, 1)"
+        ? "1100ms cubic-bezier(0.22, 1, 0.36, 1)"
         : "600ms cubic-bezier(0.5, 0, 0.75, 0)"};
 
   @media (prefers-reduced-motion: reduce) {
@@ -6754,6 +6816,14 @@ const TurtleFloat = styled.div`
 `
 
 const TurtleImg = styled(PlateImg)`
+  position: absolute;
+  display: block;
+  height: auto;
+  max-width: none;
+  user-select: none;
+`
+
+const TurtleHqImg = styled.img`
   position: absolute;
   display: block;
   height: auto;

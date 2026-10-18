@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -67,7 +68,11 @@ function saveMet(met) {
   }
 }
 
-/** Where each petamon is painted, where it's hovered, and what it says. */
+/**
+ * Where each petamon is painted, where it's hovered, and what it says.
+ * `below`: its bubble opens under it (it's high up, so above it would be
+ * under the top bar or off the window by the time it's hovered).
+ */
 const PETAMONS = [
   {
     id: "dryLab",
@@ -109,6 +114,7 @@ const PETAMONS = [
     team: "Wiki",
     to: "/wiki/",
     hit: [28, 345, 150, 420],
+    below: true,
     say: "Ain’t it fun to catalogue all these new PETamons?",
   },
 ]
@@ -118,6 +124,7 @@ const HP_PETAMON = {
   id: "humanPractices",
   team: "Human Practices",
   to: "/human-practices/",
+  below: true,
   say: "Can’t wait to meet the other petamons, we will be a large happy family of enzymes",
 }
 
@@ -143,6 +150,16 @@ export function PetamonProvider({ children }) {
     saveMet(next)
   }, [active, met])
 
+  // Meeting one some other way (the shore crab, by scuttling it).
+  const meet = useCallback(id => {
+    setMet(prev => {
+      if (!prev || prev.has(id)) return prev
+      const next = new Set(prev).add(id)
+      saveMet(next)
+      return next
+    })
+  }, [])
+
   // A tap elsewhere closes an open bubble.
   useEffect(() => {
     if (!active) return undefined
@@ -155,20 +172,51 @@ export function PetamonProvider({ children }) {
   }, [active])
 
   return (
-    <PetamonContext.Provider value={{ active, setActive, met, touchRef }}>
+    <PetamonContext.Provider value={{ active, setActive, met, meet, touchRef }}>
       {children}
     </PetamonContext.Provider>
   )
+}
+
+/** Which petamons have been met (null till read), and `meet(id)` to mark one. */
+export function usePetamonsMet() {
+  const { met, meet } = useContext(PetamonContext)
+  return { met, meet }
+}
+
+/** Room a bubble needs above its petamon besides its own height (its tail and gap). */
+const BUBBLE_ROOM_PX = 18
+
+/** Bottom of the fixed top bar, which a bubble opening above must clear. */
+function topBarBottom() {
+  const bar = document.querySelector("header")
+  return bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0
 }
 
 /**
  * A petamon's hover / tap spot: a link to its subteam with its speech
  * bubble, its "!" until met, and (with `art`, its painted box on the plaza)
  * a spotlight on it while open. Placed by `style`.
+ *
+ * The bubble opens above the petamon, or below it for the high-up ones
+ * (`p.below`) and for any other without room above under the top bar (like
+ * the red terms' popups), so it's never off the top of the window.
  */
 export function PetamonSpot({ p, style, art, leftward = false }) {
   const { active, setActive, met, touchRef } = useContext(PetamonContext)
   const open = active === p.id
+  const bubbleRef = useRef(null)
+  const [noRoomAbove, setNoRoomAbove] = useState(false)
+
+  useLayoutEffect(() => {
+    const bubble = bubbleRef.current
+    if (!open || p.below || !bubble) return
+    const spotTop = bubble.parentElement.getBoundingClientRect().top
+    setNoRoomAbove(
+      spotTop - bubble.offsetHeight - BUBBLE_ROOM_PX < topBarBottom(),
+    )
+  }, [open, p.below])
+
   return (
     <Spot
       to={p.to}
@@ -207,7 +255,13 @@ export function PetamonSpot({ p, style, art, leftward = false }) {
           <PlateImg src={BANG_SRC} alt="" draggable={false} />
         </Bang>
       )}
-      <Bubble $open={open} $leftward={leftward} aria-hidden>
+      <Bubble
+        ref={bubbleRef}
+        $open={open}
+        $leftward={leftward}
+        $below={p.below || noRoomAbove}
+        aria-hidden
+      >
         <BubbleTeam>{p.team}</BubbleTeam>
         {p.say}
       </Bubble>
@@ -756,10 +810,13 @@ const Bang = styled.span`
   }
 `
 
-/** A comic speech bubble over the petamon, white with a black outline. */
+/**
+ * A comic speech bubble over the petamon (or under it, `$below`), white with
+ * a black outline.
+ */
 const Bubble = styled.span`
   position: absolute;
-  bottom: calc(100% + 0.6em);
+  ${({ $below }) => ($below ? "top" : "bottom")}: calc(100% + 0.6em);
   ${({ $leftward }) =>
     $leftward
       ? css`
@@ -784,20 +841,21 @@ const Bubble = styled.span`
   text-align: left;
   opacity: ${({ $open }) => ($open ? 1 : 0)};
   transform: ${({ $open }) => ($open ? "scale(1)" : "scale(0.6)")};
-  transform-origin: ${({ $leftward }) => ($leftward ? "90% 110%" : "10% 110%")};
+  transform-origin: ${({ $leftward, $below }) =>
+    `${$leftward ? "90%" : "10%"} ${$below ? "-10%" : "110%"}`};
   transition:
     opacity 0.18s ease,
     transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1);
   pointer-events: none;
 
-  /* The tail, pointing down at the petamon. */
+  /* The tail, pointing at the petamon. */
   &::after {
     content: "";
     position: absolute;
-    top: 100%;
+    ${({ $below }) => ($below ? "bottom" : "top")}: 100%;
     ${({ $leftward }) => ($leftward ? "right: 1.4em;" : "left: 1.4em;")}
     border: 0.55em solid transparent;
-    border-top-color: #111;
+    border-${({ $below }) => ($below ? "bottom" : "top")}-color: #111;
   }
 
   ${phone} {

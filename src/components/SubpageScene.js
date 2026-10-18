@@ -398,6 +398,18 @@ const ZAP_FLICKER_MS = 1100
  */
 function ZapLayer({ plate, layer, children }) {
   const bodyRef = useRef(null)
+  // `jolt`: just this part of the layer shivers (the critter and its halo);
+  // the rest, like glints painted on the pipes round it, stays put.
+  const jolt = layer.jolt
+  const [x0, y0, x1, y1] = layer.box
+  const holePct =
+    jolt &&
+    [
+      ((jolt[0] - x0) / (x1 - x0)) * 100,
+      ((jolt[1] - y0) / (y1 - y0)) * 100,
+      ((jolt[2] - x0) / (x1 - x0)) * 100,
+      ((jolt[3] - y0) / (y1 - y0)) * 100,
+    ].map(v => `${v.toFixed(2)}%`)
   const boltRef = useRef(null)
   const zap = () => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
@@ -413,12 +425,25 @@ function ZapLayer({ plate, layer, children }) {
   const bolt = layer.zap
   return (
     <>
+      {jolt && (
+        <ZapStill
+          style={{
+            ...plate.windowStyle(layer.box),
+            // Everything but the jolting part (a hole where it is).
+            clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${holePct[0]} ${holePct[1]}, ${holePct[2]} ${holePct[1]}, ${holePct[2]} ${holePct[3]}, ${holePct[0]} ${holePct[3]}, ${holePct[0]} ${holePct[1]})`,
+          }}
+        >
+          {children}
+        </ZapStill>
+      )}
       <ZapBody
         ref={bodyRef}
         data-layer={layer.name}
-        style={plate.windowStyle(layer.box)}
+        style={plate.windowStyle(jolt || layer.box)}
       >
-        {children}
+        {jolt
+          ? React.cloneElement(children, { style: plate.imgStyle(jolt) })
+          : children}
       </ZapBody>
       <ZapBolt ref={boltRef} style={plate.windowStyle(bolt.box)}>
         <CropImg
@@ -450,13 +475,20 @@ const PEEK_TOUCH_MS = 2500
  * `layer.peek.dx` plate px behind the text box, leaving a little peeking out;
  * when the pointer leaves it pops back out and the glow fades. The hover area
  * stays where it started, so it doesn't chase the pointer. With `from`, it's
- * drawn from there on its plates into `box`.
+ * drawn from there on its plates into `box`. `peek.fadeX` [from, to] (plate
+ * px, in `box`): the glow fades out across these columns, for a glow painted
+ * cut off at the page's edge, which would show as a line as it slides in.
  */
 function PeekLayer({ plate, layer, children }) {
   const [hidden, setHidden] = useState(false)
   const timer = useRef(0)
   useEffect(() => () => window.clearTimeout(timer.current), [])
   const [x0, , x1] = layer.box
+  const fade = layer.peek.fadeX?.map(
+    x => `${(((x - x0) / (x1 - x0)) * 100).toFixed(2)}%`,
+  )
+  const fadeMask =
+    fade && `linear-gradient(to right, #000 ${fade[0]}, transparent ${fade[1]})`
   const hide = state => {
     window.clearTimeout(timer.current)
     setHidden(state)
@@ -478,7 +510,12 @@ function PeekLayer({ plate, layer, children }) {
           draggable={false}
           style={plate.imgStyle(layer.from || layer.box)}
         />
-        <PeekGlow $hidden={hidden}>{children}</PeekGlow>
+        <PeekGlow
+          $hidden={hidden}
+          style={fadeMask && { maskImage: fadeMask, WebkitMaskImage: fadeMask }}
+        >
+          {children}
+        </PeekGlow>
       </PeekWindow>
       <PeekHit
         style={plate.windowStyle(layer.peek.hit || layer.box)}
@@ -2740,6 +2777,22 @@ export function SubpageScene({ scene, title, description, children }) {
                   >
                     <CropWindow style={{ inset: 0 }}>{img}</CropWindow>
                   </CrabScuttle>
+                ) : layer.sway ? (
+                  // `sway`: hanging (tape, a vine), it sways in the wind
+                  // `deg` either way from its top, a whole sway every `ms`,
+                  // `at` (0–1) of the way through at the start.
+                  <HangWindow
+                    key={layer.name}
+                    data-layer={layer.name}
+                    style={{
+                      ...plate.windowStyle(layer.box),
+                      "--sway-deg": `${layer.sway.deg}deg`,
+                      "--sway-ms": `${layer.sway.ms}ms`,
+                      "--sway-delay": `${-(layer.sway.at || 0) * layer.sway.ms}ms`,
+                    }}
+                  >
+                    {img}
+                  </HangWindow>
                 ) : (
                   <CropWindow
                     key={layer.name}
@@ -2803,9 +2856,13 @@ export function SubpageScene({ scene, title, description, children }) {
                           filter: icon.glow
                             ? `drop-shadow(0 0 4px ${icon.glow})`
                             : undefined,
-                          transform: icon.rotate
-                            ? `rotate(${icon.rotate}deg)`
-                            : undefined,
+                          transform:
+                            [
+                              icon.rotate && `rotate(${icon.rotate}deg)`,
+                              icon.railScale && `scale(${icon.railScale})`,
+                            ]
+                              .filter(Boolean)
+                              .join(" ") || undefined,
                         }}
                       />
                     ) : (
@@ -3087,6 +3144,26 @@ const PatrolWindow = styled.div`
 const CropWindow = styled.div`
   position: absolute;
   overflow: hidden;
+`
+
+const hangSway = keyframes`
+  0%,
+  100% {
+    transform: rotate(calc(-1 * var(--sway-deg)));
+  }
+  50% {
+    transform: rotate(var(--sway-deg));
+  }
+`
+
+/** A hanging layer swaying from its top (`layer.sway`). */
+const HangWindow = styled(CropWindow)`
+  transform-origin: 50% 0;
+  animation: ${hangSway} var(--sway-ms) ease-in-out var(--sway-delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `
 
 const SlideWindow = styled.div`
@@ -3907,6 +3984,13 @@ const ZapBody = styled.div`
   position: absolute;
   overflow: hidden;
   transform-origin: 50% 40%;
+`
+
+/** The still rest of a zapped layer round its jolting part. */
+const ZapStill = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
 `
 
 /** Lightning over a zapped layer; invisible until it flickers. */

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import styled, { keyframes } from "styled-components"
-import { PopupClose } from "./PopupClose"
+import { POPUP_CLOSED_EVENT, PopupClose } from "./PopupClose"
 
 /** Combined textbox + copy (PETase / MHETase explanation) from team iGEM static assets. */
 const MHETASE_TEXTBOX_IMG =
@@ -276,6 +276,14 @@ export function ExplainTerm({
   const [pos, setPos] = useState(null)
   const coarsePointerRef = useRef(false)
   const pinnedRef = useRef(false)
+  // Opened by auto-scroll (HomeAutoplay's simulated hover): the reader's own
+  // hover doesn't close it then, only a click on the term or its ✕ does.
+  const [autoOpen, setAutoOpen] = useState(false)
+  const autoOpenRef = useRef(false)
+  const setAuto = useCallback((on) => {
+    autoOpenRef.current = on
+    setAutoOpen(on)
+  }, [])
 
   useEffect(() => {
     pinnedRef.current = pinned
@@ -318,15 +326,32 @@ export function ExplainTerm({
 
   const show = useCallback(() => setOpen(true), [])
   const dismiss = useCallback(() => {
+    setAuto(false)
     setOpen(false)
     setPinned(false)
     setPos(null)
-  }, [])
+  }, [setAuto])
   const hideUnlessPinned = useCallback(() => {
     if (pinnedRef.current) return
     setOpen(false)
     setPos(null)
   }, [])
+
+  const onMouseEnter = useCallback(
+    (ev) => {
+      if (!ev.nativeEvent.isTrusted) setAuto(true)
+      show()
+    },
+    [setAuto, show]
+  )
+  const onMouseLeave = useCallback(
+    (ev) => {
+      if (ev.nativeEvent.isTrusted && autoOpenRef.current) return
+      setAuto(false)
+      hideUnlessPinned()
+    },
+    [setAuto, hideUnlessPinned]
+  )
 
   useLayoutEffect(() => {
     if (!open) return undefined
@@ -359,9 +384,17 @@ export function ExplainTerm({
     [dismiss]
   )
 
-  /** Click pins the popover open; click again (or Escape) dismisses it. */
+  /**
+   * Click pins the popover open; click again (or Escape) dismisses it. One
+   * auto-scroll opened closes on the click, like its ✕: auto-scroll carries on.
+   */
   const onTermClick = useCallback((ev) => {
     ev.stopPropagation()
+    if (autoOpenRef.current) {
+      dismiss()
+      window.dispatchEvent(new Event(POPUP_CLOSED_EVENT))
+      return
+    }
     setPinned((wasPinned) => {
       if (wasPinned) {
         setOpen(false)
@@ -371,7 +404,7 @@ export function ExplainTerm({
       setOpen(true)
       return true
     })
-  }, [])
+  }, [dismiss])
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return undefined
@@ -404,8 +437,8 @@ export function ExplainTerm({
       <TermRoot
         ref={rootRef}
         className={className}
-        onMouseEnter={show}
-        onMouseLeave={hideUnlessPinned}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
         onFocus={show}
         onBlur={hideUnlessPinned}
         onKeyDown={onKeyDown}
@@ -417,6 +450,8 @@ export function ExplainTerm({
           aria-expanded={open}
           aria-pressed={pinned}
           aria-describedby={open ? popoverId : undefined}
+          // Closing one auto-scroll opened isn't the reader taking over.
+          data-autoplay-skip={autoOpen ? "" : undefined}
           onClick={onTermClick}
         >
           {term}

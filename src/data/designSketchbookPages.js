@@ -22,6 +22,12 @@ const SK_IMG = (name) =>
   `https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/content/${name}.avif`
 /** A gallery's images: [file name, alt text] pairs. */
 const gallery = (...images) => images.map(([name, alt]) => ({ src: SK_IMG(name), alt }))
+/**
+ * A tall, thin picture as gallery pieces side by side: columns [x0, x1] of it
+ * (its `size` [w, h]) cut at `rows` [[y0, y1], …], so it shows bigger.
+ */
+const splitImage = (name, alt, size, [x0, x1], rows) =>
+  rows.map(([y0, y1]) => ({ src: SK_IMG(name), alt, crop: [x0, y0, x1, y1], size }))
 
 /** One of a section's extra pages: a few lines and an image or a gallery. */
 const sectionPage = (sectionId, id, title, fields) => ({
@@ -165,8 +171,18 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   sectionPage("web-design", "storyboard", "Storyboard", {
     body:
       "Kathleen made the first storyboard of the homepage's flow, which the homepage is still built on. It was split into sections for the different artists on the web design team.",
-    imageSrc: SK_IMG("web-homepage-outline"),
-    imageAlt: "A long pencil outline of the homepage, with numbered sections and notes",
+    // Trimmed to the drawing and cut in two between sections 3 and 4.
+    images: splitImage(
+      "web-homepage-outline",
+      "A long pencil outline of the homepage, with numbered sections and notes",
+      [190, 1024],
+      [8, 176],
+      [
+        [8, 498],
+        [498, 1020],
+      ],
+    ),
+    cols: 2,
     caption: "The first outline of the homepage, split into sections.",
   }),
   sectionPage("web-design", "story", "A story to scroll", {
