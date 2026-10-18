@@ -4,6 +4,8 @@ variables:
   GATSBY_TELEMETRY_DISABLED: "1"
   GATSBY_PATH_PREFIX: "/toronto"
   XDG_CONFIG_HOME: "$CI_PROJECT_DIR/.config"
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "slowest"
 
 pages:
   stage: build

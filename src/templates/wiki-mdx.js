@@ -9,6 +9,15 @@ import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
 import { TOCWrapper } from "../components/pageStyles.js"
+import SubpageScene from "../components/SubpageScene.js"
+import {
+  ATTRIBUTIONS_SCENE,
+  CONTRIBUTION_SCENE,
+  DRY_LAB_SCENE,
+  HARDWARE_SCENE,
+  HP_SCENE,
+  VENTURE_SCENE,
+} from "../components/subpageScenes.js"
 
 const formatDate = (date) => {
   if (!date) return null
@@ -21,10 +30,54 @@ const formatDate = (date) => {
   }).format(parsed)
 }
 
+/** Pages drawn on a parallax art scene instead of the plain article layout. */
+const sceneFor = frontmatter => {
+  if (frontmatter.section === "Dry Lab") return DRY_LAB_SCENE
+  if (frontmatter.section === "Hardware") return HARDWARE_SCENE
+  if (frontmatter.path === "/beyond-the-bench/entrepreneurship/")
+    return VENTURE_SCENE
+  if (frontmatter.path === "/beyond-the-bench/human-practices/")
+    return HP_SCENE
+  if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
+  if (
+    frontmatter.path === "/team/attributions/" ||
+    frontmatter.path === "/attributions/"
+  )
+    return ATTRIBUTIONS_SCENE
+  return null
+}
+
 const WikiMdxTemplate = ({ data, children }) => {
   const { frontmatter } = data.mdx
   const owners = frontmatter.owners || []
   const updated = formatDate(frontmatter.updated)
+
+  const scene = sceneFor(frontmatter)
+  if (scene) {
+    return (
+      <WikiLayout
+        fullBleed
+        // The footer button takes the colours of the page's menu highlight.
+        footerButton={
+          scene.footerButton || {
+            bg: scene.side.highlightColor,
+            text: scene.side.activeLinkColor || scene.side.linkColor,
+          }
+        }
+      >
+        <SubpageScene
+          scene={scene}
+          // The header names the section, so the box takes the short name.
+          title={frontmatter.navTitle || frontmatter.title}
+          description={frontmatter.description}
+        >
+          <Article $wideProse>
+            <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+          </Article>
+        </SubpageScene>
+      </WikiLayout>
+    )
+  }
 
   const wideSideTabs = frontmatter.wideSideTabs === true
   const wideProse    = frontmatter.wideProse    === true
@@ -265,7 +318,7 @@ const Article = styled.article`
   p,
   li,
   blockquote {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
 
   p,
@@ -339,6 +392,14 @@ const Article = styled.article`
     font-size: 0.95rem;
   }
 
+  /* Wide tables scroll sideways on phones instead of widening the page. */
+  @media (max-width: 640px) {
+    table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+
   th,
   td {
     padding: 0.75rem;
@@ -353,7 +414,7 @@ const Article = styled.article`
   }
 
   td {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
 
   img {

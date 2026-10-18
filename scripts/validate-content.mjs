@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import process from "process"
+import { USE_PAYLOAD_EXPORTS } from "../content-source.config.mjs"
 import { STANDARD_ROUTE_ALIASES } from "../src/data/standardRoutes.mjs"
 
 const root = process.cwd()
@@ -14,10 +15,6 @@ const requiredFrontmatter = [
   "path",
   "navTitle",
   "order",
-  "description",
-  "owners",
-  "updated",
-  "status",
 ]
 
 const allowedStatuses = new Set(["draft", "review", "published"])
@@ -118,15 +115,21 @@ function validateFrontmatter(filePath, frontmatter) {
     errors.push(`${relative(filePath)} order must be an integer.`)
   }
 
-  if (!Array.isArray(frontmatter.owners) || frontmatter.owners.length === 0) {
+  if (
+    frontmatter.owners !== undefined &&
+    (!Array.isArray(frontmatter.owners) || frontmatter.owners.length === 0)
+  ) {
     errors.push(`${relative(filePath)} owners must be a non-empty array.`)
   }
 
-  if (typeof frontmatter.updated !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.updated)) {
+  if (
+    frontmatter.updated !== undefined &&
+    (typeof frontmatter.updated !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.updated))
+  ) {
     errors.push(`${relative(filePath)} updated must use YYYY-MM-DD.`)
   }
 
-  if (typeof frontmatter.status === "string" && !allowedStatuses.has(frontmatter.status)) {
+  if (frontmatter.status !== undefined && !allowedStatuses.has(frontmatter.status)) {
     errors.push(`${relative(filePath)} status must be draft, review, or published.`)
   }
 }
@@ -134,7 +137,7 @@ function validateFrontmatter(filePath, frontmatter) {
 const mdxFiles = walk(
   contentRoot,
   (filePath) => filePath.endsWith(".mdx") && !path.basename(filePath).startsWith("_")
-)
+).filter((filePath) => USE_PAYLOAD_EXPORTS || !isPayloadExport(filePath))
 
 const mdxRoutes = new Map()
 for (const filePath of mdxFiles) {

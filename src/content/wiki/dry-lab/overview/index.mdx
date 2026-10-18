@@ -1,0 +1,68 @@
+---
+title: "Overview"
+section: "Dry Lab"
+path: "/dry-lab/overview/"
+navTitle: "Overview"
+order: 10
+description: "PETadex searches for plastic-degrading enzymes systematically and at scale, expanding this enzyme family as far as public data allows."
+owners: ["Dry Lab"]
+updated: "2026-10-10"
+status: "draft"
+wideProse: true
+---
+
+{/*
+  Narrative source: Obsidian "IGEM Wiki/05 Content/PETadex Narrative.md" §1,
+  used verbatim under the four-step spine from §3.2. Edit the narrative there
+  first, then here.
+
+  Claims still to verify before this page is final (§4 of that note):
+    - headline sequence count ("over 300 million")
+    - baseline enzyme count ("around 500")
+    - the random screen (2 of 161, and that those sequences count as PETadex)
+    - temperature and pH coverage ("most sequences")
+    - "under a minute" search, after the Next.js rebuild
+  Also unresolved: "prioritizing" vs "validating" in the closing line.
+
+  The Dry Lab writeup itself lives on the standard iGEM pages: /model and
+  /software. This page is the way in.
+*/}
+
+<Callout title="Draft">
+The figures on this page are still being confirmed.
+</Callout>
+
+## Search
+
+Enzymes that break down plastic offer a cleaner way to deal with plastic waste, but the field has been working from a very small pool. Only around 500 have been validated, and new ones have mostly been found piecemeal, one enzyme and one database at a time. PETadex does this search systematically and at scale, expanding this enzyme family as far as public data allows (mining NCBI-nr and the SRA, which are both public repositories). Starting from a curated set of reference enzymes, we searched public protein databases and Logan, an assembly of the world's public sequencing data. We recovered over 300 million related sequences from diverse environments across the globe, ranging from bottle-recycling plants in Japan to the 400-year-old remains of a Spanish soldier, and covering enzymes for many plastics beyond PET.
+
+This scale matters. In an early random screen of just 161 of these sequences, two outperformed FAST-PETase, the field's current benchmark. That suggests many more strong enzymes are waiting in the full set.
+
+See the search results on a map in the [ESM Atlas](/software/#esm-atlas).
+
+## Annotate
+
+Not every relative or homolog will work, so we then annotated each sequence in depth, checking for key catalytic features, structural family, and source environment (among many other features) to narrow the space to sequences most likely to function. Most sequences also carry the temperature and pH of the place they came from. That lets us look for enzymes suited to real-world conditions, such as a cold wastewater plant, rather than only those that work on a lab bench.
+
+Try it on a real result in the [sharded DIAMOND search demo](/software/#sharded-diamond-search).
+
+## Predict and test
+
+Finally, a machine learning model trained on published activity data predicts how active and stable each enzyme should be, turning a catalogue of candidates into a ranked shortlist for lab testing. Lab results feed back into the model, so each round of testing sharpens the next set of picks.
+
+Read how the predictions are made on the [Model](/model/) page, and how they are tested on the [Wet Lab](/wet-lab/overview/) page.
+
+## Open
+
+Everything is open. Anyone can search the full database on petadex.net in under a minute, and our model and training data are freely available. The result is an end-to-end framework for discovering and prioritizing enzymes, applicable to any enzyme family.
+
+## PETadex
+
+Browse PETase candidates in PETadex, then start an enzyme battle to see how each one fares against different plastics.
+
+<PetadexGame />
+
+## Explore the Dry Lab
+
+- [Model](/model/): how we built the corpus, annotated it, extracted activity labels from the literature and trained a model to rank candidates.
+- [Software](/software/): LOBSTER, the sharded DIAMOND search, the sequence record card and the ESM Atlas.

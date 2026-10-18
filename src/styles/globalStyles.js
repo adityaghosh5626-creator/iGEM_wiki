@@ -9,11 +9,15 @@ export const GlobalStyle = createGlobalStyle`
     --color-border:     #9bb8c5;
     --color-text:       #06202b;
     --color-muted:      #58717b;
+    /* Reading text (paragraphs, lists, tables): darker than muted so long
+       sections stay comfortable to read; muted is for captions and meta. */
+    --color-body:       #1f2f36;
     --color-accent:     #c92f3b;
 
     /* Typography */
-    --font-display: 'DM Serif Display', Georgia, serif;
     --font-body:    'DM Sans', system-ui, sans-serif;
+    /* Same as the body: the whole site uses DM Sans, like the homepage. */
+    --font-display: var(--font-body);
     --font-mono:    'DM Mono', monospace;
 
     /* Spacing scale */
@@ -58,7 +62,7 @@ export const GlobalStyle = createGlobalStyle`
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     line-height: 1.15;
-    font-weight: 400;
+    font-weight: 700;
   }
 
   a {
@@ -69,6 +73,15 @@ export const GlobalStyle = createGlobalStyle`
   img, video {
     max-width: 100%;
     display: block;
+  }
+
+  /* PlateImg's stand-in for an <img>: block, the plate's own width, height
+     from its aspect ratio. Zero specificity, so a component's styles win. */
+  :where(.plate-img) {
+    position: relative;
+    display: block;
+    width: var(--plate-w);
+    max-width: 100%;
   }
 
   .citation a,
@@ -103,6 +116,7 @@ export const GlobalStyle = createGlobalStyle`
     margin-bottom: var(--space-md);
     font-family: var(--font-display);
     font-size: 2rem;
+    font-weight: 700;
     line-height: 1.15;
   }
 

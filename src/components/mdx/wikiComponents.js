@@ -1,4 +1,5 @@
 import React from "react"
+import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
 import { BioreactorRequirements } from "../bioreactorRequirements/BioreactorRequirements.js"
 import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
@@ -8,10 +9,14 @@ import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
 import { HardwareNotebookSandbox } from "../hardwareNotebook/HardwareNotebookSandbox.js"
 import { HardwareArchitectureDiagram } from "../hardwareArchitecture/HardwareArchitectureDiagram.js"
 import { PageTab, PageTabs } from "../PageTabs.js"
+import AtlasMap from "../AtlasMap.js"
+import PetadexGame from "../PetadexGame.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
+import { embedComponents } from "./embeds.js"
+import { Spreadsheet } from "./Spreadsheet.js"
 import Citation from "../Citation"
 import References from "../References"
 
@@ -22,9 +27,19 @@ export const Callout = ({ tone = "note", title, children }) => (
   </CalloutBox>
 )
 
+/** Marks draft copy that still has to be replaced before the page is published. */
+export const Placeholder = ({ label = "Placeholder text", children }) => (
+  <PlaceholderBox>
+    <PlaceholderLabel>{label}</PlaceholderLabel>
+    <CalloutBody>{children}</CalloutBody>
+  </PlaceholderBox>
+)
+
+// Root-relative srcs point into static/; withPrefix adds the /toronto path
+// prefix the iGEM build is served under.
 export const Figure = ({ src, alt = "", caption, credit, children }) => (
   <FigureWrap>
-    {src && <img src={src} alt={alt} />}
+    {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
     {(caption || credit) && (
       <figcaption>
@@ -54,6 +69,7 @@ export const ContributionCalendar = ({ title, caption }) => (
 
 export const mdxComponents = {
   Callout,
+  Placeholder,
   Figure,
   ImageGrid,
   DataTable,
@@ -75,6 +91,10 @@ export const mdxComponents = {
   Dropdown,
   Citation,
   References,
+  ...embedComponents,
+  Spreadsheet,
+  AtlasMap,
+  PetadexGame,
 }
 
 const toneStyles = {
@@ -111,8 +131,26 @@ const CalloutBody = styled.div`
   }
 
   p {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
+`
+
+const PlaceholderBox = styled.div`
+  max-width: 48rem;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px dashed var(--color-muted);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.24);
+`
+
+const PlaceholderLabel = styled.p`
+  color: var(--color-muted) !important;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
 `
 
 const FigureWrap = styled.figure`

@@ -1,7 +1,30 @@
 import path from "path"
+import { USE_PAYLOAD_EXPORTS } from "./content-source.config.mjs"
 import { STANDARD_ROUTE_ALIASES } from "./src/data/standardRoutes.mjs"
 
 const wikiTemplate = path.resolve(`./src/templates/wiki-mdx.js`)
+
+// Gatsby inlines small fonts into CSS, then repeats that CSS in every HTML
+// page. Emit shared font files instead to keep the Pages archive small.
+export function onCreateWebpackConfig({ getConfig, actions }) {
+  const config = getConfig()
+  const visit = (rules = []) => {
+    for (const rule of rules) {
+      if (!rule || typeof rule !== "object") continue
+      if (rule.test instanceof RegExp && rule.test.test("font.woff2")) {
+        for (const use of Array.isArray(rule.use) ? rule.use : [rule.use]) {
+          if (use && typeof use === "object" && /[\\/]url-loader[\\/]/.test(use.loader || "")) {
+            use.options = { ...use.options, limit: 0 }
+          }
+        }
+      }
+      visit(rule.oneOf)
+      visit(rule.rules)
+    }
+  }
+  visit(config.module?.rules)
+  actions.replaceWebpackConfig(config)
+}
 
 export async function createPages({ actions, graphql, reporter }) {
   const { createPage } = actions
@@ -36,6 +59,7 @@ export async function createPages({ actions, graphql, reporter }) {
   const selectedRoutes = new Map()
   const nodes = result.data.allMdx.nodes
     .filter((node) => !path.basename(node.internal.contentFilePath).startsWith(`_`))
+    .filter((node) => USE_PAYLOAD_EXPORTS || !isPayloadExport(node))
     .sort((a, b) => Number(isPayloadExport(b)) - Number(isPayloadExport(a)))
 
   for (const node of nodes) {
