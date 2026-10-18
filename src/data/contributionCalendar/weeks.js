@@ -185,6 +185,8 @@ const WEEK_CONTENT_OVERRIDES = {
       { date: "2026-05-26", label: "Bioreactor requirements aligned", subteamId: "hardware" },
     ],
   },
+  // Replace the blocks with these keys in WEEK_CONTENT_OVERRIDES, from "week-2026-05-31" through "week-2026-10-04".
+  // Other subteams and their milestones are copied unchanged. The old "Replace your existing..." comment can be deleted.
   "week-2026-05-31": {
     subteams: {
       hardware: {
@@ -194,14 +196,15 @@ const WEEK_CONTENT_OVERRIDES = {
         link: "/hardware/notebook/#journal-2026-06-02",
       },
       wetLab: {
-        summary: "Reagents organized; growth media and plates prepped.",
+        summary: "Reagents organized; media and plates made.",
         detail:
-          "Picked up orders, labeled reagents, then made liquid and solid bacterial growth media (LB), sterilized them in an autoclave, and poured plates for later cloning work.",
+          "• Picked up orders and labeled reagents.\n• Made LB growth media and poured plates for cloning.",
+        link: "/wet-lab/notebook/",
       },
     },
     milestones: [
       { date: "2026-06-02", label: "System architecture drafted", subteamId: "hardware" },
-      { date: "2026-06-03", label: "Pickup orders and organize and label reagents", subteamId: "wetLab" },
+      { date: "2026-06-03", label: "Pick up orders; organize and label reagents", subteamId: "wetLab" },
       { date: "2026-06-04", label: "Prep growth media and pour plates", subteamId: "wetLab" },
     ],
   },
@@ -214,14 +217,15 @@ const WEEK_CONTENT_OVERRIDES = {
         link: "/hardware/notebook/#journal-2026-06-09",
       },
       wetLab: {
-        summary: "Teaching-lab tour and competent-cell prep.",
+        summary: "Competent-cell prep.",
         detail:
-          "Competent cells are bacteria prepared so they can take up DNA. Picked up cells and liquid culture, toured the BME teaching lab, made rich growth media (SOB), and prepared competent cells with a Mix & Go kit.",
+          "• Toured the BME teaching lab.\n• Made SOB media and prepared competent cells (bacteria ready to take up DNA) with a Mix & Go kit.",
+        link: "/wet-lab/notebook/",
       },
     },
     milestones: [
-      { date: "2026-06-11", label: "Pickup cells for competent-cell prep", subteamId: "wetLab" },
-      { date: "2026-06-12", label: "Teaching-lab tour; make competent cells", subteamId: "wetLab" },
+      { date: "2026-06-11", label: "Pick up cells for competent-cell prep", subteamId: "wetLab" },
+      { date: "2026-06-12", label: "Make competent cells", subteamId: "wetLab" },
     ],
   },
   "week-2026-06-14": {
@@ -229,20 +233,17 @@ const WEEK_CONTENT_OVERRIDES = {
       "Mid-season integration: enzyme shortlist, bioreactor prototyping, and wet-lab cloning practice.",
     milestones: [
       { date: "2026-06-16", label: "Optical-sensor housing prototype ordered", subteamId: "hardware" },
-      { date: "2026-06-20", label: "Top plastic-degrading enzyme shortlist", subteamId: "dryLab" },
-      { date: "2026-06-15", label: "Grow starter culture; insert DNA into lab bacteria", subteamId: "wetLab" },
-      { date: "2026-06-16", label: "Scale up culture; retry DNA insertion", subteamId: "wetLab" },
-      { date: "2026-06-16", label: "Make competent cells; insert team plasmids", subteamId: "wetLab" },
-      { date: "2026-06-17", label: "Retry DNA insertion into cloning bacteria", subteamId: "wetLab" },
-      { date: "2026-06-17", label: "Grow cultures of transformed bacteria", subteamId: "wetLab" },
+      { date: "2026-06-16", label: "Make competent cells; transform team plasmids", subteamId: "wetLab" },
       { date: "2026-06-18", label: "Save freezer stocks; purify plasmid DNA", subteamId: "wetLab" },
       { date: "2026-06-19", label: "Pour antibiotic selection plates", subteamId: "wetLab" },
+      { date: "2026-06-20", label: "Top plastic-degrading enzyme shortlist", subteamId: "dryLab" },
     ],
     subteams: {
       wetLab: {
-        summary: "Cloning practice and competent-cell prep.",
+        summary: "Cloning practice with DH5α and BL21.",
         detail:
-          "Competent cells are bacteria treated so they can take up DNA. This week: starter cultures (DH5α / BL21), DNA insertion (transformation) with test and distribution plasmids, freezer glycerol stocks, plasmid DNA cleanup (miniprep), and antibiotic plates (chloramphenicol / ampicillin) to select successful transformants.",
+          "• Transformed test and distribution plasmids into DH5α and BL21.\n• Made freezer stocks and purified plasmid DNA (miniprep).\n• Poured antibiotic selection plates.",
+        link: "/wet-lab/notebook/",
       },
       dryLab: {
         summary: "Top enzyme shortlist shared internally.",
@@ -275,12 +276,36 @@ const WEEK_CONTENT_OVERRIDES = {
     },
   },
   "week-2026-06-21": {
+    milestones: [
+      { date: "2026-06-24", label: "Miniprep BL21; transform NEB DH5α", subteamId: "wetLab" },
+      { date: "2026-06-26", label: "Miniprep DH5α; send for sequencing", subteamId: "wetLab" },
+    ],
     subteams: {
       hardware: {
         summary: "Parts handed out; build-session prep.",
         detail:
           "• Distributed subsystem components; reviewed wiring diagrams (growth sensor needs a voltage divider).\n• Planned an extended build session: circuit diagrams in KiCad and Arduino coding kickoff.",
         link: "/hardware/notebook/#journal-2026-06-23",
+      },
+      wetLab: {
+        summary: "Plasmid purification and first sequencing samples.",
+        detail:
+          "• Grew BL21 cultures and purified their plasmids.\n• Transformed NEB DH5α cells, mini-prepped them, and sent samples for sequencing.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-06-28": {
+    milestones: [
+      { date: "2026-07-03", label: "Transform DH5α with selected plasmids", subteamId: "wetLab" },
+      { date: "2026-07-04", label: "Pour selection plates", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "Competent cells frozen; plasmids transformed.",
+        detail:
+          "• Froze DH5α competent cells at -80 °C and transformed them with selected plasmids.\n• Poured chloramphenicol, ampicillin and kanamycin plates.",
+        link: "/wet-lab/notebook/",
       },
     },
   },
@@ -292,20 +317,46 @@ const WEEK_CONTENT_OVERRIDES = {
           "• Created the bioreactor GitHub repo; chose Thursday evenings as recurring in-person build nights.\n• Data-logging software wired to eight devices; pumps soldered, CAD libraries advanced, thermocouple tested near 55 °C.",
         link: "/hardware/notebook/#journal-2026-07-07",
       },
+      wetLab: {
+        summary: "Plasmid cleanup; first FAST-PETase expression.",
+        detail:
+          "• Purified plasmids from DH5α cultures.\n• Expressed FAST-PETase (an engineered plastic-degrading enzyme) in T7 bacteria.\n• Mini-prepped the team's plasmid parts.",
+        link: "/wet-lab/notebook/",
+      },
     },
     milestones: [
       { date: "2026-07-07", label: "Bioreactor code repo and build nights", subteamId: "hardware" },
+      { date: "2026-07-08", label: "FAST-PETase expression in T7 cells", subteamId: "wetLab" },
+      { date: "2026-07-10", label: "Miniprep team plasmid set", subteamId: "wetLab" },
     ],
+  },
+  "week-2026-07-19": {
+    milestones: [
+      { date: "2026-07-21", label: "Miniprep AS plasmids; send for sequencing", subteamId: "wetLab" },
+      { date: "2026-07-24", label: "Finish BL21 competent cells", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "AS plasmid sequencing and BL21 competent cells.",
+        detail:
+          "• Purified AS plasmids and sent them for sequencing.\n• Made BL21 competent cells (two-day protocol) and began copper fabric staining.\n• Trained the team on the autoclave.",
+        link: "/wet-lab/notebook/",
+      },
+    },
   },
   "week-2026-07-26": {
     overview:
       "Summer crunch: hardware integration, scaled assays, and wiki content freeze targets for August review.",
-    milestones: [],
+    milestones: [
+      { date: "2026-07-29", label: "Pour plates; test BL21 competence", subteamId: "wetLab" },
+      { date: "2026-07-31", label: "Test copper toxicity", subteamId: "wetLab" },
+    ],
     subteams: {
       wetLab: {
-        summary: "Assay throughput doubled.",
-        detail: "Automated pipetting layout; quality checks on replicate consistency within target.",
-        link: "/wet-lab/results/",
+        summary: "Media, plates and first copper toxicity tests.",
+        detail:
+          "• Made fresh media and poured ampicillin and kanamycin plates.\n• Tested BL21 competent cells with pUC19.\n• Began copper toxicity and copper-release tests on fabric.",
+        link: "/wet-lab/notebook/",
       },
       dryLab: {
         summary: "Model checked on new data.",
@@ -335,17 +386,91 @@ const WEEK_CONTENT_OVERRIDES = {
       },
     },
   },
+  "week-2026-08-02": {
+    milestones: [
+      { date: "2026-08-04", label: "Golden Gate assembly of AS plasmid", subteamId: "wetLab" },
+      { date: "2026-08-07", label: "Miniprep and sequence AS products", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "First AS Golden Gate assemblies.",
+        detail:
+          "• Assembled the AS plasmid by Golden Gate assembly (GGA, joining DNA pieces) from newly arrived IDT/Twist DNA and transformed it into DH5α.\n• Mini-prepped the products for sequencing.\n• Ran copper and dye release tests on fabric.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-08-09": {
+    milestones: [
+      { date: "2026-08-10", label: "Gel check of AS GGA products", subteamId: "wetLab" },
+      { date: "2026-08-13", label: "Make trimethoprim stock; first antibiotic + copper plates", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "Verified assemblies; antibiotic + copper plates.",
+        detail:
+          "• Checked AS products by gel and sent good ones for sequencing.\n• Made a trimethoprim stock and kanamycin + copper plates.\n• Finished the 96-hour dye release run.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-08-16": {
+    milestones: [
+      { date: "2026-08-18", label: "Copper mesh biosensor test", subteamId: "wetLab" },
+      { date: "2026-08-20", label: "Test AS-sul1 on sulfa + copper plates", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "AS plasmids tested with copper and sulfa.",
+        detail:
+          "• Tested AS-sul1, AS-sul2 and AS-msGFP on copper and sulfa plates.\n• Ran a copper mesh leaching test.\n• Redid the AS + pCusC-RBS + dfrB10 assembly; toured the BioZone lab.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-08-23": {
+    milestones: [
+      { date: "2026-08-25", label: "Sequence AS empty and AS-dfr plasmids", subteamId: "wetLab" },
+      { date: "2026-08-26", label: "Start PD plasmid PCR", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "Dose-response tests; PD plasmid begins.",
+        detail:
+          "• Sequenced the AS empty and AS-dfr plasmids.\n• Tested copper and sulfa concentration ranges.\n• Started PCR and assembly of the PD plasmid.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-08-30": {
+    milestones: [
+      { date: "2026-08-31", label: "Assemble PD plasmid", subteamId: "wetLab" },
+      { date: "2026-09-01", label: "Start move to BioZone", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "PD plasmid assembled; BioZone move begins.",
+        detail:
+          "• Assembled the PD plasmid and transformed it into DH5α.\n• Began moving lab stocks to the new BioZone bench (room 403).",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
   "week-2026-09-06": {
     overview:
       "Pre-Jamboree polish: documentation sprint, final characterization runs, and venture storytelling.",
     milestones: [
+      { date: "2026-09-08", label: "Move plates and columns to BioZone", subteamId: "wetLab" },
+      { date: "2026-09-10", label: "BioZone lab tour", subteamId: "wetLab" },
       { date: "2026-09-10", label: "Wiki content soft freeze", subteamId: "web" },
       { date: "2026-09-12", label: "Final bioreactor demo", subteamId: "hardware" },
     ],
     subteams: {
       wetLab: {
-        summary: "Final validation replicates.",
-        detail: "Ran triplicate tests on the lead enzyme; preparing results figures.",
+        summary: "Moving into BioZone.",
+        detail:
+          "• Moved plates and columns from BME to BioZone.\n• Cleared leftover media.\n• Toured the new lab.",
+        link: "/wet-lab/notebook/",
       },
       dryLab: {
         summary: "Software documentation locked.",
@@ -371,6 +496,48 @@ const WEEK_CONTENT_OVERRIDES = {
       web: {
         summary: "Site-wide link audit.",
         detail: "Fixed navigation order, page titles, and contribution deep links.",
+      },
+    },
+  },
+  "week-2026-09-13": {
+    milestones: [
+      { date: "2026-09-15", label: "Move -80 °C samples to BioZone", subteamId: "wetLab" },
+      { date: "2026-09-15", label: "Restart PD plasmid assembly", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "Freezer move; PD plasmid restart.",
+        detail:
+          "• Moved the iGEM -80 °C samples to BioZone.\n• Resuspended Twist PD DNA, ran KLD (joins linear DNA ends into a plasmid), transformed it, and redid the fragment assembly.\n• Later shifts awaited RRF approval.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-09-20": {
+    milestones: [
+      { date: "2026-09-23", label: "Move Lash Miller samples to BioZone", subteamId: "wetLab" },
+      { date: "2026-09-24", label: "Resuspend Twist PETase inserts; set up GGAs", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "Lab move finished; control PETase cloning starts.",
+        detail:
+          "• Moved Lash Miller samples to BioZone, plus the BME -80 °C samples if freezer space allowed.\n• Resuspended Twist PETase inserts and set up Golden Gate assemblies with the PD plasmid.\n• Made LB broth and autoclaved tips.",
+        link: "/wet-lab/notebook/",
+      },
+    },
+  },
+  "week-2026-10-04": {
+    milestones: [
+      { date: "2026-10-06", label: "Assemble PD with 5 control PETases; PCR and gel", subteamId: "wetLab" },
+      { date: "2026-10-07", label: "Co-transform AS + PD into BL21(DE3)", subteamId: "wetLab" },
+    ],
+    subteams: {
+      wetLab: {
+        summary: "PD + control PETases built; AS + PD co-transformed.",
+        detail:
+          "• Assembled PD with the 5 control PETases and checked the products by PCR and gel.\n• Co-transformed AS-msGFP + PD and AS-sul1 + PD into BL21(DE3), an expression strain.\n• Made copper-stained mesh and inventoried supplies.",
+        link: "/wet-lab/notebook/",
       },
     },
   },
