@@ -336,18 +336,41 @@ so they are filtered out. Two resulting datasets are outputted. One dataset cont
 (including overlapping hits) from interproscan and HMMer and another dataset containing
 only accessory domains.
 
+<Figure
+  src="/figures/dry-lab-model/PETadex_workflow_overview.svg"
+  alt="Overview of Domain Annotation on PETadex"
+  width="40%"
+/>
 ### Novel Accessory Domains
 
 *Owner: Nino*
 
-Placeholder: TED reproduction across AFDB, nr, Logan corpora.
+<SideFigure
+  src="/figures/dry-lab-model/TED_workflow_styled.svg"
+  alt="TED novelty-discovery workflow as reconstructed for PETadex"
+  width="40%"
+>
+
+At the beginning of this project, a workflow was designed to identify potentially novel protein domains. However, while researching methodological approaches, the team encountered TED (The Encyclopedia of Domains), which had also investigated novel protein domains and folds. As a result, the team decided to reconstruct TED's novelty-discovery pipeline and adapt it for PETadex.
+
+Some parameters and reference databases used in the original TED pipeline were not publicly available. Additionally, the PETadex workflow incorporates PETadex-specific hidden Markov models (HMMs), unlike the original TED implementation. Using publicly available resources, including data released through Zenodo, the pipeline was reconstructed to the greatest extent possible.
+
+Positive controls from TED were used to evaluate whether the reconstructed pipeline could recover previously identified novel-fold candidates and to identify discrepancies between the workflows. Although some positive controls were successfully retained, other candidates were eliminated, potentially because of differences in filtering thresholds, reference databases, or upstream processing.
+
+Despite these limitations, the PETadex pilot dataset produced two putative novel-domain candidates that passed the reconstructed novelty-screening pipeline. Further structural and biological validation is required to establish their novelty and potential functions.
+
+</SideFigure>
 
 ### Predicted Structures
 
 *Owner: Alex*
 
-Placeholder: AFDB, ESMFold2, Narval ESM3 folding, confidence metrics.
+Existing protein structure prediction databases such as AlphaFold DB (AFDB) [https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4] contain predicted protein structure cif files, alongside quality metrics such as pLDDT, pTM and the PAE matrix. These metrics measure structural quality and position pairwise error, which are useful for identifying domains and components. Specifically, these structures were utilized for HMM evaluation, and can also be used for further structural analysis.
 
+We searched these databases to find predicted structures for 7.8 PETadex v2 significant hits. AFDB is indexed by Uniprot accession, so PETadex accessions were converted to Uniprot accessions using the Uniprot idmapping [https://ftp.uniprot.org/pub/databases/uniprot/current_release/]. In total, structures and metrics for 580,146 PETadex v2 proteins were found in the AFDB, emphasizing the uncategorized nature of the PETadex. Below are the distributions of the downloaded structures grouped by component and domain. We found that Component 16 (Cytochrome P450) was the most common component, while Alpha/Beta hydrolase was the most common domain.
+
+<Figure src="/figures/dry-lab-model/domain_distribution.png" alt="SignalP composite figure" width="100%" />
+<Figure src="/figures/dry-lab-model/component_distribution.png" alt="SignalP composite figure" width="100%" />
 ### Biochemical Properties and Ancestral Reconstruction
 
 Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly-sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
