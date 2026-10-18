@@ -476,35 +476,30 @@ The model learns from two datasets. The PETadex corpus supplies the candidates i
 
 ### Embedding Controls
 
-Using the ESMC-XXXM Protein Language Model (PLM), we generated embeddings for X 30%pid PETadex centroids. These X dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library, resulting in Figure 1.
+Using the ESMC-600M Protein Language Model (PLM), we generated embeddings for X 30%pid PETadex centroids. These 640 dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library.
 
-
-<Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-cath.avif"
-  alt="UMAPed enzymes, coloured by CATH domain"
-/>
-
-Noticing apparent clusters by CATH domains in the UMAP (See Figure 1), we ran further analysis to characterize these clusters, and investigate outliers. Silhouette scores found that most CATH domains were indeed highly clustered, minus Alpha/Beta Hydrolases, but since these make up ~⅔ of the PETadex, we would not expect them to be as tightly clustered. The distribution of silhouette scores per CATH domain is shown in Figure 2.
-
-<Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/silhouette.avif"
-  alt="Silhouette scores per CATH domain"
-/>
-
-Notebook: 
-https://github.com/petadex/igemtoronto/blob/main/notebooks/260324_issue51_clusterquantification.ipynb (issue #51) 
+<ImageGrid>
+  <Figure
+    src="/figures/dry-lab-model/cluster_plot.png"
+    alt="UMAPed enzymes, coloured by CATH domain"
+  />
+  <Figure
+    src="/figures/dry-lab-model/Domain640.png"
+    alt="UMAPed enzymes, coloured by CATH domain"
+  />
+</ImageGrid>
 
 Finally, we ran controls on this UMAP to verify that this clustering does not appear by chance. Our objectives are the following: 
 Generate negative controls (random and shuffled sequences) from the 64,730 family representatives, designed to disentangle amino-acid composition from sequence order.
 Generate positive / real-world controls (random UniProt proteins, real-sequence fragments) for comparison against the real centroids.
 
+<Figure
+  src="/figures/dry-lab-model/real_vs_controls_stacked.png"
+  alt="UMAPed enzymes, coloured by CATH domain"
+  width="100%"
+/>
 
 Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in Figure 3. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
-
-<Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-controls.avif"
-  alt="UMAP of PETadex enzymes against controls"
-/>
 
 ### Domain Adapted ESM-LoRA
 
