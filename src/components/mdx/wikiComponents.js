@@ -1,8 +1,36 @@
+import { HardwareIterations } from "../hardwareIterations/HardwareIterations.js"
 import React from "react"
+import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
+import { BioreactorRequirements } from "../bioreactorRequirements/BioreactorRequirements.js"
+import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
+import { DryLabCalendar } from "../dryLabCalendar/DryLabCalendar.js"
+import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
+import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
+import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
 import { HardwareNotebookSandbox } from "../hardwareNotebook/HardwareNotebookSandbox.js"
+import { HardwareArchitectureDiagram } from "../hardwareArchitecture/HardwareArchitectureDiagram.js"
+import { PageTab, PageTabs } from "../PageTabs.js"
+import AtlasMap from "../AtlasMap.js"
+import PetadexGame from "../PetadexGame.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
+import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
+import {
+  DatasetFlowchart,
+  DatasetFlowchartFigure,
+} from "./interactive/DatasetFlowchart.js"
+import {
+  ArchitectureFigure,
+  DiamondSearchHero,
+  MethodsLink,
+} from "./interactive/DiamondSearch.js"
+import { ModelDatasets } from "./interactive/ModelDatasets.js"
+import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
+import { embedComponents } from "./embeds.js"
+import { Spreadsheet } from "./Spreadsheet.js"
+import { CodeDropdown } from "../Dropdown.js"
+import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
 import References from "../References"
 
@@ -13,9 +41,19 @@ export const Callout = ({ tone = "note", title, children }) => (
   </CalloutBox>
 )
 
-export const Figure = ({ src, alt = "", caption, credit, children }) => (
-  <FigureWrap>
-    {src && <img src={src} alt={alt} />}
+/** Marks draft copy that still has to be replaced before the page is published. */
+export const Placeholder = ({ label = "Placeholder text", children }) => (
+  <PlaceholderBox>
+    <PlaceholderLabel>{label}</PlaceholderLabel>
+    <CalloutBody>{children}</CalloutBody>
+  </PlaceholderBox>
+)
+
+// Root-relative srcs point into static/; withPrefix adds the /toronto path
+// prefix the iGEM build is served under.
+export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
+  <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
+    {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
     {(caption || credit) && (
       <figcaption>
@@ -24,6 +62,16 @@ export const Figure = ({ src, alt = "", caption, credit, children }) => (
       </figcaption>
     )}
   </FigureWrap>
+)
+
+// Markdown links to other wiki pages are root-relative too, so they need the
+// same prefix. Protocol-relative (//) and hash-only links are left alone.
+const MdxLink = ({ href = "", ...props }) => (
+  <a
+    {...props}
+    {...useLinkTarget(href)}
+    href={href.startsWith("/") && !href.startsWith("//") ? withPrefix(href) : href}
+  />
 )
 
 export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
@@ -44,16 +92,42 @@ export const ContributionCalendar = ({ title, caption }) => (
 )
 
 export const mdxComponents = {
+  a: MdxLink,
+  HardwareIterations,
   Callout,
+  Placeholder,
   Figure,
   ImageGrid,
   DataTable,
   ContributionCalendar,
   ContributionTimeline,
+  DryLabCalendar,
+  DesignSketchbook,
   HardwareNotebookSandbox,
+  HardwareJournal,
+  WetLabJournal,
+  BioreactorRequirements,
+  BioreactorSimulator,
+  HardwareArchitectureDiagram,
+  PageTabs,
+  PageTab,
   InteractiveGizmo,
+  PetAssayAnimation,
+  DatasetFlowchart,
+  DatasetFlowchartFigure,
+  ArchitectureFigure,
+  DiamondSearchHero,
+  MethodsLink,
+  ModelDatasets,
+  AntibioticSelectionAnimation,
+  GfpBiosensorAnimation,
+  CodeDropdown,
   Citation,
   References,
+  ...embedComponents,
+  Spreadsheet,
+  AtlasMap,
+  PetadexGame,
 }
 
 const toneStyles = {
@@ -68,8 +142,10 @@ const toneStyles = {
   `,
 }
 
+// --wiki-block-max lets a page (the Dry Lab scene) run these boxes the full
+// width of its text box.
 const CalloutBox = styled.aside`
-  max-width: 48rem;
+  max-width: var(--wiki-block-max, 48rem);
   padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--color-border);
   border-left: 5px solid var(--callout-accent);
@@ -90,16 +166,36 @@ const CalloutBody = styled.div`
   }
 
   p {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
 `
 
+const PlaceholderBox = styled.div`
+  max-width: var(--wiki-block-max, 48rem);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px dashed var(--color-muted);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.24);
+`
+
+const PlaceholderLabel = styled.p`
+  color: var(--color-muted) !important;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+`
+
 const FigureWrap = styled.figure`
-  max-width: 54rem;
-  margin: var(--space-lg) 0;
+  width: 100%;
+  max-width: ${({ $width }) => $width};
+  margin: var(--space-lg) auto;
 
   img {
     width: 100%;
+    height: auto;
     border: 1px solid var(--color-border);
     background: rgba(255, 255, 255, 0.28);
   }
@@ -126,16 +222,16 @@ const GridWrap = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-md);
-  max-width: 54rem;
+  max-width: var(--wiki-block-max, 54rem);
   margin: var(--space-lg) 0;
 
   figure {
-    margin: 0;
+    margin: 0 auto;
   }
 `
 
 const DataTableWrap = styled.div`
-  max-width: 54rem;
+  max-width: var(--wiki-block-max, 54rem);
   overflow-x: auto;
   margin: var(--space-lg) 0;
 `

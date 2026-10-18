@@ -1,0 +1,196 @@
+---
+title: "Sharded DIAMOND Search: Methods"
+section: "Dry Lab"
+path: "/dry-lab/software/diamond-search/"
+navTitle: "DIAMOND search methods"
+order: 31
+description: "Full methods for the PETadex sharded DIAMOND search: database sharding, serverless fan-out, exact merging, e-value calibration, versioned caching and benchmarks."
+owners: ["Dry Lab"]
+updated: "2026-10-17"
+status: "draft"
+---
+
+{/*
+  WRITER NOTES — not rendered.
+
+  Methods tier for the Sharded DIAMOND search. The overview, with the hero and
+  the summary figures, is on /dry-lab/software/#sharded-diamond-search. This
+  page is reached only from the "Read the full methods" links there; it is
+  not in any menu.
+
+  Source code: github.com/petadex/petadex-sequence-search (public, MIT).
+  The repo README still describes the earlier 20-shard .dmnd setup in places;
+  the figures here follow what is live.
+
+  Sources for every number (no Numbers.md entry yet):
+    - 307,155,746 sequences, 102,929,980,061 residues, 32 shards of
+      9,598,617 to 9,598,618 sequences, ~743 MB each, 23.8 GB total, zstd
+      level 19, round-robin: live manifest
+      s3://petadex/diamond/catalytic_orfs_v1.1_20260610_173654/manifest.json
+    - DIAMOND v2.2.2: Dockerfile DIAMOND_VERSION
+    - Worker 10,240 MB memory and /tmp, 600 s timeout, arm64, -b1, default
+      sensitivity, reserved concurrency 200: live Lambda configuration
+    - Result depth 500, sequence length 10 to 10,000, search_version 1.4.0:
+      src/common.py
+    - 127.1 s vs 48.2 s end to end, 78.8 vs 7.9 s download, 40.3 vs 31.4 s
+      search, 7.99 vs 2.84 GB peak memory, 22,679 vs 11,075 GB-s, identical
+      hit sets across all 10 runs: docs/cutover.md (5 cold runs per arm,
+      FAST-PETase query)
+    - MMseqs2 parity, 90–100% top-10 overlap at --very-sensitive; ~34 s vs
+      ~170 s per shard for default vs --very-sensitive: README "Why these
+      choices" and "Key runtime parameters" (measured on the .dmnd setup)
+    - S3 storage cost: 23.8 GB at standard S3 rates, about $0.55 a month
+
+  Figures: same CDN files as the Software overview (see its writer notes).
+  The architecture SVG predates the reshard, so its labels still read
+  "20 × shard_NN.dmnd", "20 workers / search" and "reserved concurrency
+  100"; the prose here gives the live values.
+*/}
+
+<Callout title="Methods for the sharded DIAMOND search">
+This page is the full write-up behind the [sharded DIAMOND search](/dry-lab/software/#sharded-diamond-search) on the Software page. The source code is at [github.com/petadex/petadex-sequence-search](https://github.com/petadex/petadex-sequence-search) under the MIT licence.
+</Callout>
+
+## Purpose
+
+PETadex brings together over 300 million candidate plastic-degrading enzymes, most of them predicted from assembled public sequencing data through Logan. A list that size is only useful if people can ask it questions. The question researchers ask most often is a similarity search: given an enzyme they already study, which sequences in the corpus resemble it, and how closely?
+
+Tools such as BLAST answer that question against public databases, but none of them hold our corpus. Researchers could download the data and search it themselves, but that means hundreds of gigabytes, a large machine and familiarity with command-line alignment tools. We wanted anyone with a protein sequence and a web browser to be able to search the whole corpus, get an answer in under a minute and share it with a colleague by sending a link.
+
+## Design constraints
+
+Four constraints shaped the design.
+
+- **Size.** The search covers 307,155,746 sequences and about 103 billion amino acids. No single cloud function can hold that, and a single machine large enough to search it quickly is expensive.
+- **Low, irregular traffic.** A research tool sees bursts of a few searches, then hours of nothing. Anything that runs all the time is paid for mostly while idle.
+- **Latency people will wait for.** Users of sequence search are used to waiting tens of seconds to a few minutes for BLAST. Under a minute is the target, not under a second.
+- **Reproducibility.** A shared result must mean the same thing to everyone who opens it, and a cached result must never be served after the database or the search method has changed.
+
+These pointed us to a serverless design: split the database into pieces, search all the pieces at once on short-lived cloud functions that cost nothing when idle, and merge the results.
+
+## Architecture
+
+<ArchitectureFigure
+  src="/figures/diamond-search/diamond-search-architecture.svg"
+  alt="Architecture of the sharded DIAMOND search. The petadex.net search page sends the query to an orchestrator Lambda, which parses it, reads the current database version and shard manifest from S3, returns a job ID at once and starts a Step Functions Map. The Map runs one worker Lambda per shard in parallel; each downloads its shard from S3, runs diamond blastp and writes its hits to S3. An aggregator Lambda merges the shard results, validates that every shard reported, ranks hits by bit score, adds metadata from RDS and writes the result, index and timings, which the web page polls for."
+  caption="Data flow of one search. Amber boxes are compute (Lambda and Step Functions), dark cylinders are storage (S3 and RDS); dashed lines are the immediate reply and the web app's polling. Click a component to read how it works."
+  width="36rem"
+/>
+
+The search runs on Amazon Web Services and has four parts, all built from one container image.
+
+1. **Orchestrator** (AWS Lambda). Receives the search from petadex.net, validates and parses the sequence, reads the current database version and its shard list from S3, creates a job ID and returns it at once. It then starts the state machine and exits; it never waits for the search to finish.
+2. **State machine** (AWS Step Functions). A Map step starts one worker per shard, all 32 at the same time. Each branch retries short-lived Lambda errors on its own. If a branch still fails, the whole job fails.
+3. **Workers** (AWS Lambda, 32 per search). Each downloads one shard to local disk, searches it with `diamond blastp` and writes its hits, plus a small timing file, back to S3.
+4. **Aggregator** (AWS Lambda). Runs once every worker has finished. It reads all 32 hit lists, checks none is missing, ranks the hits, adds metadata for each hit from our PostgreSQL database (Amazon RDS) and writes the final result.
+
+The query sequence travels inside each worker's start request, which is far below Lambda's 256 KB request limit, so no shared scratch space is needed. Because the orchestrator answers straight away, the web app shows a results page immediately and checks for it every few seconds until it appears.
+
+<Figure
+  src="/figures/diamond-search/diamond-search-temporal.svg"
+  alt="Sequence diagram of one search over time. The web app sends the search to the orchestrator, which reads the database version and manifest from S3, starts Step Functions and returns a job ID within about a second, after which the web app starts polling. Step Functions then invokes all 32 workers in parallel; each downloads its shard, runs diamond blastp and writes its hits to S3, taking about 40 seconds. Once every part has landed, the aggregator reads all 32 parts, merges, sorts and enriches them, and writes the result and index, which the web app's poll finds."
+  caption="The same search over time. The orchestrator returns before the search runs; the web app bridges the gap by polling for the index file the aggregator writes last."
+  width="100%"
+/>
+
+We chose DIAMOND as the search engine because the Logan sequences in PETadex were found with DIAMOND. Searching with the same tool keeps the search consistent with how the data was built. It also reads compressed FASTA directly, which turned out to be the most important performance decision (see [Performance](#performance)).
+
+## Building the sharded database
+
+An offline build script (`scripts/db/build_diamond_shards.py`) streams the corpus FASTA from S3 in one pass and deals the records out round-robin into 32 shards: record 1 to shard 0, record 2 to shard 1, and so on. Whatever order the corpus is in, dealing it out like this gives every shard a similar mix. The live shards hold 9,598,617 or 9,598,618 sequences each, and their residue counts are within 0.1% of each other, so all 32 workers finish at about the same time.
+
+Each shard is compressed with zstd at level 19 and stored as `shard_NN.fa.zst`, about 743 MB each and 23.8 GB in total. Storing that in S3 costs about $0.55 a month.
+
+The number of shards is set by the 10 GB memory limit of a Lambda function. With 20 shards, each compressed shard had to be searched in one block that needed more memory than a worker has. At 32 shards the search fits comfortably: peak memory per worker is under 3 GB.
+
+### Atomic versioning
+
+Every build is written to its own folder, `s3://petadex/diamond/{version}/`, with a `manifest.json` that records the corpus file, the shard count, the sequence and residue count of every shard and their totals. A one-line text file, `diamond/LATEST`, names the version in use. The build writes every shard first, then the manifest, and only then updates `LATEST`. The orchestrator reads `LATEST` once per job and passes the resolved version to every worker, so a search can never mix shards from two builds, even if a new build is published halfway through it.
+
+## Searching a shard
+
+Each worker runs on an arm64 Lambda with 10 GB of memory (about six virtual CPUs), 10 GB of local disk and a 10-minute time limit. It downloads its shard, writes the query to a file and runs:
+
+```
+diamond blastp -q query.fasta -d shard_NN.fa.zst -o part.tsv \
+  -b 1 -k 500 --threads <cpus> --dbsize 102929980061 \
+  --outfmt 6 …
+```
+
+- `-k 500` keeps up to 500 hits per shard, which is also the most the merged result can hold.
+- `-b 1` keeps the reference block small, which keeps memory low. DIAMOND v2.2.2 merges hits correctly across blocks of a compressed FASTA database; earlier releases did not, and we waited for that fix to be released before switching to compressed shards.
+- `--dbsize` is explained under [E-values](#e-values-calibrated-to-the-whole-corpus).
+- Sensitivity is DIAMOND's default mode. Its `--very-sensitive` mode finds more distant matches but took about five times as long per shard. For a tool whose main use is finding close relatives of a known enzyme, we chose speed.
+
+A warm Lambda keeps its downloaded shard and reuses it if it is next given the same shard. Lambda does not guarantee which container gets which shard, so in practice almost every search starts cold, and the design assumes it.
+
+## Merging into one ranking
+
+The aggregator joins the 32 lists, sorts every hit by bit score (highest first, with E-value breaking ties) and keeps the top 500.
+
+**The merged top 500 is exact.** Suppose a hit is in the top 500 for the whole corpus. Fewer than 500 hits in the whole corpus beat it, so fewer than 500 hits in its own shard can beat it, and it must be in that shard's top 500. Every member of the global top 500 therefore reaches the aggregator, and sorting them gives the same list a single search over the whole corpus would have. The same holds for any shorter list, so the web app can show the top 50 or the top 100 from the stored 500 without searching again.
+
+Ranking by bit score is safe across shards because a bit score depends only on the alignment and the scoring system, not on the size of the database searched.
+
+### E-values calibrated to the whole corpus
+
+An E-value estimates how many matches this good would turn up by chance, and it grows with the size of the database. A shard is one thirty-second of the corpus, so a worker left to itself would report E-values about 32 times too small, making matches look more significant than they are. Each worker is instead given the total residue count of the corpus with `--dbsize`, taken from the manifest, so every E-value is the one a search over the whole corpus would report.
+
+DIAMOND's default E-value cut-off of 0.001 applies, measured against the whole corpus. Most queries therefore return fewer than 500 hits.
+
+## Failure handling
+
+If any shard still fails after its retries, the whole job fails. A result built from 31 of 32 shards would look complete while silently missing about 3% of the corpus, and it could not be reproduced, so we return nothing rather than a partial answer. Every worker writes its timing file even when it fails, and the aggregator collects these into a `timing.json` with each shard's status and error. A failed job leaves a record of what went wrong without publishing a result.
+
+Workers have a reserved concurrency of 200 Lambda instances, enough for six searches to run at the same time.
+
+## Versioning and caching
+
+Every result records the two things that determine its contents:
+
+| Field | What it identifies | Example |
+|---|---|---|
+| `database_version` | The exact database build searched | `catalytic_orfs_v1.1_20260610_173654` |
+| `search_version` | The search method: engine, sensitivity, scoring, depth | `1.4.0` |
+
+The web app names each search by a hash of the cleaned sequence together with both versions. Searching a sequence that has already been searched against the same database with the same method finds the stored result and returns it at once. If either version has changed, the name is different, so the search runs again and an out-of-date answer is never served. The web app learns the current versions from a small `version` request to the orchestrator before it decides whether a stored result can be used.
+
+Results are stored at `results/{sessionId}/{jobId}.json`, and `results/{sessionId}.index` points to the newest one. A result's page on petadex.net, `petadex.net/results?job={sessionId}`, is its permanent, shareable link. Alongside each hit's alignment fields, the result JSON records the engine, the database it came from, both versions and the corpus size, so a downloaded result is self-describing.
+
+## Performance
+
+The biggest gain came from the storage format. Our first version stored 20 shards in DIAMOND's own `.dmnd` format, about 6 GB each. Downloading one took 79 seconds, because a single Lambda function downloads from S3 at about 78 MB per second whatever we tuned. Compressed FASTA shards are about an eighth of the size, so downloads fell to 8 seconds.
+
+| Measure | 20 `.dmnd` shards | 32 zstd shards |
+|---|---|---|
+| End to end | 127.1 s | 48.2 s |
+| Download per shard | 78.8 s | 7.9 s |
+| Search per shard | 40.3 s | 31.4 s |
+| Peak worker memory | 7.99 GB | 2.84 GB |
+| Compute per search | 22,679 GB-s | 11,075 GB-s |
+
+All figures are the mean of five cold-start runs per setup on the live AWS Lambda configuration, with FAST-PETase as the query. Even with 32 workers in place of 20, each search uses half the compute, because every worker finishes much sooner and needs much less memory.
+
+Search time is now the largest part of the total. More, smaller shards would cut it further, at the cost of more workers per search.
+
+## Validation
+
+- **Compressed vs native shards.** All ten benchmark runs, five per setup, returned the same 50 hits for FAST-PETase, so the compressed shards and the cross-shard merge reproduce the original setup exactly.
+- **DIAMOND vs MMseqs2.** Before switching engines, we searched IsPETase, FAST-PETase and a Logan sequence from run SRR10663367 with both DIAMOND (`--very-sensitive`) and the MMseqs2 search we used before. Their top 10 hits overlapped by 90% to 100%, with near-identical percent identities.
+- **Built-in checks.** The aggregator rejects any job with a missing shard, and checks that every percent identity lies between 0 and 100.
+
+## Limitations
+
+- **Default sensitivity misses some distant matches.** DIAMOND's default mode trades sensitivity for speed. It is well suited to finding close and moderately distant relatives of a known enzyme, but a search for very remote homologues should use `--very-sensitive` locally, and the comparison with MMseqs2 should be repeated before relying on default mode for that.
+- **Every search is cold.** At current traffic, almost every search downloads all 32 shards. If traffic grows, keeping the shards on a shared file system (Amazon EFS) or a small permanent server would remove the download, at a flat monthly cost of about $60 in place of under $1.
+- **Little external metadata for Logan hits.** Hits from Logan are identified by open reading frame IDs that encode the source sequencing run, not by GenBank accessions, so most Logan hits have no metadata from public protein databases.
+- **One query at a time.** The search takes a single protein sequence of 10 to 10,000 amino acids. Batch searches are not supported through the website.
+
+## Using the search
+
+1. Go to [petadex.net/search](https://petadex.net/search).
+2. Paste one protein sequence, on its own or in FASTA format, between 10 and 10,000 amino acids long. Stop codons (`*`) and gaps (`-`) are removed automatically.
+3. Submit. The results page opens straight away and fills in when the search finishes, usually in under a minute.
+4. Each row of the hit table gives the matching sequence, its percent identity to your query, the aligned ranges of both sequences, the E-value and the bit score. Copy the page address to share the result.
+
+To run the pipeline on your own data, see the [repository README](https://github.com/petadex/petadex-sequence-search). It covers how the sharded database is built, how the AWS resources are provisioned and how the container is deployed. The search can also be run as a command-line tool.

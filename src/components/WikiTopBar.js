@@ -6,9 +6,15 @@ export const wikiNav = [
   { to: "/", label: "Home" },
   { label: "Project", children: [
     { to: "/project/description/", label: "Project Description" },
-    { to: "/project/applications/", label: "Applications" },
-    { to: "/project/contribution/", label: "Contribution" },
-    { to: "/project/engineering/", label: "Engineering" },
+    { to: "/engineering/", label: "Engineering" },
+    { to: "/wiki/", label: "Wiki" },
+    { to: "/finance/", label: "Finance" },
+    { to: "/safety-and-security/", label: "Safety" },
+  ]},
+  { label: "Dry Lab", children: [
+    { to: "/dry-lab/overview/", label: "Overview" },
+    { to: "/model/", label: "Model" },
+    { to: "/software/", label: "Software" },
   ]},
   { label: "Wet Lab", children: [
     { to: "/wet-lab/overview/", label: "Experimental Overview" },
@@ -17,41 +23,41 @@ export const wikiNav = [
     { to: "/wet-lab/results/", label: "Results" },
     { to: "/wet-lab/milestones/", label: "Pivotal Changes and Milestones" },
   ]},
-  { label: "Dry Lab", children: [
-    { to: "/dry-lab/overview/", label: "Overview" },
-    { to: "/dry-lab/model/", label: "Generalized Model" },
-    { to: "/dry-lab/software/", label: "Software" },
-    { to: "/dry-lab/software-specs/", label: "Software Specs" },
-  ]},
   { label: "Hardware", children: [
-    { to: "/hardware/overview/", label: "Overview" },
-    { to: "/hardware/parts/", label: "Parts" },
+    { to: "/hardware/", label: "Overview" },
+    { to: "/hardware/motivation/", label: "Motivation" },
+    { to: "/hardware/past-iterations/", label: "Past Iterations" },
     { to: "/hardware/notebook/", label: "Notebook" },
     { to: "/hardware/results/", label: "Results" },
   ]},
+  { to: "/human-practices/", label: "Human Practices" },
+  { to: "/beyond-the-bench/outreach/", label: "Outreach" },
+  { to: "/entrepreneurship/", label: "Entrepreneurship" },
   { label: "Team", children: [
+    { to: "/contribution/", label: "Contribution" },
     { to: "/team/", label: "Meet the Team" },
     { to: "/team/attributions/", label: "Attributions" },
-    { to: "/team/collaborations/", label: "Collaborations" },
-  ]},
-  { label: "Beyond the Bench", children: [
-    { to: "/beyond-the-bench/education-toolkit/", label: "Education Toolkit" },
-    { to: "/beyond-the-bench/human-practices/", label: "Human Practices" },
-    { to: "/beyond-the-bench/entrepreneurship/", label: "Entrepreneurship" },
-    { to: "/beyond-the-bench/safety/", label: "Safety" },
   ]},
 ]
 
-const MOBILE_NAV_BREAKPOINT = "900px"
+/** Below this the links don't fit on one line beside the logo, so the menu button takes over. */
+const MOBILE_NAV_BREAKPOINT = "1080px"
 
-export function WikiTopBar() {
+/** The PetaBite wordmark in the wiki colourway (Cindy's logo, intact frame). */
+const LOGO_SRC = "https://static.igem.wiki/teams/6187/wiki/outreach/photos/petabite-logo-web.avif"
+
+export function WikiTopBar({ sticky = false }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openMobileSection, setOpenMobileSection] = useState(null)
 
   useEffect(() => {
     if (typeof document === "undefined" || !menuOpen) return undefined
 
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setMenuOpen(false)
+      if (event.key === "Escape") {
+        setMenuOpen(false)
+        setOpenMobileSection(null)
+      }
     }
 
     const previousOverflow = document.body.style.overflow
@@ -64,26 +70,40 @@ export function WikiTopBar() {
     }
   }, [menuOpen])
 
-  const closeMenu = () => setMenuOpen(false)
+  const closeMenu = () => {
+    setMenuOpen(false)
+    setOpenMobileSection(null)
+  }
+
+  const toggleMenu = () => {
+    setMenuOpen(open => {
+      if (open) setOpenMobileSection(null)
+      return !open
+    })
+  }
 
   return (
-    <TopBar>
+    <TopBar $sticky={sticky}>
       <NavInner>
-        <LogoPlaceholder to="/" aria-label="iGEM Toronto 2026 — Home" onClick={closeMenu}>
-          <LogoBox>LOGO</LogoBox>
-        </LogoPlaceholder>
+        <LogoLink to="/" aria-label="PetaBite, iGEM Toronto 2026 home page" onClick={closeMenu}>
+          <LogoImg src={LOGO_SRC} alt="" />
+        </LogoLink>
 
         <DesktopNav aria-label="Wiki sections">
-          {wikiNav.slice(1).map(({ label, children }) => (
-            <NavItem key={label}>
-              <NavParent>{label}</NavParent>
-              <Dropdown>
-                {children.map(({ to, label: childLabel }) => (
-                  <DropdownLink key={to} to={to}>{childLabel}</DropdownLink>
-                ))}
-              </Dropdown>
-            </NavItem>
-          ))}
+          {wikiNav.slice(1).map(({ to, label, children }) =>
+            children ? (
+              <NavItem key={label}>
+                <NavParent>{label}</NavParent>
+                <Dropdown>
+                  {children.map(({ to: childTo, label: childLabel }) => (
+                    <DropdownLink key={childTo} to={childTo}>{childLabel}</DropdownLink>
+                  ))}
+                </Dropdown>
+              </NavItem>
+            ) : (
+              <DesktopLink key={to} to={to}>{label}</DesktopLink>
+            )
+          )}
         </DesktopNav>
 
         <MenuToggle
@@ -91,7 +111,7 @@ export function WikiTopBar() {
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           aria-controls="wiki-mobile-nav"
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={toggleMenu}
         >
           <MenuBar $open={menuOpen} aria-hidden />
         </MenuToggle>
@@ -99,18 +119,40 @@ export function WikiTopBar() {
 
       <MobileMenu id="wiki-mobile-nav" $open={menuOpen} aria-hidden={!menuOpen}>
         <MobileNav aria-label="Wiki sections">
-          {wikiNav.slice(1).map(({ label, children }) => (
-            <MobileSection key={label}>
-              <MobileSectionLabel>{label}</MobileSectionLabel>
-              <MobileLinks>
-                {children.map(({ to, label: childLabel }) => (
-                  <MobileLink key={to} to={to} onClick={closeMenu}>
-                    {childLabel}
-                  </MobileLink>
-                ))}
-              </MobileLinks>
-            </MobileSection>
-          ))}
+          {wikiNav.slice(1).map(({ to, label, children }) =>
+            children ? (
+              <MobileSection key={label}>
+                <MobileSectionToggle
+                  type="button"
+                  aria-expanded={openMobileSection === label}
+                  onClick={() =>
+                    setOpenMobileSection(current =>
+                      current === label ? null : label,
+                    )
+                  }
+                >
+                  <span>{label}</span>
+                  <MobileChevron
+                    $open={openMobileSection === label}
+                    aria-hidden="true"
+                  >
+                    ▾
+                  </MobileChevron>
+                </MobileSectionToggle>
+                <MobileLinks $open={openMobileSection === label}>
+                  {children.map(({ to: childTo, label: childLabel }) => (
+                    <MobileLink key={childTo} to={childTo} onClick={closeMenu}>
+                      {childLabel}
+                    </MobileLink>
+                  ))}
+                </MobileLinks>
+              </MobileSection>
+            ) : (
+              <MobileTopLink key={to} to={to} onClick={closeMenu}>
+                {label}
+              </MobileTopLink>
+            )
+          )}
         </MobileNav>
       </MobileMenu>
     </TopBar>
@@ -121,40 +163,42 @@ export function WikiTopBar() {
 export const WIKI_TOP_BAR_Z_INDEX = 110
 
 const TopBar = styled.header`
-  position: relative;
+  position: ${({ $sticky }) => ($sticky ? "sticky" : "relative")};
+  top: ${({ $sticky }) => ($sticky ? "0" : "auto")};
   z-index: ${WIKI_TOP_BAR_Z_INDEX};
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
-  position: relative;
-  z-index: 120;
 `
 
 const NavInner = styled.div`
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0.5rem var(--page-padding);
+  /* Room for the logo's hanging letters once it's nudged down (LogoImg). */
+  padding: 1rem var(--page-padding);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
 `
 
-const LogoPlaceholder = styled(Link)`
+const LogoLink = styled(Link)`
+  display: flex;
+  align-items: center;
   text-decoration: none;
   flex-shrink: 0;
 `
 
-const LogoBox = styled.div`
-  width: 6.5rem;
-  height: 1.75rem;
-  border: 1px dashed var(--color-border);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-muted);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
+/**
+ * Taller than the nav links; the negative margin lets it use the bar's padding.
+ * Nudged down so its hexagon row, not its box, lines up with the links (the
+ * B and e hang below the rest of the word).
+ */
+const LogoImg = styled.img`
+  display: block;
+  height: 3.9rem;
+  width: auto;
+  margin: -0.65rem 0;
+  transform: translateY(0.3rem);
 `
 
 const DesktopNav = styled.nav`
@@ -162,10 +206,26 @@ const DesktopNav = styled.nav`
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm) var(--space-md);
-  font-size: 0.8125rem;
+  font-size: 1.05rem;
 
   @media (max-width: ${MOBILE_NAV_BREAKPOINT}) {
     display: none;
+  }
+`
+
+const DesktopLink = styled(Link)`
+  color: var(--color-muted);
+  font-size: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 `
 
@@ -193,7 +253,7 @@ const NavParent = styled.span`
 
   &::after {
     content: '▾';
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     transition: transform 0.2s ease;
   }
 
@@ -229,7 +289,7 @@ const DropdownLink = styled(Link)`
   padding: 0.5rem 1rem;
   margin-top: 0.5rem;
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: 1rem;
   text-decoration: none;
   white-space: nowrap;
   position: relative;
@@ -331,25 +391,51 @@ const MobileSection = styled.div`
   gap: 0.35rem;
 `
 
-const MobileSectionLabel = styled.p`
-  font-size: 0.7rem;
+const MobileSectionToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.45rem 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: transparent;
+  font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--color-text);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+`
+
+const MobileChevron = styled.span`
+  font-size: 0.9rem;
+  transform: rotate(${({ $open }) => ($open ? "180deg" : "0deg")});
+  transition: transform 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `
 
 const MobileLinks = styled.div`
-  display: flex;
+  display: ${({ $open }) => ($open ? "flex" : "none")};
   flex-direction: column;
   gap: 0.125rem;
+  padding-left: 0.75rem;
 `
 
 const MobileLink = styled(Link)`
   display: block;
   padding: 0.45rem 0;
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   text-decoration: none;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
 
@@ -362,4 +448,9 @@ const MobileLink = styled(Link)`
     outline-offset: 2px;
     border-radius: 2px;
   }
+`
+
+const MobileTopLink = styled(MobileLink)`
+  color: var(--color-text);
+  font-weight: 600;
 `

@@ -3,6 +3,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import config from "../config"
+import { useLinkTarget, useNewTabLinks } from "./mdx/linkTarget.js"
 import {
   COMPONENT_SHADE_RGBA,
   CATH_GROUPS,
@@ -217,6 +218,9 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
   const compact = propHighlightId != null
   const [highlightFamilyId, setHighlightFamilyId] = useState(propHighlightId)
   const containerRef    = useRef(null)
+  const newTabRef       = useRef(false)   // read by the deck's click handler
+  newTabRef.current     = useNewTabLinks()
+  const petadexTarget   = useLinkTarget("https://petadex.net")
   const deckRef         = useRef(null)
   const pointsRef       = useRef([])
   const maxSizeRef      = useRef(1)
@@ -381,7 +385,7 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
     async function init() {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        const timeoutId = setTimeout(() => controller.abort(), 12000)
         const endpoint = highlightFamilyId != null
           ? `${config.apiUrl}/family/${highlightFamilyId}/umap`
           : `${config.apiUrl}/atlas/umap`
@@ -432,7 +436,9 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
           getTooltip: ({ object }) => object && buildTooltip(object, highlightFamilyId),
           onClick: ({ object }) => {
             if (object?.family_id != null && object.family_id !== highlightFamilyId) {
-              window.location.href = `/family/${object.family_id}`
+              const url = `https://petadex.net/family/${object.family_id}`
+              if (newTabRef.current) window.open(url, "_blank", "noopener,noreferrer")
+              else window.location.href = url
             }
           },
           getCursor: ({ isHovering }) => isHovering ? "pointer" : "grab",
@@ -446,8 +452,16 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
         // Initial projection after first render
         requestAnimationFrame(projectHighlight)
       } catch (err) {
-        console.error("AtlasMap error:", err)
-        setError(err.name === "AbortError" ? "Atlas data timed out — server may be unavailable" : err.message)
+        const timedOut = err.name === "AbortError"
+        const unreachable = timedOut || err instanceof TypeError
+        if (!unreachable) console.error("AtlasMap error:", err)
+        setError(
+          timedOut
+            ? "Atlas data timed out. The live map is on petadex.net."
+            : unreachable
+              ? "The live atlas could not be loaded. Open it on petadex.net."
+              : err.message
+        )
         setLoading(false)
       }
     }
@@ -919,7 +933,16 @@ const AtlasMap = ({ familyId: familyIdProp, highlightFamilyIds } = {}) => {
             fontSize: "1rem",
           }}
         >
-          {error}
+          <div style={{ textAlign: "center", padding: "0 1.5rem" }}>
+            <div>{error}</div>
+            <a
+              href="https://petadex.net"
+              {...petadexTarget}
+              style={{ color: "#7dd3c7", display: "inline-block", marginTop: "0.75rem" }}
+            >
+              Open petadex.net
+            </a>
+          </div>
         </div>
       )}
 

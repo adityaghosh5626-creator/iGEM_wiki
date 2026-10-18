@@ -1,0 +1,99 @@
+name: Sync main to iGEM GitLab
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-igem-gitlab
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out GitHub main
+        uses: actions/checkout@v5
+
+      # GitLab gets a snapshot of GitHub main's files as one new commit, not
+      # GitHub's history: a file GitLab can't take (over 10 MB) that was later
+      # fixed on GitHub would otherwise block every sync from then on.
+      - name: Commit a snapshot of GitHub main onto GitLab main
+        env:
+          GITLAB_TOKEN: ${{ secrets.IGEM_GITLAB_TOKEN }}
+        run: |
+          set -eu
+
+          if [ -z "$GITLAB_TOKEN" ]; then
+            echo "IGEM_GITLAB_TOKEN is not configured."
+            exit 1
+          fi
+
+          git config user.name "iGEM Toronto Sync Bot"
+          git config user.email "igem-toronto-sync@users.noreply.github.com"
+          git remote add igem "https://oauth2:${GITLAB_TOKEN}@gitlab.igem.org/2026/toronto.git"
+          git fetch igem main
+
+          tree=$(git rev-parse "$GITHUB_SHA^{tree}")
+          if [ "$tree" = "$(git rev-parse "igem/main^{tree}")" ]; then
+            echo "GitLab main already has these files."
+            exit 0
+          fi
+          snapshot=$(git commit-tree "$tree" -p igem/main -m "Sync GitHub main at $(git rev-parse --short "$GITHUB_SHA")
+
+          $(git log -1 --format='Latest: %s (%an)' "$GITHUB_SHA")")
+
+          # GitLab refuses a push over 11 MiB, so a large sync first sends its
+          # new files in smaller batches on a scratch branch (CI skipped); the
+          # push to main then only carries what is left.
+          staging=refs/heads/github-sync-staging
+          limit=$((8 * 1024 * 1024))
+          staged=""
+          entries=""
+          sent=""
+          total=0
+          flush() {
+            [ -n "$entries" ] || return 0
+            # Each tree lists every file sent so far: git counts only the
+            # newest one's as already on GitLab.
+            sent="${sent}${entries}"
+            tree=$(printf '%s' "$sent" | git mktree)
+            if [ -n "$staged" ]; then
+              staged=$(git commit-tree "$tree" -p "$staged" -m "Sync staging")
+            else
+              staged=$(git commit-tree "$tree" -m "Sync staging")
+            fi
+            echo "Staging $(printf '%s' "$entries" | wc -l) files, $((total / 1024)) KiB"
+            git push -o ci.skip --force igem "$staged:$staging"
+            entries=""
+            total=0
+          }
+          while read -r sha type size; do
+            [ "$type" = blob ] || continue
+            if [ "$total" -gt 0 ] && [ $((total + size)) -gt "$limit" ]; then
+              flush
+            fi
+            entries="${entries}100644 blob ${sha}"$'\t'"${sha}"$'\n'
+            total=$((total + size))
+          done < <(
+            git rev-list --objects "$snapshot" --not igem/main | cut -d' ' -f1 |
+              git cat-file --batch-check='%(objectname) %(objecttype) %(objectsize)'
+          )
+          # Small syncs never fill a batch and go straight to main. Otherwise a
+          # last scratch commit takes the batches and the snapshot as parents: git
+          # only skips files already sent when they come in through a parent,
+          # so this push carries the rest and main then needs no upload.
+          if [ -n "$staged" ]; then
+            flush
+            bridge=$(git commit-tree "$(git mktree </dev/null)" \
+              -p "$staged" -p "$snapshot" -m "Sync staging")
+            git push -o ci.skip --force igem "$bridge:$staging"
+          fi
+
+          git push igem "$snapshot:refs/heads/main"
+          [ -z "$staged" ] || git push -o ci.skip igem --delete "$staging" || true

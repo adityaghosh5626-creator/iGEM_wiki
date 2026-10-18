@@ -1,0 +1,727 @@
+/**
+ * @typedef {Object} HardwareJournalLink
+ * @property {string} label
+ * @property {string} href
+ */
+
+/**
+ * @typedef {Object} HardwareJournalImage
+ * @property {string} src - CDN URL under static.igem.wiki/.../hardware-notebook/
+ * @property {string} [alt]
+ * @property {string} [caption]
+ */
+
+/**
+ * @typedef {Object} HardwareJournalEntry
+ * @property {string} id - YYYY-MM-DD
+ * @property {string} date
+ * @property {string} label - Short sidebar label
+ * @property {string} goal
+ * @property {string} workCompleted
+ * @property {string} result
+ * @property {string} nextStep
+ * @property {string[]} [deliverables]
+ * @property {HardwareJournalLink[]} [links]
+ * @property {HardwareJournalImage[]} [images]
+ */
+
+const HW_IMG = (path) => `https://static.igem.wiki/teams/6187/wiki/hardware-notebook/${path}`
+
+/** @type {HardwareJournalEntry[]} */
+const HARDWARE_JOURNAL_ENTRIES_RAW = [
+  {
+    id: "2026-03-13",
+    date: "2026-03-13",
+    label: "Mar 13",
+    goal: "Onboard the hardware team and align on the pioreactor build direction.",
+    workCompleted:
+      "Shared reading resources in the drive; reviewed wet-lab assay context (PET–biotin collection surface) and pioreactor sticky-note notes.",
+    result:
+      "Team oriented on pioreactor as the starting platform and identified the wet-lab binding-assay constraint (false positives when cells cut PET without binding to the collector).",
+    nextStep:
+      "Continue pioreactor build; ask wetland leads about creative PETase filament testing ideas.",
+  },
+  {
+    id: "2026-03-20",
+    date: "2026-03-20",
+    label: "Mar 20",
+    goal: "Close sprint 1 and plan software + second pioreactor build.",
+    workCompleted:
+      "Reflected on first pioreactor build: screws, pumps, CPU-fan stirring, Raspberry Pi, photosensor OD, aeration, and heating. Reviewed stakeholder feedback (dry lab, wet lab, pioreactor expert login).",
+    result:
+      "Identified pain points: difficult screws, unclear instructions, hat-PCB limits one MCU per reactor, and material choices affecting accessibility.",
+    nextStep:
+      "Divide and conquer: software for bioreactor plus build of a second pioreactor; explore custom hat PCB or shared MCU options.",
+  },
+  {
+    id: "2026-03-27",
+    date: "2026-03-27",
+    label: "Mar 27",
+    goal: "Define user-friendly design criteria for an accessible DIY bioreactor.",
+    workCompleted:
+      "Patricia presented accessibility lessons from open-source hardware (DNA playground, Bento Lab, pioreactor). Team shared current requirements and discussed integration with wet-lab assays.",
+    result:
+      "Agreed on friendly UI, clear instructions, safe assembly, and core features (OD, mixing, web interface, pumps, heating). Upstream/downstream separators deprioritized for now.",
+    nextStep:
+      "Refine requirements with ergonomics in mind (gloves, goggles); continue pioreactor prototyping.",
+  },
+  {
+    id: "2026-04-15",
+    date: "2026-04-15",
+    label: "Apr 15",
+    goal: "Debrief with Pioreactor CEO and kick off BOM + requirement-string ownership.",
+    workCompleted:
+      "Reviewed CEO notes (Stemma QT, avoid Raspberry Pi, use cheaper MCUs). Assigned BOM owners per component; reviewed requirement strings by section.",
+    result:
+      "BOM research delegated across the team; MCU direction shifted away from Raspberry Pi; requirement flags assigned by subsystem.",
+    nextStep:
+      "Complete BOM entries on the shared sheet; continue MCU connectivity and pump-fitting research.",
+    deliverables: [
+      "BOM owners: Lindsay (Stemma QT), Lia (pH), Daisy (OD diodes), James (temp/heating), Aayush (printer), Karys (pump), Arya (fan), Claire (glassware/tubes)",
+    ],
+    links: [
+      {
+        label: "BOM sheet (April 2026)",
+        href: "https://docs.google.com/spreadsheets/d/1TNwv2scEkocbdkn35FhmObunDVHcZ7TCm1Lv9EmIX5Q/edit?gid=0#gid=0",
+      },
+    ],
+  },
+  {
+    id: "2026-04-29",
+    date: "2026-04-29",
+    label: "Apr 29",
+    goal: "Continue BOM research and flag ambiguous requirement strings.",
+    workCompleted:
+      "Reviewed BOM progress on the shared sheet; leads asked dry lab and wet lab why we need a bioreactor and what we are measuring.",
+    result: "BOM research ongoing; requirement-string review owners confirmed per section.",
+    nextStep: "Finish component research; keep flagging ambiguous or high-priority requirements.",
+  },
+  {
+    id: "2026-05-12",
+    date: "2026-05-12",
+    label: "May 12",
+    goal: "Finalize BOM ordering decisions for core sensors and actuators.",
+    workCompleted:
+      "Reviewed highlighted BOM items: Stemma QT (I2C sensors, PWM pumps), cable costs, stepper motor for peristaltic pump, external vs internal temperature sensor, and manual pH measurement path.",
+    result:
+      "External temp sensor chosen for prototyping; manual pH via wet-lab probe accepted over unreliable inline sensing; thermocouple noted for autoclave path.",
+    nextStep: "Place orders for agreed components; continue heater and pump integration research.",
+  },
+  {
+    id: "2026-05-16",
+    date: "2026-05-16",
+    label: "May 16",
+    goal: "Assign prototyping tasks for OD sensing, heating, and MCU connectivity.",
+    workCompleted:
+      "Discussed OD sensor options (~$14 TI), calibration efficiency, blackout box design, 3D-printed vs mason-jar caps, and PCB hat vs wrapped heater. Assigned MCU/wiring diagram research (CH32, STM32, Arduino, ESP32).",
+    result:
+      "OD research team formed (Aayush, Daisy, Claire); heater path confirmed with waterproof 10 cm sheath sensor; MCU compatibility investigation assigned.",
+    nextStep:
+      "Prototype OD calibration setup; investigate pin connections and libraries; complete testing procedure for Spencer.",
+    deliverables: [
+      "OD research: Aayush, Daisy, Claire",
+      "Testing procedure / Spencer education: Soham, Aayush, Claire",
+      "MCU wiring & library research: James, Soham (CH32)",
+    ],
+  },
+  {
+    id: "2026-05-19",
+    date: "2026-05-19",
+    label: "May 19",
+    goal: "Bench-test peristaltic pump and OD sensing; reassess real-time pH.",
+    workCompleted:
+      "Ran peristaltic pump test with red/blue water; attempted OD readings (noisy data). Discussed real-time pH sensing with Quigley; Lindsay reviewed pins; Karys exploring DIY pumps; James found Arduino Nano deal at myFab.",
+    result:
+      "Real-time pH adjustment deprioritized as not useful for current assays; pump plumbing validated visually; OD needs calibration work.",
+    nextStep: "Everyone review pioreactor source code; Claire and Aayush continue OD prototyping.",
+  },
+  {
+    id: "2026-05-26",
+    date: "2026-05-26",
+    label: "May 26",
+    goal: "Align bioreactor requirements with wet lab and dry lab measurement needs.",
+    workCompleted:
+      "Filmed pioreactor demo; dry-lab leads confirmed temperature sweeps matter more than pH sweeps. Defined targets: continuous flow, OD600 feedback loop, 25–70 °C heating, 3-pump layout (2 in, 1 out), manual pH. Updated BOM for OD (LED + photodiode), heaters (~7.5 W per vessel), and Stemma QT CAD for removable tubing.",
+    result:
+      "Shared requirements doc across subteams; heater wattage and heat-up time estimates documented; GFP fluorescence on output noted as optional.",
+    nextStep:
+      "OD trio meeting May 27; James on thermal interface materials; Lia on cloud integration; Lindsay on pump + sensor integration; Claire on cap-holder CAD.",
+    deliverables: [
+      "OD meeting: Daisy, Claire, Aayush (May 27)",
+      "Thermal insulation research: James",
+      "Systems integration: Lia",
+      "Pump + sensor integration: Lindsay",
+      "Cap-holder CAD: Claire",
+    ],
+  },
+  {
+    id: "2026-05-30",
+    date: "2026-05-30",
+    label: "May 30",
+    goal: "Compare connectivity options for multi-reactor setups.",
+    workCompleted:
+      "Evaluated USB hub (long serial, many ports) vs WiFi/Bluetooth modules across setup difficulty, code rewrite, cost, and connection reliability.",
+    result: "Tradeoff table started; no final architecture chosen yet.",
+    nextStep: "Build cost/complexity comparison table and pick a connectivity path for scale-up.",
+  },
+  {
+    id: "2026-06-02",
+    date: "2026-06-02",
+    label: "Jun 2",
+    goal: "Lock OD component selection and draft system architecture v1.",
+    workCompleted:
+      "Selected combined photodiode + TIA for OD600; James calculated heater losses and insulation options; Lindsay validated pump wiring; Karys weighed reusing pioreactor CAD vs DIY pump. Drafted sensor → MCU → cloud hierarchy and split physical vs cloud UI controls.",
+    result:
+      "System architecture v1 outlined; physical UI for temp/runtime/OD controls, cloud for analytics; validation experiments assigned per subsystem.",
+    nextStep:
+      "Order two OD components; James to model heat-up time and resistor layout; everyone design subsystem validation experiments for next week.",
+    deliverables: [
+      "Order combined photodiode + TIA (×2)",
+      "Power management research: Lindsay, Lia, James",
+      "Subsystem validation experiments: all members",
+    ],
+    links: [
+      {
+        label: "System architecture diagram (Canva)",
+        href: "https://www.canva.com/design/DAHLdj9nQqA/XR2nt-IOffrFGMTjgiRrkg/edit",
+      },
+    ],
+  },
+  {
+    id: "2026-06-09",
+    date: "2026-06-09",
+    label: "Jun 9",
+    goal: "Plan subsystem design-of-experiment protocols and CAD for caps/OD.",
+    workCompleted:
+      "Outreach check-in; member updates on CAD for self-healing caps and OD components; pH interim plan (effluent harvest + manual probe); microcontroller comparison; bioreactor layout sketching. Temperature / heater validation methods drafted in the master engineering workbook.",
+    result:
+      "DoE variables defined for flow rate, temperature accuracy, autoclave path, and sourcing; power budgeting and I2C daisy-chain options documented.",
+    nextStep:
+      "Solder pumps; finalize CAD prints; draft stress-test variable lists per subsystem.",
+    images: [
+      {
+        src: HW_IMG("journal/master-temp-sensor-test-jun.avif"),
+        alt: "Temperature sensor test setup from master workbook",
+        caption: "Temperature sensor validation notes (master workbook).",
+      },
+      {
+        src: HW_IMG("journal/master-heater-test-jun.avif"),
+        alt: "Heater test setup from master workbook",
+        caption: "Heater validation notes (master workbook).",
+      },
+    ],
+  },
+  {
+    id: "2026-06-16",
+    date: "2026-06-16",
+    label: "Jun 16",
+    goal: "Finalize OD CAD, transition to Jira, and review power diagrams.",
+    workCompleted:
+      "Claire completed initial OD CAD and sent prototype for print. Team discussed Jira for task tracking, RRF protocol diagrams, motor driver vs transistor tradeoffs, and power diagram review (capacitors, pull-up resistors, I2C buffer limits).",
+    result: "OD CAD prototype ordered; RRF protocols in progress; power architecture reviewed as a team.",
+    nextStep: "Continue KiCad pinout work; build RRF protocols with diagrams; run power diagram review follow-ups.",
+  },
+  {
+    id: "2026-06-23",
+    date: "2026-06-23",
+    label: "Jun 23",
+    goal: "Hand out subsystem components and align pinouts with DoE/RRF plans.",
+    workCompleted:
+      "Reviewed pinout diagrams (OD needs voltage divider); handed out subsystem components; discussed RRF and DoE; OD CAD check-in; TIM reminder; planned Arduino pinout layout activity.",
+    result:
+      "Subsystem ownership distributed; OD sensing validated at different densities pending temp/heater tests first.",
+    nextStep: "Group build session; collect Arduino libraries in shared spreadsheet; finalize logic loops.",
+  },
+  {
+    id: "2026-06-28",
+    date: "2026-06-28",
+    label: "Jun 28",
+    goal: "Prepare for extended build session and finalize RRF experiment instructions.",
+    workCompleted:
+      "Planned 2.5–3 h build meeting: RRF finalization, Artem lab updates, Jira/item sign-out, When2Meet for build nights, KiCad pin diagram activity, and Arduino coding kickoff.",
+    result: "Build-session agenda set; Sunday evening check-in scheduled for RRF edits.",
+    nextStep: "Complete RRF instructions; run collaborative KiCad pin diagram session; start subsystem code.",
+  },
+  {
+    id: "2026-07-07",
+    date: "2026-07-07",
+    label: "Jul 7",
+    goal: "Launch shared repo, set build schedule, and integrate subsystem code.",
+    workCompleted:
+      "Set up sprints and team roster; created GitHub repo; chose Thursday build evenings. Member updates: Claire on ADAfruit library + new CAD; Lia on Serial Studio (8 devices); Lindsay soldered pumps; James on vial sleeve print and thermocouple at 55 °C; integration pseudocode reviewed.",
+    result:
+      "Bioreactor repo live; Thursday build nights confirmed; RRF deadline set for Friday.",
+    nextStep:
+      "Add subdesign folders to GitHub; complete RRFs; run in-person build tests; document progress for wiki.",
+    deliverables: [
+      "Complete RRFs by Friday",
+      "Thursday build nights on calendars",
+      "Subsystem folders in GitHub repo",
+    ],
+    links: [
+      {
+        label: "Bioreactor GitHub repo",
+        href: "https://github.com/igem-toronto/Bioreactor",
+      },
+    ],
+  },
+  {
+    id: "2026-07-09",
+    date: "2026-07-09",
+    label: "Jul 9",
+    goal: "Re-CAD the OD vial holder for AS7343 sensors and pioreactor vial diameter.",
+    workCompleted:
+      "Replaced prior OPT101-oriented holder (stilts for stir-bar clearance, dual photodiode cutouts) with a 35 mm vial design, stilts attached for stability, and larger AS7343 cutouts while keeping dual-sensor orientation.",
+    result: "Print-ready OD holder CAD updated for AS7343 + pioreactor vial geometry.",
+    nextStep: "Print holder; start Nano + AS7343 wiring and Adafruit basic_readings sketch.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-od-cad-jul9-a.avif"),
+        alt: "OD vial holder CAD iteration A",
+        caption: "OD vial holder CAD, Jul 9 iteration.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-cad-jul9-b.avif"),
+        alt: "OD vial holder CAD iteration B",
+        caption: "AS7343 cutout / stilt layout.",
+      },
+    ],
+  },
+  {
+    id: "2026-07-10",
+    date: "2026-07-10",
+    label: "Jul 10",
+    goal: "Wire Arduino Nano to one AS7343 and verify I2C readings.",
+    workCompleted:
+      "Wired a single AS7343 (shared I2C address blocks dual sensors for now). Brought up Adafruit AS7343 basic_readings; fixed baud rate; used an I2C scanner sketch to confirm device ACK.",
+    result: "Single-sensor path reading; dual-sensor addressing deferred to SoftWire / software I2C.",
+    nextStep: "Continue OD setup; plan SoftWire for two same-address sensors.",
+    links: [
+      {
+        label: "Adafruit AS7343 library",
+        href: "https://github.com/adafruit/Adafruit_AS7343",
+      },
+    ],
+    images: [
+      {
+        src: HW_IMG("journal/claire-as7343-wiring-jul10.avif"),
+        alt: "AS7343 wiring to Arduino Nano",
+        caption: "Nano + AS7343 wiring / verification.",
+      },
+    ],
+  },
+  {
+    id: "2026-07-11",
+    date: "2026-07-11",
+    label: "Jul 11",
+    goal: "Stabilize OD bench setup and reference collection workflow.",
+    workCompleted:
+      "Continued OD fixture setup after CAD/wiring; documented reference and blank collection needs for later nOD math.",
+    result: "Physical OD test fixture progressing; reference logic still to be coded.",
+    nextStep: "Implement reference / blank collection steps before dual-sensor runs.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-od-setup-jul11.avif"),
+        alt: "OD bench setup",
+        caption: "OD sensing bench setup.",
+      },
+    ],
+  },
+  {
+    id: "2026-07-13",
+    date: "2026-07-13",
+    label: "Jul 13",
+    goal: "Define reference vs measuring sensor roles for normalized OD.",
+    workCompleted:
+      "Sketched ref + measuring sensor logic so normalized OD can be computed as a ratio once SoftWire addresses both devices.",
+    result: "Clearer nOD architecture: blank/dark calibration then live ratio.",
+    nextStep: "Code SoftWire dual-bus reads; validate single-channel collection first.",
+  },
+  {
+    id: "2026-07-18",
+    date: "2026-07-18",
+    label: "Jul 18",
+    goal: "Collect single-sensor readings and lock reference procedure.",
+    workCompleted: "Exercised single AS7343 reading path and documented reference collection for calibration.",
+    result: "Single-sensor data path usable for early math checks.",
+    nextStep: "Bring up second sensor on SoftWire.",
+  },
+  {
+    id: "2026-07-20",
+    date: "2026-07-20",
+    label: "Jul 20",
+    goal: "Run two AS7343 sensors and debug pump transistor drive.",
+    workCompleted:
+      "Claire: dual-sensor SoftWire path in progress. Lindsay: peristaltic pump drive via S8050 transistor: direct PSU-to-pump worked; base drive from Arduino failed; recalculated base resistor (~330 Ω) after datasheet math; also hit avrdude sync / upload failures.",
+    result:
+      "Dual OD addressing moving forward; pump circuit suspect (base resistor / transistor current headroom vs 500 mA pump).",
+    nextStep: "Retry pump with ~330 Ω base resistor; confirm Nano upload path; keep SoftWire dual OD work.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-dual-sensor-jul19.avif"),
+        alt: "Dual OD sensor bench",
+        caption: "Dual-sensor OD work (Jul 19–20).",
+      },
+      {
+        src: HW_IMG("journal/lindsay-pump-transistor-jul21-a.avif"),
+        alt: "Pump transistor bench photo A",
+        caption: "Pump / transistor bench, Jul 20–21.",
+      },
+      {
+        src: HW_IMG("journal/lindsay-pump-transistor-jul21-b.avif"),
+        alt: "Pump transistor bench photo B",
+      },
+      {
+        src: HW_IMG("journal/lindsay-pump-transistor-jul21-c.avif"),
+        alt: "Pump transistor bench photo C",
+      },
+    ],
+    links: [
+      {
+        label: "Adafruit DC motor / transistor lesson",
+        href: "https://learn.adafruit.com/adafruit-arduino-lesson-13-dc-motors/transistors",
+      },
+    ],
+  },
+  {
+    id: "2026-07-21",
+    date: "2026-07-21",
+    label: "Jul 21",
+    goal: "Advance serial UI architecture and keep subsystem actuation over COM.",
+    workCompleted:
+      "Lia: pushed for modular helpers and JSON-over-serial (temp / OD / actuator status). Explored pyserial host scripts; drafted UI features (command line, CSV download); researched Grafana / Flask / Prometheus path for later dashboards.",
+    result: "Host↔Arduino contract leaning JSON; early Grafana install notes captured.",
+    nextStep: "Prototype serial command loop for fan / heater / pump; harden error handling across ports.",
+    images: [
+      {
+        src: HW_IMG("journal/lia-serial-ui-sketch-a.avif"),
+        alt: "Serial UI sketch A",
+        caption: "Serial / dashboard UI sketches.",
+      },
+      {
+        src: HW_IMG("journal/lia-serial-ui-sketch-b.avif"),
+        alt: "Serial UI sketch B",
+      },
+    ],
+  },
+  {
+    id: "2026-07-25",
+    date: "2026-07-25",
+    label: "Jul 25",
+    goal: "Clarify normalized OD vs spectrophotometer OD600 calibration.",
+    workCompleted:
+      "Documented nOD as current/reference ratio vs “real” OD from fitting nOD to spectrometer OD600; noted 180° transmission geometry for current fixture.",
+    result: "Calibration plan: collect spectrometer OD600 alongside bioreactor ratios, fit curve, map live readings.",
+    nextStep: "Collect paired calibration points once dual sensors are stable.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-od-math-jul25.avif"),
+        alt: "OD math notes",
+        caption: "nOD / OD600 math notes.",
+      },
+    ],
+  },
+  {
+    id: "2026-07-27",
+    date: "2026-07-27",
+    label: "Jul 27",
+    goal: "Resize OD mechanical envelope and continue pump/UI work.",
+    workCompleted:
+      "Claire: vial holder geometry notes (inner radius 35.1 mm; 148×148 mm plate; scale factors). Lindsay: continued pump drive debug. Lia: serial UI and multi-Arduino interface comments.",
+    result: "Mechanical envelope refined for scaled prints; electrical/UI threads still open.",
+    nextStep: "Integrate OD fixture with pump drawers in CAD; keep transistor + serial work.",
+  },
+  {
+    id: "2026-07-30",
+    date: "2026-07-30",
+    label: "Jul 30",
+    goal: "Characterize Sunon fan tach / RPM floor for stirring.",
+    workCompleted:
+      "Arya wired Sunon fan tach and confirmed RPM readout; lowest stable speed ~1800 RPM, too high for culture safety concerns.",
+    result: "Fan usable for tach testing but minimum RPM likely unsuitable for bacteria; need geared / PWM alternative or different impeller drive.",
+    nextStep: "Evaluate lower-RPM stirring options; document MicroSD autonomy notes from Jun 27 research.",
+  },
+  {
+    id: "2026-08-04",
+    date: "2026-08-04",
+    label: "Aug 4",
+    goal: "Stabilize multi-reactor Tkinter dashboard behavior.",
+    workCompleted:
+      "Lia: in Tkinter dashboard testing, a bad input from one bioreactor disrupted telemetry for all units.",
+    result: "Need per-reactor isolation / better validation so one fault does not take down the board.",
+    nextStep: "Add input validation and isolate serial readers per port.",
+  },
+  {
+    id: "2026-08-11",
+    date: "2026-08-11",
+    label: "Aug 11",
+    goal: "Answer HP sustainability power questions and fix USB hub data path.",
+    workCompleted:
+      "Lia: HP power liaison; tested USB hubs (powered hubs are often charge-only; non-powered ones transfer data). Researched powered hubs that still pass data. Continued code error-handling and GitHub workflow fixes. Claire: ongoing CAD/OD integration rewrite (dates fuzzy Aug 11–18).",
+    result: "Clearer hub purchasing criteria; HP V1 power figures drafted for wiki.",
+    nextStep: "Order data-capable powered hub; continue OD class rewrite + CAD drawers.",
+  },
+  {
+    id: "2026-08-18",
+    date: "2026-08-18",
+    label: "Aug 18",
+    goal: "Document V1 wiki structure, CAD assembly, and OD integration code.",
+    workCompleted:
+      "Lia: received Human Practices Info V1; reviewed award-winning hardware wikis for patterns (context → requirements → subsystems → experiments → results → reflection). Specified Tkinter setup (dark/blank OD), pump stop + PWM slider, JSON targets/commands, multi-Arduino power notes. Claire: CAD iterations for OD wiring space, vial holder cutouts, horizontal peristaltic pump drawers (vs vertical), breadboard slot; continued SoftWire OD classes (divide-by-zero expected on dummy values).",
+    result:
+      "V1 documentation outline and control UI requirements captured; mechanical layout shifted to horizontal pump drawers for shorter vial height.",
+    nextStep: "Fill wiki V1 / Experiments tabs; finish OD setup/calibration code path; keep dashboard JSON protocol.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-cad-assembly-aug.avif"),
+        alt: "August CAD assembly",
+        caption: "CAD assembly / OD integration space, mid August.",
+      },
+      {
+        src: HW_IMG("journal/claire-cad-pump-drawer-aug.avif"),
+        alt: "Pump drawer CAD",
+        caption: "Horizontal peristaltic pump drawer concept.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-integration-aug.avif"),
+        alt: "OD integration notes",
+        caption: "OD SoftWire / class rewrite notes.",
+      },
+    ],
+    links: [
+      {
+        label: "Jira BIO board",
+        href: "https://rebeccazoetam.atlassian.net/jira/software/projects/BIO/boards/2",
+      },
+    ],
+  },
+  {
+    id: "2026-08-25",
+    date: "2026-08-25",
+    label: "Aug 25",
+    goal: "Write up V1 and lock the V2 design direction.",
+    workCompleted:
+      "Wrote the V1 subsystem write-ups for the wiki (context, requirements, subsystems, experiments, results, reflection). Lia specified the Tkinter dashboard: a setup button that records dark (no vial) then blank-vial OD, a pump stop button and power slider bounded by experiment, and JSON for targets and commands. Read past hardware-award wikis for structure.",
+    result:
+      "New V2 CAD design locked in with easier maintenance, such as removable tubing for autoclaving. Subsystem integration holding steady.",
+    nextStep: "Calibrate OD against a spectrophotometer and meet Prof. Milica Radisic on August 31.",
+  },
+  {
+    id: "2026-08-31",
+    date: "2026-08-31",
+    label: "Aug 31",
+    goal: "Bring on a mentor and plan OD calibration.",
+    workCompleted:
+      "Met Prof. Milica Radisic (University of Toronto, tissue engineering). Planned a continuous OD graph and a calibration curve from 5–10 vials of known OD, shown in the background of every experiment. Spencer offered to teach the team and lend a spectrophotometer for OD calibration.",
+    result:
+      "Prof. Radisic joined as Hardware mentor with monthly design reviews, plus a research student to help scale the bioreactor down to a faster, lower-volume screening format.",
+    nextStep: "Run the first OD tests against the spectrophotometer.",
+  },
+  {
+    id: "2026-09-01",
+    date: "2026-09-01",
+    label: "Sep 1",
+    goal: "Compare the bioreactor's OD sensor with a spectrophotometer.",
+    workCompleted:
+      "Claire measured bacterial cultures on a spectrophotometer (OD600) and on the integrated bioreactor's OD sensor (normalized OD, nOD). Lia added a spectrophotometer tab, colours, greyed-out calibration buttons, a warning when pumps are used before calibrating, a target-temperature slider, a live temperature reading and graph, and simulated reactor data by having an Arduino Nano write JSON to USB every 500 ms.",
+    result:
+      "nOD tracks OD600 (trendline R² ≈ 0.99), but taking the vial out shifts the reading because the gap between cap and holder lets in different amounts of room light. Loose jumper wires dropped out mid-run (Stemma QT connectors next), and changes beyond two decimal places are noise from light and LED fluctuations.",
+    nextStep: "Redesign the OD compartment to block ambient light and fit the vial consistently.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-od-spectro-sep1.avif"),
+        alt: "Spectrophotometer reading of a culture",
+        caption: "Reference OD600 on the spectrophotometer.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-culture-vial-sep1.avif"),
+        alt: "Culture vial beside the bioreactor",
+        caption: "Vial of bacterial culture next to the bioreactor.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-vial-inserted-sep1.avif"),
+        alt: "Vial inserted in the bioreactor",
+        caption: "Vial in the bioreactor; the gap at the cap lets the LED light leak.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-led-on-sep1.avif"),
+        alt: "Inside of the bioreactor with the LED on",
+        caption: "Inside the OD chamber with the LED on.",
+      },
+      {
+        src: HW_IMG("journal/claire-od-calibration-sep1.avif"),
+        alt: "OD true vs reported chart",
+        caption: "Spectrophotometer OD vs bioreactor nOD.",
+      },
+      {
+        src: HW_IMG("journal/lia-spectrophotometer-tab-sep.avif"),
+        alt: "Spectrophotometer tab of the dashboard",
+        caption: "Dashboard spectrophotometer tab with simulated OD over time.",
+      },
+    ],
+  },
+  {
+    id: "2026-09-06",
+    date: "2026-09-06",
+    label: "Sep 6",
+    goal: "Find how few points a reliable OD calibration needs.",
+    workCompleted:
+      "Claire fitted quadratic calibration curves using 2, 3, 4 and all 10 points, measured the vial and holder for a new CAD model (Sep 2–3), and wrote up the OD code: SoftWire addresses for the reference and measuring sensors, dark, blank and sample collection, then normalized OD. Lia added a normalized / raw OD checkbox (Sep 8).",
+    result:
+      "First, middle and last points give nearly the same curve as all ten (R² = 0.993), so a three-vial calibration is enough for users.",
+    nextStep: "Build the calibration flow (dark, blank, then samples) into the dashboard.",
+    images: [
+      {
+        src: HW_IMG("journal/claire-od-calibration-points-sep6.avif"),
+        alt: "Calibration curves from all points and from three points",
+        caption: "Calibration from all points (black) vs first, middle and last (green).",
+      },
+      {
+        src: HW_IMG("journal/lia-od-calibration-tab-sep.avif"),
+        alt: "OD calibration tab",
+        caption: "Dashboard OD-calibration steps.",
+      },
+    ],
+  },
+  {
+    id: "2026-09-14",
+    date: "2026-09-14",
+    label: "Sep 14",
+    goal: "Start the school year and prepare the conference poster.",
+    workCompleted:
+      "First in-person meeting of the school year (Mondays 5:30 PM). Lindsay finished a CAD model of the exact Adafruit peristaltic pump. Lia added a spectrophotometry graph and pH control using two inlet pumps of known pH. Arya laid out the hardware poster with a cost breakdown and progress for each subsystem.",
+    result: "Hardware poster printed on September 18 for the UofT Microplastics Conference.",
+    nextStep: "Tune the heater's PID control.",
+    images: [
+      {
+        src: HW_IMG("journal/lia-dashboard-sep.avif"),
+        alt: "Bioreactor dashboard",
+        caption: "Bioreactor dashboard with live readings and pump and temperature controls.",
+      },
+    ],
+  },
+  {
+    id: "2026-09-17",
+    date: "2026-09-17",
+    label: "Sep 17",
+    goal: "Tune temperature control.",
+    workCompleted:
+      "James ran full-power heater tests (Sep 16) and short PID tests at a 36 °C target with Kp = 2500, Ki = 10, Kd = 0.",
+    result:
+      "Integral wind-up is large when heating from room temperature, but without Ki the temperature settles just below target. Fix: only enable PID near the target, or write custom PID with a cap on integral build-up.",
+    nextStep: "Write custom PID and tune gains per target temperature.",
+    images: [
+      {
+        src: HW_IMG("journal/james-pid-36c-sep17.avif"),
+        alt: "Temperature trace during PID testing",
+        caption: "PID test at a 36 °C target.",
+      },
+    ],
+  },
+  {
+    id: "2026-09-21",
+    date: "2026-09-21",
+    label: "Sep 21",
+    goal: "Simulate realistic reactor data and refine the OD chamber.",
+    workCompleted:
+      "Lia defined the ideal reactor JSON (reactor, port, fan PWM and RPM, pump state and speed, temperature and target, OD, pH), worked out pH control from the acid or base added and the volume change, and planned an HTML view and scheduled commands (e.g. raise the temperature in five hours). Rebecca noted CAD changes: lower slots so the OD sensor sits near the bottom of the vial, and a keyhole slot for the cap so the vial sits in complete darkness.",
+    result: "Command and telemetry format agreed for all subsystems.",
+    nextStep: "Get each subsystem's script reading and writing the shared JSON.",
+    images: [
+      {
+        src: HW_IMG("journal/lia-multi-reactor-architecture.avif"),
+        alt: "Diagram of a laptop app connected to several reactors through a USB hub",
+        caption: "One laptop app reaches every reactor's Arduino through a USB hub.",
+      },
+      {
+        src: HW_IMG("journal/claire-cad-od-module-sep.avif"),
+        alt: "CAD render of a cylindrical vial holder with a sensor slot on each side",
+        caption: "OD module CAD: the vial holder with a slot on each side for the light source and sensor.",
+      },
+    ],
+  },
+  {
+    id: "2026-09-27",
+    date: "2026-09-27",
+    label: "Sep 27",
+    goal: "Hold temperature tightly across the operating range.",
+    workCompleted:
+      "James replaced library PID with custom PID (Sep 25), found the minimum useful heater output (Sep 26), and tuned gains per target: 30 °C (Kp 800, Ki 5), 40 °C (Kp 1750, Ki 50), 45 °C (Kp 5000, Ki 50) and 50 °C (Kp 23000, Ki 50).",
+    result:
+      "Custom PID holds within ±0.5 °C at most and ±0.12 °C once stable; tuned runs hold ±0.2–0.45 °C. Time to reach target: 515 s at 30 °C, 703 s at 40 °C, 880 s at 45 °C and 2001 s at 50 °C.",
+    nextStep: "Integrate the tuned heater into V2.",
+  },
+  {
+    id: "2026-09-28",
+    date: "2026-09-28",
+    label: "Sep 28",
+    goal: "Assemble V2 and redesign the pump lid.",
+    workCompleted:
+      "Lindsay modelled three 3D-printed pump designs: rollers attached to the base; rollers on base and top with two side pieces that clip together; and clips on top, bottom and sides for extra security. Lia worked on a demo video and two-way JSON communication (sending, receiving and acting on commands).",
+    result: "The V2 bioreactor is fully assembled, building on the V1 platform from the summer.",
+    nextStep: "Check everything needed to grow bacteria in the reactor.",
+    images: [
+      {
+        src: HW_IMG("journal/lindsay-pump-design-2-sep28.avif"),
+        alt: "Pump lid design with clips",
+        caption: "Pump design 2: two side pieces that clip together.",
+      },
+      {
+        src: HW_IMG("journal/lindsay-pump-design-3-sep28.avif"),
+        alt: "Pump roller base design",
+        caption: "Pump design 3: rollers attached to the base.",
+      },
+    ],
+  },
+  {
+    id: "2026-10-01",
+    date: "2026-10-01",
+    label: "Oct 1",
+    goal: "Get V2 ready to grow bacteria.",
+    workCompleted:
+      "Set the checklist for the first growth run: fan RPM that does not lyse bacteria, OD calibrated to the environment, a stable UI with file writing and commands, and a heater that reaches about 40 °C. A new fan arrived; its PWM pin did not slow it, so mechanical slowing or pulsed power is being tried. Started writing assembly (work) instructions.",
+    result: "Remaining gaps before growth are the fan speed and end-to-end stability.",
+    nextStep: "Finish the demo and the master Arduino code.",
+  },
+  {
+    id: "2026-10-03",
+    date: "2026-10-03",
+    label: "Oct 3",
+    goal: "Demo the full control loop.",
+    workCompleted:
+      "Recorded a demo of the dashboard (Oct 2). Wrote the master Arduino code that reads and writes the shared JSON, and an OD calibration flow (bright, dark, then blank OD) where the user confirms each step. Each subsystem's script now writes its properties to the Arduino each cycle.",
+    result: "Commands and telemetry run end to end on the demo setup.",
+    nextStep: "Add a status tab and finish the wiki write-ups.",
+  },
+  {
+    id: "2026-10-05",
+    date: "2026-10-05",
+    label: "Oct 5",
+    goal: "Monitor component health and write V1 and V2 for the wiki.",
+    workCompleted:
+      "Planned a status tab that pings each component (on a button press or every few seconds), reports which modules are active, and flags readings that drift from expected values. Integrated Claire's OD code and started the V1 and V2 wiki write-ups.",
+    result: "V2 write-up due October 13; V1 edits due the weekend of October 17–18.",
+    nextStep: "Grow E. coli in the reactor and record a better demo video.",
+  },
+]
+
+/** Newest first — Oct 5 at top, Mar 13 at bottom. */
+export const HARDWARE_JOURNAL_ENTRIES = [...HARDWARE_JOURNAL_ENTRIES_RAW].sort((a, b) =>
+  b.date.localeCompare(a.date)
+)
+
+/** @type {Record<string, HardwareJournalEntry>} */
+export const HARDWARE_JOURNAL_BY_ID = Object.fromEntries(
+  HARDWARE_JOURNAL_ENTRIES.map((e) => [e.id, e])
+)
+
+export function parseJournalHash(hash) {
+  const raw = (hash || "").replace(/^#/, "")
+  if (!raw.startsWith("journal-")) return null
+  const id = raw.slice("journal-".length)
+  return HARDWARE_JOURNAL_BY_ID[id] ? id : null
+}
+
+export function journalHashForDate(date) {
+  return `journal-${date}`
+}

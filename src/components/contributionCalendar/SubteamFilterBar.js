@@ -1,24 +1,36 @@
 import React from "react"
 import styled from "styled-components"
-import { SUBTEAM_TRACKS } from "../../data/subteamTracks.js"
+import {
+  SUBTEAM_TRACKS,
+  trackColor,
+  trackTextColor,
+} from "../../data/subteamTracks.js"
 
-export function SubteamFilterBar({ activeIds, onToggle, layout = "inline" }) {
+export function SubteamFilterBar({
+  activeIds,
+  onToggle,
+  layout = "inline",
+  tracks = SUBTEAM_TRACKS,
+  label = "Subteams",
+  compact = false,
+}) {
   const isNavbar = layout === "navbar"
 
   return (
-    <FilterRoot $navbar={isNavbar} role="group" aria-label="Filter subteam details">
-      {!isNavbar && <FilterLabel>Subteams</FilterLabel>}
-      <ChipRow $navbar={isNavbar}>
-        {SUBTEAM_TRACKS.map((track) => {
+    <FilterRoot $navbar={isNavbar} role="group" aria-label={`Filter ${label.toLowerCase()} details`}>
+      {!isNavbar && <FilterLabel>{label}</FilterLabel>}
+      <ChipRow $navbar={isNavbar} $compact={compact}>
+        {tracks.map((track) => {
           const on = activeIds.has(track.id)
           return (
             <Chip
               key={track.id}
               type="button"
-              $color={track.color}
-              $text={track.textColor}
+              $color={trackColor(track)}
+              $text={trackTextColor(track)}
               $on={on}
               $navbar={isNavbar}
+              $compact={compact}
               aria-pressed={on}
               onClick={() => onToggle(track.id)}
             >
@@ -38,8 +50,8 @@ const FilterRoot = styled.div`
     $navbar &&
     `
     padding: var(--space-sm) var(--space-md);
-    background: #fff;
-    border-bottom: 2px solid #2d9194;
+    background: var(--cal-surface, #fff);
+    border-bottom: 2px solid var(--cal-accent, #2d9194);
   `}
 `
 
@@ -47,7 +59,7 @@ const FilterLabel = styled.p`
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--cal-muted, var(--color-muted));
   font-weight: 600;
   margin-bottom: var(--space-sm);
 `
@@ -58,12 +70,22 @@ const ChipRow = styled.div`
   gap: ${({ $navbar }) => ($navbar ? "0.5rem" : "0.4rem")};
   align-items: center;
   ${({ $navbar }) => $navbar && `justify-content: flex-start;`}
+
+  /* Compact: one row, scrolling sideways when it doesn't fit. */
+  ${({ $compact }) =>
+    $compact &&
+    `
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  `}
 `
 
 const Chip = styled.button`
-  border: 2px solid ${({ $on, $color }) => ($on ? $color : "var(--color-border)")};
+  border: 2px solid ${({ $on, $color }) => ($on ? $color : "var(--cal-line, var(--color-border))")};
   background: ${({ $on, $color }) => ($on ? $color : "transparent")};
-  color: ${({ $on, $text }) => ($on ? $text : "var(--color-text)")};
+  color: ${({ $on, $text }) => ($on ? $text : "var(--cal-ink, var(--color-text))")};
   font-family: var(--font-body);
   font-size: ${({ $navbar }) => ($navbar ? "0.78rem" : "0.72rem")};
   font-weight: 600;
@@ -81,6 +103,14 @@ const Chip = styled.button`
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
+
+  ${({ $compact }) =>
+    $compact &&
+    `
+    flex: none;
+    font-size: 0.74rem;
+    padding: 0.3rem 0.7rem;
+  `}
 `
 
 export default SubteamFilterBar

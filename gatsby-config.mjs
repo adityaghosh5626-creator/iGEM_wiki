@@ -1,6 +1,8 @@
 import { fileURLToPath } from "url"
 import path from "path"
+import { USE_PAYLOAD_EXPORTS } from "./content-source.config.mjs"
 import rehypeAutolinkHeadings from "rehype-autolink-headings"
+import rehypeWikiCitations from "./plugins/rehype-wiki-citations.mjs"
 import rehypeSlug from "rehype-slug"
 import remarkGfm from "remark-gfm"
 
@@ -10,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
  * @type {import('gatsby').GatsbyConfig}
  */
 const config = {
+  pathPrefix: process.env.GATSBY_PATH_PREFIX || ``,
   siteMetadata: {
     title: `iGEM Toronto 2026`,
     description: `iGEM Toronto 2026 Wiki`,
@@ -30,6 +33,7 @@ const config = {
       options: {
         name: `wiki`,
         path: `${__dirname}/src/content/wiki`,
+        ignore: USE_PAYLOAD_EXPORTS ? [] : [`**/_payload-export/**`],
       },
     },
     `gatsby-transformer-csv`,
@@ -40,6 +44,7 @@ const config = {
         mdxOptions: {
           remarkPlugins: [remarkGfm],
           rehypePlugins: [
+            rehypeWikiCitations,
             rehypeSlug,
             [
               rehypeAutolinkHeadings,

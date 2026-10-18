@@ -1,13 +1,31 @@
 import React from "react"
 import { graphql } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
-import styled from "styled-components"
+import styled, { css } from "styled-components"
 import WikiLayout from "../components/layout.js"
 import Seo from "../components/seo.js"
 import { mdxComponents } from "../components/mdx/wikiComponents.js"
+import { NewTabLinks } from "../components/mdx/linkTarget.js"
+import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
 import { TOCWrapper } from "../components/pageStyles.js"
+import SubpageScene from "../components/SubpageScene.js"
+import {
+  ATTRIBUTIONS_SCENE,
+  CONTRIBUTION_SCENE,
+  DRY_LAB_SCENE,
+  ENGINEERING_SCENE,
+  FINANCE_SCENE,
+  WET_LAB_SCENE,
+  HARDWARE_SCENE,
+  HP_SCENE,
+  OUTREACH_SCENE,
+  PROJECT_SCENE,
+  SAFETY_SCENE,
+  VENTURE_SCENE,
+  WIKI_SCENE,
+} from "../components/subpageScenes.js"
 
 const formatDate = (date) => {
   if (!date) return null
@@ -20,32 +38,123 @@ const formatDate = (date) => {
   }).format(parsed)
 }
 
+/** Pages drawn on a parallax art scene instead of the plain article layout. */
+const sceneFor = frontmatter => {
+  if (frontmatter.section === "Dry Lab") return DRY_LAB_SCENE
+  if (frontmatter.section === "Hardware") return HARDWARE_SCENE
+  if (frontmatter.section === "Wet Lab") return WET_LAB_SCENE
+  if (frontmatter.path === "/beyond-the-bench/entrepreneurship/")
+    return VENTURE_SCENE
+  if (frontmatter.path === "/beyond-the-bench/human-practices/")
+    return HP_SCENE
+  if (frontmatter.path === "/beyond-the-bench/outreach/") return OUTREACH_SCENE
+  if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
+  // Served at the standard /description/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/project/description/") return PROJECT_SCENE
+  if (frontmatter.path === "/finance/") return FINANCE_SCENE
+  // Served at the standard /engineering/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/project/engineering/") return ENGINEERING_SCENE
+  // Served at the standard /safety-and-security/ too (standardRoutes.mjs).
+  if (frontmatter.path === "/safety/") return SAFETY_SCENE
+  if (frontmatter.path === "/wiki/") return WIKI_SCENE
+  if (
+    frontmatter.path === "/team/attributions/" ||
+    frontmatter.path === "/attributions/"
+  )
+    return ATTRIBUTIONS_SCENE
+  return null
+}
+
 const WikiMdxTemplate = ({ data, children }) => {
   const { frontmatter } = data.mdx
   const owners = frontmatter.owners || []
   const updated = formatDate(frontmatter.updated)
 
-  return (
-    <WikiLayout pageTitle={frontmatter.title} sectionLabel={frontmatter.section}>
-      <ScrollProgress />
-      <TOCWrapper>
-        <TableOfContents />
-      </TOCWrapper>
-      <ArticleShell id="page-content">
-        {(frontmatter.description || owners.length > 0 || updated || frontmatter.status) && (
-          <PageMeta aria-label="Page metadata">
-            {frontmatter.description && <Description>{frontmatter.description}</Description>}
-            <MetaRow>
-              {frontmatter.status && <StatusBadge>{frontmatter.status}</StatusBadge>}
-              {owners.length > 0 && <span>Maintained by {owners.join(", ")}</span>}
-              {updated && <span>Updated {updated}</span>}
-            </MetaRow>
-          </PageMeta>
-        )}
-        <Article>
-          <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+  // Every link on the Dry Lab pages opens in a new tab.
+  const content = (
+    <NewTabLinks enabled={frontmatter.path?.startsWith("/dry-lab/")}>
+      <MDXProvider components={mdxComponents}>{children}</MDXProvider>
+    </NewTabLinks>
+  )
+
+  const scene = sceneFor(frontmatter)
+  if (scene) {
+    return (
+      <WikiLayout
+        fullBleed
+        // The footer button takes the colours of the page's menu highlight.
+        footerButton={
+          scene.footerButton || {
+            bg: scene.side.highlightColor,
+            text: scene.side.activeLinkColor || scene.side.linkColor,
+          }
+        }
+      >
+        <SubpageScene
+          scene={scene}
+          // The header names the section, so the box takes the short name.
+          title={frontmatter.navTitle || frontmatter.title}
+          description={frontmatter.description}
+        >
+          <Article $wideProse>
+            {content}
+          </Article>
+        </SubpageScene>
+      </WikiLayout>
+    )
+  }
+
+  const wideSideTabs = frontmatter.wideSideTabs === true
+  const wideProse    = frontmatter.wideProse    === true
+
+  const pageHeader = (frontmatter.description || owners.length > 0 || updated || frontmatter.status) && (
+    <PageMeta $wide={wideSideTabs} aria-label="Page metadata">
+      {frontmatter.description && <Description>{frontmatter.description}</Description>}
+      <MetaRow>
+        {frontmatter.status && <StatusBadge>{frontmatter.status}</StatusBadge>}
+        {owners.length > 0 && <span>Maintained by {owners.join(", ")}</span>}
+        {updated && <span>Updated {updated}</span>}
+      </MetaRow>
+    </PageMeta>
+  )
+
+  const shell = wideSideTabs ? (
+    <WideSideTabProvider>
+      <ArticleShell id="page-content" $wide>
+        <InlinePageHeader>
+          {frontmatter.section && <SectionLabel>{frontmatter.section}</SectionLabel>}
+          <InlinePageTitle>{frontmatter.title}</InlinePageTitle>
+          <InlineDivider />
+        </InlinePageHeader>
+        {pageHeader}
+        <Article $wide>
+          {content}
         </Article>
       </ArticleShell>
+    </WideSideTabProvider>
+  ) : (
+    <ArticleShell id="page-content">
+      {pageHeader}
+      <Article $wideProse={wideProse}>
+        {content}
+      </Article>
+    </ArticleShell>
+  )
+
+  return (
+    <WikiLayout
+      pageTitle={wideSideTabs ? null : frontmatter.title}
+      sectionLabel={wideSideTabs ? null : frontmatter.section}
+      wideSideTabs={wideSideTabs}
+      withToc={!frontmatter.hideToc && !wideSideTabs}
+    >
+      <ScrollProgress />
+      {!frontmatter.hideToc && (
+        <TOCWrapper>
+          <TableOfContents />
+        </TOCWrapper>
+      )}
+      {shell}
     </WikiLayout>
   )
 }
@@ -62,6 +171,9 @@ export const query = graphql`
         owners
         updated
         status
+        hideToc
+        wideSideTabs
+        wideProse
       }
     }
   }
@@ -79,6 +191,53 @@ const ArticleShell = styled.div`
   max-width: 80rem;
   margin: 0 auto;
   overflow: visible;
+
+  ${({ $wide }) =>
+    $wide &&
+    css`
+      max-width: none;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(10rem, 12rem) minmax(0, 1fr);
+      gap: var(--space-md);
+      align-items: start;
+
+      @media (max-width: 720px) {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+      }
+    `}
+`
+
+const InlinePageHeader = styled.div`
+  grid-column: 2;
+
+  @media (max-width: 720px) {
+    grid-column: 1 / -1;
+  }
+`
+
+const SectionLabel = styled.p`
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+  font-weight: 600;
+`
+
+const InlinePageTitle = styled.h1`
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+`
+
+const InlineDivider = styled.hr`
+  border: none;
+  border-top: 1px solid var(--color-accent);
+  width: 4rem;
+  margin: 0;
 `
 
 const PageMeta = styled.aside`
@@ -87,6 +246,18 @@ const PageMeta = styled.aside`
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+
+  ${({ $wide }) =>
+    $wide &&
+    css`
+      grid-column: 2;
+      margin-bottom: 0;
+      padding: var(--space-md);
+
+      @media (max-width: 720px) {
+        grid-column: 1 / -1;
+      }
+    `}
 `
 
 const Description = styled.p`
@@ -124,6 +295,12 @@ const Article = styled.article`
   font-size: 1rem;
   line-height: 1.75;
 
+  ${({ $wide }) =>
+    $wide &&
+    css`
+      display: contents;
+    `}
+
   > * + * {
     margin-top: var(--space-md);
   }
@@ -133,8 +310,18 @@ const Article = styled.article`
   h4 {
     color: var(--color-text);
     margin-top: var(--space-xl);
-    max-width: 48rem;
+    max-width: ${({ $wide, $wideProse }) => ($wide || $wideProse ? "none" : "48rem")};
   }
+
+  ${({ $wide }) =>
+    $wide &&
+    css`
+      h2,
+      h3,
+      h4 {
+        margin-top: 0;
+      }
+    `}
 
   h2 {
     padding-top: var(--space-lg);
@@ -157,7 +344,7 @@ const Article = styled.article`
   p,
   li,
   blockquote {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
 
   p,
@@ -166,7 +353,7 @@ const Article = styled.article`
   blockquote,
   pre,
   table {
-    max-width: 48rem;
+    max-width: ${({ $wide, $wideProse }) => ($wide || $wideProse ? "none" : "48rem")};
   }
 
   strong {
@@ -177,6 +364,7 @@ const Article = styled.article`
     color: var(--color-text);
     border-bottom: 1px solid var(--color-accent);
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
 
   a:not(.heading-anchor):hover {
@@ -231,6 +419,14 @@ const Article = styled.article`
     font-size: 0.95rem;
   }
 
+  /* Wide tables scroll sideways on phones instead of widening the page. */
+  @media (max-width: 640px) {
+    table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+
   th,
   td {
     padding: 0.75rem;
@@ -245,7 +441,7 @@ const Article = styled.article`
   }
 
   td {
-    color: var(--color-muted);
+    color: var(--color-body);
   }
 
   img {

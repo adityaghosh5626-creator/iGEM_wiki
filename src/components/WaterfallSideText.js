@@ -1,18 +1,41 @@
 import React, { useLayoutEffect, useRef } from "react"
-import styled from "styled-components"
+import styled, { css, keyframes } from "styled-components"
 import { ExplainTerm } from "./ExplainTermPopover.js"
+import { artFont, artPx, inputCopyCss, phone, phoneSize } from "./artScale.js"
+
+/** The popovers' text (drawn as text, in a box like the artwork's: `plain`). */
+export const PETASE_EXPLANATION =
+  "Specialized enzymes like PETases, MHETases, and engineered LCC cutinases cut the chemical bonds that hold PET together. PET is the plastic in most drink bottles and polyester fibres. These enzymes break the PET down into smaller pieces and finally into its two monomers, terephthalic acid and ethylene glycol, which can be recovered and used to make new plastic."
+
+const MICROPLASTICS_EXPLANATION =
+  "Plastic particles have been detected in human blood (Leslie et al., 2022) and lung tissue (Jenner et al., 2022). In a 2024 study of 257 patients after carotid surgery, those with microplastics in plaque had a higher risk of heart attack, stroke or death over 34 months (Marfella et al., NEJM). These are still associations, and further research is being conducted on the extent to the impacts of microplastic pollution."
+
+const EXCLAMATION_SRC =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/exclamation.avif"
 
 /** Horizontal offset from the left edge of the mockup composition (%). */
-export const WATERFALL_TEXT_LEFT_PCT = 2
+export const WATERFALL_TEXT_LEFT_PCT = 5
 
-/** Vertical offset from the top of the mockup composition (%). */
-export const WATERFALL_TEXT_TOP_PCT = 58
+/** Vertical offset from the top of the waterfall band (%). */
+export const WATERFALL_TEXT_TOP_PCT = 52
+
+/** Vertical offset for right-side copy. */
+export const WATERFALL_TEXT_RIGHT_TOP_PCT = 61
 
 /**
- * Width as % of mockup composition. Type inside uses `cqw` so font size tracks this box
- * when the window (and artwork) get narrower.
+ * Preferred width as % of mockup composition (left column).
+ * Right column uses left→right edge fill instead of a fixed %.
  */
-export const WATERFALL_TEXT_WIDTH_PCT = 26
+export const WATERFALL_TEXT_WIDTH_PCT = 30
+
+/**
+ * Type scales with viewport width. Floors are low so mid/narrow windows shrink;
+ * maxes keep the current desktop look.
+ */
+export const WATERFALL_BODY_PX = 29.52
+const WATERFALL_BANG_WIDTH = artPx(68)
+/** The popup hint's smallest size (px), under the art copy's floor. */
+const HINT_FONT_MIN_PX = 9
 
 /** Viewport px from top where faded copy reaches full opacity. */
 export const WATERFALL_TEXT_FADE_FULL_AT_PX = 150
@@ -22,9 +45,6 @@ export const WATERFALL_TEXT_FADE_START_AT_PX = 0
 
 /** Mask alpha at the top of the fade band (0–1). */
 export const WATERFALL_TEXT_FADE_MIN_ALPHA = 0.28
-
-/** Screen-reader label for the labore popover (visual copy is in the PNG). */
-const LABORE_EXPLANATION = "Explanation for labore."
 
 function clearViewportTopFade(el) {
   el.style.maskImage = ""
@@ -39,10 +59,6 @@ function viewportFadeAlpha(viewportY, fadeStartVp, fadeEndVp, minA) {
   return minA + (1 - minA) * t
 }
 
-/**
- * Fades heading + body near the top of the viewport while scrolling.
- * No mask when the block’s top is at or below the fade band (resting on the mockup).
- */
 function applyViewportTopFade(el) {
   const rect = el.getBoundingClientRect()
   const fadeStartVp = WATERFALL_TEXT_FADE_START_AT_PX
@@ -67,13 +83,7 @@ function applyViewportTopFade(el) {
   el.style.webkitMaskImage = mask
 }
 
-/**
- * Waterfall-band copy on the home scroll mockup (left / brown side).
- * Positioning is percentage-based so it tracks the full-bleed art on resize.
- */
-export function WaterfallSideText() {
-  const mountRef = useRef(null)
-
+function useViewportTopFade(mountRef) {
   useLayoutEffect(() => {
     const el = mountRef.current
     if (!el || typeof window === "undefined") return undefined
@@ -95,7 +105,10 @@ export function WaterfallSideText() {
     }
 
     update()
-    window.addEventListener("scroll", schedule, { passive: true, capture: true })
+    window.addEventListener("scroll", schedule, {
+      passive: true,
+      capture: true,
+    })
     window.addEventListener("resize", schedule, { passive: true })
     return () => {
       if (raf) cancelAnimationFrame(raf)
@@ -103,20 +116,77 @@ export function WaterfallSideText() {
       window.removeEventListener("resize", schedule)
       clearViewportTopFade(el)
     }
-  }, [])
+  }, [mountRef])
+}
+
+/**
+ * Waterfall-band copy on the home scroll mockup (left + right of the fall).
+ * Positioning is percentage-based so it tracks the waterfall ArtBand on resize.
+ */
+export function WaterfallSideText() {
+  const leftRef = useRef(null)
+  const rightRef = useRef(null)
+  useViewportTopFade(leftRef)
+  useViewportTopFade(rightRef)
 
   return (
-    <TextMount ref={mountRef}>
-      <Heading>Lorem ipsum</Heading>
-      <Body>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-        labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-        laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-        voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-        non proident, sunt in culpa qui officia deserunt mollit anim id est{" "}
-        <ExplainTerm term="labore" explanation={LABORE_EXPLANATION} />.
-      </Body>
-    </TextMount>
+    <>
+      <TextMount ref={leftRef} $side="left">
+        <Body>
+          The world produces over 400 million tonnes of plastic each year
+          <span className="wide-copy">. As it degrades, it breaks into </span>
+          <span className="phone-copy">, which degrade into </span>
+          <ExplainTerm
+            term="microplastics"
+            explanation={MICROPLASTICS_EXPLANATION}
+            plain
+          />
+          <span className="wide-copy">
+            , fragments smaller than 5 millimetres.
+          </span>
+          <span className="phone-copy">.</span>
+        </Body>
+        <PopupHintBlock />
+      </TextMount>
+
+      <TextMount ref={rightRef} $side="right">
+        <Body $side="right">
+          <span className="wide-copy">
+            The discarded water bottle would turn into microplastics that come
+            back to us. Microplastics have been found in human blood, lungs and
+            arteries.
+          </span>
+          <span className="phone-copy">
+            The water bottle would turn into microplastics that have been found
+            in human blood, lungs, and arteries.
+          </span>
+        </Body>
+      </TextMount>
+    </>
+  )
+}
+
+/** How to open the red underlined words: under the left bank's lines, where there's room. */
+function PopupHintBlock() {
+  return (
+    <PopupHint>
+      <BangHover aria-hidden>
+        <BangImg src={EXCLAMATION_SRC} alt="" />
+      </BangHover>
+      <HintText>
+        <span className="hover-copy">
+          Hover red underlined words for a popup, click to pin it open / close.
+        </span>
+        <span className="touch-copy">
+          <span className="wide-copy">
+            Tap red underlined words for a popup, tap again to close.
+          </span>
+          <span className="phone-copy">
+            Tap red words for a popup, and again to close.
+          </span>
+        </span>
+      </HintText>
+    </PopupHint>
   )
 }
 
@@ -124,12 +194,8 @@ export default WaterfallSideText
 
 const TextMount = styled.div`
   position: absolute;
-  left: ${WATERFALL_TEXT_LEFT_PCT}%;
-  top: ${WATERFALL_TEXT_TOP_PCT}%;
-  width: ${WATERFALL_TEXT_WIDTH_PCT}%;
-  max-width: 100%;
-  padding-right: 2%;
-  padding-left: max(env(safe-area-inset-left, 0px), 2%);
+  top: ${({ $side }) =>
+    $side === "right" ? WATERFALL_TEXT_RIGHT_TOP_PCT : WATERFALL_TEXT_TOP_PCT}%;
   box-sizing: border-box;
   container-type: inline-size;
   pointer-events: auto;
@@ -140,34 +206,148 @@ const TextMount = styled.div`
   mask-repeat: no-repeat;
   -webkit-mask-repeat: no-repeat;
 
-  @media (max-width: 720px) {
-    width: min(${WATERFALL_TEXT_WIDTH_PCT}%, 42vw);
+  /* Phones get shorter copy. */
+  .phone-copy {
+    display: none;
   }
 
-  @media (max-width: 480px) {
-    width: min(24%, 38vw);
-  }
-`
+  ${phone} {
+    .wide-copy {
+      display: none;
+    }
 
-const Heading = styled.h2`
-  margin: 0 0 0.65em;
-  color: #fff;
-  font-family: var(--font-body);
-  /* Scales with the text column (cqw), not raw viewport vw */
-  font-size: clamp(0.6rem, 7.5cqw, 1.35rem);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1.15;
-  text-transform: uppercase;
+    .phone-copy {
+      display: inline;
+    }
+  }
+
+  ${({ $side }) =>
+    $side === "left"
+      ? css`
+          left: ${WATERFALL_TEXT_LEFT_PCT}%;
+          width: ${WATERFALL_TEXT_WIDTH_PCT}%;
+          max-width: 100%;
+          padding-right: 2%;
+          padding-left: 2%;
+
+          /* Phones: fits the left bank, clear of the falls, well under the
+             dark sewer mouth (its copy's shorter, so the popup hint under it
+             still stays on the bank). */
+          ${phone} {
+            top: ${WATERFALL_TEXT_TOP_PCT + 2}%;
+            left: 4%;
+            width: 34%;
+          }
+        `
+      : css`
+          /* Compact column on the right bank — not full remaining width. */
+          left: auto;
+          right: 3%;
+          width: ${artPx(416)};
+
+          /* Only on the bank (from 65% across), clear of the falls and the
+             edge, and well under the yellow pipe. */
+          ${phone} {
+            top: ${WATERFALL_TEXT_RIGHT_TOP_PCT + 2}%;
+            width: 29%;
+            right: 3%;
+            padding-left: 0;
+          }
+          padding-left: 2%;
+          padding-right: 0;
+          text-align: center;
+        `}
 `
 
 const Body = styled.p`
-  margin: 0;
+  margin: ${({ $spaced }) => ($spaced ? "0.75em 0 0" : "0")};
   color: rgba(255, 255, 255, 0.92);
   font-family: var(--font-body);
-  font-size: clamp(0.5rem, 4.4cqw, 1.05rem);
+  ${artFont(WATERFALL_BODY_PX)}
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.4;
   overflow-wrap: break-word;
   overflow: visible;
+
+  ${phone} {
+    font-size: ${({ $side }) => phoneSize($side === "right" ? 0.62 : 0.7)};
+  }
+`
+
+const bangHover = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+`
+
+const bangHoverStrong = keyframes`
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+`
+
+const PopupHint = styled.span`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: ${artPx(7.2)};
+  margin: ${artPx(16)} 0 0;
+  width: 100%;
+  max-width: 100%;
+
+  ${phone} {
+    margin-top: 0.3em;
+  }
+`
+
+const BangHover = styled.span`
+  flex: 0 0 auto;
+  display: block;
+  animation: ${bangHover} 2.4s ease-in-out infinite;
+
+  ${PopupHint}:hover & {
+    animation-name: ${bangHoverStrong};
+    animation-duration: 1.6s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const BangImg = styled.img`
+  display: block;
+  width: ${WATERFALL_BANG_WIDTH};
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+`
+
+const HintText = styled.span`
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  color: #e63946;
+  font-family: var(--font-body);
+  /* Less important than the lines around it, so it may shrink below their floor. */
+  font-size: max(${HINT_FONT_MIN_PX}px, ${artPx(18)});
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+
+  ${phone} {
+    font-size: ${phoneSize(0.55)};
+  }
+
+  ${inputCopyCss}
 `

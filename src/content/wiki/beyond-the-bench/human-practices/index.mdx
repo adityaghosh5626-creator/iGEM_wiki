@@ -4,14 +4,1132 @@ section: "Beyond the Bench"
 path: "/beyond-the-bench/human-practices/"
 navTitle: "Human Practices"
 order: 20
-description: "Stakeholder engagement and project reflection."
-owners: ["Beyond the Bench"]
-updated: "2026-05-16"
-status: "draft"
+hideToc: true
 ---
 
-This page will document how stakeholder conversations, community needs, and ethical reflection shaped the project.
+## Executive Overview
 
-<Callout title="Human practices standard">
-Connect each engagement to a concrete project insight, decision, or change.
+Plastic pollution does not stop at borders and neither should the solution. A technology that works only in a well-funded Canadian treatment plant solves a narrow slice of the problem for the communities that can already afford infrastructure. We built PetaBite around that constraint. From the start, we set a moonshot goal of building a workflow that produces highly efficient plastic-degrading enzymes for any set of operating conditions, rather than optimizing a single enzyme for a single environment.
+
+So we pursued that goal on two fronts: listening to the people our technology would affect and opening synthetic biology to people who have never had access to it.
+
+To hold ourselves to that standard, we produced two formal reports.
+
+### Regulatory Oversight
+
+The Regulatory Oversight Framework maps what it would actually take to deploy a biological solution responsibly. It covers our open science obligations under Canada's Roadmap for Open Science and the FAIR principles, benefit-sharing duties under the Nagoya Protocol for enzyme sequences drawn from biodiversity-rich nations, dual-use research of concern, and the AI governance frameworks that apply to PETadex, including PIPEDA, the Directive on Automated Decision-Making, and the EU AI Act.
+
+On the biosafety side, the regulatory framework examines our project under the Canadian Environmental Protection Act and includes country‑specific profiles for Pakistan, India, Nigeria, Indonesia, and Canadian Indigenous communities, developed from primary stakeholder interviews. These profiles evaluate the ethics of deploying a Global North technology in regions disproportionately affected by plastic pollution, addressing waste colonialism, ethics dumping, and the extent to which open access enables genuine usability in areas with limited infrastructure and technical capacity.
+
+### Environmental and Sustainability Considerations
+
+The Sustainability Report evaluates whether our solution mitigates existing problems without creating new ones. It measures our environmental footprint across the energy demands of the AI pipeline, enzyme synthesis and production, hardware use, biological and chemical waste streams, and water consumption. It also includes carbon emission calculations for our Dry Lab, Wet Lab, and Hardware operations.
+
+Beyond environmental metrics, the report addresses microplastic fate, enzyme containment, and integration within a circular economy. On the social side, it examines cost and accessibility, public perception of engineered enzymes and AI‑driven databases across cultural and regional contexts, and outlines an ethical deployment framework specifying the evidence required before release. We close with recommendations for the field and directions for future research.
+
+### Stakeholder Outreach
+
+These reports shaped our technical decisions as much as our outreach. We learned from <strong>~70 stakeholders</strong> this season through various interviews, conferences and competitions, including researchers, regulators, ethicists, conference panelists, plant operators, Indigenous knowledge holders and industry experts across four continents. Those conversations changed where we deploy, what evidence we gather before deployment, and how we frame enzymatic degradation alongside prevention and policy.
+
+### Education
+
+On the education side, we hosted <strong>three conferences</strong>, mentored <strong>two high school teams</strong> in synthetic biology, ran sustained exchanges with <strong>four universities abroad</strong>, and carried out <strong>eight campus collaborations</strong> across the University of Toronto that reached over <strong>800</strong> students and community members cumulatively.
+
+## Commitment to Inclusivity
+
+Solving a global challenge requires input from the people who will be most affected by the solution. We embedded this principle throughout our project by building it into our recruitment practices, laboratory culture, and engagement with advisors, stakeholders, and community members.
+
+<Dropdown title="Holistic stakeholder engagement">
+
+We engaged every group our technology affects. Plant operators described how facilities function in practice. Regulators at Environment and Climate Change Canada and the U.S. EPA mapped the approval pathways we must navigate. Community organizations such as the U of T Trash Team challenged our framing. Indigenous knowledge holders reframed plastic pollution as a matter of relationships among people, land, and water rather than a purely technical issue.
+
+</Dropdown>
+
+<Dropdown title="Inclusive team composition">
+
+Our seven subteams include members from molecular biology, computational biology, machine learning, hardware engineering, environmental science, and business. New members join through an open application process with no prior lab experience required because we found that experience requirements often exclude the students who most need the opportunity.
+
+</Dropdown>
+
+<Dropdown title="Inclusive lab culture">
+
+All members review a code of conduct at the start of the season. We train new members and we structure subteam work so first‑year students have the opportunity to present alongside senior members.
+
+</Dropdown>
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/inclusitivity-images/wetlab-hp-img-2.avif"
+    alt="wetlab 2"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/inclusitivity-images/wetlab-hp-img-1.avif"
+    alt="wetlab 1"
+  />
+</ImageGrid>
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/inclusitivity-images/dl-hp-img-1.avif"
+    alt="dl hp"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/inclusitivity-images/hp-img-1.avif"
+    alt="hp"
+  />
+</ImageGrid>
+
+## Our Mission
+
+### The Fragmented Crisis
+
+It is hard to believe a solution to any problem can be achieved when its solvers are fragmented. Scale this to a crisis that affects every continent on Earth, and the ability to act efficiently and ethically can seem impossible. Plastic pollution is one such crisis; from the deep oceans to the human placenta, this pressing issue has proven to be immensely complex.
+
+As a result, multidisciplinary action united against this threat is essential for any sustainable solution. However, this endeavor is remarkably difficult because the global plastics community is deeply disjointed, which heavily reduces efficiency in creating practical interventions.
+
+### The Two Pillars of PetaBite
+
+Human Practices presented a unique opportunity to bring together all sectors of the plastics community. To make the optimal, lasting difference, we realized a true solution must stand on two equal pillars:
+
+1. **A robust, scalable technical solution** - leveraging engineering to solve the physical presence of plastic pollution around the world.
+2. **A unified community platform** that bridges the disjointed plastics landscape by uniting data scientists, policy-makers, plant operators, ethicists, and local communities.
+
+### The Iterative Feedback Loop
+
+Our work this year used global stakeholder engagement to analyze the real-world challenges our project would encounter in unique contexts around the world. This created an iterative process that directly shaped our technical solutions and inspired us to build multidisciplinary frameworks to address the concerns raised in our interviews.
+
+Using the core themes that emerged from these stakeholder sessions, our work bringing together the global plastics community culminated in the <strong>MERGE</strong> framework:
+
+<Dropdown title="M — Multidisciplinary Global Stakeholder Outreach">
+
+We spoke with ~70 stakeholders across four continents, this included plant operators, regulators, ethicists, and Indigenous knowledge holders. Our interviews aimed to ensure our technology actually fit real-world needs.
+
+</Dropdown>
+
+<Dropdown title="E — Education and Multi-Directional Feedback">
+
+We broke down academic silos by hosting three conferences, mentoring high school teams, running international university exchanges, and reaching over 800 students through campus collaborations.
+
+</Dropdown>
+
+<Dropdown title="R — Regulatory Oversight">
+
+We mapped out legal and safety realities, navigating global plastic, AI, and PETase regulations as well as considerations about open science and ethics to bring together one framework allowing crosstalk to show how plastic solutions would fit into global contexts.
+
+</Dropdown>
+
+<Dropdown title="G — Global Consolidated Database Interviews">
+
+We created the <strong>PETadex</strong>, a database that summarizes years of work from the plastics community, establishing a central hub where research is globally accessible to a traditionally disjointed field.
+
+</Dropdown>
+
+<Dropdown title="E — Environmental & Sustainability Consideration">
+
+We reflected on our projected life-cycle footprint (covering energy, carbon, water, and waste) while addressing microplastic fate and biological containment.
+
+</Dropdown>
+This framework successfully guided the execution of our project this year. Beyond PetaBite, the <strong>MERGE</strong> framework serves as a scalable model for any future initiative that aims to uphold our two core pillars: developing a robust technical solution to synthetic biology while actively unifying the scientific community.
+
+## Multidisciplinary Global Stakeholder Outreach
+
+### Executive Overview
+
+When we began the journey of seeking stakeholders, we knew we couldn’t only feature people who have historically had a seat at the table. We identified communities that are most affected by plastics, including Nigeria, Pakistan, Indonesia, and the Indigenous communities of Canada, to understand how our solution could fit into the unique environments and realities of these locations. This is because PetaBite's goal was always to follow the 2 pillars we identified for the best solution. Not only a great technical solution, but one that was built around the entire Plastics community.
+We organized our interviews into two streams, each designed to address a distinct category of questions.
+
+### Industry and Community Interviews
+
+These conversations tested both the feasibility and the ethics of deploying our technology beyond the laboratory. We spoke with wastewater treatment plant operators and environmental scientists about operational viability, with bioethicists and regulatory specialists about the governance structures a biological deployment would encounter, and with Indigenous scholars about environmental stewardship and our responsibilities to the communities and ecosystems affected by our work.
+
+Several of these interviews directly informed our <strong>Regulatory Framework</strong> and <strong>Sustainability Report</strong>.
+
+<Dropdown title="See all of our industry and community interviews">
+
+<PdfEmbed
+  title="Industry and Community Interviews"
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/industry-community-interviews.pdf"
+/>
+
+</Dropdown>
+
+### Conference and Competition Feedback
+
+Across national and international competitions and conferences, we gathered feedback from founders, investors, industry operators, and keynote speakers. These sessions ranged from one‑on‑one mentor meetings and investor discussions to panel dialogues and breakout workshops. The advice focused on commercial strategy, intellectual property, product‑market fit, and how a science‑driven venture positions itself to potential funders. We integrate their feedback in detail in our Entrepreneurship page.
+
+<Dropdown title="See more conference and competition insights">
+
+Our Venture team collected feedback at competitions and conferences throughout the season, including the Tech Futures Challenge National Competition, Web Summit Vancouver and SynBioBeta. The tables below record the advice we received and who gave it.
+
+<strong> Tech Futures Challenge National Competition: Advisor Feedback </strong>
+
+| Advisor                | Role                                                                                                                                           | Key advice and takeaways                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prof. Rasha Maal-Bared | Principal Scientist, CDM Smith R&T Labs; Adjunct Professor, University of Alberta (Civil and Environmental Engineering); WEF Board of Trustees | • 60 to 90% of PET microplastics end up in WWTP sludge rather than the water stream<br />• Digesters run at mesophilic temperatures<br />• Plant operators, not engineers, manage day-to-day processes, so design for operators<br />• A laundry detergent additive bypasses slow WWTP regulatory timelines<br />• Recommended sidestream deployment for optimal contact between PETase and microplastics                                                                                                                                                                                         |
+| Sophia Young           | Technical and Commercialization Advisor                                                                                                        | • Cost is always underestimated, so design for multiple environments from day one<br />• Small particles pass physical filters, so our system belongs in the biological treatment stage<br />• Most degradation solutions fail by ignoring the full microplastic transport pathway<br />• Strongest IP path: patent the ML process, meaning the algorithm and optimization, rather than individual enzymes<br />• Kill switch: engineer a biological dependency so the enzyme cannot be reproduced without our inputs<br />• University IP rights must be settled before commercialization begins |
+| Mary Mohamad           | IP and University Relations Advisor                                                                                                            | • Student IP rights are not automatic; the university may hold a legal claim<br />• Hold a formal meeting with the department head before commercializing anything<br />• Document everything, including dates, attendees and decisions, since verbal agreements are not sufficient<br />• Resolve who owns the IP, what percentage the university takes, and who carries liability<br />• A registered company name makes this conversation more urgent<br />• Fix specific percentages, dollar amounts and time periods in writing before any investor conversations                            |
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/stakeholder-images/tfc-photo-hp-1.avif"
+  alt="tfc photo"
+  width={400}
+/>
+
+### Web Summit Vancouver
+
+Organizers selected PetaScale from roughly 1,200 startups to present at Web Summit Vancouver, where we received feedback from CEOs and venture capitalists across six sessions.
+
+| Session                                  | Speakers                                                                                                                                               | Key advice and takeaways                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Session 1: The New Go-To-Market          | Graeme Barlow (CEO, Iversoft); Edmon Moren (CEO, LicenseSpring); Emmanuel Sohe (CEO, Cardtonic); Issmaeel Lawendy (CEO, Get Gambit)                    | • Moving fast without stable fundamentals amplifies mistakes before customers can correct them<br />• Retention beats acquisition: recurring revenue lives in a loop where customers stay, expand and refer<br />• Tie pricing to the value delivered rather than a fixed rate<br />• Every buyer moves through know, like and trust before purchasing, so go-to-market is the whole company rather than sales alone                                                                                |
+| Session 2: When Everything Is Signal     | Tushar Gupta (MD, Qualcomm Ventures); Edwin Solares (CTO, 1Password); Anis Uzzaman (CEO, Pegasus Tech Ventures); Yuliya Chernova (Wall Street Journal) | • Integrate into existing infrastructure and earn trust incrementally rather than building new systems from scratch<br />• Flexible architecture is a feature, because markets shift, regulations evolve and customer understanding changes<br />• Reviewing code and writing tests early prevents compounding problems<br />• Science-led startups are valued on future potential rather than current revenue, so seek thesis-aligned investors                                                    |
+| Session 3: Mentor Hours                  | Peter Lykomskyj (CEO, Radiant Health)                                                                                                                  | • Follow your users over your advisors, since operators will tell you more than any boardroom<br />• Consumer traction generates the case studies needed to sell institutionally<br />• The first 10 to 30 customers are design partners rather than clients, so give them more attention<br />• Delay payment until 10 full WWTP treatment cycles are complete, which removes the adoption risk objection<br />• WWTP operators talk to each other, so one strong customer seeds the whole network |
+| Session 4: How VCs Evaluate Your Startup | Ricky Tejapaibul (Managing Partner, Tech Wildcatters)                                                                                                  | • Bio neo-labs are valued on future potential<br />• Know your moat: how long would a competitor need to replicate what you have built?<br />• IP assignment agreements must be drafted before diligence starts<br />• Letters of intent from WWTP operators are the strongest pre-seed signal available<br />• 12 to 18 months of runway is the benchmark, and cap table hygiene matters from the start                                                                                            |
+| Session 5: Building, Funding, Surviving  | Marcus Ryu (General Battery Ventures); Zachary Karabell (The Progress Network)                                                                         | • Build because you cannot do otherwise, since conviction is the only foundation that survives hard times<br />• Capital is short-term fuel rather than long-term strategy, so grow enterprise value alongside funding<br />• Take the most aligned cheque rather than the largest one<br />• VCs evaluate two things above all else: strategy coherence and founder synergy under pressure                                                                                                         |
+| Session 6: The AI ROI Reckoning          | Feyza Haskaraman (Felicis Ventures); Simon Wu (Cathay Innovation); Aidan Madigan-Curtis (Eclipse Ventures)                                             | • VC focus has shifted from pure software to infrastructure and applied AI in physical-world industries<br />• In an open-source world, distribution matters more than the model itself<br />• The three most closely watched sectors are AI and biology, services, and energy<br />• Team quality and directional clarity are the primary evaluation signals at early stage                                                                                                                        |
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/stakeholder-images/websummit-hp-img-2.avif"
+    alt="websummit 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/stakeholder-images/websummit-hp-img-1-2.avif"
+    alt="websummit 2"
+  />
+</ImageGrid>
+
+### SynBioBeta
+
+We represented PetaScale at SynBioBeta, a leading global synthetic biology conference, where we met investors, founders and researchers working at the intersection of AI and biology.
+
+| Contact                                             | Role and context                                                                        | Key advice and takeaways                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Emily Leproust                                      | CEO, Twist Bioscience<br />Next Gen BioLeaders keynote                                  | • Product-market fit is non-negotiable, because great science does not find its own market<br />• Speed beats scientific perfection at the early stage<br />• The first 10 hires determine the fate of the company, and the first firings matter just as much<br />• Culture outweighs science; run the team like an elite sports team<br />• Fundraising takes twice as long and twice as much capital as expected<br />• The platform and product distinction oscillates, so choose what makes sense now |
+| Landon Merrill                                      | Partner, General Ventures<br />VC roundtable and investor reverse pitch                 | • Lock down exactly who the customer is before anything else<br />• Federal government is a valid customer, but go deep: who specifically, what are the procurement procedures, and how would enzymes be deployed in lakes?<br />• Look at bioremediation contractors hired for oil spills and enzymatic recycling, who may be the real buyers                                                                                                                                                             |
+| Shelby                                              | Compound Ventures, thesis-driven fund (New York)<br />VC roundtable                     | • New science must either create a new market or capture an existing one wholesale<br />• Makes N-of-1 bets on companies with foundational advances<br />• Asked what new markets PetaScale's technology could enable<br />• Echoed Landon Merrill: settle who you are selling to first                                                                                                                                                                                                                    |
+| Blair                                               | KDT Ventures, pre-seed and seed focus<br />Investor reverse pitch                       | • Invests in frontier bio, chem and materials, and leads first institutional rounds<br />• Supports scaling, market-finding and regulatory processes<br />• Called proprietary datasets combined with AI and biology the right bet                                                                                                                                                                                                                                                                         |
+| Dimi Kellari                                        | Co-Founder and CEO, Neion Bio<br />Conference chat, ongoing sounding board              | • Have 50 conversations with different companies to understand real problems before building<br />• Tailor the platform to problems discovered in those conversations rather than assumed needs<br />• Government is a slow, difficult customer to avoid as a near-term focus                                                                                                                                                                                                                              |
+| Luke Riggan                                         | Amplify Partners<br />Investor meeting                                                  | • Amplify invests in technical founders who are often overlooked<br />• Runs an AI and biology fund focused on therapeutic platforms and infrastructure<br />• Portfolio includes Tahoe Therapeutics and Axiom Bio<br />• Established a warm relationship and expressed interest in meeting again                                                                                                                                                                                                          |
+| Ali Madani and panellists                           | Profluent, Constructive Bio, Radical Numerics<br />Synthetic Evolution breakout session | • Design-based approaches do not make directed evolution obsolete, so use a mix of both<br />• Binder design is easy compared with designing enzymes new to nature, and the two should not be conflated<br />• Far fewer researchers work in AI and biology than at the major AI labs, which leaves an enormous opportunity<br />• Top-decile domain experts are still needed to sanity-check model outputs                                                                                                |
+| T.J. Chen, Joy Jiao, Laura Luebbert, Yoram Vodovotz | NVIDIA, OpenAI, FutureHouse, ARPA-H<br />Biology in Silico breakout session             | • People with deep biology expertise and strong engineering proficiency are rare team superpowers<br />• Use AI where it is genuinely needed rather than forcing it where other approaches work<br />• Plan for regulators, pharmaceutical partnerships and operating within the broader ecosystem                                                                                                                                                                                                         |
+| Matúš Grieš, Miro Rosputinský, Jonáš Pospíchal      | iGEM BRNO (President and team)<br />Conference chat                                     | • Bring judges to your booth rather than waiting for them<br />• Community and environmental impact angles score well with judges<br />• Read the judging handbook carefully                                                                                                                                                                                                                                                                                                                               |
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/stakeholder-images/synbiobeta-hp-img-1.avif"
+  alt="synbiobeta"
+  width={400}
+/>
+
+### Miscellaneous Feedback (Insights on the Plastic Landscape)
+
+| Contact        | Role and context                                                    | Key advice and takeaways                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shane Harker   | Founder, Rethink Resource (waste management and circular economy)   | • Canada's plastic diversion rate sits near 16% and is declining<br />• Mechanical recycling is bottlenecked by feedstock quality rather than quantity<br />• Multilaminate packaging and PLA contamination are the hardest processing problems<br />• Ontario has no deposit-return system and no IC&I waste enforcement<br />• Framing matters: emphasize reduction alongside degradation, or industry will use the technology to justify more production                                                                     |
+| Arjun Krishnan | Plastics Industry and Recycling Infrastructure Expert, EFS Plastics | • Canada has abundant PET, and the hardest materials are PLA look-alikes and non-PET polymers such as PVC and PS that contaminate PET streams<br />• Commercial facilities generate large plastic volumes, but haulers own the landfills, so no diversion incentive exists<br />• Enzymatic depolymerization needs clean, sorted PET feedstock<br />• The end-of-life fate of the enzymes must be studied, because regulators will ask<br />• PFAS is a cautionary tale: good intentions without long-term studies can backfire |
+
+</Dropdown>
+
+## Education and Multi-Directional Feedback
+
+### Executive Summary
+
+Our Human Practices Education arm explored how synthetic biology can be both communicated to and shaped by the communities it affects through open dialogue. While plastic pollution is a universally recognized crisis, enzymatic systems to degrade microplastics at the source remain unfamiliar to most communities. We set out to close that gap by making every activity this season a two-way exchange, where we learned as much as we taught. What we discovered about ethics, regulation, and the realities of industrial deployment ultimately changed how we developed PetaBite.
+
+Our outreach this iGEM season reached <strong>four communities</strong>:
+
+- <strong>The public and the research community.</strong> We hosted and
+  organized <strong>three</strong> conferences, headlined by our own UofT
+  Microplastics Conference, which drew over <strong>200 registrants</strong> and
+  <strong>15 scientific posters</strong> from
+  <strong>four universities</strong>. Working with the University of Toronto
+  Trash Team taught us to position enzymatic degradation alongside prevention
+  and policy, and that framing carried through every presentation that followed.
+- <strong>High school students.</strong> We also mentored <strong>two</strong>
+  high school teams through a full season. We co-created cGEM, a national high
+  school synthetic biology pitch competition, and our mentees at the Temerty
+  Faculty of Medicine's STEAM-Design program placed first out of 16 teams.
+- <strong>Teams abroad.</strong> We ran knowledge exchanges with iGEM teams at
+  Lund University, the University of Patras and Fudan University, and we took
+  part in the University of Michigan Bioethics Symposium. These exchanges gave
+  us perspectives from regulatory environments further along than Canada's,
+  particularly the EU framework on microplastics.
+- <strong>At the University of Toronto.</strong> We ran <strong>eight</strong>
+  campus collaborations across the University of Toronto, reaching over
+  <strong>800</strong> students and community members. <strong>12</strong> of
+  those students joined iGEM Toronto and now contribute to PetaBite.
+
+<Dropdown title="UofT Microplastics Conference (September 19, 2026)">
+
+### Please Visit our Conference Website! https://www.uoftmicroplastics.ca/
+
+On <strong>September 19</strong>, iGEM Toronto hosted the <strong>UofT Microplastics Conference</strong> in close collaboration with the U of T Trash Team. The free, one-day conference took place at the Bahen Centre for Information Technology on the University of Toronto St. George campus. Under the theme <strong>"Rethink plastic,"</strong> we brought together researchers, students, and community members who work on or care about microplastics, and we built the day around two questions: <strong>what happens to plastic once it enters the environment and what we can realistically do about it.</strong>
+
+### Overview
+
+We built the conference to bridge the gap between research, public awareness, and action on plastic pollution. Microplastics research is moving quickly, and the evidence is growing faster than our shared response to it. Most of that research also stays inside academic journals and specialist meetings that students and the public rarely attend. Progress depends on researchers, the public and decision-makers working on this problem together, so we designed the conference to put all three in the same room.
+
+We centred the day on freshwater microplastics, an urgent and under-monitored problem with direct relevance to Toronto. The Great Lakes hold 84% of North America's surface freshwater and roughly 20% of the world's, and researchers have found microplastics in every one of them. The problem reaches human health as well. Researchers have detected microplastics in human blood, placental tissue, and gastrointestinal samples, and current evidence points to exposure through both ingestion and inhalation. How that exposure happens, and what it means for health, remains open, and we wanted attendees to engage with those questions directly.
+
+Our theme framed plastic pollution as a linear system, where plastic is made, used, and discarded, and asked attendees to consider what a circular one could look like. Answering that question requires chemistry, ecology, toxicology, policy, waste management and community behaviour, and no single field or technology covers it. We therefore drew speakers from ocean science, freshwater ecology, environmental chemistry, policy advocacy and community outreach, so attendees could see how these fields connect and where their own interests fit.
+
+We also removed the barriers that keep people out of conferences like this one. Admission was free and open to anyone, and our call for abstracts invited undergraduate and graduate students from every discipline to present. We wanted students with no prior conference experience to have a genuine chance to present, and members of the public with no research background to feel welcome in the conversation.
+
+Our partnership with the U of T Trash Team shaped this approach from the start. The Trash Team is a science-based community outreach organization of students, postdocs, researchers, local volunteers, and staff who work to increase waste literacy and reduce plastic pollution in local ecosystems. In May, both teams ran a series of cleanups across the Greater Toronto Area to prepare for the conference. During those cleanups, Trash Team members asked whether technologies like enzymatic degradation risk distracting from reducing plastic use. That question stayed with us through planning. It is why we built the program around prevention, policy and community action alongside technical solutions, and why we presented PetaBite as one approach among many.
+
+### Statistics from the Event
+
+Over 200 people registered for the UofT Microplastics Conference. Attendees included undergraduate and graduate students, faculty, researchers, environmental advocates, and members of the public, many of whom were attending a research conference for the first time.
+
+The day ran from 8:30 a.m. to 5:00 p.m. and included a keynote address, <strong>five invited talks, our own project presentation, a community solutions talk from the U of T Trash Team, and a policy panel.</strong> Over lunch, <strong>15</strong> scientific posters were presented and judged in our Student Poster Session. Presenters came from Toronto Metropolitan University, Trent University, the University of Toronto and York University, along with researchers from the Rochman Lab, which gave attendees a view of plastics research happening across Ontario. For many student presenters, it was one of their first opportunities to share their work outside their own lab, and they did so directly with leading researchers and community members.
+
+### The Program
+
+#### Keynote: Microplastic Pollution
+
+Dr. Kara Lavender Law, Research Professor of Oceanography at the Sea Education Association, opened the day. Dr. Law studies the sources, distribution, transformation, and fate of plastic debris in the marine environment. As a physical oceanographer, she has spent more than 12 months at sea aboard research vessels in the North Pacific and North Atlantic, sampling the regions where plastic debris accumulates in what are commonly called garbage patches. Her recent work moves upstream to how plastic waste is generated, transported, and treated, with the aim of stopping plastic from reaching the ocean in the first place.
+
+Her keynote set the scale of the problem for the rest of the day and established the framing we returned to throughout: that the leverage lies in the systems producing and handling plastic, rather than in the ocean where it ends up.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/1.avif"
+    alt="pc1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/2.avif"
+    alt="pc2"
+  />
+</ImageGrid>
+
+#### Effect of Microplastics on the Environment
+
+Dr. Chelsea Rochman, Associate Professor of Ecology and Evolutionary Biology at the University of Toronto, spoke next. An internationally recognized leader in microplastic pollution research, Dr. Rochman develops monitoring methods and risk assessment frameworks that clarify the sources, fate, and impacts of plastic pollution in aquatic ecosystems. She also works with government and industry partners to translate that science into policy at the local, national, and international levels.
+
+Her talk connected the keynote's global picture to the freshwater systems around Toronto, and her emphasis on what current monitoring methods can and cannot measure shaped how we think about the evidence a technology like PetaBite would need before deployment.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/3.avif"
+    alt="pc3"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/4.avif"
+    alt="pc4"
+  />
+</ImageGrid>
+
+#### Microplastics in Health
+
+Madeleine Milne, Manager of the Rochman Lab, followed with a talk on microplastics and human health. Madeleine joined Dr. Rochman's lab as a research assistant in 2020 and later joined the U of T Trash Team, where she leads outreach, cleanups, workshops, and volunteer training. Her research has examined microplastics in Lake Ontario fish, in grocery store foods, and in a multi-year whole-lake study at the Experimental Lakes Area.
+
+Her talk traced microplastics from the environment into the food system and the human body, which gave attendees the clearest answer to the question most of them came in with: whether this affects them directly.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/5.avif"
+  alt="pc5"
+/>
+
+#### Lunch and Student Poster Session
+
+Over lunch, supported by Longo's, attendees participated in the poster session and reviewed posters presented by various student researchers.
+
+Our project also appeared in the poster session. Our wet lab, dry lab, and hardware subteams each created a scientific poster describing their part of our iGEM research:
+
+- **Wet lab:** Our enzyme engineering and experimental validation, including how we test PET degradation in the lab.
+- **Dry lab:** Our computational design work, including how we model and select enzyme candidates.
+- **Hardware:** Our bioreactor design and how it keeps the enzyme contained during treatment.
+
+Presenting three posters let each subteam explain its own work in depth and gave attendees a full picture of how the pieces of PetaBite fit together. It also gave many of our members, especially newer ones, their first experience presenting research to a public audience.
+
+A significant portion of the day was spent discussing PetaBite with attendees, speakers, and fellow poster presenters. Researchers asked about our enzyme's activity and how we measure degradation. Policy and advocacy voices asked how an engineered enzyme would be regulated and what evidence regulators would need before approving it for use in water systems. Members of the public asked whether an engineered enzyme could be used safely near the environment. Through these conversations, we explained our science, and in return, attendees pushed us on the regulatory, environmental, and community realities our work needs to address.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/6.avif"
+    alt="pc6"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/7.avif"
+    alt="pc7"
+  />
+</ImageGrid>
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/8.avif"
+    alt="pc8"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/9.avif"
+    alt="pc9"
+  />
+</ImageGrid>
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/10.avif"
+    alt="pc10"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/11.avif"
+    alt="pc11"
+  />
+</ImageGrid>
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/12.avif"
+    alt="pc12"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/13.avif"
+    alt="pc13"
+  />
+</ImageGrid>
+
+#### Scientific Solutions - Presenting PetaBite
+
+We presented PetaBite in the program's Scientific Solutions session. We explained how the enzyme works, what our experiments have shown so far, where the project could fall short, and how we plan to deploy it in a contained bioreactor. We framed PetaBite as a complement to prevention rather than a replacement for it, focused on plastic already in the environment, and connected it to the ecological, health, and policy questions the earlier speakers had raised.
+
+<strong>You can watch our full project talk here:</strong>
+<VideoEmbed
+  title="iGEM Toronto Microplastic Conference Presentation (2026) [English]"
+  src="https://video.igem.org/videos/embed/bQnvgAZFbTF48ZZadZ14us"
+/>
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/14.avif"
+    alt="pc14"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/15.avif"
+    alt="pc15"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/16.avif"
+    alt="pc16"
+  />
+</ImageGrid>
+
+**Community Solutions.** The U of T Trash Team then presented how community science, cleanups, and waste literacy programs let the public take part in measuring and reducing plastic pollution. Their talk showed attendees practical ways to contribute outside a lab.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/17.avif"
+    alt="pc17"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/18.avif"
+    alt="pc18"
+  />
+</ImageGrid>
+
+#### Panel: The Current Regulatory State of Mitigating Microplastics in the Environment.
+
+The day closed with a panel featuring Dr. Miriam Diamond, Karen Wirsig and Dr. Chelsea Rochman.
+
+Dr. Diamond, Professor in Earth Sciences and the School of the Environment at the University of Toronto, researches chemical contaminants from emission through to human and ecosystem exposure. She has co-chaired Canada's Chemicals Management Plan Science Committee, serves as Vice-Chair of the International Panel on Chemical Pollution, and is a Fellow of the Royal Society of Canada. Karen Wirsig, Senior Program Manager for Plastics at Environmental Defence Canada, brought a background in journalism and labour and community organizing to the question of how advocates push for stronger plastics policy.
+
+The panellists discussed where Canadian and international regulation of microplastics stands, where it falls short, and how research can inform what comes next. Attendees used the Q&A to ask directly about the gaps between current science, current policy and what communities need, which made this the session where the three groups we had set out to bring together actually spoke to one another.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/19.avif"
+    alt="pc19"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/20.avif"
+    alt="pc20"
+  />
+</ImageGrid>
+
+### Reflections from the Organizing Leads (Lisa Chen, Clara Han, & Adrija Paul)
+
+"We focused largely on partnerships, and on helping lead our collaboration with the U of T Trash Team. The hardest part of organizing a conference at this scale was keeping a growing number of people, ideas and moving pieces aligned as plans changed. We ended up taking on a bridging role between the two teams, building structure around the collaboration so that conversations, feedback and commitments kept translating into progress.
+
+Working with the Trash Team was one of the most rewarding parts of the experience. They brought deep experience, established relationships and real generosity with their time, along with genuine enthusiasm for what we were building. I came away with a much stronger sense of what a good partnership looks like. Dividing up responsibilities is the easy part. The harder and more valuable work is bringing different strengths together around something neither team could have built the same way alone.
+
+What stood out most on the day was watching researchers, students, community organizations and industry partners engage with one another around a problem we all cared about. We especially loved seeing students exchange contact information with researchers and speakers, and continue those conversations well past the formal sessions. After months of planning, watching the conference become a space where those connections formed made the work behind it feel worthwhile."
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/21.avif"
+    alt="pc21"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/22.avif"
+    alt="pc22"
+  />
+</ImageGrid>
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/23.avif"
+    alt="pc23"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/24a.avif"
+    alt="pc24"
+  />
+</ImageGrid>
+
+### Message from Prof. Chelsea Rochman - Primary Supervisor for this initiative and Head of the University of Toronto Trash Team
+
+“We were so pleased to support iGEM’s microplastic conference. The iGEM team had a big dream, and they made it come true! The conference was a huge success, and ran so professionally - from start to finish. The work iGEM shared through their presentation was also incredible. I could not be more proud of this team, and we felt so lucky to get to share several months with a group of such incredibly talented UofT students as they prepared for their big day!”
+
+### Acknowledgements
+
+This conference depended on the people and organizations who supported it.
+
+Thank you to the [U of T Trash Team](https://www.linkedin.com/company/uofttrashteam/) for your mentorship and for partnering with us from the first cleanup through to the final session.
+
+Thank you to our speakers, [Kara Lavender Law](https://www.linkedin.com/in/kara-lavender-law-0902614/), [Chelsea Rochman](https://www.linkedin.com/in/chelsea-rochman-33968aa2/), [Madeleine Milne](https://www.linkedin.com/in/madeleine-milne-7ba00a1b0/), [Miriam Diamond](https://www.linkedin.com/in/miriam-diamond-9b068b13/) and [Karen Wirsig](https://www.linkedin.com/in/karen-wirsig-2b309335/), who gave their time to a free event built for students and the public.
+
+Thank you to our sponsors, whose support kept the conference free to attend: the [Arts and Science Students' Union](https://www.linkedin.com/company/uoft-assu/), the University of Toronto Department of Ecology and Evolutionary Biology, [Longo's](https://www.linkedin.com/company/longos/), [Fraser River Junk Removal](https://frjunk.ca/) ([Matthew Ison](https://www.linkedin.com/in/matthew-ison-a072a2210/)), the Student Initiative Fund and [Jukebox](https://www.linkedin.com/company/jukebox/).
+
+We also thank [Chem Eng at UofT](https://www.linkedin.com/in/chem-eng-at-uoft-9a66ab14/), [University of Toronto Engineering](https://www.linkedin.com/company/uoftengineering/), and in particular [Chris Yip](https://www.linkedin.com/in/chris-yip-5997a4/), for their advice and support throughout.
+
+Finally, thank you to every attendee and poster presenter who spent the day with us. The full program and speaker bios are available on the [UofT Microplastics Conference](https://www.uoftmicroplastics.ca/) website.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/plastic-conference/25.avif"
+  alt="pc25"
+/>
+
+</Dropdown>
+
+<Dropdown title="Other Conferences Hosted">
+
+Along with the microplastics conference, we hosted two other conferences this year. We created cGEM with a high school team we mentored and we co-hosted the North American Mini Jamboree with universities across the continent.
+
+### cGEM (August 29, 2026)
+
+We co-created and hosted <strong>cGEM</strong>, a national high school synthetic biology pitch competition, in partnership with the <strong>iGEM Ontario High School team.</strong> The inaugural edition took place at <strong>Myhal Auditorium</strong> on the University of Toronto St. George campus. The competition was open to any high school team in Canada, ten teams applied online, and five advanced to the in-person finals.
+
+Building a new competition meant designing everything ourselves: the application and selection process, the judging framework, the venue logistics and the event schedule. We kept applications open rather than invitation-only, so teams without university connections could enter. We also wrote the judging criteria to reward clarity of reasoning over complexity of science, which let students new to synthetic biology compete on equal footing.
+
+Running cGEM showed us that accessibility matters more than technical difficulty at this level. Many applicants arrived with strong ideas and no lab access, which told us the real barrier was opportunity rather than ability. That insight is shaping the next edition, which we will co-run again with the iGEM Ontario High School team this winter.
+
+The highlight of the day came when the five finalist teams pitched in a university auditorium, for most, it was their first time presenting science in an academic setting. The energy in the room captured exactly what cGEM set out to achieve: giving young innovators a stage to begin their journey in synthetic biology.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/other-conferences/cgem-photo-1.avif"
+  alt="cGem"
+/>
+
+Website: https://cgem.vercel.app/index.html
+
+## North American Mini Jamboree (September 12, 2026)
+
+We co‑hosted and competed at the <strong>North American Mini Jamboree.</strong> On the organizing side, we partnered with the <strong>North American iGEM Ambassadors</strong> and several collaborating universities to host more than <strong>200 participants from 29 design teams.</strong> Our team coordinated the event schedule, logistics, and panelist management.
+
+The feedback system was the part we prioritized most. We designed it so that every team received structured critique from judges outside its own research area, giving projects perspectives they would not gain from specialists alone. Working alongside ambassadors and host universities demonstrated that an event of this scale depends on clear division of labour and constant communication among organizing teams. We valued the experience of building something this large with peers from across the continent.
+
+The Mini Jamboree provided teams with a venue to present their work, exchange feedback, and engage with keynote speakers and panelists from academia, industry, and venture capital. Speakers included <strong>Dr. Sanjay Magavi</strong>, Co‑founder and Chief Scientific Officer of Progentos Therapeutics; <strong>Anne DeGheest</strong>, Founder of HealthTech Capital; <strong>Dr. Una Ryan</strong>, Founder of ULUX LLC; <strong>Dr. Mohsen Yoosefzadeh Najafabadi</strong> of the University of Guelph; and <strong>Taylor Lanosky</strong> of the Church Lab at Harvard Medical School. Bringing voices from these sectors to a student event allowed participants to hear how their work resonates with scientists, investors, and clinicians in the same forum.
+
+We also competed with <strong>PetaBite</strong>. Out of 29 teams, we placed <strong>Second Overall</strong> and earned <strong>Top 3 nominations</strong> for Best Entrepreneurship and Best Human Practices, along with a Top 5 nomination for Best Presentation. The Human Practices nomination meant the most to us, as it recognized the work described throughout this section at an event we helped organize. For additional details about the competition portion of this event, see the <strong>Entrepreneurship Appendix.</strong>
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/other-conferences/na-mini-jamboree-photo-1.avif"
+    alt="mini jam 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/other-conferences/na-mini-jamboree-photo-2.avif"
+    alt="mini jam 2"
+  />
+</ImageGrid>
+
+</Dropdown>
+
+<Dropdown title="High School Teams Mentored">
+
+Alongside our events, we mentored two high school teams through the full season. We worked with each team from their first introduction to synthetic biology through to the end of their season.
+
+### iGEM Ontario High School
+
+We mentored a new Ontario high school team with no prior iGEM experience and guided them from their first lesson to their first conference launch. We began with the fundamentals of synthetic biology, advanced to project design, and coached them through planning and running their own outreach events. By the end of the season, they launched <strong>cGEM</strong>, a platform for other high school students to showcase their synthetic biology projects.
+
+When the team could not secure funding to compete at iGEM this year, they refused to slow down. They redirected their efforts toward building capacity for the next iGEM cycle and plan to apply again. They also plan on co‑running the second edition of <strong>cGEM</strong> this winter, expanding on the blueprint developed for the first.
+
+That experience revealed the real barrier for many high school teams: funding. This team had the skill and commitment to compete but financial constraints were the only obstacle. They carried that insight into <strong>cGEM’s</strong> design, keeping participation free and applications open so cost and connections would never determine who gets to take part.
+
+The following is a reflection from the <strong>Ontario High  School iGEM Team:</strong>
+
+<Callout >
+  “**Our Mission**
+
+The mission of the iGEM Ontario High School team is to make synthetic biology a more recognized and accessible field for high school students. Synthetic biology remains underrepresented at the high school level, where most students encounter biology through traditional or medical science rather than engineering biology. Our goal is to expand the ways students can enter the field and to show that biology can be designed, built, and innovated upon.
+
+Many students find iGEM and synthetic biology inaccessible simply because they don’t know what they are, how to participate, or where to find resources. That’s why our team consistently works to host events, create educational content, build social media outreach, and offer opportunities to join our team. We’re committed to helping students discover synthetic biology and to representing high school innovation at the Grand Jamboree next year.
+
+**Our Events**
+One of our proudest accomplishments is the creation of cGEM, a national high school synthetic biology pitch competition. The first edition was hosted on August 29, 2026, at the Bahen Information Centre on the University of Toronto St. George campus, in collaboration with the UofT iGEM team. Alongside these competitions, we continue to engage with local communities through outreach events such as the **Markham Youth Expo**, helping students see how synthetic biology connects to real-world challenges and opportunities.
+
+**Our Members**
+
+- **The Presidents:** Lukas Chang and Hillary Wan
+- **Head of Human Practices and Marketing:** Eloise Nose
+- **Wet Lab team:** Stella Shen
+- **Outreach and Wet Lab team:** Sophia Tarves and Kathy Han
+- **Business Team:** Ethan Ping
+- **Dry Lab:** Akshat Goenka
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/highschool-mentored/igem-ontario-hs-team-photo-1.avif"
+  alt="highschool team photo"
+/>
+
+However, throughout the process of hosting our conferences, each and every single member had a vital role in marketing, finance, and outreach, far beyond what their respective roles required.
+
+**Our Goals and Future Events:**
+
+Alongside cGEM, we are planning additional conferences during high school winter breaks and are currently developing another biotech hackathon. Beyond these larger events, we have several upcoming initiatives at our members’ schools and school boards, through which we aim to continue expanding awareness and engagement in synthetic biology. With each event, we hope to create accessible entry points for students to explore biotechnology and connect with the broader iGEM community.”
+
 </Callout>
+
+### STEAM-D from University of Toronto's Faculty of Medicine
+
+The second team came through **STEAM-Design (STEAM-D), a program run by the University of Toronto Temerty Faculty of Medicine.** STEAM-D brings high school students who face systemic barriers to higher education onto the St. George campus for one month each summer. Students attend health science sessions led by researchers, graduate students and practitioners, then compete in a design competition where top teams win prizes and mentorship.
+
+Our Co-President, Anthony Dinglasan, co-mentored a cohort of six high school students. He taught them the fundamentals of synthetic biology and guided them through the design challenge, and their project, PhosFlow, placed **first** out of 16 teams.
+
+**What the team built:** PhosFlow addresses a problem in Canadian canola farming. Roughly 80% of Prairie soils bind phosphorus into insoluble forms that plants cannot absorb, so farmers spend over $1 billion each year on phosphate fertilizer to compensate. Much of that fertilizer washes into freshwater during snowmelt and rainfall, where it drives eutrophication and toxic algae blooms, and it exposes agricultural workers and nearby residents to chemical burns and respiratory harm. The team proposed an alkaline phosphatase spray that releases the phosphorus already present in the soil, which reduces how much new fertilizer a farm needs to apply.
+
+Over four weeks, the students worked through the full arc of a mini iGEM synthetic biology project:
+
+- **Enzyme production.** They proposed expressing alkaline phosphatase in Saccharomyces cerevisiae, then screening expressed variants through yeast assays to select the best performers.
+- **Formulation.** They designed a stabilization strategy using cryoprotectants, phosphate and pH buffers, and microencapsulation, specifically to address why existing live-microbe bio-inoculants fail in Prairie winters and summer heat.
+- **Competitive analysis.** They evaluated existing products, including Jumpstart and XiteBio Tuber+, and identified that both rely on live organisms that struggle in extreme conditions and work as additives rather than replacements.
+- **Limitations.** They documented where their own approach would underperform, including drought conditions, high temperatures, dense grass systems and heavy metal contamination, and they proposed mitigations such as pre-planting application and root-zone targeting.
+- **Regulatory pathway.** They determined that alkaline phosphatase is absent from Canada's Domestic Substances List, which requires a New Substances Notification, and that PhosFlow would register with the Canadian Food Inspection Agency as a supplement rather than a fertilizer.
+
+### Full Project Slideshow:
+
+<PdfEmbed
+  title="Phosflow"
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/phosflow.pdf"
+/>
+
+<Callout title="Anthony’s Reflection">
+  “The depth of their presentation surprised me so much. Within a month they had worked through chassis selection, formulation chemistry, competitive positioning, Canadian regulatory classification and a funding strategy. Their regulatory analysis was more thorough than most first-year university projects I have seen. I am beyond proud of the work they have accomplished.”
+
+</Callout>
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/highschool-mentored/steam-d-image-2-improved-2.avif"
+  alt="steam d team"
+/>
+
+**Program Website:**
+[STEAM-Design Program | Temerty Faculty of Medicine](https://temertymedicine.utoronto.ca/steam-design-program)
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/highschool-mentored/steam-d-2026-phosflow-certificate.avif"
+  alt="steam d cert"
+/>
+
+</Dropdown>
+
+<Dropdown title="Campus Collaborations">
+
+Our mentorship work reached a small number of students in depth. Our campus collaborations reached a much larger audience and gave students a direct route into synthetic biology research. Across the year, we ran **eight** campus collaborations at the University of Toronto and reached over **800** students and community members.
+
+We designed every collaboration around conversation. At each event, we asked students what they already knew about synthetic biology, what concerns they had about engineered organisms and enzymes, and what stopped them from joining research. We then explained how PetaBite works, where it could fall short, and what undergraduate research at this level actually involves, including the failed experiments and slow progress. We avoided pitching synthetic biology as the answer to plastic pollution. Enzymatic PET degradation is one tool among many, and we presented it alongside waste reduction, policy and filtration.
+
+Each event taught us something about how a different community approaches
+synthetic biology, and we carried those lessons into the next one.
+
+### HMB Research Fair (February 2026)
+
+We presented at the Human Biology research fair and spoke with life sciences students about the wet lab and enzyme work behind PetaBite.
+
+- **Students reached:** roughly 100
+- **Mutual learning:** These students already understood biology, so conversations moved quickly to experimental design. Several students with backgrounds in health and environmental science raised questions about microplastic exposure and human health, which connected our work to research areas we had not considered.
+- **Pathway to participation:** Several conversations turned into interest in joining our wet lab team.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/hmb-research-fair-photo-1.avif"
+  alt="hmb research fair"
+/>
+
+### UofT Trash Team Cleanup (May 2026)
+
+To prepare for the UofT Microplastics Conference, we partnered with the UofT Trash Team to run a series of cleanups across the Greater Toronto Area. Students from both teams removed litter from local shorelines and parks.
+
+- **Mutual learning:** The Trash Team brought years of experience in community science, litter audits and waste reduction. We brought knowledge of enzyme engineering and PET biochemistry. Their members questioned whether enzymatic degradation distracts from reducing plastic use, and that question changed how we framed PetaBite for the rest of the year, as a complement to prevention focused on plastic already in the environment.
+- **Outcome:** The cleanups built the working relationship behind our co-led microplastics conference.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/uoft-trash-team-cleanup-photo-2.avif"
+    alt="trashteam 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/uoft-trash-team-cleanup-photo-3.avif"
+    alt="trashteam 2"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/uoft-trash-team-cleanup-photo-4.avif"
+    alt="trashteam 3"
+  />
+</ImageGrid>
+
+### EngSci Online Club Fair (August 2026)
+
+We exhibited at the Engineering Science online club fair to reach students in one of U of T's most demanding programs. We recruit actively from EngSci because much of our work sits at the boundary of biology and hardware, especially the bioreactor array.
+
+- **Students reached:** roughly 110
+- **Mutual learning:** EngSci students challenged our bioreactor design choices and suggested sensor and control improvements, which showed us how much engineering input our wet lab work needs. The hardware side also draws in students who never saw themselves as biology people.
+- **Implementation:** The online format let us share screens of our bioreactor designs and data, which worked better for this audience than a physical booth.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/engsci-winter-fair-photo-1.avif"
+  alt="engsci online club fair"
+/>
+
+### Faculty Orientation (September 2026)
+
+We presented at faculty orientation to introduce the incoming class and the faculty community to the team and our science.
+
+- **Attendees reached:** around 80
+- **Implementation:** We scheduled this for the first week of term because most students choose their extracurriculars within the first month. We kept the presentation short and focused on how a first-year student with no lab experience can join.
+- **Pathway to participation:** Over 60 attendees signed up for our recruitment mailing list.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/faculty-orientation-photo-1.avif"
+    alt="faculty 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/faculty-orientation-photo-2.avif"
+    alt="faculty 2"
+  />
+</ImageGrid>
+
+### Engineering Winter Fair (September 2026)
+
+We attended the Engineering Winter Fair to reach engineering students early in the fall term.
+
+- **Students reached:** about 85
+- **Implementation:** Many students at this fair had not yet chosen a research or extracurricular commitment, so we focused on how new members train and what time commitment each subteam requires.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/engineering-winter-fair-photo-1.avif"
+  alt="winter fair"
+/>
+### Ontario Universities' Fair (September 2026)
+
+We ran a booth at the Ontario Universities' Fair on September 27 and 28 at the Metro Toronto Convention Centre. Canada's largest university fair draws thousands of prospective students and families over two days.
+
+- **Students reached:** roughly 200
+- **Mutual learning:** Most visitors were high school students and parents with little exposure to synthetic biology. Their questions centred on safety and whether engineered enzymes could escape into the environment. This told us that biosafety needs to come first in public conversations, before any technical detail, and we opened with containment at every public-facing event afterward.
+- **Pathway to participation:** High school students choosing where to apply responded strongly to the chance to work on a real environmental problem as undergraduates. We connected interested schools with our high school mentorship program.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/ontario-university-fair-photo-1.avif"
+  alt="uni fair"
+/>
+
+### Engineering Global Experiences Expo (October 2026)
+
+This expo brings together U of T offices, departments and student groups to show engineering undergraduates global opportunities, including study and research abroad, global engineering courses and student organizations. The organizers invited us because iGEM Toronto's focus on biological solutions to global challenges matched the event's theme.
+
+- **Students reached:** roughly 70
+- **Mutual learning:** Engineering students asked how PetaBite would scale and whether it could work outside Canada, in regions with different wastewater infrastructure. These questions pushed us to think about global deployment earlier than we had planned.
+- **Implementation:** Students weighing where to spend their time responded best when we framed our work as a global challenge with a technical solution, and we used that framing at every engineering event that followed.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/global-experiences-expo-img-1.avif"
+    alt="global exp 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/global-experiences-expo-img-2.avif"
+    alt="global exp 2"
+  />
+</ImageGrid>
+
+### URSA Biotech Event (October 2026)
+
+We collaborated with UofT’s Undergraduate Research Student Association to panel their ‘Careers in Biotechnology’ event. Co-President Anthony Dinglasan spoke with undergraduates about synthetic biology and how to enter the biotechnology field.
+
+- **Students reached:** 105
+- **Mutual learning:** Since this audience primarily asked how to enter the biotechnology field, a large share of our conversations covered career pathways rather than our project.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/ursa-photo-1.avif"
+    alt="ursa 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/ursa-biotech-event-img-2.avif"
+    alt="ursa 2"
+  />
+</ImageGrid>
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/campus-collab/ursa-biotech-event-img-3.avif"
+  alt="ursa 3"
+/>
+
+### What Our Work Enabled
+
+Across **eight** collaborations, we gave over **800** people a first conversation about synthetic biology and a clear route into it. Over **12** students joined iGEM Toronto through these events and now contribute to PetaBite. The feedback we collected changed how we explain our project, how we train members, and how we think about PetaBite's place alongside other approaches to plastic pollution.
+
+</Dropdown>
+
+<Dropdown title="University Collaborations">
+
+On campus, we measured our reach in students. Beyond Toronto, we measured it in institutions. This year, we held sustained conversations with iGEM teams across **Europe, Asia,** and the **United States**, including participation in a **bioethics symposium.**
+
+### Lund University (Sweden)
+
+We recorded a podcast exchange with **Lund University’s iGEM team,** discussing the sustainability case for **enzymatic degradation** compared with mechanical and chemical recycling. The conversation explored how each team plans to move enzymes from the lab into industrial settings and how we frame the impact of our work.
+
+The podcast format reached audiences beyond conferences and gave both teams a lasting record others can listen to. It also revealed how a European team weighs environmental impact, sharpening how we describe our own approach to sustainability.
+
+### University of Patras (Greece)
+
+Our discussion with the **University of Patras iGEM team** focused on the ethics and regulation of releasing engineered biology into the environment. We compared the rules and public attitudes we encounter in Canada with the EU framework under which the Patras team operates.
+
+Because the EU is further ahead than Canada on microplastics regulation, the comparison offered a practical preview of where Canadian policy may be heading. It also informed how we map regulatory pathways in our commercialization planning, since the EU requirements our future customers may face are already established.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/uni-collab/patras-photo-1-2.avif"
+  alt="University of Patras"
+/>
+
+### Fudan University (China)
+
+Our conversation with the **Fudan University iGEM team** in Shanghai extended our network into Asia. We compared approaches to scaling enzyme research toward industrial application and discussed how **plastic policy and manufacturing** operate within China’s regulatory and industrial context.
+
+Together with Lund and Patras, Fudan gave us a standing network of peers across **Europe, Asia, and North America.** We now have teams in three regions we can turn to when a question falls outside our own regulatory or market context, a foundation that strengthens both our research and our global perspective.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/uni-collab/fudan-university-photo-1.avif"
+  alt="Fudan University"
+/>
+
+### University of Michigan Bioethics Symposium (United States)
+
+At the **University of Michigan Bioethics Symposium,** we explored questions that our technical data alone cannot answer. Our discussions centered on whether deploying an engineered enzyme qualifies as **contained use** or **open environmental release**, what forms of **ecological safety evidence** regulators would require before enzymes enter water systems, and the **equity implications** of introducing new biotechnology into municipal water systems that disproportionately serve lower‑income communities.
+
+These conversations directly shaped two of our technical decisions. We now prioritize **enzyme candidates with close homology to naturally occurring proteins** and lead with a **contained bioreactor design** rather than dosing enzymes into open process streams. The symposium reminded us that ethical and regulatory insight must evolve alongside our technical progress.
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/uni-collab/bioethics-symponsium-pic-1-2.avif"
+    alt="Michigan Bioethics Symposium 1"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/uni-collab/bioethics-symponsium-pic-2-2.avif"
+    alt="Michigan Bioethics Symposium 2"
+  />
+</ImageGrid>
+
+<PdfEmbed
+  title="Bioethics Symposium Presentation"
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/bioethics-symposium-presentation.pdf"
+/>
+
+</Dropdown>
+
+## Regulatory Oversight
+
+Throughout our stakeholder interviews, one recurring theme was the absence of regulatory frameworks capable of ensuring the safe, ethical, and responsible deployment of technologies like ours across many regions of the world. In response, we developed a comprehensive regulatory framework to evaluate how PetaBite could be governed throughout its lifecycle and across diverse jurisdictions. By identifying and synthesizing common principles shared among international regulatory bodies, we created a report that anticipates regulatory requirements and provides guidance for communities where formal oversight mechanisms may not yet exist.
+
+Our framework examines the regulatory considerations relevant to PetaBite across open science, genetic resource access and benefit-sharing, dual-use research oversight, artificial intelligence governance, and plastics regulation. It also incorporates Canada's designation of plastic manufactured items as toxic under the Canadian Environmental Protection Act (CEPA), as well as the Federal Court of Appeal decision affirming that designation.
+
+To support responsible global deployment, the framework profiles the regulatory landscapes of Pakistan, India, Nigeria, China, and Indonesia, identifying key governance considerations within each jurisdiction. It also establishes the ethical commitments that guide our work, including standards for data provenance, equitable access and deployment, and safeguards against waste colonialism, ethics dumping, and other forms of regulatory exploitation.
+
+<PdfEmbed
+  title="Regulatory Oversight"
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/6-1-regulatory-oversight.pdf"
+/>
+
+## Global Consolidated Database Interviews:
+
+One of the greatest barriers to uniting the global plastics biodegradation community is the lack of a centralized, accessible resource that consolidates decades of research on plastic-degrading enzymes. To address this challenge, we developed the PETadex, a comprehensive database and enzyme atlas containing over one billion plastic-degrading enzyme candidate sequences derived from scientific research conducted around the world.
+
+Designed as a resource built by and for the global scientific community, the PETadex transforms fragmented datasets and historical research into a unified, accessible platform. By bringing this knowledge together in a single location, the database enables researchers to more efficiently identify promising enzyme candidates, build upon existing discoveries, and accelerate innovation in plastic biodegradation.
+
+To ensure the platform's long-term utility and sustainability, we conducted follow-up interviews with active researchers and domain experts. Their feedback directly informed iterative improvements to the database's user interface, functionality, and feature set, helping ensure that PETadex remains a practical and evolving resource for the broader scientific community.
+
+<Dropdown title="See all of our global consolidated database interviews">
+
+### Dr. Maria-Jesús Martin
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/1-dr-maria-jesus-martin.avif"
+  alt="Dr. Maria-Jesús Martin"
+/>
+
+#### Their role:
+
+Dr. Maria-Jesús Martin leads the Protein Function Development team at EMBL-EBI and has more than 20 years of experience developing major biological data resources, including UniProt. Her work spans protein annotation, database development, evidence integration, Gene Ontology, and large-scale biological data management.
+
+#### Contents of the interview:
+
+Our discussion focused on how PETadex could organize a large protein sequence space while remaining useful and trustworthy for researchers. Dr. Martin emphasized that database development should begin by understanding the needs of the scientific community, rather than building features solely around the available data. She discussed quality-control strategies for identifying truncated or spurious proteins and recommended using evidence labels to distinguish predicted, homology-based, experimentally validated, and uncharacterized sequences. We also discussed combining multiple forms of evidence, such as sequence conservation, active-site conservation, and structural similarity, to support candidate prioritization. Dr. Martin further highlighted the value of recording both positive and negative experimental results so that they can improve future annotations and model development. Community engagement, contributor attribution, interoperability with established databases, and long-term maintenance were also identified as important components of a successful resource.
+
+#### How the interview shaped our project:
+
+Dr. Martin's emphasis on understanding user needs directly influenced our Human Practices approach. Following the interview, we began conducting PETadex-specific user interviews, where we demonstrated the website to researchers and gathered feedback on usability, data presentation, missing features, and how the platform could better support their work. Her recommendations also informed how we approached evidence and uncertainty, including clearer distinctions between predicted and experimentally supported entries. The interview helped move PETadex toward a more user-informed and iterative platform, with researcher feedback guiding continued development.
+
+### Dr. Qing Sun
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/2-dr-sun-qing.avif"
+  alt="Dr. Qing Sun"
+/>
+
+#### Their role:
+
+Dr. Qing Sun is an Associate Professor in Chemical Engineering at Texas A&M University and a Stephanie Sneed Langenstein ’89 Faculty Excellence Fellow. Her research spans synthetic biology, biotechnology, biomedical engineering, environmental engineering, and energy, with work involving engineered biological systems and microbial technologies. This background made her perspective particularly relevant to evaluating how PETadex could support researchers working with plastic-degrading enzymes and related biotechnologies.
+
+#### Contents of the interview:
+
+We presented PETadex and explained how the platform expands the known sequence space of plastic-degrading enzymes using resources such as PAZy, DIAMOND, and LOGAN. We then asked Dr. Sun to assess what information or functionality would make the database more useful for research. She suggested providing direct links to underlying datasets and improving how users identify the most promising enzymes or combinations. Predicted activity strength was highlighted as another useful feature for comparing candidates. Experimental activity data was considered especially valuable because it could support machine-learning researchers developing and training predictive models. She also suggested that the platform could eventually expand to include enzymes targeting plastics beyond PET and noted that the existing data representation was clear.
+
+#### How the interview shaped our project:
+
+Dr. Sun's feedback helped us assess PETadex from the perspective of an end user rather than solely as its developers. Her recommendations reinforced the importance of making source data easy to trace while giving researchers enough information to compare and prioritize enzyme candidates. The discussion also highlighted experimental activity data as a valuable resource for both validation and future machine-learning applications. Her suggestion to include additional plastic-degrading enzymes provided a potential direction for expanding PETadex beyond PET in future development.
+
+### Dr. Wei-Min Wu
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/3-dr-wei-min-wu.avif"
+  alt="Dr. Wei-Min Wu"
+/>
+
+#### Bio:
+
+Dr. Wei-Min Wu has been a Senior Research Engineer in the Department of Civil & Environmental Engineering at Stanford since 2001. He holds a bachelor's degree from Harbin Architectural & Civil Engineering Institute, a Masters of Engineering degree from Tsinghua University, and a Ph.D. degree in Environmental Engineering from Michigan State University. Dr. Wu’s research interests are in the area of environmental biotechnology such as biodegradable plastics, anaerobic digestion for energy recovery, bioremediation, and microbial ecology.
+
+#### Dry Lab Prototype Feedback
+
+While Dr. Wu appreciated that PETadex included a page describing various polymers, he noted that PETadex should expand beyond PETases to include biodegradable polymers. He noted that this could expand the repertoire of users and allow PETadex to become more useful to a wider audience. Furthermore, he recommended considering multiple-enzyme chains for the complete degradation of plastics.
+
+#### Reflection or Next Steps
+
+Dr. Wu recommended several researchers to contact including Dr. Elizabeth A. Edwards, whom we later interviewed. In the future, as recommended by Dr. Wu, PETadex could be expanded to include biodegradable polymers beyond PETases.
+
+### Madison Cohen
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/4-madison-cohen.avif"
+  alt="Madison Cohen"
+/>
+
+#### Bio:
+
+Madison holds a Bachelor's degree in Microbiology from UC Santa Barbara and is a Project Scientist at Nereid Biomaterials. Her work contributes to the development of polymers and products that completely biodegrade in short periods of time using living, self-eating materials to preserve ecosystems.
+
+#### Dry Lab Prototype Feedback
+
+Madison found PETadex to be very useful, with the compilation of all relevant information in a single website being easier to navigate. She suggested improving the search function in PETadex to accept inputs of enzyme names rather than sequences to make it easier for researchers to search. For the overview page of each enzyme, she recommended adding two links: one where researchers could purchase that enzyme and another where researchers could read a relevant paper describing the conditions in which the enzyme had previously been tested, allowing them to easily replicate the experiment and strengthen the reliability of the information. She noted that the information was easy to digest, with relevant information placed near the top, while researchers had the option to scroll down the page to find more specific information. She also appreciated that the homepage included direct links to four distinct ways to display the data.
+
+#### Reflection or Next Steps
+
+Moving forward, she recommended expanding PETadex to target enzymes that could degrade not just PET but also other polymers. She also suggested exploring enzymes that may be able to break down many polymers at once, as many products often contain multiple polymers in the same product.
+
+### Dr. Doris Ribitsch
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/5-dr-doris-ribitsch.avif"
+  alt="Dr. Doris Ribitsch"
+/>
+
+#### Bio:
+
+Dr. Ribitsch is a senior researcher of biotechnology and bioengineering at the Institute of Environmental Biotechnology. Her research focuses on engineering plastic-degrading enzymes for sustainable degradation, recycling, and upcycling, supporting the transition towards a circular bioeconomy.
+
+#### Dry Lab Prototype Feedback
+
+Dr. Ribitsch appreciated the variety and volume of information that has been made available on the plastic-degrading activity of enzymes. She suggested that a starting page would be helpful for learning how the database was constructed, understanding its content, and exploring the options offered to users. She mentioned that a brief guide detailing how to use the database, navigate the ATLAS page, and navigate the SEARCH page might also be helpful. For future work, Dr. Ribitsch recommended exploring enzyme mutagenesis so that, in addition to the variants listed, users could explore the structure-function relationship in greater detail.
+
+#### Reflection or Next Steps
+
+Based on Dr. Ribitsch’s advice, the team hoped to build a tutorial or overview of PETadex for easier use among users. In future work, the team could explore enzyme mutagenesis and add it to PETadex to show the structure-function relationships of enzymes.
+
+### Dr. Elizabeth A. Edwards
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/6-dr-elizabeth-a-edwards.avif"
+  alt="Dr. Elizabeth A. Edwards"
+/>
+
+#### Bio:
+
+Dr. Elizabeth A. Edwards is the Canada Research Chair in Anaerobic Biotechnology and the Principal Investigator of the Biodegraders Research Group. Her research focuses on biodegradation, biotransformation, and bioremediation including anaerobic digestion of organic waste to alleviate economic and the environmental pressures. Her advice about PETadex helped develop a list of next steps for the Dry Lab team.
+
+#### Dry Lab Prototype Feedback
+
+Dr. Edwards noted that we are missing the source of information in PETadex whether it be papers, experimental data, or other online resources. She appreciated the user interface and stated that PETadex could be useful for various audiences including companies that recycle plastics. To strengthen and expand the database, she suggested adding more metadata including pH temp buffer reagents, concentrations ranges that were tested, colour responses of the reactions, and how to feed each enzyme. She also highlighted the importance of considering long term maintenance and durability of PETadex; from her experience, she mentioned it was difficult to maintain databases after several years. Furthermore, she brought to attention that while alpha folds are easy to predict, it is very difficult to predict the substrate of an enzyme well; she recommended expanding PETadex to include substrate prediction in the future.
+
+#### Reflection or Next Steps
+
+Based on Dr. Edwards’ recommendations, the Dry Lab team has considered adding links to external databases to strengthen reliability and show the sources of information. In addition to adding more metadata, the Dry Lab team could also add a substrate prediction feature in PETadex. In the future, the team could develop a plan for long term maintenance of the database.
+
+### Ariel Tastassa
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/7-ariel-tastassa.avif"
+  alt="Ariel Tastassa"
+/>
+
+#### Bio:
+
+Ariel is a Ph.D. student in the Edwards group at the University of Toronto, exploring enzymatically driven plastic depolymerization. Her work focuses on developing and optimizing methods to identify and characterize plastic degrading enzymes. Her advice about PETadex helped identify rooms for improvement for the Dry Lab team.
+
+#### Dry Lab Prototype Feedback
+
+Ariel felt that the user interface is well done, but found some of the fonts to be too small. She mentioned that adding a ReadMe file at the top of the homepage could be helpful for users to easily understand how to use PETadex. She recommended adding more filters to the atlas page, such as filtering enzymes by plastic type, or filtering by enzymes that have shown plastic degrading activity, those that have been biochemically characterized, and those that were mentioned in a paper that related to PETases. Also, she suggested adding more relevant information about each enzyme, including the reason it was included in PETadex. Furthermore, Ariel noted that from a researcher’s perspective, she would like to see the direct link to a publication or the data source so that she could replicate the experiment herself.
+
+#### Reflection or Next Steps
+
+Based on Ariel’s feedback, next steps include adding additional filters on the atlas page, adding more relevant information for each enzyme, and adding the information source along with explanation for each enzyme in the database about why each particular enzyme is relevant to this database.
+
+### Dr. Pratyoosh Shukla
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/8-dr-pratyoosh-shukla-2.avif"
+  alt="Dr. Pratyoosh Shukla"
+/>
+
+#### Bio:
+
+Dr. Pratyoosh Shukla is a senior professor of enzyme technology at Banaras Hindu University (BHU), with extensive research in in-silico protein engineering, enzyme design, and Design-build-test-learn (DBTL) cycles. His work spans thermostable enzyme engineering, plastic-degrading enzymes, and computational approaches to enzyme optimization, and one of his labs is actively working on PETases. He has held major leadership roles in microbiology and serves as an editor for several journals, bringing deep experience in evaluating enzyme performance in both computational and experimental contexts.
+
+#### Contents of interview:
+
+Dr. Shukla opened by identifying low catalytic efficiency as the fundamental barrier for natural PET-degrading enzymes in harsh environments, and recommended metabolic engineering approaches including heterologous strain construction, since wastewater presents mixed microbial loads, fluctuating temperatures, and mixed plastic waste. On assay design, he advised using published, standardized assay techniques rather than innovating, on the reasoning that assays are not the bottleneck if the degrading strain is strong, and he emphasized using a uniform amorphous PET substrate because crystallinity affects degradation and amorphous material yields cleaner, more comparable results. On determining honest performance metrics, he directed us to the end products of hydrolysis, namely TPA, MHET, BHET, and ethylene glycol measured by HPLC(High Performance Liquid Chromatography), alongside looking at the crystallinity study published by him and his team as confirmation. He also mentioned the importance of looking at basic enzymology including thermostability, Kcat and transition temperature evaluation, noting that hyperactive engineered enzymes are ultimately measured by mass degraded per gram of enzyme per hour.
+
+Furthermore, he cautioned that AI-ranked candidates can be false positives and that structural validation using AlphaFold and RosettaFold should come first and moving to wet lab validation only once the structure makes sense. On PETadex, he considered building the database good practice and a useful input to AI-based enzyme design, and suggested adding a checklist showing which enzymes work with which assays.
+
+#### Reflection and Next Steps
+
+Dr. Shukla's metrics guidance shaped how we define success, with end-product identification by HPLC and kinetic parameters including Kcat and thermostability. In the wet lab, his advice to use standardized published assays and uniform amorphous PET substrate informed our protocol choices and gave us confidence to proceed in E. coli once we had grounded the approach in literature. His suggestion of an enzyme to assay compatibility checklist acts as a future feature idea for PETadex, complementing the feedback we received from other database stakeholders. His remark that a genuinely effective PETase would matter most for developing countries facing excessive plastic waste, also informed how we think about deployment context and long-term project direction, and his offer of mentorship opened an ongoing channel for feedback.
+
+### Dr. Felipe Piedra
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/9-dr-felipe-andre-s-piedra.avif"
+  alt="Dr. Felipe Piedra"
+/>
+
+#### Bio:
+
+Dr. Felipe Piedra is an Assistant Professor at Baylor College of Medicine in Houston, Texas, and the principal investigator of RestoreLAB. His research is related to microbiology and environmental biotechnology, focusing specifically on using bacteria to completely break down PET plastic and convert it into microbial biomass that can then be repurposed for other applications. He coined the term "eco-microbiology" alongside Dr. Maresso to describe this field, and his most recent published work developed an iterative screening platform that pairs rapid bioactivity assays with longer-term biodegradation tests to identify chemical compounds that boost how efficiently bacteria consume PET plastic.
+
+#### Contents of the interview:
+
+Dr. Piedra walked us through his assay development approach, recommending whole-cell screening using E. coli with inducible PETase expression in a 96-well format, where tiny amorphous PET discs are introduced at equal concentrations and degradation is read via absorbance at 600 nm as plastic transitions from clear to opaque. He stressed that tracking the PET loading ratio, which is the surface area of plastic exposed relative to total reaction volume, is the most critical variable to keep consistent when scaling. On our three directed evolution assay designs, he affirmed all three were scientifically sound and emphasized running experiments in triplicates to manage noise over multi-day measurements. He also introduced us to complete bioconversion, explaining that his lab measures not just plastic weight loss but bacterial density increase to confirm breakdown products are consumed and converted into biomass. He clarified an important distinction: every PETase is a plastic-degrading enzyme, but not every plastic-degrading enzyme is a PETase, and recommended we clearly define our scope.
+
+#### Reflection and Next Steps:
+
+Dr. Piedra's clarification that PETases are a subset of plastic-degrading enzymes prompted us to explicitly define our scope throughout our project documentation. His emphasis on tracking the PET loading ratio and running triplicates helped inform our wet lab protocols. His point about the absence of established scalability procedures for wastewater-specific enzymatic degradation helped sharpen how we position our project's contribution to the field.
+
+### Dr. Tomonori Saito
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/10-dr-saito.avif"
+  alt="Dr. Tomonori Saito"
+/>
+
+#### Bio:
+
+Dr. Saito is a Distinguished R&D Staff working in the Chemical Sciences Division at the Oak Ridge National Laboratory. He is a synthetic polymer chemist who completed his PhD in Organic Polymer Chemistry at Virginia Polytechnic Institute and State University. His expertise spans various projects including polymer upcycling, and has published over 170 peer-reviewed articles and has issued 20 patents.
+
+#### Dry Lab Prototype Feedback:
+
+Dr. Saito commented that PETadex is very interesting, allowing large amounts of information to be more accessible. He recommended adding a brief overview and/or tutorial explaining the workflow about the method of data collection and data sources in the home page, as well as a subpage explaining how to navigate PETadex. He mentioned that it would also be useful to clearly denote sources for each block of information displayed to explicitly show the reliability of the data. Furthermore, in regards to the Substrates page, Dr. Saito suggested adding more information about what the polymers are used for in daily life along with pictures so that the general audience can understand why such displayed polymers exist in wastewater systems, ultimately strengthening the problem statement.
+
+### Dr. Wolfgang Streit
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/11-dr-wolfgang-streit.avif"
+  alt="Dr. Wolfgang Streit"
+/>
+
+#### Their Role:
+
+Dr. Wolfgang Streit is a professor and microbiology researcher at the University of Hamburg, specializing in microbial biotechnology and plastic-degrading enzymes. His research focuses on discovering, characterizing, and engineering enzymes capable of breaking down plastics, including PET, as well as developing screening methods to identify promising enzyme candidates.
+
+#### Contents of the Interview:
+
+Our interview with Dr. Streit focused on improving PETadex's enzyme classification system, computational screening, and experimental validation. He emphasized the importance of establishing a standardized enzyme classification system using sequence clustering and existing databases such as PAZy, NCBI, and UniProt. He recommended applying stricter selection criteria to reduce false positives and using experimentally validated enzymes, such as ICCG-LCC, as benchmarks. We also discussed our Wet Lab screening strategies, particularly antibiotic-based selection, which he viewed as a promising approach to reducing the number of candidates requiring further testing. He highlighted the importance of measuring degradation efficiency under standardized conditions and suggested exploring enzymes with novel characteristics, even if their initial PET-degrading activity is limited.
+
+#### How the Interview Shaped Our Project:
+
+Dr. Streit's feedback reinforced the importance of developing a systematic classification framework for PETadex and incorporating experimentally validated benchmarks to improve the reliability of our enzyme predictions. His recommendations encouraged us to prioritize stricter computational screening criteria and explore connections with PAZy to strengthen our database. For our Wet Lab, his positive feedback on antibiotic-based selection supported its potential as an efficient screening strategy, while his recommendations on enzyme benchmarks provided direction for experimental validation. He also connected us with researchers involved in PAZy development, opening opportunities for further feedback and collaboration to make PETadex more useful to the research community.
+
+### Dr. Milica Radisic
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/12-milica-radisic.avif"
+  alt="Dr. Milica Radisic"
+/>
+
+#### Their Role:
+
+Dr. Milica Radisic is a University Professor at the University of Toronto in the Department of Chemical Engineering and Applied Chemistry and the Institute of Biomedical Engineering, and a Canada Research Chair in Organ-on-a-Chip Engineering. Her lab builds microfluidic culture platforms and engineered tissue systems, including the AngioChip and Biowire technologies, which gives her direct expertise in miniaturizing culture devices, managing sterility in small volumes, and designing hardware that researchers will actually adopt. We approached her because our bioreactor array faces the same design questions her lab has solved repeatedly: how small a culture vessel can get before handling becomes the bottleneck, and what features determine whether a device gets used after the first week.
+
+#### Contents of the Interview:
+
+Dr. Radisic focused on scale. She argued that our 40 mL reactors are too large for the intermediate screening step in our pipeline and recommended working toward 1 mL and eventually the microlitre range, which would cut both space requirements and the enzyme volume bottleneck. She pointed us toward 96 deep-well plates running on five-day cycles, with film membranes in place of plastic lids to improve gas exchange, and bottomless plates fitted with a permeable PDMS base to let the culture breathe from below. She also described work in her own lab on channels etched into the plate base to connect wells, and noted that a former postdoc has since founded a company manufacturing this type of plate. On feature priorities, she ranked safety, ease of sterilization, reusability, minimal connectors, and reliable gas and bubble removal above added functionality, and she pushed for as few parts as possible while keeping the system modular. On measurement, she warned that we cannot read optical density and colorimetric degradation on the same channel, since dye contamination makes cell density impossible to estimate, and recommended separate diodes at different wavelengths, GFP tagging to normalize activity per enzyme instead of per cell, and multiplexed dyes to read multiple plastic substrates in a single reaction. She closed on sterility, emphasizing that everything entering the system has to be sterilized.
+
+#### How the Interview Shaped Our Project:
+
+Dr. Radisic’s scale argument changed how we position the bioreactor within our screening funnel. We now treat the 40 mL reactor as the directed evolution and long-horizon kinetics instrument, where programmatic control over conditions lets us run mutagenesis and extract Michaelis-Menten parameters, and we treat the intermediate screen from roughly 1,000 candidates down to the top 50 to 100 as a separate problem that calls for a smaller format. Her feedback on optical channels led us to separate the optical density path from the colorimetric degradation readout, which prevents dye from corrupting our cell density estimates, and her GFP recommendation gave us a route to reporting activity per enzyme rather than per cell. Her feature ranking set our design priorities toward sterilization and bubble management ahead of added sensing. She also offered to connect us with a fourth-year thesis student in her lab to work on the microlitre format, and agreed to monthly calls to review our progress, which gives us a continuing channel for hardware feedback.
+
+### Cameron Davidson-Pilon
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/global-consolidated-database-interviews/13-cameron.avif"
+  alt="Cameron Davidson-Pilon"
+/>
+
+#### Their Role:
+
+Cameron Davidson-Pilon created the Pioreactor, an open-source, low-cost bioreactor platform built for education and research laboratories, and he maintains its hardware and software stack. He is also the author of Bayesian Methods for Hackers and previously led data science at Shopify. Because the Pioreactor solves the same problem our hardware subteam set out to solve, namely parallel, affordable, programmatically controlled culture, he could speak directly to the design decisions we were still debating and to which of them he would reverse given the chance.
+
+#### Contents of the Interview:
+
+Asked what he would change if he redesigned the Pioreactor, Cameron said he would move away from the Raspberry Pi toward a microcontroller, which is harder to develop against while usually delivering a better user experience at far lower cost. He would also separate the wetware from the hardware by lifting the reactor off the board, and he would use off-the-shelf PCBs wherever possible, since custom board design consumes more time than any other part of the build. Software and 3D printing iterate quickly and can be deferred, while long-lead items such as glassware, stir bars and custom caps need ordering early. On components, he recommended Adafruit’s StemmaQT connector standard over bare I2C wiring, since the software already exists and the parts cost less, and he shared his working performance targets: heating from ambient to 40 C, pumping at millilitres per minute or lower, mixing between 100 and 1,000 rpm, and optical density readings where higher opacity is tolerable. He explained the one-to-one reactor-to-Pi ratio as a deliberate choice for modularity, since a unit can be added or removed at will, with the Pi earning its place through the web server, plugin system and file system. On mechanical choices, he described screws as a historical accident that turned out well, since users understand them, they do not crack, they cost almost nothing, and they accept heat-set inserts. On failure modes he ranked glassware first as a consumable, followed by lost stir bars and failing vial caps, and on the electronics side pumps first, since motors wear out, then tubing, then integrated circuits. He preferred software interfaces over physical controls, since web UIs are cheap and fast to develop while physical interfaces add a development layer, though he noted a new Pioreactor with a screen is in progress. On running 96 units in parallel, he expected power consumption to matter less than we feared, with savings in the milliwatt range not worth chasing, and he flagged network latency as the likelier constraint if we transfer data frequently. He advised establishing a power budget in the range of 60 to 300 W, and confirmed that PCB heating is the cheapest option while cautioning that it heats from the side without liquid contact and will not be uniform.
+
+#### How the Interview Shaped Our Project:
+
+Cameron’s point that fractions of a percent in power efficiency are not worth redesigning around stopped us from optimizing a part of the system that does not constrain us, and his power budget range gave the hardware subteam a concrete figure to design against instead of an estimate. His warning about custom PCB development time moved us toward off-the-shelf boards and the StemmaQT connector standard, which removes both design time and driver work from our critical path. His ranking of failure modes gave us a maintenance and consumables plan we did not have, with glassware and pumps identified as the parts that need replacement rather than repair. His confirmation that a Pi Pico can replace the full Raspberry Pi without substantial changes, and that the Pi, STM and Arduino options perform comparably for our task, let us treat the controller choice as a cost and pin-count question. His note on long-lead components also reshaped our procurement timeline, since glassware and custom caps now sit at the front of our ordering schedule.
+
+</Dropdown>
+
+## Environmental and Sustainability Considerations
+
+Our stakeholder interviews provided critical insight into the communities most affected by the plastic pollution crisis we seek to address. Because plastic pollution is a global challenge, creating a solution that can be deployed responsibly and equitably across diverse regions requires careful consideration of sustainability. No two communities face identical circumstances, and a solution that succeeds in one context may prove ineffective or even harmful in another.
+
+Through these discussions, we identified three key areas that would shape the long-term sustainability of our project:
+
+1. **Mitigating Operational Footprints:** Recognizing that training and running AI models, synthesizing enzymes, and operating laboratory and computational infrastructure require significant energy, water, and material resources.
+2. **Preventing Secondary Pollution:** Assessing downstream impacts such as microplastic fate, biological and chemical waste management, and robust enzyme containment measures to minimize unintended environmental consequences.
+3. **Advancing Circular Integration and Equity:** Ensuring that our solution can be integrated into existing systems without creating disproportionate burdens for vulnerable communities, while actively addressing concerns related to waste colonialism and unequal access to environmental technologies.
+
+To evaluate and address these challenges, we developed a comprehensive sustainability report that critically assessed our project's environmental and social footprint. Guided by the concerns and perspectives shared by stakeholders, the report informed both the design and deployment strategy of PetaBite. This process helped ensure that our solution remained not only technically effective, but also socially responsible and equitable across diverse contexts.
+
+<PdfEmbed
+  title="Environmental and Sustainability Considerations"
+  src="https://static.igem.wiki/teams/6187/wiki/hp-page/content/8-1-environmental-and-sustainability-considerations.pdf"
+/>
+
+## Final Thoughts
+
+**Human Practices** served as the foundation of our project, guiding every technical subteam throughout the season. We approached plastic pollution as a global challenge that transcends geographic, political, and economic boundaries, recognizing that solutions developed in isolation rarely succeed at scale. To guide our work, we established two core pillars: **technical excellence** and **community co-creation.**
+
+Stakeholder engagement directly influenced our project's direction. Conversations with plant operators, bioprocess engineers, researchers, and bioinformatics experts shaped key design considerations, including enzyme stability, microbial compatibility, degradation byproducts, ecological risk, and deployment feasibility. Their feedback also strengthened PETadex through improved evidence labeling, source traceability, and search functionality, while discussions around enzyme immobilization and washout reinforced our commitment to contained deployment.
+
+These insights culminated in the **MERGE Framework,** our Human Practices roadmap for translating stakeholder perspectives into actionable design decisions. Built from approximately **70 stakeholder interviews, 3 conferences, 4 international exchanges, mentorship of 2 high school iGEM teams, outreach to over 800 students through 8 campus collaborations,** and extensive regulatory, sustainability, and database development efforts, MERGE provides a structured approach for integrating community engagement with technical development.
+
+Biotechnology is filled with innovations that succeeded in the lab but failed in practice because stakeholder needs were considered too late. Through Human Practices, we brought those conversations to the forefront from the beginning. The commitments that emerged, including contained deployment, transparent science with clearly defined proprietary boundaries, and compatibility with existing infrastructure, now form a core part of PetaScale's industrialization strategy.
+
+**Human Practices shaped what we built this season and defines what we are prepared to build next.**
+
+_**Note:** The events listed here do not encapsulate all the cumulative outreach we conducted! Please check out the **Outreach** page for our **newsletter, custom designed trading cards,** our **Road to Jamboree instagram series,** and more!_

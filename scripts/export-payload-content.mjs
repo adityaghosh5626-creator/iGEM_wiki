@@ -1,3 +1,4 @@
+import { USE_PAYLOAD_EXPORTS } from "../content-source.config.mjs"
 import fs from "fs"
 import path from "path"
 import process from "process"
@@ -8,6 +9,11 @@ import {
   routePartsForExport,
 } from "./lib/payload-mdx-render.mjs"
 
+if (!USE_PAYLOAD_EXPORTS) {
+  console.log("Payload is disabled in content-source.config.mjs; skipping CMS sync/export.")
+  process.exit(0)
+}
+
 const root = process.cwd()
 const outputRoot = path.join(root, "src", "content", "wiki", "_payload-export")
 const payloadMediaRoot = path.join(root, "cms", "payload-app", "media")
@@ -15,6 +21,11 @@ const staticMediaRoot = path.join(root, "static", "payload-media")
 const payloadUrl = String(process.env.PAYLOAD_URL || "http://localhost:3000").replace(/\/$/, "")
 const payloadFetchTimeoutMs = Number(process.env.PAYLOAD_FETCH_TIMEOUT_MS || 15000)
 const errors = []
+
+// Exit code contract (used by scripts/payload-sync.mjs):
+// 1 = content/validation failure (always fatal)
+// 2 = Payload CMS unreachable (callers may fall back to the committed export)
+const EXIT_CMS_UNREACHABLE = 2
 
 let response
 
@@ -26,13 +37,13 @@ try {
   console.error(`Unable to fetch Payload pages from ${payloadUrl} within ${payloadFetchTimeoutMs}ms.`)
   console.error("Make sure Payload is running with npm run payload:develop, then try again.")
   console.error(error.message)
-  process.exit(1)
+  process.exit(EXIT_CMS_UNREACHABLE)
 }
 
 if (!response.ok) {
   console.error(`Unable to fetch Payload pages from ${payloadUrl}: ${response.status} ${response.statusText}`)
   console.error(await response.text())
-  process.exit(1)
+  process.exit(EXIT_CMS_UNREACHABLE)
 }
 
 const payload = await response.json()
@@ -159,6 +170,26 @@ function validatePage(page) {
         normalizeGizmoConfig(block.gizmo, block.config)
       } catch (error) {
         errors.push(`${label} ${error.message}`)
+      }
+    }
+
+    if (block.blockType === "pageTabs") {
+      const tabs = Array.isArray(block.tabs) ? block.tabs : []
+      if (tabs.length === 0) {
+        errors.push(`${label} has a Page Tabs block with no tabs.`)
+      }
+      const ids = new Set()
+      for (const tab of tabs) {
+        const id = String(tab.id || "").trim()
+        if (!/^[A-Za-z0-9_-]+$/.test(id)) {
+          errors.push(`${label} has a Page Tabs block with invalid tab id "${id}".`)
+        } else if (ids.has(id)) {
+          errors.push(`${label} has a Page Tabs block with duplicate tab id "${id}".`)
+        }
+        ids.add(id)
+        if (!String(tab.label || "").trim() || !String(tab.body || "").trim()) {
+          errors.push(`${label} has a Page Tabs block tab missing label or body.`)
+        }
       }
     }
   }

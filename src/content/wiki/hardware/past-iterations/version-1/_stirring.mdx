@@ -1,0 +1,55 @@
+### Main Function(s) + Requirements
+
+<br />
+
+The stirring mechanism in the bioreactor uses a brushless DC fan as a low cost rotating motor. Creating a rotating magnetic field, two small nickel-plated neodymium magnets secured to the fan hub with Gorilla glue; a magnetic stir bar housed inside the vial follows this field and mixes all components suspended with it. Following the DBLT cycle, initially, several requirements like low power consumption, cost efficiency, and providing various speed settings. However, throughout testing, and by better understanding stakeholder needs, specifically the bacteria used in experiments, we identified the most critical requirement: limiting the fan speed. It was found that the lowest RPM of the acting prototype, 1800 RPM, would risk harming the bacteria, while too low a voltage may not start the fan at all. Throughout iterations of this subsystem, speed control at a known RPM, and reduced below 800 was prioritized throughout this subsystem’s design process. Within the context of the entire vessel, the strength of the magnetic field through the heating system was also considered.
+
+<br />
+
+### Component Selection Justification
+
+| Component                                                   | Why did we pick this component specifically?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Photo]<br />Same Sky CFM-4010B-065-251-22 DC Brushless Fan | This fan was selected against our requirements, narrowed from a previous iteration to speed control as the critical criterion. Low starting voltage was necessary, given the excessive RPM could harm bacteria, since the fan needed to be able to run slowly while starting reliably. After testing a 3-pin fan proved difficult to control upon testing, this fan was selected for its dedicated control pin as a 4-pin fan, which allowed for finer speed regulation (PWM). Its starting voltage was half that of our previous iteration. A ball bearing design was also chosen to reduce subsystem wear and tear over uses. Although this fan costs roughly 17$, nearly four times the first fan we tested, based on the narrowing of requirements, the added cost was an essential expenditure; it sat on the lower end of the price range upon comparable fans. |
+| Gorilla Super Glue Gel                                      | Gorilla Super Glue gel was selected given its ability to bond strongly with both metal and plastic, which was needed to hold the magnets in place with alternating faces up. It is also widely available and cost effective.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Hillman Neodymium Disc Magnets                              | The neodymium disc magnets were selected for magnetic field strength, given they are the among the strongest permanent magnets available for their size. These Hillman neodymium disc magnets were chosen due to their tested ability to create a field strong enough to pass through the heater, whilst retaining a couple with the stir bar. They also satisfied our secondary requirements of accessibility (sourcing) and low cost. They were easily sourced, bound reliably to the fan, and are sold in bulk which lowers the cost per unit.                                                                                                                                                                                                                                                                                                                     |
+| Magnetic Stir Bars                                          | Were purchased in bulk with multiple testing sizes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+### BoM
+
+<br />
+
+| Component         | Purpose                                                                     | Cost   | Sourcing Link |
+| ----------------- | --------------------------------------------------------------------------- | ------ | ------------- |
+| Fan               | A spinning brushless DC fan                                                 | 17.64  |               |
+| Super glue        | Adhesive for neodymium magnets to fan                                       | $14.00 |               |
+| Neodymium Magnets | Used to create a rotating magnetic field when adhered to a DC brushless fan | $4.50  |               |
+| Magnetic Stir Bar | Couple with the field to rotate vial components                             |        |               |
+
+### Build, Assembly, Code
+
+We first started with outlining many requirements for the fan drawn from competitor research, main requirements were outlined as: starting voltage, 3 or 4 pin fan, footprint of 9x6 [cm^2], reduction control from 0-100% range, and under 5$.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/stir1.avif"
+  alt="stir1"
+/>
+
+The Sunon MF40201V1-1000U-G99 was selected for its low starting voltage range (except the range was very large, 4.5–5.5 VDC) and footprint. It was low cost and sourced from [DigiKey](https://www.digikey.ca/en/products/detail/sunon-fans/MF40201V1-1000U-G99/7927780).
+
+After wiring the fan in several different layouts: directly from nano, using tachometer pins diodes and mosfets, and assembling the magnets and vial with make-shift housing, the magnetic field seemed strong enough to create a vortex in water with the stir bar, and strong enough to pass through the heater. (See image below)
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/stir2.avif"
+  alt="stir2"
+/>
+
+<br />
+It was found that upon attempting to control the speed of the fan, however, the
+fan’s original speed was 6000 RPM, and despite different strategies like using
+the tachometer pin to make the fan slow down, using a transistor, and adding
+many resistors to the power wire, the floor RPM the fan would spin was 1800RPM.
+As outlined in the introduction, this rate was too high, and risked damaging
+bacteria.
+
+Fan selection resumed, searching for a new fan.

@@ -2,23 +2,23 @@ import React, { useCallback, useEffect, useId, useRef, useState } from "react"
 import styled from "styled-components"
 import { CONTRIBUTION_MONTHS } from "../../data/contributionCalendar/calendarUtils.js"
 
-export function MonthNav({ selectedKey, onSelect }) {
+export function MonthNav({ selectedKey, onSelect, months = CONTRIBUTION_MONTHS }) {
   const listboxId = useId()
   const rootRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  const index = CONTRIBUTION_MONTHS.findIndex((m) => m.key === selectedKey)
-  const current = CONTRIBUTION_MONTHS[index >= 0 ? index : 0]
+  const index = months.findIndex((m) => m.key === selectedKey)
+  const current = months[index >= 0 ? index : 0]
 
   const goPrev = useCallback(() => {
-    if (index > 0) onSelect(CONTRIBUTION_MONTHS[index - 1].key)
-  }, [index, onSelect])
+    if (index > 0) onSelect(months[index - 1].key)
+  }, [index, months, onSelect])
 
   const goNext = useCallback(() => {
-    if (index < CONTRIBUTION_MONTHS.length - 1) {
-      onSelect(CONTRIBUTION_MONTHS[index + 1].key)
+    if (index < months.length - 1) {
+      onSelect(months[index + 1].key)
     }
-  }, [index, onSelect])
+  }, [index, months, onSelect])
 
   const pickMonth = useCallback(
     (key) => {
@@ -64,7 +64,7 @@ export function MonthNav({ selectedKey, onSelect }) {
           aria-controls={listboxId}
         >
           {current.label}
-          <YearSpan>2026</YearSpan>
+          <YearSpan>{current.year}</YearSpan>
           <Chevron $open={open} aria-hidden>
             ▾
           </Chevron>
@@ -72,7 +72,7 @@ export function MonthNav({ selectedKey, onSelect }) {
 
         {open && (
           <MonthDropdown id={listboxId} role="listbox" aria-label="Choose month">
-            {CONTRIBUTION_MONTHS.map((m) => (
+            {months.map((m) => (
               <MonthOption
                 key={m.key}
                 type="button"
@@ -82,6 +82,7 @@ export function MonthNav({ selectedKey, onSelect }) {
                 onClick={() => pickMonth(m.key)}
               >
                 {m.label}
+                {m.year !== 2026 ? ` ${m.year}` : ""}
               </MonthOption>
             ))}
           </MonthDropdown>
@@ -91,7 +92,7 @@ export function MonthNav({ selectedKey, onSelect }) {
       <ArrowBtn
         type="button"
         onClick={goNext}
-        disabled={index >= CONTRIBUTION_MONTHS.length - 1}
+        disabled={index >= months.length - 1}
         aria-label="Next month"
       >
         ›
@@ -113,10 +114,10 @@ const Header = styled.div`
 const ArrowBtn = styled.button`
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--cal-line, var(--color-border));
   border-radius: 6px;
-  background: #fff;
-  color: #2d9194;
+  background: var(--cal-surface, #fff);
+  color: var(--cal-accent, #2d9194);
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
@@ -131,8 +132,8 @@ const ArrowBtn = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: #f5f5f2;
-    border-color: #2d9194;
+    background: var(--cal-hover, #f5f5f2);
+    border-color: var(--cal-accent, #2d9194);
   }
 
   &:focus-visible {
@@ -154,13 +155,14 @@ const MonthTrigger = styled.button`
   background: transparent;
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.5vw, 1.75rem);
-  color: #06202b;
+  font-weight: 700;
+  color: var(--cal-ink, #06202b);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 
   &:hover {
-    color: #2d9194;
+    color: var(--cal-accent, #2d9194);
   }
 
   &:focus-visible {
@@ -172,13 +174,13 @@ const MonthTrigger = styled.button`
 const YearSpan = styled.span`
   font-family: var(--font-body);
   font-size: 0.85rem;
-  color: var(--color-muted);
+  color: var(--cal-muted, var(--color-muted));
   font-weight: 500;
 `
 
 const Chevron = styled.span`
   font-size: 0.75rem;
-  color: #2d9194;
+  color: var(--cal-accent, #2d9194);
   margin-left: 0.15rem;
   transform: ${({ $open }) => ($open ? "rotate(180deg)" : "none")};
   transition: transform 0.15s ease;
@@ -190,8 +192,8 @@ const MonthDropdown = styled.div`
   left: 50%;
   transform: translateX(-50%);
   min-width: 11rem;
-  background: #fff;
-  border: 1px solid var(--color-border);
+  background: var(--cal-surface, #fff);
+  border: 1px solid var(--cal-line, var(--color-border));
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 0.35rem;
@@ -204,8 +206,8 @@ const MonthDropdown = styled.div`
 const MonthOption = styled.button`
   text-align: left;
   border: none;
-  background: ${({ $active }) => ($active ? "rgba(45,145,148,0.12)" : "transparent")};
-  color: ${({ $active }) => ($active ? "#2d9194" : "#06202b")};
+  background: ${({ $active }) => ($active ? "var(--cal-tint, rgba(45, 145, 148, 0.12))" : "transparent")};
+  color: ${({ $active }) => ($active ? "var(--cal-accent, #2d9194)" : "var(--cal-ink, #06202b)")};
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: ${({ $active }) => ($active ? 700 : 500)};
@@ -214,8 +216,8 @@ const MonthOption = styled.button`
   cursor: pointer;
 
   &:hover {
-    background: rgba(45, 145, 148, 0.1);
-    color: #2d9194;
+    background: var(--cal-tint, rgba(45, 145, 148, 0.1));
+    color: var(--cal-accent, #2d9194);
   }
 
   &:focus-visible {

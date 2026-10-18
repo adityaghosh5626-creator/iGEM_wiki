@@ -1,48 +1,9 @@
-import React, { useState } from "react"
-import { Link } from "gatsby"
+import React, { useEffect, useState } from "react"
 import styled from "styled-components"
 import { GlobalStyle } from "../styles/globalStyles.js"
+import { SiteLoader } from "./SiteLoader.js"
 import { SponsorCarousel } from "./SponsorCarousel.js"
-
-const nav = [
-  { to: "/", label: "Home" },
-  { label: "Project", children: [
-    { to: "/project/description/", label: "Project Description" },
-    { to: "/project/applications/", label: "Applications" },
-    { to: "/project/contribution/", label: "Contribution" },
-    { to: "/project/engineering/", label: "Engineering" },
-  ]},
-  { label: "Wet Lab", children: [
-    { to: "/wet-lab/overview/", label: "Experimental Overview" },
-    { to: "/wet-lab/parts/", label: "Parts" },
-    { to: "/wet-lab/notebook/", label: "Notebook" },
-    { to: "/wet-lab/results/", label: "Results" },
-    { to: "/wet-lab/milestones/", label: "Pivotal Changes and Milestones" },
-  ]},
-  { label: "Dry Lab", children: [
-    { to: "/dry-lab/overview/", label: "Overview" },
-    { to: "/dry-lab/model/", label: "Generalized Model" },
-    { to: "/dry-lab/software/", label: "Software" },
-    { to: "/dry-lab/software-specs/", label: "Software Specs" },
-  ]},
-  { label: "Hardware", children: [
-    { to: "/hardware/overview/", label: "Overview" },
-    { to: "/hardware/parts/", label: "Parts" },
-    { to: "/hardware/notebook/", label: "Notebook" },
-    { to: "/hardware/results/", label: "Results" },
-  ]},
-  { label: "Beyond the Bench", children: [
-    { to: "/beyond-the-bench/education-toolkit/", label: "Education Toolkit" },
-    { to: "/beyond-the-bench/human-practices/", label: "Human Practices" },
-    { to: "/beyond-the-bench/entrepreneurship/", label: "Entrepreneurship" },
-    { to: "/beyond-the-bench/safety/", label: "Safety" },
-  ]},
-  { label: "Team", children: [
-    { to: "/team/", label: "Meet the Team" },
-    { to: "/team/attributions/", label: "Attributions" },
-    { to: "/team/collaborations/", label: "Collaborations" },
-  ]},
-]
+import { WikiTopBar } from "./WikiTopBar.js"
 
 const WikiLayout = ({
   children,
@@ -51,101 +12,119 @@ const WikiLayout = ({
   hideSiteChrome = false,
   hideTopBar = false,
   fullBleed = false,
+  wideSideTabs = false,
+  /** Pages that render their own SiteLoader (the homepage hands off to its hero). */
+  hideLoader = false,
+  /**
+   * Colours for the footer's "Visit iGEM Toronto" button, `{ bg, text }`, so
+   * it matches the page's own menu highlight. The site accent otherwise.
+   */
+  footerButton = null,
+  /** The page shows a contents list down the left (see TOCWrapper). */
+  withToc = false,
 }) => {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  useEffect(() => {
+    const updateVisibility = () => setShowScrollTop(window.scrollY > 600)
+    updateVisibility()
+    window.addEventListener("scroll", updateVisibility, { passive: true })
+    return () => window.removeEventListener("scroll", updateVisibility)
+  }, [])
+
+  const scrollToTop = () => {
+    const reduceMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" })
+  }
+
   return (
-  <>
-    <GlobalStyle />
-    <SiteWrapper>
+    <>
+      <GlobalStyle />
+      {!hideLoader && <SiteLoader />}
+      <SiteWrapper>
 
-      {!hideSiteChrome && !hideTopBar && (
-        <TopBar>
-          <NavInner>
-            <LogoPlaceholder to="/" aria-label="iGEM Toronto 2026 — Home">
-              <LogoBox>LOGO</LogoBox>
-            </LogoPlaceholder>
-            <Nav aria-label="Wiki sections">
-              {nav.slice(1).map(({ label, children }) => (
-                <NavItem key={label}>
-                  <NavParent>{label}</NavParent>
-                  <Dropdown>
-                    {children.map(({ to, label: childLabel }) => (
-                      <DropdownLink key={to} to={to}>{childLabel}</DropdownLink>
-                    ))}
-                  </Dropdown>
-                </NavItem>
-              ))}
-            </Nav>
-            <Hamburger onClick={() => setMenuOpen(out => !out)} aria-label="Toggle navigation">
-              <span /><span /><span />
-            </Hamburger>
-          </NavInner>
-        </TopBar>
-      )}
+        {!hideSiteChrome && !hideTopBar && <WikiTopBar sticky />}
 
-      {!hideSiteChrome && !hideTopBar && (
-        <MobileDrawer $open={menuOpen}>
-          {nav.slice(1).map(({ label, children }) => (
-            <MobileSection key={label}>
-              <b>{label}</b>
-              {children.map(({ to, label: l }) => (
-                <MobileLink key={to} to={to} onClick={() => setMenuOpen(false)}>{l}</MobileLink>
-              ))}
-            </MobileSection>
-          ))}
-        </MobileDrawer>
-      )}
+        {hideSiteChrome || fullBleed ? (
+          <MainFullBleed>{children}</MainFullBleed>
+        ) : (
+          <Main $wideSideTabs={wideSideTabs} $withToc={withToc}>
+            {pageTitle && (
+              <PageHeader>
+                {sectionLabel && <SectionLabel>{sectionLabel}</SectionLabel>}
+                <PageTitle>{pageTitle}</PageTitle>
+                <Divider />
+              </PageHeader>
+            )}
+            {children}
+          </Main>
+        )}
 
-      {hideSiteChrome || fullBleed ? (
-        <MainFullBleed>{children}</MainFullBleed>
-      ) : (
-        <Main>
-          {pageTitle && (
-            <PageHeader>
-              {sectionLabel && <SectionLabel>{sectionLabel}</SectionLabel>}
-              <PageTitle>{pageTitle}</PageTitle>
-              <Divider />
-            </PageHeader>
-          )}
-          {children}
-        </Main>
-      )}
+        {showScrollTop && (
+          <ScrollTopButton
+            type="button"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+            onClick={scrollToTop}
+          >
+            <span aria-hidden="true">↑</span>
+          </ScrollTopButton>
+        )}
 
-      <Footer>
-        <FooterInner>
-          <FooterTop>
-            <FooterIntro>
-              <FooterBrand>iGEM Toronto</FooterBrand>
-              <FooterButton href="https://igem.skule.ca/" target="_blank" rel="noopener noreferrer">
-                Visit iGEM Toronto
-              </FooterButton>
-            </FooterIntro>
-            <FooterSponsorSlot>
-              <SponsorCarousel />
-            </FooterSponsorSlot>
-            <FooterConnect aria-label="Contact and social">
-              <ConnectLink href="https://www.instagram.com/igemtoronto" target="_blank" rel="noopener noreferrer">
-                Instagram
-              </ConnectLink>
-              <ConnectLink href="mailto:igem@g.skule.ca">igem@g.skule.ca</ConnectLink>
-            </FooterConnect>
-          </FooterTop>
+        <Footer
+          style={{
+            "--footer-button-bg": footerButton?.bg,
+            "--footer-button-text": footerButton?.text,
+          }}
+        >
+            <FooterInner>
+              <FooterTop>
+                <FooterIntro>
+                  <FooterBrand>iGEM Toronto</FooterBrand>
+                  <FooterButton href="https://igem.skule.ca/" target="_blank" rel="noopener noreferrer">
+                    Visit iGEM Toronto
+                  </FooterButton>
+                </FooterIntro>
+                <FooterSponsorSlot>
+                  <SponsorCarousel />
+                </FooterSponsorSlot>
+                <FooterConnect aria-label="Contact and social">
+                  <ConnectLink href="https://www.instagram.com/igemtoronto" target="_blank" rel="noopener noreferrer">
+                    Instagram
+                  </ConnectLink>
+                  <ConnectLink href="mailto:igem@g.skule.ca">igem@g.skule.ca</ConnectLink>
+                </FooterConnect>
+              </FooterTop>
 
-          <FooterRule />
+              <FooterRule />
 
-          <FooterMeta>
-            <MetaLink href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">
-              This work is licensed under CC BY 4.0
-            </MetaLink>
-            <MetaSep aria-hidden>·</MetaSep>
-            <MetaLink href="https://gitlab.com" target="_blank" rel="noopener noreferrer">
-              Source on GitLab
-            </MetaLink>
-          </FooterMeta>
-        </FooterInner>
-      </Footer>
+              <FooterMeta>
+                <MetaLink href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">
+                  This work is licensed under CC BY 4.0
+                </MetaLink>
+                <MetaSep aria-hidden>·</MetaSep>
+                <MetaLink href="https://gitlab.igem.org/2026/toronto" target="_blank" rel="noopener noreferrer">
+                  Source on GitLab
+                </MetaLink>
+                <MetaSep aria-hidden>·</MetaSep>
+                {/* Third-party assets are credited with their licence. */}
+                <span>
+                  Set in{" "}
+                  <MetaLink href="https://github.com/googlefonts/dm-fonts" target="_blank" rel="noopener noreferrer">
+                    DM Sans
+                  </MetaLink>{" "}
+                  by The DM Sans Project Authors,{" "}
+                  <MetaLink href="https://openfontlicense.org/" target="_blank" rel="noopener noreferrer">
+                    SIL Open Font License 1.1
+                  </MetaLink>
+                </span>
+              </FooterMeta>
+            </FooterInner>
+        </Footer>
 
-    </SiteWrapper>
+      </SiteWrapper>
     </>
   )
 }
@@ -160,153 +139,43 @@ const SiteWrapper = styled.div`
   flex-direction: column;
 `
 
-const TopBar = styled.div`
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
-`
-
-const NavInner = styled.div`
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: var(--space-lg) var(--page-padding);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`
-
-const LogoPlaceholder = styled(Link)`
-  text-decoration: none;
-  flex-shrink: 0;
-`
-
-const LogoBox = styled.div`
-  width: 8rem;
-  height: 2.5rem;
-  border: 1px dashed var(--color-border);
-  border-radius: 4px;
-  display: flex;
+const ScrollTopButton = styled.button`
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 105;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-`
-
-const Nav = styled.nav`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-md) var(--space-lg);
-  font-size: 0.9rem;
-  @media (max-width: 768px) { display: none; }
-`
-
-const NavItem = styled.div`
-  position: relative;
-
-  &:hover > div,
-  &:focus-within > div {
-    display: flex;
-  }
-`
-
-const NavParent = styled.span`
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  cursor: default;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-
-  &::after {
-    content: '▾';
-    font-size: 0.7rem;
-    transition: transform 0.2s ease;
-  }
-
-  ${NavItem}:hover & {
-    color: var(--color-text);
-    &::after { transform: rotate(180deg); }
-  }
-`
-
-const Hamburger = styled.button`
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: 0 4px 14px rgba(6, 32, 43, 0.18);
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  line-height: 1;
   cursor: pointer;
-  padding: 0.25rem;
-  span { display: block; width: 24px; height: 2px; background: var(--color-text); border-radius: 2px; }
-  @media (max-width: 768px) { display: flex; }
-`
+  transition: transform 0.15s ease, background-color 0.2s ease;
 
-const MobileDrawer = styled.div`
-  display: none;
-  @media (max-width: 768px) {
-    display: ${({ $open }) => ($open ? "flex" : "none")};
-    flex-direction: column;
-    background: var(--color-bg);
-    border-bottom: 1px solid var(--color-border);
+  /* A phone tap would leave it lifted (sticky hover). */
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      background: var(--color-surface);
+    }
   }
-`
 
-const MobileSection = styled.div`
-  padding: var(--space-md) var(--page-padding);
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  b { color: var(--color-text); font-size: 0.9rem; }
-`
-
-const MobileLink = styled(Link)`
-  padding-left: 1rem;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  text-decoration: none;
-  &:hover { color: var(--color-text); }
-`
-
-const Dropdown = styled.div`
-  display: none;
-  flex-direction: column;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  padding-top: 0.5rem;
-  background: transparent;
-  min-width: 200px;
-  z-index: 100;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0.5rem 0 0;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    z-index: -1;
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
-`
 
-const DropdownLink = styled(Link)`
-  padding: 0.5rem 1rem;
-  margin-top: 0.5rem;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  text-decoration: none;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
-
-  &:first-child { margin-top: 0.75rem; }
-  &:last-child { margin-bottom: 0.25rem; }
-
-  &:hover {
-    color: var(--color-text);
-    background: rgba(0,0,0,0.04);
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `
 
@@ -316,6 +185,23 @@ const Main = styled.main`
   width: 100%;
   margin: 0 auto;
   padding: var(--space-xl) var(--page-padding);
+
+  ${({ $wideSideTabs }) =>
+    $wideSideTabs &&
+    `
+    max-width: none;
+    width: 100%;
+  `}
+
+  /* Too narrow for the contents list to sit in the margin: the page moves
+     over to leave it a column. */
+  ${({ $withToc }) =>
+    $withToc &&
+    `
+    @media (min-width: 860px) and (max-width: 1423px) {
+      padding-left: 14rem;
+    }
+  `}
 `
 
 const MainFullBleed = styled.main`
@@ -420,19 +306,23 @@ const FooterSponsorSlot = styled.div`
 const FooterBrand = styled.p`
   font-family: var(--font-display);
   font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 700;
   color: var(--color-text);
   letter-spacing: 0.02em;
 `
 
+/** In the page's menu-highlight colours when it has them (see footerButton). */
 const FooterButton = styled.a`
+  --button-bg: var(--footer-button-bg, var(--color-accent));
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.625rem 1.125rem;
-  border: 1px solid var(--color-accent);
+  border: 1px solid var(--button-bg);
   border-radius: 999px;
-  color: var(--color-text);
-  background: var(--color-accent);
+  color: var(--footer-button-text, var(--color-text));
+  background: var(--button-bg);
   font-family: var(--font-body);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -450,11 +340,11 @@ const FooterButton = styled.a`
   &:hover {
     background: transparent;
     color: var(--color-text);
-    box-shadow: 0 0 0 1px var(--color-accent);
+    box-shadow: 0 0 0 1px var(--button-bg);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--button-bg);
     outline-offset: 3px;
   }
 `

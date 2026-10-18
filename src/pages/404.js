@@ -17,7 +17,7 @@ const NotFoundPage = () => (
 
 export default NotFoundPage
 
-export const Head = () => <title>Page not found — iGEM Toronto 2026</title>
+export const Head = () => <title>Page not found | iGEM Toronto 2026</title>
 
 const NotFoundBody = styled.div`
   max-width: 36rem;

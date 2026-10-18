@@ -22,14 +22,19 @@ section: "Project"
 path: "/project/description/"
 navTitle: "Project Description"
 order: 10
+---
+```
+
+`description`, `owners`, `updated`, and `status` are optional. You can add them to the same frontmatter block:
+
+```yaml
 description: "One sentence page summary."
 owners: ["Project Leads", "Dry Lab"]
 updated: "2026-05-16"
 status: "draft"
----
 ```
 
-Use `draft`, `review`, or `published` for `status`. Paths must start and end with `/`, and each path must be unique.
+When provided, `owners` must be a non-empty array, `updated` must use `YYYY-MM-DD`, and `status` must be `draft`, `review`, or `published`. Paths must start and end with `/`, and each path must be unique.
 
 ## Markdown
 
@@ -58,6 +63,24 @@ Ask the relevant lead to check this claim before marking the page as published.
 ```
 
 Optional tones: `note`, `success`, `warning`.
+
+### Placeholder
+
+Marks stand-in copy that still has to be replaced. It renders as a dashed box with a label, so an unfinished section is obvious to any reader, not just the author.
+
+```mdx
+<Placeholder>
+Known PET-degrading enzymes are few, and each one took years of bench work to characterise.
+</Placeholder>
+
+<Placeholder label="Placeholder figure">
+Corpus funnel: from the known reference enzymes to the full candidate corpus.
+</Placeholder>
+```
+
+`label` defaults to `Placeholder text`; use `Placeholder figure` or `Placeholder demo` for a figure or interactive slot that is not built yet.
+
+Replace the copy and delete the wrapper when the real content lands. Before a page is published, `grep -rn Placeholder src/content/wiki` should return nothing for it.
 
 ### Figure
 

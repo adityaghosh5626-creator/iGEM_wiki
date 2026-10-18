@@ -8,9 +8,47 @@ description: "How the Hardware team supports practical enzyme testing for PET bi
 owners: ["Hardware"]
 updated: "2026-05-16"
 status: "draft"
+wideProse: true
 ---
 
 The Hardware team builds custom bioreactors that simulate industrial recycling conditions, enabling high-throughput enzyme testing across a range of temperatures and pH levels. By engineering the physical infrastructure for experimental validation, the team bridges the gap between the Dry Lab's computational predictions and real-world applicability, ensuring that promising PETase candidates can be rigorously tested under conditions that reflect practical biorecycling scenarios.
+
+## Introduction: A Bioreactor Beyond Plastics
+
+iGEM Toronto’s drylab team has assembled  
+ the scale of the Petadex catalogue of polyethylene terephthalate (PET) degrading enzymes, iGEM Toronto’s wetlab team has developed novel assays to increase the throughput of PETase screening. However, these screening methods can only characterize enzymatic degradation activity under one specific condition at a time. True characterization of enzymes requires quantifying their behaviour under multiple conditions, including temperature, pH, and differing media contents. More importantly, these experiments must be run at high throughput in parallel, enabling the quickest and most comprehensive screening of enzymes. How does the hardware team address this need?
+
+Lowkey i made some edits that I sent to Ibi; please use this to reference instead:
+
+The dry lab team has assembled a database of thousands of PET-degrading enzymes. Meanwhile, the wet lab team has developed novel high throughput assays to validate their models. However, these screening methods can only measure enzymatic activity under one condition. Full characterization requires quantifying their behaviour in multiple temperatures, pH values, and media. This ground-truth data can allow drylab to improve their models over time.
+
+So how do we close the gap? This year, iGEM Toronto’s hardware team introduces a new bioreactor that is accessible for wet lab researchers, both in terms of its user interface and its assembly, that can work in parallel with up to 96 other bioreactors, and contains sensors and actuators that provide the basic functionalities including temperature regulation, OD600 readings, and stirring, all for a total price less than $250. Stakeholder interviews with wet lab members, engineering experts, and even CEOs informed our user interface, which connects to bioreactors using an intuitive USB serial connection. Plug it directly into your laptop and a wall socket, and the bioreactor is ready for usage.
+
+The most recent design uses three peristaltic pumps: two inlet pumps and one outlet pump for pH control, optical density (OD) control, and extracting fluid. It also uses one heater, to reach a peak temperature of approximately 60 degrees Celsius, and maintains temperature to within one degree of an accepted thermometer value. The stirring is completed by a stir bar and PC fan. The overall design is powered by a usb c charger and the current usb hub can house up to 8 bioreactors per laptop USB port. iGEM hardware’s bioreactor makes testing the plastic-degrading activity of PETases possible, but its features make it an accessible, user-friendly, and highly efficient solution for anyone hoping to automate their assays.
+
+## Requirements
+
+placeholder
+
+maybe sticky notes goes here?
+
+## Final Design
+
+placeholder
+
+## Final Results
+
+placeholder
+
+## Next Steps
+
+placeholder
+
+## Interactive Bioreactor Simulator Move to some where else
+
+Adjust temperature and pH with the sliders, then toggle the stir bar, pump, and LED to see how each parameter affects the liquid and projected bacterial growth. The OD₆₀₀ curve updates in real time, and the dashed line shows the theoretical optimum for _Ideonella sakaiensis_ PETase (37 °C, pH 7.5).
+
+<BioreactorSimulator />
 
 ## Hardware Role
 

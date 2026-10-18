@@ -1,6 +1,30 @@
 import path from "path"
+import { USE_PAYLOAD_EXPORTS } from "./content-source.config.mjs"
+import { STANDARD_ROUTE_ALIASES } from "./src/data/standardRoutes.mjs"
 
 const wikiTemplate = path.resolve(`./src/templates/wiki-mdx.js`)
+
+// Gatsby inlines small fonts into CSS, then repeats that CSS in every HTML
+// page. Emit shared font files instead to keep the Pages archive small.
+export function onCreateWebpackConfig({ getConfig, actions }) {
+  const config = getConfig()
+  const visit = (rules = []) => {
+    for (const rule of rules) {
+      if (!rule || typeof rule !== "object") continue
+      if (rule.test instanceof RegExp && rule.test.test("font.woff2")) {
+        for (const use of Array.isArray(rule.use) ? rule.use : [rule.use]) {
+          if (use && typeof use === "object" && /[\\/]url-loader[\\/]/.test(use.loader || "")) {
+            use.options = { ...use.options, limit: 0 }
+          }
+        }
+      }
+      visit(rule.oneOf)
+      visit(rule.rules)
+    }
+  }
+  visit(config.module?.rules)
+  actions.replaceWebpackConfig(config)
+}
 
 export async function createPages({ actions, graphql, reporter }) {
   const { createPage } = actions
@@ -17,6 +41,7 @@ export async function createPages({ actions, graphql, reporter }) {
           id
           frontmatter {
             path
+            preferLocal
           }
           internal {
             contentFilePath
@@ -31,9 +56,22 @@ export async function createPages({ actions, graphql, reporter }) {
     return
   }
 
+  // Comma-separated path prefixes left out of this build. The iGEM build skips
+  // the Dry Lab issue pages: their embedded images are far over iGEM's 5 MB
+  // upload limit until they move to static.igem.wiki.
+  const excludedPrefixes = (process.env.WIKI_EXCLUDE_PATHS || ``)
+    .split(`,`)
+    .map((prefix) => prefix.trim())
+    .filter(Boolean)
+  if (excludedPrefixes.length) {
+    reporter.info(`Leaving out wiki pages under: ${excludedPrefixes.join(`, `)}`)
+  }
+
   const selectedRoutes = new Map()
   const nodes = result.data.allMdx.nodes
     .filter((node) => !path.basename(node.internal.contentFilePath).startsWith(`_`))
+    .filter((node) => !excludedPrefixes.some((prefix) => node.frontmatter.path.startsWith(prefix)))
+    .filter((node) => USE_PAYLOAD_EXPORTS || !isPayloadExport(node))
     .sort((a, b) => Number(isPayloadExport(b)) - Number(isPayloadExport(a)))
 
   for (const node of nodes) {
@@ -41,6 +79,15 @@ export async function createPages({ actions, graphql, reporter }) {
     const existing = selectedRoutes.get(pagePath)
 
     if (existing) {
+      const preferredLocal = [existing, node].find(
+        (candidate) => !isPayloadExport(candidate) && candidate.frontmatter.preferLocal === true
+      )
+
+      if (preferredLocal) {
+        selectedRoutes.set(pagePath, preferredLocal)
+        continue
+      }
+
       if (isPayloadExport(existing) && !isPayloadExport(node)) {
         continue
       }
@@ -60,6 +107,27 @@ export async function createPages({ actions, graphql, reporter }) {
   for (const [, node] of selectedRoutes) {
     createPage({
       path: node.frontmatter.path,
+      component: `${wikiTemplate}?__contentFilePath=${node.internal.contentFilePath}`,
+      context: {
+        id: node.id,
+      },
+    })
+  }
+
+  for (const [aliasPath, sourcePath] of Object.entries(STANDARD_ROUTE_ALIASES)) {
+    if (selectedRoutes.has(aliasPath)) {
+      reporter.panicOnBuild(`Standard iGEM path collides with an MDX page: ${aliasPath}`)
+      return
+    }
+
+    const node = selectedRoutes.get(sourcePath)
+    if (!node) {
+      reporter.panicOnBuild(`Standard iGEM path ${aliasPath} has no source page: ${sourcePath}`)
+      return
+    }
+
+    createPage({
+      path: aliasPath,
       component: `${wikiTemplate}?__contentFilePath=${node.internal.contentFilePath}`,
       context: {
         id: node.id,
