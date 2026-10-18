@@ -68,6 +68,11 @@ export const LOGO_FRAME_KEYFRAMES = LOGO_FRAME_TIMING.windows.map(({ start, end 
 export const LOGO_PLATE = { w: 2360, h: 1640 }
 /** Painted area across all frames (plate px), padded. */
 export const LOGO_BOX = { x: 180, y: 420, w: 2180, h: 848 }
+/**
+ * The logo at rest (plate px). Smaller than LOGO_BOX, which also holds the
+ * pieces flying off down and to the right mid-loop.
+ */
+export const LOGO_REST = { x: 189, y: 428, w: 1928, h: 590 }
 
 /**
  * One frame of the loop; frame 0 sizes the stack, the rest sit on top. Find
