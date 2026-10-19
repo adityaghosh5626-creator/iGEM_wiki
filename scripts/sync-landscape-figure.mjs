@@ -16,6 +16,17 @@
  *      thing; inside the overview page's iframe it would swallow the page's
  *      scroll, so an embedded copy leaves the wheel alone and is stepped with
  *      the ↑ Back / ↓ Next buttons, the step list and the arrow keys.
+ *   3. The wiki wants the Story panel alone. Panels 1-7 share almost every code
+ *      path with the stacked panel the story is built on, so rather than cut
+ *      them out they are made unreachable: goTo refuses any index but the story
+ *      panel, which closes the nav, the keyboard and the URL hash at once, and
+ *      the panel strip is hidden. Every step, view, hover card, the simulated
+ *      volume with its turntable and both of its buttons come across.
+ *   4. Two things that only cost bytes go: the structure renders are 700 px and
+ *      are drawn about 100 px wide, so they are resized on the way through, and
+ *      KNN_EDGES is emptied. It feeds a "graph" view of the interpretation
+ *      layer that no longer exists in VIEWS, so it was parsed and turned into a
+ *      geometry on every load and never drawn.
  *
  * Rerun make_landscapes.py in that repository and then rerun this, rather than
  * editing the copy under static/.
@@ -38,6 +49,7 @@ const destRoot = path.join(process.cwd(), "static/figures/dry-lab-landscape")
 const STRUCTURE_AVIF = { quality: 50 }
 const SITE_AVIF = { quality: 55 }
 const SITE_WIDTH = 408
+const STRUCTURE_WIDTH = 224   // about 2x the ~100 px the cards draw them at
 
 const EMBED_GUARD = `// Embedded in the wiki's overview page: the host page owns the wheel, so the
 // walkthrough is stepped with the buttons, the step list and the arrow keys
@@ -48,9 +60,62 @@ stage.addEventListener("wheel", e => {
 
 const WHEEL_ANCHOR = `stage.addEventListener("wheel", e => {`
 
+// Each of these must match exactly once. If the figure changes shape the sync
+// fails loudly here rather than shipping a page with a live panel strip.
+const STORY_PATCHES = [
+  [
+    "the story panel is the only reachable one",
+    `function goTo(i, instant = false) {
+  i = clip(i, 0, STATES.length - 1);`,
+    `function goTo(i, instant = false) {
+  i = clip(i, 0, STATES.length - 1);
+  if (i !== STORY_PANEL) return;   // wiki copy: the story panel is the only one`,
+  ],
+  [
+    "no panel tour to play",
+    "function play() {",
+    `function play() {
+  return;   // wiki copy: there is no panel tour`,
+  ],
+  [
+    "the embed must not write to the host's URL",
+    `  history.replaceState(null, "", "#" + (i + 1));\n`,
+    "",
+  ],
+  [
+    "open on the story panel, ignoring any hash",
+    `const start = parseInt(location.hash.slice(1), 10);
+goTo(Number.isFinite(start) ? start - 1 : 0, true);`,
+    "goTo(STORY_PANEL, true);",
+  ],
+  [
+    "hide the chrome of the panels that are gone",
+    "  .site-cap { position: absolute;",
+    `  /* wiki copy: only the story panel exists, so its chrome is all that shows */
+  #ctl, #stamp, #legend { display: none !important; }
+  .title:not([data-t="7"]) { display: none !important; }
+  .site-cap { position: absolute;`,
+  ],
+]
+
 async function readHtml() {
   const file = path.join(sourceRoot, "web/landscape.html")
   let html = await fs.readFile(file, "utf8")
+
+  for (const [what, from, to] of STORY_PATCHES) {
+    const hits = html.split(from).length - 1
+    if (hits !== 1) {
+      throw new Error(
+        `Expected exactly one place to patch for "${what}", found ${hits}. The ` +
+        `figure changed; re-check scripts/sync-landscape-figure.mjs.`
+      )
+    }
+    html = html.replace(from, to)
+  }
+
+  const edges = html.match(/const KNN_EDGES = .*?;\n/s)
+  if (!edges) throw new Error("KNN_EDGES not found; re-check scripts/sync-landscape-figure.mjs.")
+  html = html.replace(edges[0], "const KNN_EDGES = [];   // wiki copy: the graph view is gone\n")
 
   const structures = new Set()
   html = html.replace(/"\.\.\/structures\/([A-Za-z0-9_]+)\.png"/g, (_, name) => {
@@ -99,7 +164,7 @@ for (const name of structures) {
   assetBytes += await convert(
     path.join(sourceRoot, `structures/${name}.png`),
     path.join(destRoot, `structures/${name}.avif`),
-    (img) => img.avif(STRUCTURE_AVIF)
+    (img) => img.resize({ width: STRUCTURE_WIDTH, withoutEnlargement: true }).avif(STRUCTURE_AVIF)
   )
 }
 for (const name of sites) {
@@ -124,7 +189,7 @@ for (const [dir, keep, ext] of [
 
 const kb = (bytes) => `${(bytes / 1024).toFixed(0)} kB`
 console.log(
-  `landscape.html ${kb(Buffer.byteLength(html))}, ` +
+  `Story panel only. landscape.html ${kb(Buffer.byteLength(html))}, ` +
   `${structures.length} structures + ${sites.length} site photos ${kb(assetBytes)}, ` +
   `three.min.js ${kb((await fs.stat(path.join(destRoot, "vendor/three.min.js"))).size)}`
 )
