@@ -25,7 +25,7 @@ import {
   DiamondSearchHero,
   MethodsLink,
 } from "./interactive/DiamondSearch.js"
-import { ModelDatasets } from "./interactive/ModelDatasets.js"
+import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
@@ -119,6 +119,7 @@ export const mdxComponents = {
   DiamondSearchHero,
   MethodsLink,
   ModelDatasets,
+  DatasetLoop,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,
