@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
 
 /**
@@ -132,9 +133,37 @@ function Photo({ src, alt }) {
   )
 }
 
+/**
+ * A self-contained HTML figure from static/ (e.g. a three.js scene) in a 16:9
+ * frame, with a link to open it on its own page. `dark` matches the frame to a
+ * figure that draws on a dark ground, so the page doesn't flash light around it
+ * while the iframe loads.
+ */
+export const InteractiveEmbed = ({ src, title, caption, dark = false }) => {
+  const href = src.startsWith("/") ? withPrefix(src) : src
+  return (
+    <EmbedFigure>
+      <EmbedHead>
+        {title && <EmbedTitle>{title}</EmbedTitle>}
+        <OpenLink href={href} target="_blank" rel="noopener noreferrer">
+          Open full screen ↗
+        </OpenLink>
+      </EmbedHead>
+      <InteractiveFrame
+        src={href}
+        title={title || "Interactive figure"}
+        loading="lazy"
+        $dark={dark}
+      />
+      {caption && <EmbedCaption>{caption}</EmbedCaption>}
+    </EmbedFigure>
+  )
+}
+
 export const embedComponents = {
   Dropdown,
   Photos,
+  InteractiveEmbed,
   PdfEmbed,
   SheetEmbed,
   VideoEmbed,
@@ -267,6 +296,27 @@ const VideoFrame = styled.iframe`
   ${frameBox}
   aspect-ratio: 16 / 9;
   height: auto;
+`
+
+const InteractiveFrame = styled.iframe`
+  ${frameBox}
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 22rem;
+  background: ${({ $dark }) => ($dark ? "#0b1220" : "#f8fafc")};
+
+  ${({ $dark }) =>
+    $dark &&
+    css`
+      border-color: #0b1220;
+    `}
+`
+
+const EmbedCaption = styled.figcaption`
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 `
 
 const Pending = styled.div`
