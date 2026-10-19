@@ -186,7 +186,7 @@ const TeamPage = ({ data }) => {
   }
 
   return (
-    <WikiLayout>
+    <WikiLayout pagePath="/team/">
       <Backdrop ref={backdropRef} aria-hidden>
         <img src={BG_SRC} alt="" />
       </Backdrop>

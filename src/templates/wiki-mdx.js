@@ -82,6 +82,7 @@ const WikiMdxTemplate = ({ data, children }) => {
     return (
       <WikiLayout
         fullBleed
+        pagePath={frontmatter.path}
         // The footer button takes the colours of the page's menu highlight.
         footerButton={
           scene.footerButton || {
@@ -143,6 +144,7 @@ const WikiMdxTemplate = ({ data, children }) => {
 
   return (
     <WikiLayout
+      pagePath={frontmatter.path}
       pageTitle={wideSideTabs ? null : frontmatter.title}
       sectionLabel={wideSideTabs ? null : frontmatter.section}
       wideSideTabs={wideSideTabs}
