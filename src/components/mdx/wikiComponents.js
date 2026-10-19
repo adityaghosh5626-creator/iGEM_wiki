@@ -30,7 +30,6 @@ import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interacti
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
-import { CodeDropdown } from "../Dropdown.js"
 import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
 import References from "../References"
