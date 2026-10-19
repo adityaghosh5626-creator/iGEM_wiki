@@ -204,11 +204,12 @@ const TeamPage = ({ data }) => {
                 src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
                 alt=""
               />
-              {type.label}
+              <span>{type.label}</span>
             </LegendItem>
           ))}
         </Legend>
 
+        <Roster>
         {sections.map(([level, title, members]) => (
           <Section key={level} aria-labelledby={`team-${level}`}>
             <SectionTitle id={`team-${level}`}>{title}</SectionTitle>
@@ -295,6 +296,7 @@ const TeamPage = ({ data }) => {
             </Cards>
           </Section>
         ))}
+        </Roster>
       </Content>
     </WikiLayout>
   )
@@ -349,7 +351,7 @@ const Content = styled.div`
 `
 
 const Title = styled.h1`
-  margin: clamp(2rem, 6vw, 4rem) 0 clamp(2.5rem, 7vw, 5rem);
+  margin: clamp(2rem, 6vw, 4rem) 0 clamp(1.5rem, 4vw, 2.5rem);
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
@@ -358,31 +360,74 @@ const Title = styled.h1`
   letter-spacing: -0.01em;
 `
 
+/** Clears a legend fixed to the left of the viewport, and only when it would cover the cards. */
+const Roster = styled.div`
+  --legend-reach: 13.25rem;
+  padding-left: max(
+    0px,
+    calc(
+      var(--legend-reach) - max(0px, (100vw - var(--max-width)) / 2) -
+        var(--page-padding)
+    )
+  );
+
+  @media (max-width: 700px) {
+    --legend-reach: 3.6rem;
+  }
+`
+
 const Legend = styled.ul`
+  position: fixed;
+  z-index: 20;
+  top: 5.25rem;
+  left: max(0.75rem, env(safe-area-inset-left));
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem 0.75rem;
-  max-width: 46rem;
-  margin: -1.25rem auto clamp(2.5rem, 6vw, 4rem);
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: calc(100vh - 6.5rem);
+  margin: 0;
   padding: 0;
+  overflow: auto;
   list-style: none;
 `
 
 const LegendItem = styled.li`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  width: max-content;
   padding: 0.3rem 0.7rem 0.3rem 0.35rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.9);
   color: ${HEADING};
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
 
   img {
     width: 1.7rem;
     height: 1.7rem;
+  }
+
+  /* A phone has no room for every name at once. The icons stay; the name shows on tap. */
+  @media (max-width: 700px) {
+    padding-right: 0.35rem;
+
+    span {
+      position: absolute;
+      left: calc(100% + 0.35rem);
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:hover span,
+    &:focus-within span {
+      opacity: 1;
+    }
   }
 `
 
