@@ -1,4 +1,5 @@
 import { HardwareIterations } from "../hardwareIterations/HardwareIterations.js"
+import { HardwareMap } from "../hardwareIterations/HardwareMap.js"
 import React from "react"
 import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
@@ -39,6 +40,20 @@ export const Callout = ({ tone = "note", title, children }) => (
     {title && <CalloutTitle>{title}</CalloutTitle>}
     <CalloutBody>{children}</CalloutBody>
   </CalloutBox>
+)
+
+/** The Project page's painted papers (on iGEM's uploads, by colour). */
+const PAPER_ART = "https://static.igem.wiki/teams/6187/wiki/project/paper-"
+
+/** Callouts on painted paper, side by side, a third of the text each. */
+export const PaperCallouts = ({ children }) => <PaperRow>{children}</PaperRow>
+
+/** One of them: `paper` is "peach", "mauve" or "blue". */
+export const PaperCallout = ({ paper = "peach", title, children }) => (
+  <PaperNote style={{ backgroundImage: `url(${PAPER_ART}${paper}.avif)` }}>
+    {title && <PaperTitle>{title}</PaperTitle>}
+    <CalloutBody>{children}</CalloutBody>
+  </PaperNote>
 )
 
 /** Marks draft copy that still has to be replaced before the page is published. */
@@ -94,7 +109,10 @@ export const ContributionCalendar = ({ title, caption }) => (
 export const mdxComponents = {
   a: MdxLink,
   HardwareIterations,
+  HardwareMap,
   Callout,
+  PaperCallouts,
+  PaperCallout,
   Placeholder,
   Figure,
   ImageGrid,
@@ -170,6 +188,43 @@ const CalloutBody = styled.div`
   p {
     color: var(--color-body);
   }
+`
+
+const PaperRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 3%, 2rem);
+  width: 100%;
+  margin: var(--space-lg) 0;
+
+  /* Too narrow for three: one under the other. */
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`
+
+/** Upright like the painted paper (404 × 555), taller if its text needs it. */
+const PaperNote = styled.aside`
+  aspect-ratio: 404 / 555;
+  /* Clear of the paper's rough edges. */
+  padding: 13% 11% 12%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+
+  @media (max-width: 640px) {
+    aspect-ratio: auto;
+    padding: 2rem 1.75rem;
+  }
+`
+
+const PaperTitle = styled.p`
+  color: var(--color-text) !important;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-sm);
 `
 
 const PlaceholderBox = styled.div`
