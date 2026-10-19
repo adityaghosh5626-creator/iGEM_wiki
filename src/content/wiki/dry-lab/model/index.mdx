@@ -370,12 +370,12 @@ Existing protein structure prediction databases such as AlphaFold DB (AFDB) [htt
 We searched these databases to find predicted structures for 7.83M PETadex v2 significant hits. AFDB is indexed by Uniprot accession, so PETadex accessions were converted to Uniprot accessions using the Uniprot idmapping [https://ftp.uniprot.org/pub/databases/uniprot/current_release/]. In total, structures and metrics for 580,146 PETadex v2 proteins were found in the AFDB, emphasizing the uncategorized nature of the PETadex. Below are the distributions of the downloaded structures grouped by component and domain. We found that Component 16 (Cytochrome P450) was the most common component, while Alpha/Beta hydrolase was the most common domain.
 
 <Figure
-  src="/figures/dry-lab-model/domain_distribution.png"
+  src="/figures/dry-lab-model/domain_distribution.avif"
   alt="Distribution of the AFDB-downloaded PETadex structures grouped by domain, with Alpha/Beta hydrolase the most common"
   width="100%"
 />
 <Figure
-  src="/figures/dry-lab-model/component_distribution.png"
+  src="/figures/dry-lab-model/component_distribution.avif"
   alt="Distribution of the AFDB-downloaded PETadex structures grouped by component, with Component 16 (Cytochrome P450) the most common"
   width="100%"
 />
@@ -523,11 +523,11 @@ Using the ESMC-600M Protein Language Model (PLM), we generated embeddings for th
 
 <ImageGrid>
   <Figure
-    src="/figures/dry-lab-model/cluster_plot.png"
+    src="/figures/dry-lab-model/cluster_plot.avif"
     alt="Family atlas UMAP of PETadex centroids, coloured by CATH domain"
   />
   <Figure
-    src="/figures/dry-lab-model/Domain640.png"
+    src="/figures/dry-lab-model/Domain640.avif"
     alt="Silhouette scores per domain cluster for the 640-dimensional embeddings"
   />
 </ImageGrid>
@@ -537,7 +537,7 @@ Generate negative controls (random and shuffled sequences) from the 64,730 famil
 Generate positive / real-world controls (random UniProt proteins, real-sequence fragments) for comparison against the real centroids.
 
 <Figure
-  src="/figures/dry-lab-model/real_vs_controls_stacked.png"
+  src="/figures/dry-lab-model/real_vs_controls_stacked.avif"
   alt="Real PETadex embeddings overlaid with shuffled, 90% fragment and random UniProt controls, in three panels"
   width="100%"
 />
