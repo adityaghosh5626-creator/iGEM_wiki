@@ -94,7 +94,7 @@ const DATASETS = [
       {
         label: "Halo screen",
         repo: "petai-halo-screen",
-        desc: "Our supervising lab's BHET plate screen at every condition, with raw colony data. The only real source of negatives.",
+        desc: "Our collaborator lab's BHET plate screen at every condition, with raw colony data. The only real source of negatives.",
       },
     ],
   },

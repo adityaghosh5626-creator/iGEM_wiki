@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PETadex Game Demo</title>
+<style>
+/* Wiki copy: always dark, sized to fill its frame without scrolling. */
+:root {
+  color-scheme: dark;
+  --bg: #16181a; --ink: #ecebe4; --muted: #9a9a90; --panel: #202326;
+  --accent: #2f7d5b; --accent-ink: #ffffff; --border: #ecebe4;
+  --screen: #2c3d2f; --screen-ink: #d9efd4;
+  --danger: #e0675a; --warn: #e0a43a; --good: #5cc28f;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.4 ui-monospace, Menlo, Consolas, monospace; padding: 12px 16px;
+  height: 100vh; overflow: hidden; }
+main { max-width: 900px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 620px), (max-height: 480px) {
+  body { height: auto; overflow: auto; }
+  main { height: auto; }
+}
+button, select { font: inherit; color: inherit; }
+button { background: var(--panel); border: 2px solid var(--border); padding: 6px 12px;
+  cursor: pointer; box-shadow: 3px 3px 0 var(--border); }
+button:active:not(:disabled) { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--border); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: block; }
+
+/* PETadex device */
+.device { flex: none; background: #b23a3a; border: 3px solid var(--border); border-radius: 14px 14px 14px 40px;
+  padding: 16px; box-shadow: 6px 6px 0 var(--border); }
+.device-inner { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); gap: 14px; }
+@media (max-width: 620px) { .device-inner { grid-template-columns: 1fr; } }
+.screen { background: var(--screen); color: var(--screen-ink); border: 3px solid var(--border);
+  border-radius: 6px; padding: 12px; display: flex; flex-direction: column; align-items: center; }
+.screen .sprite-box { height: clamp(90px, 22vh, 180px); aspect-ratio: 1; }
+.screen .dexno { align-self: flex-start; font-size: 13px; }
+.info { background: var(--panel); border: 3px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+.info h3 { margin: 0 0 2px; font-size: 18px; }
+.info .cls { color: var(--muted); margin: 0 0 10px; }
+.stats { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; font-size: 13px; }
+.bar { height: 8px; border: 1px solid var(--border); background: transparent; }
+.bar > span { display: block; height: 100%; background: var(--accent); }
+.raw { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.controls .count { color: #fff; flex: 1; text-align: center; }
+.battle-btn { background: #f2c94c; font-weight: bold; }
+.placeholder-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* Battle dialog */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex;
+  align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.overlay[hidden] { display: none; }
+.dialog { background: var(--panel); border: 3px solid var(--border); box-shadow: 6px 6px 0 var(--border);
+  width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 16px; }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dialog-head h2 { margin: 0; font-size: 18px; }
+.biomes { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 8px; margin: 8px 0 14px; }
+.biome { text-align: left; box-shadow: none; }
+.biome[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.biome small { display: block; opacity: .8; }
+.warn { color: var(--warn); font-size: 13px; min-height: 1.4em; }
+.arena { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fighter { border: 2px solid var(--border); padding: 10px; background: var(--bg); }
+.fighter .sprite-box { width: 96px; aspect-ratio: 1; margin: 6px auto; }
+.fighter .name { font-weight: bold; }
+.fighter .meta { font-size: 12px; color: var(--muted); }
+.hp { height: 10px; border: 1px solid var(--border); margin-top: 6px; }
+.hp > span { display: block; height: 100%; background: var(--good); transition: width .3s; }
+.hp.low > span { background: var(--danger); }
+.hptext { font-size: 12px; }
+.moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 8px; margin: 12px 0; }
+.moves button small { display: block; font-size: 11px; opacity: .75; }
+.log { list-style: none; margin: 0; padding: 8px; border: 2px solid var(--border); height: 140px;
+  overflow-y: auto; font-size: 13px; background: var(--bg); }
+.log li { padding: 1px 0; }
+.result { text-align: center; padding: 10px 0; }
+.result h3 { font-size: 22px; margin: 6px 0; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Objective banner */
+.objective { border: 2px solid var(--border); background: var(--panel); padding: 8px 12px;
+  margin: 0; font-size: 13px; flex: none; }
+.objective b { color: var(--good); }
+
+/* Field coverage board */
+.coverage { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 3px solid var(--border);
+  background: var(--panel); padding: 12px 14px; }
+@media (max-width: 620px), (max-height: 480px) { .coverage { flex: none; overflow: visible; } }
+.coverage h2 { font-size: 15px; margin: 0 0 2px; }
+.coverage .hint { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+.cov-row { display: grid; grid-template-columns: 160px 170px 1fr; gap: 4px 10px; align-items: start;
+  border-top: 1px dashed var(--muted); padding: 7px 0; font-size: 13px; }
+@media (max-width: 620px) { .cov-row { grid-template-columns: 1fr; } }
+.cov-row .site { font-weight: bold; }
+.cov-row small { color: var(--muted); font-size: 11px; }
+.tag { font-size: 11px; border: 1px solid currentColor; padding: 0 4px; white-space: nowrap; }
+.good-t { color: var(--good); } .mid-t { color: var(--warn); } .bad-t { color: var(--danger); }
+
+/* Match report */
+.report { border: 2px solid var(--border); background: var(--bg); padding: 10px; margin: 10px 0; font-size: 13px; }
+.report h4 { margin: 0 0 6px; font-size: 13px; }
+.report table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 4px 0; }
+.report td { padding: 1px 8px 1px 0; }
+.report .call { margin-top: 6px; }
+.biome:disabled { opacity: .45; }
+.btn-link { display: inline-block; font: inherit; color: var(--accent-ink); background: var(--accent);
+  border: 2px solid var(--border); padding: 6px 12px; cursor: pointer; text-decoration: none;
+  box-shadow: 3px 3px 0 var(--border); }
+.btn-link:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--border); }
+
+/* Tutorial coach */
+.coach { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--accent);
+  color: var(--accent-ink); border-top: 3px solid var(--border); padding: 10px 14px;
+  display: flex; gap: 12px; align-items: flex-start; }
+.coach[hidden] { display: none; }
+.coach .step { font-size: 11px; opacity: .85; letter-spacing: .05em; }
+.coach p { margin: 2px 0 0; font-size: 13px; max-width: 76ch; }
+.coach button { background: var(--panel); color: var(--ink); flex: none; }
+body.coached { padding-bottom: 130px; }
+body.coached .overlay { padding-bottom: 130px; }
+body.coached .dialog { max-height: calc(100vh - 150px); }
+.tut-target { position: relative; z-index: 11; animation: tutpulse 1.1s ease-in-out infinite; }
+@keyframes tutpulse {
+  0%, 100% { outline: 3px solid var(--warn); outline-offset: 2px; }
+  50%      { outline: 3px solid transparent; outline-offset: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-target { animation: none; outline: 3px solid var(--warn); outline-offset: 2px; }
+}
+</style>
+</head>
+<body>
+<main>
+
+  <p class="objective"><b>Objective: one enzyme is never enough.</b> Every site has its own temperature and its
+  own plastic. An enzyme that shreds amorphous PET film is useless on a crystalline bottle, denatures in a hot
+  reactor, and cannot touch a polyolefin at all. <b>Find the right enzyme for each job.</b> Win a battle
+  to sequence a new one, then watch the coverage board below fill in.</p>
+
+  <!-- Petadex.js equivalent -->
+  <section class="device" id="dex" tabindex="0" aria-label="PETadex browser. Use left and right arrow keys to browse." data-nav-skip>
+    <div class="device-inner">
+      <div class="screen">
+        <span class="dexno" id="dex-no"></span>
+        <div class="sprite-box"><canvas class="sprite" id="dex-sprite" aria-hidden="true"></canvas></div>
+      </div>
+      <div class="info">
+        <h3 id="dex-name"></h3>
+        <p class="cls" id="dex-cls"></p>
+        <div class="stats" id="dex-stats"></div>
+        <div class="raw" id="dex-raw"></div>
+      </div>
+    </div>
+    <!-- BATTLE button sits in normal flow: no measuring, no offsets -->
+    <div class="controls">
+      <button id="dex-prev" aria-label="Previous enzyme">&lt; Prev</button>
+      <span class="count" id="dex-count" aria-live="polite"></span>
+      <button id="dex-next" aria-label="Next enzyme">Next &gt;</button>
+      <button id="battle-open" class="battle-btn">BATTLE</button>
+      <button id="dex-reset" title="Erase progress and start over from IsPETase">RESET</button>
+    </div>
+  </section>
+
+  <section class="coverage" id="coverage">
+    <h2>Can your PETamon handle each site?</h2>
+    <p class="hint">Recomputed from the enzymes you have sequenced. Red is not bad play: it means you are
+      missing an enzyme and need to go find one.</p>
+    <div id="cov-rows" aria-live="polite"></div>
+  </section>
+
+</main>
+
+<!-- EnzymeBattle.js equivalent -->
+<div class="overlay" id="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bt-title" id="dialog">
+    <div class="dialog-head">
+      <h2 id="bt-title" tabindex="-1">Battle</h2>
+      <button id="bt-close" aria-label="Close battle">X</button>
+    </div>
+
+    <div id="scr-setup">
+      <label for="bt-enzyme">Enzyme <span id="bt-roster" style="color:var(--muted)"></span></label>
+      <select id="bt-enzyme"></select>
+      <p style="margin:12px 0 0">Biome</p>
+      <div class="biomes" id="bt-biomes"></div>
+      <div class="report" id="bt-report"></div>
+      <p class="warn" id="bt-warn"></p>
+      <button class="primary" id="bt-start">Start battle</button>
+    </div>
+
+    <div id="scr-battle" hidden>
+      <div class="arena">
+        <div class="fighter" id="f-enzyme"></div>
+        <div class="fighter" id="f-plastic"></div>
+      </div>
+      <div class="moves" id="bt-moves"></div>
+      <ul class="log" id="bt-log" aria-live="polite" aria-label="Battle log"></ul>
+    </div>
+
+    <div id="scr-result" hidden>
+      <div class="result">
+        <h3 id="res-title"></h3>
+        <p id="res-text"></p>
+        <div class="row" id="res-seq-row"></div>
+        <div class="row">
+          <button class="primary" id="res-again">Battle again</button>
+          <button id="res-setup">Change setup</button>
+          <button id="res-home">Return to PETadex</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="coach" id="coach" hidden>
+  <div style="flex:1">
+    <div class="step" id="coach-step"></div>
+    <p id="coach-text"></p>
+  </div>
+  <button id="coach-skip">Skip tutorial</button>
+</div>
+
+<script>
+/* ---------------- Data (placeholders; replace with PETadex export) ---------------- */
+// TODO: point this at the real PETadex wiki. Used by the "we are working on it" button
+// shown when a player loses to a polyolefin that no known enzyme can degrade.
+const WIKI_URL = '#';
+const CLASSES = {
+  PETase:   { pal: ['#24543a', '#3f8f5e', '#8fd3a6'] },
+  Cutinase: { pal: ['#1d4567', '#2f6f9f', '#8cc4ea'] },
+  Lipase:   { pal: ['#6e4708', '#b9770e', '#f0c26a'] },
+  Tannase:  { pal: ['#3f2456', '#6c3f8f', '#b996d9'] }
+};
+
+// Multiplier of enzyme class vs plastic. Game-balance placeholders.
+const EFFECT = {
+  PETase:   { PETa: 1.6, PETc: 1.0, PU: 0.8, PLA: 0.8, HDPE: 0.25, PP: 0.25 },
+  Cutinase: { PETa: 1.4, PETc: 1.2, PU: 1.0, PLA: 1.2, HDPE: 0.25, PP: 0.25 },
+  Lipase:   { PETa: 0.6, PETc: 0.4, PU: 1.4, PLA: 1.4, HDPE: 0.25, PP: 0.25 },
+  Tannase:  { PETa: 1.0, PETc: 0.8, PU: 0.6, PLA: 0.6, HDPE: 0.25, PP: 0.25 }
+};
+
+// Raw fields only. tm in C, act = relative activity 0-1, len = residues. Approximate, verify.
+// Listed in unlock order, so PETadex numbering follows progression: beach (start), then compost
+// and landfill (opened by clearing the beach), then reactor (opened by clearing compost).
+const RAW_ENZYMES = [
+  { id: 'ispetase',   name: 'IsPETase',    cls: 'PETase',   tm: 48, act: 0.30, len: 290, biome: 'beach',    starter: true },
+  { id: 'fastpetase', name: 'FAST-PETase', cls: 'PETase',   tm: 67, act: 0.60, len: 290, biome: 'beach' },
+  { id: 'tfcut2',     name: 'TfCut2',      cls: 'Cutinase', tm: 70, act: 0.45, len: 262, biome: 'compost' },
+  { id: 'phl7',       name: 'PHL7',        cls: 'Cutinase', tm: 79, act: 0.70, len: 258, biome: 'compost' },
+  { id: 'lccicc',     name: 'LCC-ICCG',    cls: 'Cutinase', tm: 94, act: 0.85, len: 293, biome: 'compost' },
+  { id: 'calb',       name: 'CalB',        cls: 'Lipase',   tm: 60, act: 0.20, len: 317, biome: 'landfill' },
+  { id: 'mhetase',    name: 'MHETase',     cls: 'Tannase',  tm: 50, act: 0.35, len: 603, biome: 'landfill' },
+  { id: 'hotpetase',  name: 'HotPETase',   cls: 'PETase',   tm: 82, act: 0.55, len: 290, biome: 'reactor' }
+];
+
+function deriveStats(e) {
+  return { ...e,
+    hp:  Math.round(40 + e.tm * 0.8),   // thermostability -> durability
+    atk: Math.round(8 + e.act * 30),    // activity -> damage
+    spd: Math.round(4000 / e.len)       // smaller enzyme -> acts first
+  };
+}
+const ENZYMES = RAW_ENZYMES.map(deriveStats);
+
+const PLASTICS = {
+  PETa: { id: 'PETa', name: 'PET film',      hp: 70,  atk: 9,  spd: 8,  cryst: 0.10, pal: ['#4a5a66', '#8aa0b0', '#d5e2ea'] },
+  PETc: { id: 'PETc', name: 'PET bottle',    hp: 110, atk: 11, spd: 6,  cryst: 0.35, pal: ['#33536b', '#5f8fb0', '#bcdcef'] },
+  PU:   { id: 'PU',   name: 'PU foam',       hp: 90,  atk: 12, spd: 9,  cryst: 0.15, pal: ['#6b5a2e', '#b39b52', '#eadba6'] },
+  PLA:  { id: 'PLA',  name: 'PLA cup',       hp: 80,  atk: 10, spd: 10, cryst: 0.30, pal: ['#5a6b3a', '#94ad62', '#dbe9bd'] },
+  HDPE: { id: 'HDPE', name: 'HDPE bag',      hp: 120, atk: 12, spd: 7,  cryst: 0.60, polyolefin: true, pal: ['#555', '#999', '#eee'] },
+  PP:   { id: 'PP',   name: 'Polypropylene', hp: 220, atk: 15, spd: 8,  cryst: 0.50, polyolefin: true, boss: true, pal: ['#4a1f1f', '#8f3b3b', '#e0a0a0'] }
+};
+
+// needs = sites you must have won before this one opens. The Beach is the forced starting match.
+const BIOMES = [
+  { id: 'beach',     name: 'The Beach',          temp: 30, plastics: ['PETa', 'PETc'],         needs: [] },
+  { id: 'compost',   name: 'Compost Heap',       temp: 60, plastics: ['PETc', 'PLA', 'PU'],    needs: ['beach'] },
+  { id: 'landfill',  name: 'The Landfill',       temp: 40, plastics: ['HDPE', 'PETc', 'PU'],   needs: ['beach'] },
+  { id: 'reactor',   name: 'Recycling Reactor',  temp: 72, plastics: ['PETc', 'PU'],           needs: ['compost'] },
+  { id: 'petrochem', name: 'Petrochem Facility', temp: 50, plastics: ['PP'],                   needs: ['reactor', 'landfill'] }
+];
+const biomeById = id => BIOMES.find(b => b.id === id);
+const poolFor = id => ENZYMES.filter(e => e.biome === id);
+const unlocked = b => b.needs.every(id => state.won.has(id));
+
+/* ---------------- Sprites (procedural placeholders) ---------------- */
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { return () => { seed = (seed + 0x6D2B79F5) >>> 0; let t = seed;
+  t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function drawSprite(canvas, seedName, pal, { hidden = false, eyes = true } = {}) {
+  const N = 14, H = N / 2, r = rng(hash(seedName));
+  canvas.width = N; canvas.height = N;
+  const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, N, N);
+  const fill = Array.from({ length: N }, () => Array(N).fill(-1));
+  for (let y = 1; y < N - 1; y++) for (let x = 1; x < H; x++) {
+    const d = Math.hypot(x - H + 0.5, y - H + 0.5) / H;
+    if (r() < 1.05 - d * 1.1) { const c = r() < 0.55 ? 1 : (r() < 0.6 ? 2 : 0); fill[y][x] = c; fill[y][N - 1 - x] = c; }
+  }
+  const outline = '#111';
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (fill[y][x] >= 0) { ctx.fillStyle = hidden ? '#111' : pal[fill[y][x]]; ctx.fillRect(x, y, 1, 1); continue; }
+    const n = [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => (fill[y + dy] || [])[x + dx] >= 0);
+    if (n) { ctx.fillStyle = outline; ctx.fillRect(x, y, 1, 1); }
+  }
+  if (eyes && !hidden) { ctx.fillStyle = '#fff'; ctx.fillRect(H - 3, 5, 1, 1); ctx.fillRect(H + 2, 5, 1, 1);
+    ctx.fillStyle = '#111'; ctx.fillRect(H - 3, 6, 1, 1); ctx.fillRect(H + 2, 6, 1, 1); }
+}
+
+/* ---------------- Game state (persisted) ---------------- */
+const SAVE_KEY = 'petadex.demo.v1';
+const freshState = () => ({
+  idx: 0,
+  caught: new Set(ENZYMES.filter(e => e.starter).map(e => e.id)), // IsPETase only
+  won: new Set(),
+  biome: 'beach',
+  tut: 0
+});
+function loadState() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (raw && Array.isArray(raw.caught) && raw.caught.length) {
+      return {
+        idx: Math.min(Math.max(0, raw.idx | 0), ENZYMES.length - 1),
+        caught: new Set(raw.caught.filter(id => ENZYMES.some(e => e.id === id))),
+        won: new Set((raw.won || []).filter(id => biomeById(id))),
+        biome: biomeById(raw.biome) ? raw.biome : 'beach',
+        tut: raw.tut | 0
+      };
+    }
+  } catch (err) { /* blocked or private-mode storage: play without saving */ }
+  return freshState();
+}
+function save() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      idx: state.idx, caught: [...state.caught], won: [...state.won], biome: state.biome, tut: state.tut
+    }));
+  } catch (err) { /* ignore */ }
+}
+let state = loadState();
+const $ = id => document.getElementById(id);
+
+/* ---------------- Roster analysis: what are we still missing? ---------------- */
+const ownedEnzymes = () => ENZYMES.filter(e => state.caught.has(e.id));
+const stableIn = b => ownedEnzymes().filter(e => b.temp <= e.tm - 5);
+const effOf = (e, pid) => EFFECT[e.cls][pid];
+const effWord = v => v >= 1.4 ? 'super effective' : v >= 1.0 ? 'workable' : v >= 0.6 ? 'weak' : 'no ester bonds to cut';
+const effTone = v => v >= 1.4 ? 'good-t' : v >= 1.0 ? 'mid-t' : 'bad-t';
+
+// One sentence naming the gap between your roster and a site.
+function verdict(b) {
+  if (!unlocked(b)) return { tone: 'bad-t', tag: 'LOCKED',
+    text: 'Win in ' + b.needs.map(n => biomeById(n).name).join(' and ') + ' first.' };
+
+  const pool = stableIn(b);
+  if (!pool.length) {
+    const hottest = ownedEnzymes().reduce((a, c) => c.tm > a.tm ? c : a);
+    return { tone: 'bad-t', tag: 'NEED THERMOSTABILITY',
+      text: `${b.temp}C denatures every enzyme you hold (your most stable is ${hottest.name}, Tm ${hottest.tm}C). ` +
+            `You need one with Tm above ${b.temp + 5}C. No amount of strategy substitutes.` };
+  }
+
+  let bestE = pool[0], bestV = -1, bestP = b.plastics[0];
+  for (const e of pool) for (const pid of b.plastics) {
+    const v = effOf(e, pid);
+    if (v > bestV) { bestV = v; bestE = e; bestP = pid; }
+  }
+  const noAnswer = b.plastics.filter(pid => Math.max(...pool.map(e => effOf(e, pid))) < 0.6);
+
+  if (b.plastics.some(pid => PLASTICS[pid].boss) && bestV < 0.6) return { tone: 'mid-t', tag: 'NEEDS CHEMISTRY',
+    text: 'Polypropylene has no ester bonds at all, so no enzyme class cuts it, held or unsequenced. Pretreat ' +
+          '(UV/oxidation) is the only way to even land a hit, and it still outlasts everything. This one is a genuine ' +
+          'open problem: the honest answer is that the enzyme for this job does not exist yet.' };
+  if (b.plastics.some(pid => PLASTICS[pid].polyolefin) && bestV < 0.6) return { tone: 'mid-t', tag: 'NEEDS CHEMISTRY',
+    text: 'A polyolefin here has no ester bonds, so Pretreat (UV/oxidation) is the only way to land a hit on it. ' +
+          'That is survivable, but only with a high-activity enzyme: a weak one will not finish the job.' };
+
+  if (bestV < 0.6) return { tone: 'bad-t', tag: 'NEED A NEW CLASS',
+    text: `Your best is ${bestE.name} (${bestE.cls}) at x${bestV.toFixed(2)} on ${PLASTICS[bestP].name}. ` +
+          'Wrong enzyme family for this substrate, so go sequence a different class.' };
+
+  let text = `${bestE.name} (${bestE.cls}, Tm ${bestE.tm}C) is your best fit here: x${bestV.toFixed(2)} on ${PLASTICS[bestP].name}.`;
+  if (noAnswer.length) text += ` You still have nothing for ${noAnswer.map(pid => PLASTICS[pid].name).join(', ')}.`;
+  return { tone: bestV >= 1.4 ? 'good-t' : 'mid-t', tag: bestV >= 1.4 ? 'GOOD MATCH' : 'WORKABLE', text };
+}
+
+function renderCoverage() {
+  const box = $('cov-rows'); box.innerHTML = '';
+  for (const b of BIOMES) {
+    const v = verdict(b);
+    const left = poolFor(b.id).filter(e => !state.caught.has(e.id)).length;
+    box.insertAdjacentHTML('beforeend',
+      `<div class="cov-row">
+         <span class="site">${b.name}${state.won.has(b.id) ? ' \u2713' : ''}</span>
+         <span class="tag ${v.tone}">${v.tag}</span>
+         <span><span class="${v.tone}">${v.text}</span><br>
+           <small>${b.temp}C | ${b.plastics.map(pid => PLASTICS[pid].name).join(', ')}
+           | ${left ? left + ' enzyme(s) still unsequenced here'
+                : (poolFor(b.id).length ? 'all enzymes here sequenced' : 'no enzymes native to this site')}</small></span>
+       </div>`);
+  }
+  tutHighlight();
+}
+
+/* ---------------- PETadex browser ---------------- */
+function renderDex() {
+  const e = ENZYMES[state.idx], have = state.caught.has(e.id);
+  $('dex-no').textContent = 'No. ' + String(state.idx + 1).padStart(3, '0');
+  drawSprite($('dex-sprite'), e.id, CLASSES[e.cls].pal, { hidden: !have });
+  $('dex-name').textContent = have ? e.name : '???';
+  $('dex-cls').textContent = have ? e.cls + ' class' : 'Unsequenced. Win in ' + biomeById(e.biome).name + ' to sequence.';
+  const stats = $('dex-stats'); stats.innerHTML = '';
+  const rows = [['HP', e.hp, 120], ['ATK', e.atk, 40], ['SPD', e.spd, 20]];
+  for (const [k, v, max] of rows) {
+    const shown = have ? v : '?';
+    stats.insertAdjacentHTML('beforeend',
+      `<span>${k}</span><span class="bar"><span style="width:${have ? Math.min(100, v / max * 100) : 0}%"></span></span><span>${shown}</span>`);
+  }
+  $('dex-raw').textContent = have ? `Tm ${e.tm}C | rel. activity ${e.act} | ${e.len} aa | found in ${biomeById(e.biome).name}` : '';
+  $('dex-count').textContent = `${state.idx + 1} / ${ENZYMES.length}  (${state.caught.size} sequenced)`;
+  $('dex-prev').disabled = state.idx === 0;
+  $('dex-next').disabled = state.idx === ENZYMES.length - 1;
+  tutHighlight();
+}
+function step(d) { const n = state.idx + d; if (n < 0 || n >= ENZYMES.length) return; state.idx = n; save(); renderDex(); }
+$('dex-prev').onclick = () => step(-1);
+$('dex-next').onclick = () => step(1);
+$('dex').addEventListener('keydown', ev => {
+  if (ev.target.tagName === 'BUTTON' && (ev.key === 'Enter' || ev.key === ' ')) return;
+  if (ev.key === 'ArrowLeft') { step(-1); ev.preventDefault(); }
+  if (ev.key === 'ArrowRight') { step(1); ev.preventDefault(); }
+});
+
+/* ---------------- Reset ---------------- */
+$('dex-reset').onclick = () => {
+  if (!confirm('Erase all progress?\n\nYou will be back to a single enzyme (IsPETase) at The Beach, with the tutorial replayed.')) return;
+  try { localStorage.removeItem(SAVE_KEY); } catch (err) { /* ignore */ }
+  state = freshState();
+  save();
+  if (!$('overlay').hidden) closeBattle();
+  renderDex();
+  renderCoverage();
+  tutShow();
+  $('battle-open').focus();
+};
+
+/* ---------------- Tutorial walkthrough ---------------- */
+const TUT = [
+  { id: 'dex',  on: 'open-battle', target: 'battle-open', text:
+    'Welcome to the PETadex. You hold exactly one enzyme: IsPETase, the mesophilic PETase from Ideonella sakaiensis ' +
+    'with Tm 48C and modest activity. That is the whole starting toolkit. Press BATTLE to take it into the field.' },
+  { id: 'site', on: 'start-battle', target: 'biome-beach', text:
+    'The Beach is the only site open, and the only one IsPETase can survive: 30C, weathered PET film and bottles. ' +
+    'Everywhere else is locked until you clear it. Select The Beach, read the match report, then press Start battle.' },
+  { id: 'bind', on: 'move-bind', target: 'move-bind', text:
+    'Read the type numbers: PETase on weathered amorphous film is x1.6, super effective. The same enzyme on the ' +
+    'crystalline bottle beside it manages only x1.0, and crystallinity blunts every hit, so IsPETase cannot win that ' +
+    'fight at all. Open with Bind: adsorbing to the surface makes your next Hydrolyze 1.6x stronger.' },
+  { id: 'hyd',  on: 'move-hydrolyze', target: 'move-hydrolyze', text:
+    'Now Hydrolyze to cleave the ester bonds while you are still bound to the surface.' },
+  { id: 'tips', on: 'battle-over', target: null, text:
+    'Keep going. Refold recovers 25% HP when the plastic wears you down, and crystallinity blunts every hit. Above ' +
+    '65C that penalty is halved, which is exactly why thermostable enzymes and hot reactors matter. Battle again until ' +
+    'you win here.' },
+  { id: 'seq',  on: 'sequenced', target: 'res-seq', text:
+    'You cleared The Beach. Sequencing a sample is the only way to get a new enzyme, so press it to add one from this ' +
+    'biome to your PETadex.' },
+  { id: 'done', on: 'dismiss', target: 'res-home', text:
+    'That is the whole loop. The Beach was the easy case. IsPETase already loses to the crystalline bottle next to that ' +
+    'film, and every other site is hotter, tougher, or a polyolefin with no ester bonds at all. One enzyme cannot ' +
+    'cover them. Return to the PETadex and read the coverage board: NEED THERMOSTABILITY means the temperature beat you, ' +
+    'NEED A NEW CLASS means the substrate did, and NEEDS CHEMISTRY means no enzyme exists yet. Go find the right tool ' +
+    'for each job.' }
+];
+const tutIndex = id => TUT.findIndex(t => t.id === id);
+function tutHighlight() {
+  for (const el of document.querySelectorAll('.tut-target')) el.classList.remove('tut-target');
+  const t = TUT[state.tut];
+  if (t && t.target) { const el = $(t.target); if (el) el.classList.add('tut-target'); }
+}
+function tutShow() {
+  const t = TUT[state.tut];
+  document.body.classList.toggle('coached', !!t);
+  $('coach').hidden = !t;
+  if (t) {
+    $('coach-step').textContent = `TUTORIAL · STEP ${state.tut + 1} / ${TUT.length}`;
+    $('coach-text').textContent = t.text;
+    $('coach-skip').textContent = t.id === 'done' ? 'Got it' : 'Skip tutorial';
+  }
+  tutHighlight();
+}
+// Advance only if the completed action is the one this step was waiting for.
+function tut(event) {
+  const t = TUT[state.tut];
+  if (t && t.on === event) { state.tut++; save(); tutShow(); } else tutHighlight();
+}
+// Jump forward when the player takes a shortcut (wins without binding, nothing left to sequence, ...).
+function tutJump(id) {
+  const i = tutIndex(id);
+  if (state.tut < i) { state.tut = i; save(); }
+  tutShow();
+}
+$('coach-skip').onclick = () => { state.tut = TUT.length; save(); tutShow(); };
+
+/* ---------------- Dialog shell (focus, Escape) ---------------- */
+let lastFocus = null;
+function openBattle() {
+  lastFocus = document.activeElement;
+  $('overlay').hidden = false;
+  tut('open-battle');
+  showSetup();
+  $('bt-title').focus();
+}
+function closeBattle() {
+  $('overlay').hidden = true;
+  renderDex();
+  renderCoverage();
+  (lastFocus || $('battle-open')).focus();
+}
+$('battle-open').onclick = openBattle;
+$('bt-close').onclick = closeBattle;
+$('res-home').onclick = closeBattle;
+$('overlay').addEventListener('click', ev => { if (ev.target === $('overlay')) closeBattle(); });
+document.addEventListener('keydown', ev => {
+  if ($('overlay').hidden) return;
+  if (ev.key === 'Escape') { closeBattle(); return; }
+  if (ev.key !== 'Tab') return;
+  const f = [...$('dialog').querySelectorAll('button:not(:disabled), select, a[href], [tabindex="0"]')]
+    .filter(el => el.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (ev.shiftKey && (document.activeElement === first || document.activeElement === $('bt-title'))) { last.focus(); ev.preventDefault(); }
+  else if (!ev.shiftKey && document.activeElement === last) { first.focus(); ev.preventDefault(); }
+});
+function showScreen(name) {
+  for (const s of ['setup', 'battle', 'result']) $('scr-' + s).hidden = s !== name;
+}
+
+/* ---------------- Setup screen ---------------- */
+function showSetup() {
+  showScreen('setup');
+  $('bt-title').textContent = 'Choose your battle';
+  if (!unlocked(biomeById(state.biome))) state.biome = 'beach';
+  const sel = $('bt-enzyme'); sel.innerHTML = '';
+  const owned = ENZYMES.filter(e => state.caught.has(e.id));
+  for (const e of owned) sel.add(new Option(`${e.name} (${e.cls}, Tm ${e.tm}C)`, e.id));
+  const cur = ENZYMES[state.idx];
+  sel.value = state.caught.has(cur.id) ? cur.id : owned[0].id;
+  const classes = [...new Set(owned.map(e => e.cls))];
+  $('bt-roster').textContent =
+    `(${owned.length} of ${ENZYMES.length} sequenced, ${classes.length} of ${Object.keys(CLASSES).length} classes: ${classes.join(', ')})`;
+  const box = $('bt-biomes'); box.innerHTML = '';
+  for (const b of BIOMES) {
+    const btn = document.createElement('button');
+    btn.className = 'biome'; btn.id = 'biome-' + b.id;
+    const open = unlocked(b);
+    btn.disabled = !open;
+    btn.setAttribute('aria-pressed', String(b.id === state.biome));
+    btn.innerHTML = open
+      ? `${b.name}<small>${b.temp}C | ${b.plastics.map(p => PLASTICS[p].name).join(', ')}</small>`
+      : `${b.name} [LOCKED]<small>Win in ${b.needs.map(n => biomeById(n).name).join(' and ')}</small>`;
+    btn.onclick = () => { state.biome = b.id; save(); showSetup(); $('biome-' + b.id).focus(); };
+    box.appendChild(btn);
+  }
+  sel.onchange = updateReport;
+  updateReport();
+}
+// Spell out, before committing, exactly how this enzyme stacks up against this site.
+function updateReport() {
+  const e = ENZYMES.find(x => x.id === $('bt-enzyme').value), b = biomeById(state.biome);
+  const hot = b.temp > e.tm - 5;
+  const rows = b.plastics.map(pid => {
+    const v = effOf(e, pid), pl = PLASTICS[pid];
+    return `<tr><td>${pl.name}</td><td>${Math.round(pl.cryst * 100)}% crystalline</td>
+      <td class="${effTone(v)}">x${v.toFixed(2)} ${effWord(v)}</td></tr>`;
+  }).join('');
+  const v = verdict(b);
+  $('bt-report').innerHTML =
+    `<h4>Match report: ${e.name} (${e.cls}) vs ${b.name}, ${b.temp}C</h4>
+     <div class="${hot ? 'bad-t' : 'good-t'}">Thermal: Tm ${e.tm}C, ${hot
+       ? `denatures at ${b.temp}C, bleeding HP every turn`
+       : `stable at ${b.temp}C`}</div>
+     <table>${rows}</table>
+     <div class="call"><b>Best in your whole PETadex:</b> <span class="${v.tone}">${v.text}</span></div>`;
+  const w = [];
+  if (hot) w.push(`${b.temp}C is near or above ${e.name}'s Tm (${e.tm}C): it will denature each turn.`);
+  if (b.temp >= 65) w.push('Near PET glass transition: crystallinity penalty halved.');
+  if (b.id === 'petrochem') w.push('Boss. Polyolefins have no ester bonds. Try Pretreat.');
+  $('bt-warn').textContent = w.join(' ');
+  tutHighlight();
+}
+$('bt-start').onclick = () => { const id = $('bt-enzyme').value; tut('start-battle'); newBattle(id, state.biome); };
+
+/* ---------------- Battle ---------------- */
+let B = null;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const roll = () => 0.85 + Math.random() * 0.3;
+
+function newBattle(enzymeId, biomeId) {
+  const e = ENZYMES.find(x => x.id === enzymeId), b = biomeById(biomeId);
+  // During the walkthrough, serve the substrate IsPETase can actually beat (weathered amorphous film).
+  // Once the tutorial is done The Beach randomises again, and the crystalline bottle makes the point
+  // that this enzyme has run out of road.
+  const tutorialRun = state.tut < TUT.length && b.id === 'beach';
+  const p = tutorialRun ? PLASTICS.PETa
+    : PLASTICS[b.plastics[Math.floor(Math.random() * b.plastics.length)]];
+  B = { e, p, b, eHp: e.hp, pHp: p.hp, bound: false, refolds: 2, pretreated: false, busy: false, over: false };
+  showScreen('battle');
+  $('bt-title').textContent = `${b.name} (${b.temp}C)`;
+  $('bt-log').innerHTML = '';
+  log(`A wild ${p.name} appeared!`);
+  log(`Go, ${e.name}!`);
+  const eff0 = EFFECT[e.cls][p.id];
+  log(`${e.cls} vs ${p.name}: x${eff0.toFixed(2)}, ${effWord(eff0)}.`);
+  if (b.temp > e.tm - 5) log(`${b.temp}C is above ${e.name}'s safe range (Tm ${e.tm}C). A more thermostable enzyme would hold up.`);
+  renderFighters(true);
+  renderMoves();
+}
+
+function fighterHTML(who, name, meta, hp, max) {
+  const pct = Math.max(0, hp / max * 100);
+  return `<div class="name">${name}</div><div class="meta">${meta}</div>
+    <div class="sprite-box"><canvas class="sprite" id="spr-${who}" aria-hidden="true"></canvas></div>
+    <div class="hp${pct < 30 ? ' low' : ''}"><span style="width:${pct}%"></span></div>
+    <div class="hptext">HP ${Math.max(0, hp)} / ${max}</div>`;
+}
+function renderFighters(redraw) {
+  const { e, p } = B;
+  $('f-enzyme').innerHTML = fighterHTML('e', e.name, `${e.cls} | ATK ${e.atk} SPD ${e.spd}${B.bound ? ' | bound' : ''}`, B.eHp, e.hp);
+  $('f-plastic').innerHTML = fighterHTML('p', p.name + (p.boss ? ' (BOSS)' : ''),
+    `cryst ${Math.round(p.cryst * 100)}% | ATK ${p.atk} SPD ${p.spd}${B.pretreated ? ' | oxidised' : ''}`, B.pHp, p.hp);
+  drawSprite($('spr-e'), e.id, CLASSES[e.cls].pal);
+  drawSprite($('spr-p'), p.id, p.pal, { eyes: !!p.boss });
+}
+
+// First three are enzyme activities. Pretreat is NOT an enzyme or an enzyme action: it is an
+// abiotic UV/thermo-oxidative process step, the only way to put attackable groups on a
+// polyolefin that has no hydrolysable bonds to begin with.
+const MOVES = [
+  { id: 'hydrolyze', name: 'Hydrolyze', desc: 'Enzyme: cleave ester bonds' },
+  { id: 'bind',      name: 'Bind',      desc: 'Enzyme: next Hydrolyze x1.6' },
+  { id: 'refold',    name: 'Refold',    desc: 'Enzyme: heal 25% HP' },
+  { id: 'pretreat',  name: 'Pretreat *', desc: '* Not an enzyme. Abiotic UV/oxidation step' }
+];
+function renderMoves() {
+  const box = $('bt-moves'); box.innerHTML = '';
+  for (const m of MOVES) {
+    const btn = document.createElement('button');
+    btn.id = 'move-' + m.id;
+    let extra = '';
+    if (m.id === 'refold') extra = ` (${B.refolds} left)`;
+    btn.innerHTML = `${m.name}${extra}<small>${m.desc}</small>`;
+    btn.disabled = B.busy || B.over
+      || (m.id === 'refold' && B.refolds === 0)
+      || (m.id === 'pretreat' && (!B.p.polyolefin || B.pretreated));
+    btn.onclick = () => turn(m.id);
+    box.appendChild(btn);
+  }
+  tutHighlight();
+}
+function log(msg) {
+  const li = document.createElement('li'); li.textContent = msg;
+  const ul = $('bt-log'); ul.appendChild(li); ul.scrollTop = ul.scrollHeight;
+}
+
+function effectiveness() {
+  let eff = EFFECT[B.e.cls][B.p.id];
+  if (B.pretreated) eff = Math.max(eff, 0.8);
+  return eff;
+}
+
+function enzymeAct(move) {
+  const { e, p, b } = B;
+  if (move === 'bind') { B.bound = true; log(`${e.name} binds to the ${p.name} surface.`); return; }
+  if (move === 'refold') { const h = Math.round(e.hp * 0.25); B.eHp = Math.min(e.hp, B.eHp + h); B.refolds--; log(`${e.name} refolds and recovers ${h} HP.`); return; }
+  if (move === 'pretreat') { B.pretreated = true;
+    log(`Abiotic step (no enzyme): UV/oxidation adds carbonyl groups to ${p.name}, giving ${e.name} something to grip.`);
+    return; }
+  const eff = effectiveness();
+  let dmg = e.atk * eff * (B.bound ? 1.6 : 1);
+  dmg *= 1 - p.cryst * (b.temp >= 65 ? 0.4 : 0.8);
+  dmg = Math.max(1, Math.round(dmg * roll()));
+  B.bound = false;
+  B.pHp -= dmg;
+  log(`${e.name} used Hydrolyze for ${dmg} damage.`);
+  if (eff >= 1.2) log('Super effective!');
+  else if (eff <= 0.3) log('Barely a scratch. No ester bonds to cut.');
+}
+function plasticAct() {
+  const { e, p } = B;
+  const eff = EFFECT[e.cls][p.id];
+  const dmg = Math.max(1, Math.round(p.atk * (eff >= 1.2 ? 0.6 : 1) * roll()));
+  B.eHp -= dmg;
+  const verbs = p.polyolefin ? 'jams the active site' : 'leaches additives';
+  log(`${p.name} ${verbs}: ${dmg} damage.${eff >= 1.2 ? ' Resisted!' : ''}`);
+}
+function endOfTurn() {
+  const { e, b } = B;
+  if (b.temp > e.tm - 5) {
+    const d = Math.ceil(e.hp * 0.08); B.eHp -= d;
+    log(`${e.name} is denaturing at ${b.temp}C: ${d} damage.`);
+  }
+}
+function checkOver() {
+  if (B.pHp <= 0) { finish(true); return true; }
+  if (B.eHp <= 0) { finish(false); return true; }
+  return false;
+}
+
+async function turn(move) {
+  if (B.busy || B.over) return;
+  tut('move-' + move);
+  B.busy = true; renderMoves();
+  const enzymeFirst = B.e.spd >= B.p.spd;
+  const steps = enzymeFirst ? [() => enzymeAct(move), plasticAct] : [plasticAct, () => enzymeAct(move)];
+  for (let i = 0; i < steps.length; i++) {
+    if (i > 0) await wait(550);
+    steps[i](); renderFighters();
+    if (checkOver()) return;
+  }
+  endOfTurn(); renderFighters();
+  if (checkOver()) return;
+  B.busy = false; renderMoves();
+}
+
+// Why you lost, in terms of the enzyme you were missing rather than the buttons you pressed.
+function lossHint() {
+  const { e, p, b } = B;
+  if (b.temp > e.tm - 5)
+    return `At ${b.temp}C, ${e.name} denatures (Tm ${e.tm}C) and loses HP every turn. This site wants an enzyme with ` +
+           `Tm above ${b.temp + 5}C. That is a sequencing problem, not a tactics problem.`;
+  if (p.polyolefin && !p.boss)
+    return `${p.name} has no ester bonds, so Pretreat (UV/oxidation) first to give any enzyme a grip. Even oxidised ` +
+           'it resists hard at x0.25: this one needs your highest-activity enzyme, not a better opening move.';
+  if (p.boss)
+    return `You could not beat ${p.name}, and neither could the field. There are no ester bonds in it for any ` +
+           `enzyme to cleave, so nothing on record degrades ${p.name}: this is not a gap in your PETadex, it is a gap ` +
+           'in the science. That is exactly what we are addressing. By mining for new and better enzymes, we are ' +
+           `trying to find the one that can finally match up against ${p.name} and beat it.`;
+  const v = EFFECT[e.cls][p.id];
+  if (v < 0.6)
+    return `${e.cls} only manages x${v.toFixed(2)} on ${p.name}: the wrong enzyme family for these bonds. Find a class ` +
+           'that actually cuts this substrate.';
+  if (p.cryst >= 0.3)
+    return `${p.name} is ${Math.round(p.cryst * 100)}% crystalline, which blunts every hit. A higher-activity enzyme, ` +
+           'or a hotter site above 65C, would cut through it faster.';
+  return 'Close. Try Bind before Hydrolyze, or bring a higher-activity enzyme.';
+}
+
+async function finish(won) {
+  B.over = true; renderMoves();
+  log(won ? `${B.p.name} was degraded!` : `${B.e.name} was inactivated.`);
+  const opensNow = [];
+  if (won) {
+    const before = new Set(BIOMES.filter(unlocked).map(b => b.id));
+    state.won.add(B.b.id);
+    for (const b of BIOMES) if (!before.has(b.id) && unlocked(b)) opensNow.push(b);
+    save();
+  }
+  await wait(700);
+  showScreen('result');
+  $('bt-title').textContent = won ? 'Victory' : 'Defeated';
+  $('res-title').textContent = won ? 'Victory!' : 'Defeated';
+  $('res-text').textContent = won
+    ? `${B.e.name} broke down ${B.p.name} into monomers.` + (opensNow.length
+        ? ` New sites open: ${opensNow.map(b => `${b.name} (${b.temp}C, ${b.plastics.map(pid => PLASTICS[pid].name).join('/')})`).join(', ')}.`
+        : '')
+    : `${B.p.name} outlasted ${B.e.name}. ${lossHint()}`;
+  const row = $('res-seq-row'); row.innerHTML = '';
+  const unseq = poolFor(B.b.id).filter(e => !state.caught.has(e.id));
+  if (won && unseq.length) {
+    const btn = document.createElement('button');
+    btn.className = 'primary'; btn.id = 'res-seq';
+    btn.textContent = 'Sequence a sample (Illumina)';
+    btn.onclick = () => {
+      const got = unseq[Math.floor(Math.random() * unseq.length)];
+      state.caught.add(got.id);
+      state.idx = ENZYMES.indexOf(got);
+      save();
+      $('res-text').textContent =
+        `Sequenced a new enzyme: ${got.name} (${got.cls}, Tm ${got.tm}C, rel. activity ${got.act}). ` +
+        'Added to the PETadex. Check the coverage board to see which sites it finally opens up.';
+      btn.remove();
+      renderCoverage();
+      tut('sequenced');
+    };
+    row.appendChild(btn);
+  }
+  if (!won && B.p.boss) {
+    const link = document.createElement('a');
+    link.id = 'res-wiki'; link.className = 'btn-link';
+    link.href = WIKI_URL; link.target = '_blank'; link.rel = 'noopener';
+    link.textContent = `See how we are hunting for an enzyme that beats ${B.p.name} →`;
+    row.appendChild(link);
+  }
+  renderCoverage();
+  if (won) tutJump(unseq.length ? 'seq' : 'done'); else tutJump('tips');
+  $('res-again').focus();
+}
+$('res-again').onclick = () => newBattle(B.e.id, B.b.id);
+$('res-setup').onclick = () => { showSetup(); $('bt-enzyme').focus(); };
+
+renderDex();
+renderCoverage();
+tutShow();
+</script>
+</body>
+</html>

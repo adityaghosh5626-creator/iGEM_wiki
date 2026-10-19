@@ -58,6 +58,8 @@ export function VintageMonthGrid({
   months = CONTRIBUTION_MONTHS,
   trackById = MILESTONE_TRACK_BY_ID,
   fit = false,
+  /** Dates to outline: the open iteration thread's steps. */
+  markedDates = null,
 }) {
   const month = months.find((m) => m.key === monthKey)
   const rows = useMemo(() => {
@@ -83,16 +85,18 @@ export function VintageMonthGrid({
             const isSelected = weekId === selectedWeekId
             const dayNum = parseInt(ymd.split("-")[2], 10)
             const milestones = milestonesByDate[ymd] || []
+            const marked = Boolean(markedDates?.has(ymd))
 
             return (
               <Cell
                 key={ymd}
                 $fit={fit}
+                $marked={marked}
                 $inBand={isSelected}
                 $outOfMonth={!inMonth}
                 role="button"
                 tabIndex={0}
-                aria-label={`${formatDayShort(ymd)}${!inMonth ? ", outside month" : ""}${isSelected ? ", selected week" : ""}`}
+                aria-label={`${formatDayShort(ymd)}${!inMonth ? ", outside month" : ""}${isSelected ? ", selected week" : ""}${marked ? ", step in the open iteration" : ""}`}
                 onClick={() => onSelectWeek(weekId)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -263,6 +267,24 @@ const Cell = styled.div`
     `
     min-height: 0;
     padding: 0.3rem 0.35rem;
+  `}
+
+  /* A step in the open iteration thread: a ring and a corner marker. */
+  ${({ $marked }) =>
+    $marked &&
+    `
+    box-shadow: inset 0 0 0 2px var(--cal-ink, #06202b);
+
+    &::after {
+      content: "↻";
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--cal-ink, #06202b);
+    }
   `}
 `
 

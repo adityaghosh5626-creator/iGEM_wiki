@@ -93,18 +93,36 @@ LOBSTER on one enzyme cluster: adjust the degeneracy and see the fragment librar
   delete the static/ copies:
     - diamond-search-logo.avif, from
       petadex-sequence-search/assets/diamond-logo-web.png
-    - diamond-search-architecture.svg, from
+    - diamond-search-architecture-simple.svg (this page), rendered from
+      dennis-scratch/diamond_sharded-architecture-simple.d2 with
+      d2 --theme 200 --sketch; the d2 file's header has the command and
+      says what it drops against the full figure. Re-measure the hotspot
+      boxes in DiamondSearch.js (SIMPLE_HOTSPOTS) if it is re-rendered.
+    - diamond-search-architecture.svg, the full portrait figure, used on
+      the Methods page only, from
       dennis-scratch/diamond_sharded-architecture.svg
       (= petadex-sequence-search/infra/architecture.svg)
     - diamond-search-temporal.svg, the README's Mermaid "Temporal view"
       rendered with mermaid-cli (neutral theme), with its stale labels
       updated: 32 workers, shard_N.fa.zst, ~40 s fan-out
 
-  Demo D2 (MVP), still to build: 3 to 5 precomputed queries, IsPETase and LCC
-  among them, real hit table, sortable and filterable, under 300 KB. Present
-  it as a real result from the live tool, not as live search, and link out
-  to petadex.net. IsPETase and FAST-PETase results already exist in S3 under
-  results/regen_example_ispetase and results/regen_example_fast_petase.
+  Demo D2 is built: <DiamondSearchDemo />, src/data/diamondSearchDemo.json
+  (46 KB, no network calls). Ten real searches run on the live tool on
+  2026-10-19 against catalytic_orfs_v1.1_20260610_173654, search_version
+  1.4.0; top 25 hits of each are shipped, summaries use all stored hits.
+  Source and the three regeneration scripts:
+  petadex-sequence-search/wiki-demo/ (README.md has the steps and the
+  decisions behind the enzyme set).
+
+  BEFORE PUBLISHING, check the two outward links in the demo:
+    - "Open this full result on petadex.net" per query, which resolves
+      results/{sessionId}; the session IDs were minted the way the website
+      mints them, but api.petadex.net timed out on 2026-10-19, so none of
+      the ten was confirmed to open.
+    - the per-hit "Sequence page on petadex.net" links, /sequence/orf/{id}.
+  Hit annotations come from ENA, NCBI and RCSB, not the site's family data,
+  so Logan hits read "sample labelled X": ENA records what the submitter
+  called the sample, not the organism the enzyme came from.
 */}
 
 <DiamondSearchHero logoSrc="/figures/diamond-search/diamond-search-logo.avif" />
@@ -116,10 +134,11 @@ Researchers often come to our database and ask a simple question.
 We can tell what it is by looking at the enzymes that are similar to it using the entirety of the PETadex corpus. We've built this into a lightweight tool in the web-browser, no installs and less than a minute runtime.
 
 <ArchitectureFigure
-  src="/figures/diamond-search/diamond-search-architecture.svg"
-  alt="Architecture of the sharded DIAMOND search. The petadex.net search page sends the query to an orchestrator Lambda, which parses it, reads the current database version and shard manifest from S3, returns a job ID at once and starts a Step Functions Map. The Map runs one worker Lambda per shard in parallel; each downloads its shard from S3, runs diamond blastp and writes its hits to S3. An aggregator Lambda merges the shard results, ranks them by bit score, adds metadata from RDS and writes the result, which the web page polls for."
-  caption="The database is split into shards that are all searched at the same time, then merged into one ranked list. Click a component to read how it works."
-  width="34rem"
+  variant="simple"
+  src="/figures/diamond-search/diamond-search-architecture-simple.svg"
+  alt="The sharded DIAMOND search, left to right. The petadex.net search page sends one sequence to an orchestrator, which replies with a job ID straight away and starts a Step Functions Map. The Map runs 32 workers at once, each taking one of the 32 shards of the database from S3 and searching it. Their hits go to an aggregator, which merges and ranks them and writes the stored result that the web page polls for."
+  caption="One search, left to right. The database is split into 32 shards that are all searched at the same time, then merged into one ranked list. Amber boxes are compute, blue cylinders are storage, and the dashed lines are the immediate reply and the web app's polling. Hover or click a component to read how it works."
+  width="100%"
   sectionsPath="/dry-lab/software/diamond-search/"
 />
 
@@ -132,15 +151,15 @@ Nothing runs between searches, so the tool costs almost nothing while it waits f
   width="100%"
 />
 
+Below is what comes back. Each of these ten searches was really run on the live tool, and the replay shows the shards finishing and merging the way the real pipeline does, sped up from about 45 seconds to two.
+
+<DiamondSearchDemo />
+
+MHETase is the one to try for a contrast: it is IsPETase's partner enzyme but has a different fold, and the search finds only 134 relatives, the closest about 34% identical, where every PETase here fills the 500-hit cap. SRR10663367 is the question we opened with — a sequence from Logan that nobody had identified, whose closest neighbours turn out to be *Nonomuraea* PET hydrolases at 71% identity.
+
 <MethodsLink>How the database is split, why the merged ranking is exact, how results are versioned and cached, and how we measured all of this.</MethodsLink>
 
 *Owner: Dennis*
-
-<Placeholder label="Placeholder demo">
-
-Search results for a handful of well-known enzymes: a real hit table from the live tool that can be sorted and filtered.
-
-</Placeholder>
 
 ## Sequence record card
 

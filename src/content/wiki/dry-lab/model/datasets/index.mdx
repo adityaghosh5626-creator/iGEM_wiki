@@ -50,10 +50,10 @@ status: "draft"
     - Licensing: the four label sets and the halo screen are CC BY 4.0 as of
       2026-10-18. The two corpus cards still say pending, so the page does
       not state a licence for them.
-    - Attribution (2026-10-19): the halo screen is our SUPERVISING LAB's
+    - Attribution (2026-10-19): the halo screen is our COLLABORATOR LAB's
       work, not the team's own wet lab. The published HF card and the licence
       rationale in the vault note both still call it in-house iGEM Toronto
-      data; both need the same correction, and the supervising lab should be
+      data; both need the same correction, and the collaborator lab should be
       named here once we know how they want to be credited.
     - Activity Prediction must say which split its metrics came from, and
       must not quote anything computed on the v1 test fold.
@@ -108,14 +108,14 @@ Two layers need care. Logan ORFs are read from one stop codon to the next, so on
 
 ## The PETai activity labels
 
-The labels are 12,888 measurements of activity and stability on 1,219 protein sequences, from 649 published references and a wet lab screen run by our supervising lab. Three of the four sources read the literature; the fourth is a plate assay. Each is published as its own dataset, because they differ in kind and each moves on its own schedule, and the unified set is the merge of all four, joined on sequence MD5. Every label carries the repository and row it came from, so it resolves back to exactly one row in its source.
+The labels are 12,888 measurements of activity and stability on 1,219 protein sequences, from 649 published references and a wet lab screen run by our collaborator lab. Three of the four sources read the literature; the fourth is a plate assay. Each is published as its own dataset, because they differ in kind and each moves on its own schedule, and the unified set is the merge of all four, joined on sequence MD5. Every label carries the repository and row it came from, so it resolves back to exactly one row in its source.
 
 | Source | How we got it | Labels | Sequences | Papers |
 |---|---|---|---|---|
 | [Human-scraped](https://huggingface.co/datasets/petadex/petai-labels-human) | Curators read papers and entered every measurement | 6,655 | 458 | 59 |
 | [LLM-scraped](https://huggingface.co/datasets/petadex/petai-labels-llm) | Our language-model pipeline read papers at scale | 4,694 | 455 | 572 |
 | [Kinetics](https://huggingface.co/datasets/petadex/petai-labels-kinetics) | kcat, Km and kcat/Km compiled from the literature | 1,342 | 206 | 74 |
-| [Halo screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our supervising lab's BHET plate assay | 197 | 197 | — |
+| [Halo screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our collaborator lab's BHET plate assay | 197 | 197 | — |
 
 Sequence counts are each source's own and overlap between sources, so they sum to more than 1,219. The overlap is small: 358 of the 455 sequences in the LLM set carry no label from any other source, and only 14 kinetics sequences also appear in the human-scraped set.
 
@@ -133,7 +133,7 @@ Its weaknesses are the price of that breadth. It recorded no pH, temperature or 
 
 Against that, 328 of its 464 rows measure a soluble surrogate ester rather than a plastic, so a PET-specific task has little to work with. A class code covering 222 rows, 48% of the table, is undefined and nobody can say what it denotes. Every p-nitrophenyl structure string encodes its nitro group wrongly and one naphthyl compound carries another's structure, so the SMILES need fixing before they are used as features. Its 10 rows recorded as inactive on PET would be the cleanest negatives anywhere, but as published they have blank kcat cells and no DOI.
 
-**Halo screen.** Our supervising lab grew each enzyme on BHET plates and measured the clearing around the colony. 253 genes were screened and 197 have both a sequence and a label: 29 active and 168 inactive. The published set keeps all 3,036 gene-by-condition combinations and the 6,792 raw colony measurements behind them, so another threshold can be chosen; the label itself is taken at one fixed condition, 120 hours on BHET, where a gene counts as active if its clearing exceeds the empty-vector control by more than three standard errors. Taking each gene's best value across conditions instead would make every gene look active, because the largest of twelve noisy measurements is biased upward.
+**Halo screen.** Our collaborator lab grew each enzyme on BHET plates and measured the clearing around the colony. 253 genes were screened and 197 have both a sequence and a label: 29 active and 168 inactive. The published set keeps all 3,036 gene-by-condition combinations and the 6,792 raw colony measurements behind them, so another threshold can be chosen; the label itself is taken at one fixed condition, 120 hours on BHET, where a gene counts as active if its clearing exceeds the empty-vector control by more than three standard errors. Taking each gene's best value across conditions instead would make every gene look active, because the largest of twelve noisy measurements is biased upward.
 
 It supplies 168 of the release's 200 negatives, which is the only reason a binary classifier trained on the merge has two classes. Three limits belong with any result built on it: BHET is not PET, a failure to express is indistinguishable from a failure to catalyse, and most genes have only two replicates, so the measure is a call rather than a graded value.
 
@@ -147,7 +147,7 @@ Assay conditions are recorded unevenly, because they come from whichever source 
 
 ### Licensing
 
-All five datasets are released under CC BY 4.0. The measurements themselves are facts and not ours to license; what the licence covers is our compilation, curation, sequence recovery, clustering and split, and the plate screen our supervising lab contributed. Three things sit outside that grant, and each card says so: the values are facts whose source paper should be cited, publisher text, tables and figures remain with the publishers and no PDFs are redistributed, and sequences fetched from EBI, UniProt, RefSeq or RCSB carry those services' terms. The LLM set's verbatim evidence sentences are also outside the grant; they are short, factual and attributed to a DOI, and dropping that column leaves the rest of the dataset intact.
+All five datasets are released under CC BY 4.0. The measurements themselves are facts and not ours to license; what the licence covers is our compilation, curation, sequence recovery, clustering and split, and the plate screen our collaborator lab contributed. Three things sit outside that grant, and each card says so: the values are facts whose source paper should be cited, publisher text, tables and figures remain with the publishers and no PDFs are redistributed, and sequences fetched from EBI, UniProt, RefSeq or RCSB carry those services' terms. The LLM set's verbatim evidence sentences are also outside the grant; they are short, factual and attributed to a DOI, and dropping that column leaves the rest of the dataset intact.
 
 ## Splitting
 
@@ -182,7 +182,7 @@ We use this as a weak prior, not as evidence of activity. Only 0.7% of BioSample
 | [petadex/petai-labels-human](https://huggingface.co/datasets/petadex/petai-labels-human) | Human-scraped literature, with full assay conditions and the experiment tree | One label source |
 | [petadex/petai-labels-llm](https://huggingface.co/datasets/petadex/petai-labels-llm) | LLM-scraped literature, with the evidence sentence behind every value | One label source |
 | [petadex/petai-labels-kinetics](https://huggingface.co/datasets/petadex/petai-labels-kinetics) | Published kinetic constants, every row with its sequence | One label source |
-| [petadex/petai-halo-screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our supervising lab's BHET plate screen at every condition, with raw colony measurements | Negatives |
+| [petadex/petai-halo-screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our collaborator lab's BHET plate screen at every condition, with raw colony measurements | Negatives |
 
 Each dataset card documents its columns, how its tables join and its known caveats. Every table loads with the Hugging Face `datasets` library, and for joins across the full corpus, querying the Parquet files directly with DuckDB or Polars is much faster.
 
