@@ -89,7 +89,7 @@ export const SideFigure = ({ src, alt = "", caption, width = "40%", side = "righ
     <SideFigureText>{children}</SideFigureText>
     <SideFigureFrame>
       <SideFigureImage>
-        <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />
+        {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
       </SideFigureImage>
       {caption && <figcaption>{caption}</figcaption>}
     </SideFigureFrame>

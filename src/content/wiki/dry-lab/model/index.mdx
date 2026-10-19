@@ -367,10 +367,18 @@ Despite these limitations, the PETadex pilot dataset produced two putative novel
 
 Existing protein structure prediction databases such as AlphaFold DB (AFDB) [https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4] contain predicted protein structure cif files, alongside quality metrics such as pLDDT, pTM and the PAE matrix. These metrics measure structural quality and position pairwise error, which are useful for identifying domains and components. Specifically, these structures were utilized for HMM evaluation, and can also be used for further structural analysis.
 
-We searched these databases to find predicted structures for 7.8 PETadex v2 significant hits. AFDB is indexed by Uniprot accession, so PETadex accessions were converted to Uniprot accessions using the Uniprot idmapping [https://ftp.uniprot.org/pub/databases/uniprot/current_release/]. In total, structures and metrics for 580,146 PETadex v2 proteins were found in the AFDB, emphasizing the uncategorized nature of the PETadex. Below are the distributions of the downloaded structures grouped by component and domain. We found that Component 16 (Cytochrome P450) was the most common component, while Alpha/Beta hydrolase was the most common domain.
+We searched these databases to find predicted structures for 7.83M PETadex v2 significant hits. AFDB is indexed by Uniprot accession, so PETadex accessions were converted to Uniprot accessions using the Uniprot idmapping [https://ftp.uniprot.org/pub/databases/uniprot/current_release/]. In total, structures and metrics for 580,146 PETadex v2 proteins were found in the AFDB, emphasizing the uncategorized nature of the PETadex. Below are the distributions of the downloaded structures grouped by component and domain. We found that Component 16 (Cytochrome P450) was the most common component, while Alpha/Beta hydrolase was the most common domain.
 
-<Figure src="/figures/dry-lab-model/domain_distribution.png" alt="SignalP composite figure" width="100%" />
-<Figure src="/figures/dry-lab-model/component_distribution.png" alt="SignalP composite figure" width="100%" />
+<Figure
+  src="/figures/dry-lab-model/domain_distribution.png"
+  alt="Distribution of the AFDB-downloaded PETadex structures grouped by domain, with Alpha/Beta hydrolase the most common"
+  width="100%"
+/>
+<Figure
+  src="/figures/dry-lab-model/component_distribution.png"
+  alt="Distribution of the AFDB-downloaded PETadex structures grouped by component, with Component 16 (Cytochrome P450) the most common"
+  width="100%"
+/>
 ### Biochemical Properties and Ancestral Reconstruction
 
 Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly-sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
@@ -499,16 +507,16 @@ The model learns from two datasets. The PETadex corpus supplies the candidates i
 
 ### Embedding Controls
 
-Using the ESMC-600M Protein Language Model (PLM), we generated embeddings for X 30%pid PETadex centroids. These 640 dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library.
+Using the ESMC-600M Protein Language Model (PLM), we generated embeddings for the 30%pid PETadex centroids. These 640 dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library.
 
 <ImageGrid>
   <Figure
     src="/figures/dry-lab-model/cluster_plot.png"
-    alt="UMAPed enzymes, coloured by CATH domain"
+    alt="Family atlas UMAP of PETadex centroids, coloured by CATH domain"
   />
   <Figure
     src="/figures/dry-lab-model/Domain640.png"
-    alt="UMAPed enzymes, coloured by CATH domain"
+    alt="Silhouette scores per domain cluster for the 640-dimensional embeddings"
   />
 </ImageGrid>
 
@@ -518,11 +526,11 @@ Generate positive / real-world controls (random UniProt proteins, real-sequence 
 
 <Figure
   src="/figures/dry-lab-model/real_vs_controls_stacked.png"
-  alt="UMAPed enzymes, coloured by CATH domain"
+  alt="Real PETadex embeddings overlaid with shuffled, 90% fragment and random UniProt controls, in three panels"
   width="100%"
 />
 
-Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in Figure 3. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
+Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in the figure above. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
 
 ### Domain Adapted ESM-LoRA
 
