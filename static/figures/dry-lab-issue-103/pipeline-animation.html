@@ -4,8 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sequential Pipeline Crab Animation</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Plain CSS rather than the Tailwind CDN: the wiki can't load scripts
+           from third-party servers at runtime. The box-sizing rule keeps the
+           layout Tailwind's reset gave the container's border. */
+        *, ::before, ::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 1rem;
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e2e8f0;
+            color: #1e293b;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+
         #pipeline-container {
             position: relative;
             width: 100%;
@@ -56,7 +75,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-200 font-sans text-slate-800 flex justify-center items-center min-h-screen m-0 p-4">
+<body>
 
     <div id="pipeline-container"></div>
 
@@ -196,7 +215,7 @@
                 ]
             },
             {
-                name: "Phase 4: Literature Expansion (Wave of 8)",
+                name: "Phase 4: Literature Expansion (Wave of 16)",
                 crabType: 'paper1',
                 sizePercent: 6,
                 speedMsPer100Percent: 7000, 
@@ -330,13 +349,22 @@
                     
                     this.el.style.transitionDuration = `${durationMs}ms`;
 
+                    // transitionend never fires if the figure is hidden (display: none)
+                    // or the move has no length, so a timer finishes the move too;
+                    // otherwise one stuck crab would stall the whole sequence.
+                    let fallback = null;
+                    const finish = () => {
+                        clearTimeout(fallback);
+                        this.el.removeEventListener('transitionend', transitionEndHandler);
+                        resolve();
+                    };
                     const transitionEndHandler = (e) => {
                         if (e.propertyName === 'left' || e.propertyName === 'top') {
-                            this.el.removeEventListener('transitionend', transitionEndHandler);
-                            resolve();
+                            finish();
                         }
                     };
                     this.el.addEventListener('transitionend', transitionEndHandler);
+                    fallback = setTimeout(finish, durationMs + 100);
                     this.setPosition(targetPoint.x, targetPoint.y);
                 });
             }
@@ -355,14 +383,39 @@
 
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+        // Only send out new crabs while the figure is on screen and the tab is
+        // visible, so it isn't animating for nobody. Crabs already walking finish.
+        let onScreen = true;
+        let wakeUp = null;
+        const isVisible = () => onScreen && document.visibilityState === 'visible';
+        const recheck = () => {
+            if (wakeUp && isVisible()) {
+                wakeUp();
+                wakeUp = null;
+            }
+        };
+        const waitUntilVisible = () =>
+            isVisible() ? Promise.resolve() : new Promise(resolve => { wakeUp = resolve; });
+
+        function watchVisibility() {
+            document.addEventListener('visibilitychange', recheck);
+            if ('IntersectionObserver' in window) {
+                new IntersectionObserver((entries) => {
+                    onScreen = entries[0].isIntersecting;
+                    recheck();
+                }).observe(document.getElementById('pipeline-container'));
+            }
+        }
+
         async function runMasterSequence() {
             while (true) {
                 for (let i = 0; i < MASTER_SEQUENCE.length; i++) {
                     const phaseConfig = MASTER_SEQUENCE[i];
                     const repeats = phaseConfig.repeatCount || 1;
                     const rDelay = phaseConfig.repeatDelay !== undefined ? phaseConfig.repeatDelay : 0;
-                    
+
                     for (let r = 0; r < repeats; r++) {
+                        await waitUntilVisible();
                         const crab = new CrabSequence(phaseConfig);
                         const isLastCrab = (r === repeats - 1);
                         
@@ -383,6 +436,9 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            // With reduced motion the figure stays as the still pipeline diagram.
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            watchVisibility();
             runMasterSequence();
         });
     </script>
