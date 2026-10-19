@@ -28,6 +28,25 @@ wideProse: true
   /software. This page is the way in.
 */}
 
+{/*
+  Adjacency landscape: the interactive version of the conference talk figures,
+  ~/Documents/projects/petadex-adjacency-landscape/web/landscape.html.
+  `node scripts/sync-landscape-figure.mjs` copies it into
+  static/figures/dry-lab-landscape/; rerun make_landscapes.py there and rerun
+  that script rather than editing the copy.
+
+  The #8 opens it on its Story panel: the three-layer walkthrough on a dark
+  ground, each step captioned with what it adds to the argument rather than how
+  it was built. Panels 1-7 are still reachable from the strip at the bottom.
+*/}
+
+<InteractiveEmbed
+  src="/figures/dry-lab-landscape/landscape.html#8"
+  title="The PETadex adjacency landscape"
+  caption="Three layers over one map of sequence space: the dataset we built, the annotations hung on it, and what we read off them. Step through with ↓ Next, pick a step from the list on the right, or move sideways through a layer's views with ‹ View / View ›; drag to orbit."
+  dark
+/>
+
 <Callout title="Draft">
 The figures on this page are still being confirmed.
 </Callout>
