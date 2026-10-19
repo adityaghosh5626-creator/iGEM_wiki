@@ -4,9 +4,9 @@ section: "Dry Lab"
 path: "/dry-lab/model/datasets/"
 navTitle: "Model datasets methods"
 order: 21
-description: "The two datasets the PETadex model learns from, the corpus of candidates and the PETai activity labels, how they were split, and where to download them on Hugging Face."
+description: "The two datasets the PETadex model learns from, the corpus of candidates and the four sources of PETai activity labels, how they were split, and where to download them on Hugging Face."
 owners: ["Dry Lab"]
-updated: "2026-10-17"
+updated: "2026-10-18"
 status: "draft"
 ---
 
@@ -24,18 +24,43 @@ status: "draft"
       singletons, 6,591 largest hold half the ORFs; 22,235 30% clusters:
       petadex-corpus-full and petadex-corpus-centroids90
     - 98 / 1 / 1 split, 17,809,500 / 181,730 / 181,730: catalytic-orfs-90pid
-    - 13,092 labels, 1,219 sequences, 696 references, source counts, 200
-      negatives (168 halo), 796 train sequences in 70 clusters, 401 / 1,219
-      in the corpus by MD5 (327 nr, 109 PAZy, 21 Logan), pH 53.25% and
-      temperature 29.74% of labels: petai-activity-labels
+    - Every label number: the five Hugging Face cards published 2026-10-18
+      (petai-activity-labels v2, -labels-human, -labels-llm, -labels-kinetics,
+      -halo-screen) and the vault note "PETai HF Release Cards". v2 dropped
+      204 duplicate LLM rows, so the release is 12,888 labels, not 13,092,
+      and the LLM source is 4,694, not 4,898. Corpus overlap (401 / 1,219 by
+      MD5: 327 nr, 109 PAZy, 21 Logan) is still from the v1 card.
+    - Landscape figure and its numbers (0.7% / 0.15% of BioSamples with a
+      temperature / pH, 28,481 and 20,531 of 61,900 families, 14 to 22 °C,
+      pH 7.0 to 7.5, families A/B/C): README of
+      ~/Documents/projects/petadex-adjacency-landscape (conference talk)
 
   Open checks:
     - 307,155,746 should be the headline ORF count everywhere (Overview says
       "over 300 million"; Corpus-Scale Embedding notes list rivals).
-    - 1,342 kinetics labels here vs 464 rows in the Model page's Kinetics
-      Dataset subsection.
-    - The corpus cards still say the licence is pending.
-    - Which split were PETai's reported metrics computed on? See Splitting.
+    - Per-source sequence counts are each repo's own, not the 1,137 clean
+      set, so they overlap. Kinetics: 464 rows give 1,342 labels as
+      kcat 454 + Km 454 + kcat/Km 434. Halo: BHET25 at 120 h, z > 3.
+    - The LLM pipeline section on the Model page says ~4k papers and the card
+      says 5,960 extraction files; reconcile the two.
+    - Three open items from the release, all affecting claims here: validate
+      the LLM extractions on the 58 shared sequences, apply the fragment
+      remap (3,101 of 3,137 labels), run the MMseqs2 search against the 30%
+      centroids for real homology coverage.
+    - Licensing: the four label sets and the halo screen are CC BY 4.0 as of
+      2026-10-18. The two corpus cards still say pending, so the page does
+      not state a licence for them.
+    - Attribution (2026-10-19): the halo screen is our SUPERVISING LAB's
+      work, not the team's own wet lab. The published HF card and the licence
+      rationale in the vault note both still call it in-house iGEM Toronto
+      data; both need the same correction, and the supervising lab should be
+      named here once we know how they want to be credited.
+    - Activity Prediction must say which split its metrics came from, and
+      must not quote anything computed on the v1 test fold.
+    - Closing the loop (from Purav, Discord 2026-10-17). Owed by Purav:
+      how uncertainty is estimated, the acquisition rule, and the round 2
+      library's size and cluster count. If round 2 was not chosen this way,
+      change "was chosen" to "will be chosen".
 */}
 
 <Callout title="Methods for the model's datasets">
@@ -46,36 +71,102 @@ This page is the full write-up behind the [Datasets](/dry-lab/model/#datasets) s
 
 The model learns from two datasets that we publish separately and join on sequence MD5. The PETadex corpus supplies the candidates the model scores, and the PETai activity labels supply the targets it learns to predict. Neither contains the other: the corpus carries no activity data, and the labels carry no corpus annotations. Protein language model embeddings are in neither.
 
-## The corpus
+## The PETadex corpus
 
-The corpus holds 307,155,746 open reading frames (ORFs): 211 from PAZy, 4,723,128 from NCBI nr and 302,432,407 assembled from public sequencing runs through Logan. Each ORF comes with every annotation we could key to it: catalytic domain calls, signal peptides, biochemical properties, taxonomy, structures and the metadata of the sample it came from.
+The corpus is the output of [Dataset Generation](/dry-lab/model/#dataset-generation) on the Model page, which gives the methods for each step. In outline:
+
+1. **Known enzymes.** We gathered the plastic-degrading enzymes already reported in PAZy and the literature into a curated reference set, the [plasticome](/dry-lab/model/#plasticome-reference-curation), and grouped them by [fold](/dry-lab/model/#cath-assignment) and by [homology component](/dry-lab/model/#component-assignment).
+2. **Catalytic profiles.** For each component we built a [seed alignment and a profile HMM](/dry-lab/model/#seed-msas-and-catalytic-hmms) of its catalytic domain, with the positions of its catalytic residues.
+3. **NCBI nr.** We searched NCBI's non-redundant protein database for [homologs of the references](/dry-lab/model/#ncbi-nr-homology-expansion) and kept a hit only if a profile HMM found its catalytic domain.
+4. **Logan.** We clustered those proteins and used them as queries against [Logan](/dry-lab/model/#logan-query-extraction), which assembles the public sequencing runs in the Sequence Read Archive, with the same HMM filter.
+5. **Clustering.** We [clustered](/dry-lab/model/#clustering-and-corpus-structure) everything at 90%, 60% and 30% identity.
+
+The result holds 307,155,746 open reading frames (ORFs): 211 from PAZy, 4,723,128 from NCBI nr and 302,432,407 from Logan.
 
 The corpus is highly redundant. Only 40% of the ORFs are distinct sequences, half of its 18,172,960 clusters at 90% identity are singletons, and the largest 6,591 clusters hold half of all ORFs. We therefore adapted the protein language model on the 90% cluster centroids rather than on raw ORFs, split 98 / 1 / 1 into training, validation and test sets.
 
-## The activity labels
+### What each sequence carries
 
-The labels hold 13,092 activity and stability measurements on 1,219 sequences. They come from 696 published papers, through the human and language-model extraction described on the Model page, and from our own halo screen.
+Every ORF comes with each annotation we could key to it. The [Sequence Annotation](/dry-lab/model/#sequence-annotation) section of the Model page describes how each layer was computed. Coverage differs between layers, and a missing value means the sequence was not annotated, not that it lacks the feature.
 
-| Source | Labels |
-|---|---|
-| Hand-curated activity | 6,655 |
-| LLM-extracted | 4,898 |
-| Published kinetics | 1,342 |
-| Our halo screen | 197 |
+| Annotation | What it records | Coverage |
+|---|---|---|
+| [Catalytic domain](/dry-lab/model/#domain-annotation) | Which PETadex profile HMM matched, the domain's coordinates and its catalytic residues | Every ORF |
+| [Clusters](/dry-lab/model/#clustering-and-corpus-structure) | The ORF's cluster at 90%, 60% and 30% identity: 18,172,960, 1,814,296 and 22,235 clusters | Every ORF |
+| [Signal peptide](/dry-lab/model/#localization-and-signal-peptides) | SignalP 6 class probabilities and cleavage site | Every ORF; unreliable for Logan ORFs (below) |
+| [Biochemical properties](/dry-lab/model/#biochemical-properties-and-ancestral-reconstruction) | Molecular weight, isoelectric point, hydrophobicity (GRAVY), instability index and aromaticity | Every ORF; recomputed for the mature protein on the 13.8% with a signal peptide |
+| [Sample metadata](/dry-lab/model/#biosample-metadata-annotations) | The sequencing run and BioSample a Logan ORF was assembled from: environment, [metadata profile](/dry-lab/model/#biosample-metadata-profiles), location, and temperature and pH where recorded | Logan ORFs, through 6.2 million runs and 6.8 million BioSamples |
+| Taxonomy | Organism and lineage | NCBI nr ORFs (0.9% of the corpus) |
+| [Structures](/dry-lab/model/#predicted-structures) | Links to AlphaFold DB models | ORFs whose nr accession matches an AlphaFold entry (0.1%) |
+| [Reference membership](/dry-lab/model/#plasticome-reference-curation) | Whether the ORF is a plasticome enzyme, and the fold of each homology component | 522 ORFs |
+| [Families](/dry-lab/software/#esm-atlas) | Membership in the 64,730 enzyme families of the atlas, with InterProScan domains for each family representative | Family representatives |
 
-The labels are not one quantity. Relative activity, melting temperature and the kinetic constants kcat, Km and kcat/Km are separate targets with different units, which is why Activity Prediction runs several label definitions in parallel. The cleanest are binary activity from the halo screen, for classification, and PET monomer release, for regression.
+Two layers need care. Logan ORFs are read from one stop codon to the next, so only about 3% begin with a methionine, and annotations that depend on the protein's start (signal peptides and mature-protein properties) are unreliable for them. And few BioSamples record a temperature (0.7%) or a pH (0.15%), so environmental values exist for only part of the corpus; [Closing the loop](#closing-the-loop) describes how we use them.
 
-Confirmed inactive enzymes are rare. Only 200 labels are negative, 168 of them from our screen, and the LLM-extracted labels contain none, since papers seldom report enzymes that did not work. The halo screen measured BHET hydrolysis, so its negatives mean that no BHET hydrolysis was detected, not that the enzyme cannot degrade PET.
+## The PETai activity labels
+
+The labels are 12,888 measurements of activity and stability on 1,219 protein sequences, from 649 published references and a wet lab screen run by our supervising lab. Three of the four sources read the literature; the fourth is a plate assay. Each is published as its own dataset, because they differ in kind and each moves on its own schedule, and the unified set is the merge of all four, joined on sequence MD5. Every label carries the repository and row it came from, so it resolves back to exactly one row in its source.
+
+| Source | How we got it | Labels | Sequences | Papers |
+|---|---|---|---|---|
+| [Human-scraped](https://huggingface.co/datasets/petadex/petai-labels-human) | Curators read papers and entered every measurement | 6,655 | 458 | 59 |
+| [LLM-scraped](https://huggingface.co/datasets/petadex/petai-labels-llm) | Our language-model pipeline read papers at scale | 4,694 | 455 | 572 |
+| [Kinetics](https://huggingface.co/datasets/petadex/petai-labels-kinetics) | kcat, Km and kcat/Km compiled from the literature | 1,342 | 206 | 74 |
+| [Halo screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our supervising lab's BHET plate assay | 197 | 197 | — |
+
+Sequence counts are each source's own and overlap between sources, so they sum to more than 1,219. The overlap is small: 358 of the 455 sequences in the LLM set carry no label from any other source, and only 14 kinetics sequences also appear in the human-scraped set.
+
+**Human-scraped.** Using the [extraction schema](/dry-lab/model/#schema-design-and-extraction-protocol), 19 curators read 65 papers over four rounds, recording each experiment and every measurement in it. This is the only source where a person read the paper, and the conditions show it: pH on 90.4% of labels and temperature on 42.8%, plus buffer, crystallinity, pretreatment, expression host and enzyme loading. 26 papers were read independently by two or more curators, so agreement between people can be measured. Curators are identified by pseudonym.
+
+Papers often name a mutant without printing its sequence, so the build recovers sequences four ways: rebuilding mutants from a wild type and the mutation in the enzyme's name, looking up recorded accessions, translating nucleotide entries that are complete reading frames, and linking a measurement to a sequence that another curator of the same paper supplied when every curator agreed on it. Of its 534 sequences, 367 were typed by a curator alone, 148 were never typed by a curator, and 19 arrived both ways.
+
+The gaps are in the join, not the reading. 2,386 measurements carry no sequence and a further 316 are linked but hold no usable value. Most of the loss is panel papers whose enzymes were entered as internal numbers: one paper alone holds 1,377 measurements against a single sequenced enzyme.
+
+**LLM-scraped.** The [extraction pipeline](/dry-lab/model/#llm-extraction-pipeline) read 5,960 papers, far more than people could. Breadth is the point: most of its sequences appear in no other source. Every one of its 4,694 rows carries the verbatim sentence the value was taken from, which is what makes the set checkable rather than merely trusted.
+
+Its weaknesses are the price of that breadth. It recorded no pH, temperature or time on any row. It wrote whatever vocabulary each paper used, giving 2,028 distinct variable names against 79 in the human set. And it contains no negatives at all, which is a sign of extraction bias rather than of biology. 58 of its sequences also appear in a human-read source, so validation against human curation is possible; it has not yet been run.
+
+**Kinetics.** The [kinetics set](/dry-lab/model/#kinetics-dataset) holds 464 rows from 74 papers on 206 sequences, taken from the table behind petadex.net's kinetics page. Each row reports up to three constants, which gives 1,342 labels: 454 kcat, 454 Km and 434 kcat/Km. It is the easiest source to use, because every row carries its own sequence, so nothing is lost in joining, and its conditions are well covered at 78.1% for temperature and 71.2% for pH. Its target is a real kinetic constant rather than an assay proxy.
+
+Against that, 328 of its 464 rows measure a soluble surrogate ester rather than a plastic, so a PET-specific task has little to work with. A class code covering 222 rows, 48% of the table, is undefined and nobody can say what it denotes. Every p-nitrophenyl structure string encodes its nitro group wrongly and one naphthyl compound carries another's structure, so the SMILES need fixing before they are used as features. Its 10 rows recorded as inactive on PET would be the cleanest negatives anywhere, but as published they have blank kcat cells and no DOI.
+
+**Halo screen.** Our supervising lab grew each enzyme on BHET plates and measured the clearing around the colony. 253 genes were screened and 197 have both a sequence and a label: 29 active and 168 inactive. The published set keeps all 3,036 gene-by-condition combinations and the 6,792 raw colony measurements behind them, so another threshold can be chosen; the label itself is taken at one fixed condition, 120 hours on BHET, where a gene counts as active if its clearing exceeds the empty-vector control by more than three standard errors. Taking each gene's best value across conditions instead would make every gene look active, because the largest of twelve noisy measurements is biased upward.
+
+It supplies 168 of the release's 200 negatives, which is the only reason a binary classifier trained on the merge has two classes. Three limits belong with any result built on it: BHET is not PET, a failure to express is indistinguishable from a failure to catalyse, and most genes have only two replicates, so the measure is a call rather than a graded value.
+
+### What a label is
+
+The labels are not one quantity. Relative activity, melting temperature and the kinetic constants kcat, Km and kcat/Km are separate targets with different units, which is why Activity Prediction runs several label definitions in parallel. 12,691 labels are quantitative and 197 binary. The cleanest targets are binary activity from the halo screen, for classification, and PET monomer release, for regression.
+
+Confirmed inactive enzymes are rare. Only 200 labels are negative, 1.55% of the release: 168 from the plate screen and 32 measurements that papers reported as not detected, over 16 sequences. Papers seldom report enzymes that did not work, so the literature cannot supply many more.
+
+Assay conditions are recorded unevenly, because they come from whichever source read the paper. pH is on 54.1% of labels and temperature on 30.2%, with both on 26.4%.
+
+### Licensing
+
+All five datasets are released under CC BY 4.0. The measurements themselves are facts and not ours to license; what the licence covers is our compilation, curation, sequence recovery, clustering and split, and the plate screen our supervising lab contributed. Three things sit outside that grant, and each card says so: the values are facts whose source paper should be cited, publisher text, tables and figures remain with the publishers and no PDFs are redistributed, and sequences fetched from EBI, UniProt, RefSeq or RCSB carry those services' terms. The LLM set's verbatim evidence sentences are also outside the grant; they are short, factual and attributed to a DOI, and dropping that column leaves the rest of the dataset intact.
 
 ## Splitting
 
-We split the labelled sequences at 30% identity so that close relatives never fall on both sides of the split, and checked the result for leakage. The 796 training sequences fall into only 70 clusters, so their effective diversity is closer to 70 enzyme families than to 796 sequences. Confidence intervals are therefore bootstrapped over clusters, not sequences.
+We clustered the labelled sequences at 90%, 50% and 30% identity, giving 619, 323 and 201 clusters, and assigned whole 30% clusters to the training, validation and test folds so that close relatives never fall on both sides.
 
-The released split is homology-clean but unevenly stratified. Its test fold holds few negatives and a much larger share of LLM-extracted labels than the training fold, so it should be treated as a cluster assignment and re-stratified before it is used for evaluation. The dataset card describes this in detail.
+The first release was homology-clean but unusable for evaluation, and the current one fixes it. Negatives are now spread across the folds, 124, 39 and 33 of them, where the first release put 7 in the test fold and none of the plate screen's 168. The share of machine-extracted labels is now even too, 39.5% in training against 39.9% in test, where it previously ran 19.6% against 62.9%: a model would have been trained on human curation and scored on unvalidated extraction.
+
+One problem remains, and it limits what any evaluation here can claim. A single 30% cluster holds 113 of the validation fold's 171 sequences and 104 of the test fold's, so the effective diversity of an evaluation is nearer 27 enzyme families than 171 sequences. Confidence intervals must be resampled over clusters, not sequences, and results reported per cluster. A further 82 sequences carrying 3,137 labels have no fold at all because they are fragments or contained duplicates; 3,101 of those labels can be recovered by remapping onto a parent sequence that is already in a fold, which is not yet applied.
 
 ## Distance to the candidates
 
 The labelled set sits far from the population the model is meant to screen. Only 401 of the 1,219 labelled sequences appear in the corpus by exact sequence, and only 21 of those are Logan ORFs. Measurement conditions show the same gap: pH is recorded for about half of the labels and temperature for under a third, but neither exists for a sequence mined from Logan. A model that uses them in training has to work without them when it scores candidates.
+
+## Closing the loop
+
+The two datasets play different roles. The corpus is the raw material for discovery: it is large and changes only when we search for more sequences. The labels are the part we can improve, and the sections above show where they are weakest: few confirmed negatives, about 70 enzyme families in training, and only 21 sequences from Logan, the population we want to screen. Every wet lab round is a chance to add labels where they help most.
+
+We treat choosing what to test as Bayesian optimisation. Testing only the candidates with the highest predicted activity would confirm what the model already believes and teach it little. Testing only the candidates it is least sure about would spend assays on clusters that are unlikely to work. We pick clusters where the model's uncertainty is high and other evidence suggests activity, so that each result either finds an active enzyme or corrects the model where it was weakest. The round 2 library was chosen this way, and its results return to the labels for the next round.
+
+The other evidence is environmental metadata: the temperature, pH and environment of the samples a cluster was assembled from. Sequence alone cannot separate enzymes that work in different conditions. IsPETase, LCC, TfCut2 and Cut190 fall in a single enzyme family, yet IsPETase works at mild temperatures and LCC and TfCut2 near 70 °C. Mapping each region's median sample temperature over the family atlas shows the same thing in both directions: families far apart in sequence can come from equally warm or cold environments, and close relatives can come from different ones.
+
+We use this as a weak prior, not as evidence of activity. Only 0.7% of BioSamples state a temperature and 0.15% a pH, so 28,481 of 61,900 families have a temperature and 20,531 a pH. Smoothed over the atlas, temperatures mostly sit between 14 and 22 °C, and pH barely varies, from 7.0 to 7.5. We have not yet tested whether temperature is more similar between neighbouring families than chance would predict. Until we do, metadata decides between clusters the model is equally unsure about; it does not outweigh the model.
 
 ## Downloading the data
 
@@ -84,7 +175,11 @@ The labelled set sits far from the population the model is meant to screen. Only
 | [petadex/petadex-corpus-centroids90](https://huggingface.co/datasets/petadex/petadex-corpus-centroids90) | One row per 90% identity cluster, with member summaries | Recommended starting point |
 | [petadex/petadex-corpus-full](https://huggingface.co/datasets/petadex/petadex-corpus-full) | Every ORF in the corpus with every annotation layer | Candidates to score |
 | [petadex/catalytic-orfs-90pid](https://huggingface.co/datasets/petadex/catalytic-orfs-90pid) | 90% identity centroid sequences, split for training | PlasticESM pretraining |
-| [petadex/petai-activity-labels](https://huggingface.co/datasets/petadex/petai-activity-labels) | Measured activity and stability labels with a homology-aware split | PETai training labels |
+| [petadex/petai-activity-labels](https://huggingface.co/datasets/petadex/petai-activity-labels) | All four label sources merged, with clustering and the homology-aware split | PETai training labels |
+| [petadex/petai-labels-human](https://huggingface.co/datasets/petadex/petai-labels-human) | Human-scraped literature, with full assay conditions and the experiment tree | One label source |
+| [petadex/petai-labels-llm](https://huggingface.co/datasets/petadex/petai-labels-llm) | LLM-scraped literature, with the evidence sentence behind every value | One label source |
+| [petadex/petai-labels-kinetics](https://huggingface.co/datasets/petadex/petai-labels-kinetics) | Published kinetic constants, every row with its sequence | One label source |
+| [petadex/petai-halo-screen](https://huggingface.co/datasets/petadex/petai-halo-screen) | Our supervising lab's BHET plate screen at every condition, with raw colony measurements | Negatives |
 
 Each dataset card documents its columns, how its tables join and its known caveats. Every table loads with the Hugging Face `datasets` library, and for joins across the full corpus, querying the Parquet files directly with DuckDB or Polars is much faster.
 
