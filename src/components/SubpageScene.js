@@ -2863,6 +2863,7 @@ export function SubpageScene({ scene, title, description, children }) {
       {scene.header && (
         <SectionHeader>
           <SectionTitle>{scene.header}</SectionTitle>
+          {scene.headerSub && <SectionSub>{scene.headerSub}</SectionSub>}
         </SectionHeader>
       )}
 
@@ -4125,8 +4126,10 @@ const SectionHeader = styled.div`
   right: 0;
   height: var(--sky-h);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
   pointer-events: none;
 
   ${NARROW} {
@@ -4143,6 +4146,19 @@ const SectionTitle = styled.p`
   font-size: min(max(3.25rem, ${ax(108)}), var(--title-fit));
   line-height: 0.95;
   letter-spacing: -0.025em;
+  text-shadow: var(--header-shadow);
+`
+
+/** A scene's `headerSub`: a line under the header, in its colour. */
+const SectionSub = styled.p`
+  max-width: 88%;
+  margin: ${ax(10)} 0 0;
+  color: var(--header-color);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: max(0.95rem, ${ax(25)});
+  line-height: 1.15;
+  text-wrap: balance;
   text-shadow: var(--header-shadow);
 `
 

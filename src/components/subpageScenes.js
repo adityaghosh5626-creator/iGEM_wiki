@@ -1147,6 +1147,8 @@ export const OUTREACH_SCENE = {
  */
 export const PROJECT_SCENE = {
   header: "Project",
+  headerSub:
+    "PetaBite: Accelerating the Discovery of Scalable Plastic-Degrading Enzymes",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/project/",
   plate: [918, 4000],
   background: "#111926",
