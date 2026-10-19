@@ -684,18 +684,24 @@ export const CONTRIBUTION_SCENE = {
     // Catches fire like the Wiki dragons: a fiery glow spreads out from
     // behind it, from its head, its eyes glow, its swirls light up and it
     // trembles.
+    // The axolotl hides like the Wet Lab ones: it lights up, hops back over
+    // the floor's back edge (where the water starts) and sinks behind it,
+    // peeking over, until the pointer leaves. Its arm's over the dragon's
+    // tail: it hops high enough for its whisker to clear the tail, and goes
+    // behind the dragon from there.
+    {
+      name: "wlpetamon",
+      box: [604, 2783, 805, 2910],
+      // The floor's back edge slopes down to the right under it.
+      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 62, over: true },
+    },
     {
       name: "webpetamon",
-      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      // On its own, tail and all (the axolotl's arm goes over it). Its
+      // flames' wisps left of the box are over the bunny, so they're left
+      // to the bunny's crop.
+      src: "https://static.igem.wiki/teams/6187/wiki/contributions/img-3782.avif",
       box: [386, 2815, 646, 3022],
-      // Not the bunny's tail (left) or the axolotl's arm over its tail.
-      clip: [
-        [386, 2815], [646, 2815], [646, 2859], [639, 2860.5], [633, 2862.5],
-        [627, 2865.5], [621, 2870.5], [615, 2875.5], [611, 2879],
-        [611, 2885.5], [618, 2887.5], [624, 2884.5], [630, 2881.5],
-        [636, 2879.5], [642, 2875.5], [646, 2874.5], [646, 3022], [392, 3022],
-        [392, 2938], [386, 2938],
-      ],
       dragon: {
         // Its glow fades out to the left, off the bunny.
         heat: { pad: 60, fade: [376, 404] },
@@ -714,15 +720,6 @@ export const CONTRIBUTION_SCENE = {
         eyeSize: 18,
         hits: [[392, 2815, 646, 3020]],
       },
-    },
-    // The axolotl hides like the Wet Lab ones: it lights up, hops back over
-    // the floor's back edge (where the water starts) and sinks behind it,
-    // peeking over, until the pointer leaves.
-    {
-      name: "wlpetamon",
-      box: [604, 2783, 805, 2910],
-      // The floor's back edge slopes down to the right under it.
-      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 36 },
     },
     { name: "dlpetamon", crab: true, box: [161, 3046, 290, 3148] },
     {
@@ -909,6 +906,20 @@ export const SAFETY_SCENE = {
   textEndY: 3691,
 }
 
+/**
+ * The Engineering winch: the gear turns, winding the rope in over it and
+ * lifting the bucket WINCH_LIFT plate px, holds, then lets it back down.
+ * The gear is centred on the rope's curve over it (radius WINCH_ROPE_R), so
+ * its turn is the rope's travel.
+ */
+const WINCH_MS = 16000
+const WINCH_LIFT = 400
+const WINCH_ROPE_R = 124
+const WINCH_GEAR = [1143.6, 971.2]
+/** The full gear's hole, where it's painted on its plate. */
+const GEAR_HOLE = [495.4, 1013.1]
+const around = ([x, y], r) => [x - r, y - r, x + r, y + r]
+
 /** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
 export const ENGINEERING_SCENE = {
   header: "Engineering",
@@ -922,10 +933,40 @@ export const ENGINEERING_SCENE = {
   accent: "#b04a38",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
-    // The rope runs up behind the gear. Still for now: the full gear's on
-    // its way, to spin and pull the bucket up.
-    { name: "rope-bucket-only", box: [960, 850, 1110, 2462] },
-    { name: "gear-only", box: [985, 816, 1110, 1130] },
+    // The rope runs up behind the gear. Over it, in its shadow, the rope's
+    // plain red, so that part stays put; the striped rope below rides up
+    // and down with the bucket. The two cross-fade where they meet.
+    {
+      name: "rope-over-gear",
+      src: "full-rope",
+      box: [985, 840, 1110, 1075],
+      fadeY: [0, 30],
+    },
+    {
+      name: "rope-bucket",
+      src: "full-rope",
+      box: [960, 1045, 1110, 2462],
+      fadeY: [30, 0],
+      winch: {
+        ms: WINCH_MS,
+        lift: WINCH_LIFT,
+        // The rope bends right a little as it comes off the gear; slid up
+        // past the join, it's moved back by that much to line up with it.
+        drift: [[0, 0], [30, 1.9], [60, 3.4], [80, 4.8]],
+      },
+    },
+    {
+      name: "gear",
+      src: "full-gear",
+      from: around(GEAR_HOLE, 165),
+      box: around(WINCH_GEAR, 165),
+      winch: {
+        ms: WINCH_MS,
+        turn: (WINCH_LIFT / WINCH_ROPE_R) * (180 / Math.PI),
+        // Turned as the old, cut-off gear was painted.
+        rest: 105.5,
+      },
+    },
   ],
   side: null,
   /** No menu highlight to match: the girders' red. */
