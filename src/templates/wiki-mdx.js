@@ -6,6 +6,7 @@ import WikiLayout from "../components/layout.js"
 import Seo from "../components/seo.js"
 import { mdxComponents } from "../components/mdx/wikiComponents.js"
 import { NewTabLinks } from "../components/mdx/linkTarget.js"
+import { scrollToReference } from "../components/referenceNavigation.js"
 import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
@@ -20,6 +21,7 @@ import {
   WET_LAB_SCENE,
   HARDWARE_SCENE,
   HP_SCENE,
+  OUTREACH_SCENE,
   PROJECT_SCENE,
   SAFETY_SCENE,
   VENTURE_SCENE,
@@ -46,6 +48,7 @@ const sceneFor = frontmatter => {
     return VENTURE_SCENE
   if (frontmatter.path === "/beyond-the-bench/human-practices/")
     return HP_SCENE
+  if (frontmatter.path === "/beyond-the-bench/outreach/") return OUTREACH_SCENE
   if (frontmatter.path === "/project/contribution/") return CONTRIBUTION_SCENE
   // Served at the standard /description/ too (standardRoutes.mjs).
   if (frontmatter.path === "/project/description/") return PROJECT_SCENE
@@ -80,6 +83,7 @@ const WikiMdxTemplate = ({ data, children }) => {
     return (
       <WikiLayout
         fullBleed
+        pagePath={frontmatter.path}
         // The footer button takes the colours of the page's menu highlight.
         footerButton={
           scene.footerButton || {
@@ -94,7 +98,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           title={frontmatter.navTitle || frontmatter.title}
           description={frontmatter.description}
         >
-          <Article $wideProse>
+          <Article $wideProse onClickCapture={scrollToReference}>
             {content}
           </Article>
         </SubpageScene>
@@ -125,7 +129,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           <InlineDivider />
         </InlinePageHeader>
         {pageHeader}
-        <Article $wide>
+        <Article $wide onClickCapture={scrollToReference}>
           {content}
         </Article>
       </ArticleShell>
@@ -133,7 +137,7 @@ const WikiMdxTemplate = ({ data, children }) => {
   ) : (
     <ArticleShell id="page-content">
       {pageHeader}
-      <Article $wideProse={wideProse}>
+      <Article $wideProse={wideProse} onClickCapture={scrollToReference}>
         {content}
       </Article>
     </ArticleShell>
@@ -141,6 +145,7 @@ const WikiMdxTemplate = ({ data, children }) => {
 
   return (
     <WikiLayout
+      pagePath={frontmatter.path}
       pageTitle={wideSideTabs ? null : frontmatter.title}
       sectionLabel={wideSideTabs ? null : frontmatter.section}
       wideSideTabs={wideSideTabs}
@@ -430,6 +435,42 @@ const Article = styled.article`
     padding: 0.75rem;
     border: 1px solid var(--color-border);
     vertical-align: top;
+  }
+
+  /* Image dimensions must not establish a table's minimum column width. */
+  table:has(img) {
+    display: table;
+    table-layout: fixed;
+  }
+
+  table:has(img) th,
+  table:has(img) td {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  table figure {
+    min-width: 0;
+  }
+
+  .od-iteration-table th:first-child {
+    width: 3.5rem;
+  }
+
+  .od-iteration-table td:first-child {
+    white-space: nowrap;
+  }
+
+  table img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 640px) {
+    table:has(img) th,
+    table:has(img) td {
+      padding: 0.35rem;
+    }
   }
 
   th {

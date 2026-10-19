@@ -52,7 +52,7 @@ export const SUBTEAM_TRACKS = [
   },
   {
     id: "venture",
-    label: "Venture",
+    label: "Entrepreneurship",
     color: "#06202B",
     textColor: "#ffffff",
     href: "/entrepreneurship/",

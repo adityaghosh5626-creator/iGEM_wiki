@@ -1,4 +1,5 @@
 import { HardwareIterations } from "../hardwareIterations/HardwareIterations.js"
+import { HardwareMap } from "../hardwareIterations/HardwareMap.js"
 import React from "react"
 import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
@@ -30,9 +31,9 @@ import {
 import { DiamondSearchDemo } from "./interactive/DiamondSearchDemo.js"
 import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
+import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
 import { Spreadsheet } from "./Spreadsheet.js"
-import { CodeDropdown } from "../Dropdown.js"
 import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
 import References from "../References"
@@ -42,6 +43,20 @@ export const Callout = ({ tone = "note", title, children }) => (
     {title && <CalloutTitle>{title}</CalloutTitle>}
     <CalloutBody>{children}</CalloutBody>
   </CalloutBox>
+)
+
+/** The Project page's painted papers (on iGEM's uploads, by colour). */
+const PAPER_ART = "https://static.igem.wiki/teams/6187/wiki/project/paper-"
+
+/** Callouts on painted paper, side by side, a third of the text each. */
+export const PaperCallouts = ({ children }) => <PaperRow>{children}</PaperRow>
+
+/** One of them: `paper` is "peach", "mauve" or "blue". */
+export const PaperCallout = ({ paper = "peach", title, children }) => (
+  <PaperNote style={{ backgroundImage: `url(${PAPER_ART}${paper}.avif)` }}>
+    {title && <PaperTitle>{title}</PaperTitle>}
+    <CalloutBody>{children}</CalloutBody>
+  </PaperNote>
 )
 
 /** Marks draft copy that still has to be replaced before the page is published. */
@@ -79,6 +94,26 @@ const MdxLink = ({ href = "", ...props }) => (
 
 export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
 
+/**
+ * Text with a figure beside it. The text sets the row height and the image
+ * scales down to fit inside it, so the figure never runs past the text.
+ * Stacks on narrow screens.
+ */
+export const SideFigure = ({ src, alt = "", caption, width = "40%", side = "right", children }) => (
+  <SideFigureWrap
+    $width={typeof width === "number" ? `${width}px` : width}
+    $left={side === "left"}
+  >
+    <SideFigureText>{children}</SideFigureText>
+    <SideFigureFrame>
+      <SideFigureImage>
+        {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
+      </SideFigureImage>
+      {caption && <figcaption>{caption}</figcaption>}
+    </SideFigureFrame>
+  </SideFigureWrap>
+)
+
 export const DataTable = ({ caption, children }) => (
   <DataTableWrap>
     {caption && <TableCaption>{caption}</TableCaption>}
@@ -97,10 +132,14 @@ export const ContributionCalendar = ({ title, caption }) => (
 export const mdxComponents = {
   a: MdxLink,
   HardwareIterations,
+  HardwareMap,
   Callout,
+  PaperCallouts,
+  PaperCallout,
   Placeholder,
   Figure,
   ImageGrid,
+  SideFigure,
   DataTable,
   ContributionCalendar,
   ContributionTimeline,
@@ -128,6 +167,7 @@ export const mdxComponents = {
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,
+  Dropdown,
   Citation,
   References,
   ...embedComponents,
@@ -176,6 +216,43 @@ const CalloutBody = styled.div`
   p {
     color: var(--color-body);
   }
+`
+
+const PaperRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 3%, 2rem);
+  width: 100%;
+  margin: var(--space-lg) 0;
+
+  /* Too narrow for three: one under the other. */
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`
+
+/** Upright like the painted paper (404 × 555), taller if its text needs it. */
+const PaperNote = styled.aside`
+  aspect-ratio: 404 / 555;
+  /* Clear of the paper's rough edges. */
+  padding: 13% 11% 12%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+
+  @media (max-width: 640px) {
+    aspect-ratio: auto;
+    padding: 2rem 1.75rem;
+  }
+`
+
+const PaperTitle = styled.p`
+  color: var(--color-text) !important;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-sm);
 `
 
 const PlaceholderBox = styled.div`
@@ -228,13 +305,87 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  width: 100%;
+  min-width: 0;
   gap: var(--space-md);
   max-width: var(--wiki-block-max, 54rem);
   margin: var(--space-lg) 0;
 
   figure {
+    min-width: 0;
     margin: 0 auto;
+  }
+`
+
+const SideFigureWrap = styled.div`
+  display: grid;
+  grid-template-columns: ${({ $left, $width }) =>
+    $left ? `${$width} minmax(0, 1fr)` : `minmax(0, 1fr) ${$width}`};
+  gap: var(--space-lg);
+  max-width: var(--wiki-block-max, 54rem);
+  margin: var(--space-lg) 0;
+
+  ${({ $left }) =>
+    $left &&
+    css`
+      > figure {
+        order: -1;
+      }
+    `}
+
+  @media (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
+
+    > figure {
+      order: 0;
+    }
+  }
+`
+
+const SideFigureText = styled.div`
+  > * + * {
+    margin-top: var(--space-sm);
+  }
+`
+
+const SideFigureFrame = styled.figure`
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+
+  figcaption {
+    margin-top: var(--space-sm);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+  }
+`
+
+// The absolutely placed image adds nothing to the row height, so the text
+// alone sets it; object-fit then shrinks the image to fit the box.
+const SideFigureImage = styled.div`
+  position: relative;
+  flex: 1;
+  min-height: 12rem;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: top center;
+  }
+
+  @media (max-width: 720px) {
+    position: static;
+    min-height: 0;
+
+    img {
+      position: static;
+      height: auto;
+    }
   }
 `
 

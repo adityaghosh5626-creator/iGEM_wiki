@@ -1,11 +1,62 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Power management design used in Version 2.
+<br />
 
-#### Design decisions and changes
+| Requirement/Functionality                                                                                                                                      | Old Priority | New Priority | Why?                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| **Provide stable power to Arduino Nano**<br /><br />Constraints: must provide stable, regulated 5V power via the 5V pin, or stable 7–12V power via the VIN pin | N/A          | High         | A power-induced reset or crash in the Arduino Nano can interrupt long-term experiments and wipe out commands and data logs. |
 
-Placeholder: explain what changed in Power management from Version 1 to Version 2 and why.
+### BoM
 
-#### Testing and lessons
+<br />
 
-Placeholder: add Version 2 test results, limitations, and lessons for Power management.
+| **Component**                                             | **Purpose**                                          | **Cost (USD)**             | **Sourcing Link**                                                                                      |
+| --------------------------------------------------------- | ---------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| USB-C PD/USB-A QC trigger board                           | Provide 5V power from power brick                    | 1.98                       | [Link](https://www.amazon.ca/dp/B0FXLCHVXQ)                                                            |
+| 8-port 200W multi-charger\*                               | Adapts wall socket power to USB-C PD or USB-A QC     | 21.7 (3.1 per bioreactor)  | [Link](https://www.amazon.ca/dp/B0F3D5VSVD)                                                            |
+| USB A-C or C-C cable                                      | Connect trigger board to multi-charger               | 1.82 (A-C)<br />1.26 (C-C) | [Link: A-C](https://www.amazon.ca/dp/B09XVCQSR5)<br />[Link: C-C](https://www.amazon.ca/dp/B0DYTVN1WJ) |
+| USB-C PD/USB-A QC trigger board, for Arduino power module | Provide 9V power from power brick to 7 Arduino Nanos | 1.98 (0.28 per bioreactor) | [Link](https://www.amazon.ca/dp/B0FXLCHVXQ)                                                            |
+| USB C-C cable, for Arduino power module                   | Connect trigger board to multi-charger               | 1.26 (0.18 per bioreactor) | [Link](https://www.amazon.ca/dp/B0DYTVN1WJ)                                                            |
+
+\*With the new Arduino power module, only 7 ports remain available for bioreactors. Thus, the cost per bioreactor for this item has slightly increased.
+
+### Component Selection Justification
+
+<br />
+
+| **Old Component** | **New Component**                                         | **Why?**                                                                                              |
+| ----------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| N/A               | USB-C PD/USB-A QC trigger board, for Arduino power module | To build the Arduino power module and provide stable power to the VIN pin (satisfies new requirement) |
+| N/A               | USB C-C cable, for Arduino power module                   |                                                                                                       |
+
+### Design Modifications
+
+The 5V pin on the Arduino Nano is unregulated and is thus sensitive to voltage fluctuations. While the QC/PD trigger boards provide 5V, the actual voltage measured by the multimeter can fluctuate, especially when high-power components are turned on and off (heater, pumps).
+
+<br />
+
+Thus, we decided to use the VIN pin, which accepts less stable sources from 7-12V. This makes the Nano incompatible with the rest of the 5V electronics, which requires a separate QC/PD trigger board set to 9V. This forms the Arduino power module, which is shared between 7 bioreactors to minimize cost per bioreactor.
+
+<br />
+
+The power and data architecture based on the V2 power supply system is shown below.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/power1.avif"
+  alt="power1"
+/>
+
+Compared to V1, V2 provides more stable power to the onboard Nanos and thus improves the stability of the system for long-term experiments.
+
+### New Design of Experiments
+
+#### Arduino power supply testing
+
+This tests the stability of the Arduino Nano power module, especially in longer experiments. The number of crashes (if any) will be recorded using a script while the Nano runs for 24 hours and operates the bioreactor as normal.
+
+1. Set up the Arduino power supply module and connect it to a bioreactor.
+2. After 24 hours, record the number of crashes (if any).
+
+### Metrics and Experimental Data
+
+Test to be performed

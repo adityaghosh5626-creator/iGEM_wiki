@@ -451,6 +451,8 @@ export const HARDWARE_SCENE = {
       name: "turtle-1",
       box: [76, 1815, 426, 2392],
       hit: [125, 1865, 315, 2150],
+      // Just it and its halo shiver: glints on the pipes stay put.
+      jolt: [118, 1858, 388, 2166],
       zap: { name: "zapzap", box: [122, 1830, 352, 2133] },
     },
     // The turtle lying in the pool does the same with its own lightning.
@@ -559,7 +561,8 @@ export const WET_LAB_SCENE = {
       name: "11-swimming-right-glow",
       from: [829, 1480, 1110, 1720],
       box: [829, 640, 1110, 880],
-      peek: { plain: "10-swimming-right", dx: -58 },
+      // Its glow runs off the page's edge: faded there, as it slides in.
+      peek: { plain: "10-swimming-right", dx: -58, fadeX: [1088, 1110] },
     },
     // This one swims a lap: out the left edge, back in at the right edge to
     // peek, then left again behind the text box to its spot. Drawn lower
@@ -582,14 +585,16 @@ export const WET_LAB_SCENE = {
     indicator: { fill: "#f7e36b", box: [135, 456, 289, 517] },
     highlightColor: "#f7e36b",
     /**
-     * A homepage bubble rides on its left end, standing in until one is
-     * drawn; a soft glow keeps it from getting lost against the water.
+     * A bubble rides on its left end (painted on its own 946×4000 canvas); a
+     * soft glow keeps it from getting lost against the water.
      */
     indicatorIcon: {
-      name: "https://static.igem.wiki/teams/6187/wiki/homepage-cropped/bubbles-bubble3.avif",
-      box: [92, 461, 144, 508],
-      canvas: { size: [68, 61], crop: [0, 0, 68, 61] },
+      name: "bubble",
+      box: [89, 457, 147, 512],
+      canvas: { size: [946, 4000], crop: [458, 3090, 529, 3157] },
       glow: "rgba(255, 255, 255, 0.9)",
+      /** A little bigger than the other pages' icons in the labelled menu. */
+      railScale: 1.2,
     },
     linkColor: "#0b4a57",
     activeLinkColor: "#0b4a57",
@@ -612,6 +617,24 @@ export const WET_LAB_SCENE = {
  * so there's no section list and the text box is wide, ending just above the
  * petamons on the steps (they and the pool below are the ending).
  */
+/**
+ * The Outreach acorn (drop-acorn.avif): it bonks the squirrels on the head
+ * when they're hovered (see BonkLayer), there and on Contribution.
+ */
+const OUTREACH_ACORN = {
+  src: "https://static.igem.wiki/teams/6187/wiki/outreach/drop-acorn.avif",
+  plate: [1110, 4000],
+  box: [130, 3426, 254, 3550],
+}
+
+/**
+ * Sharper petamons on the same canvas: all of them in one picture (the bird,
+ * bunny, dragon and turtle are drawn from it, each cut out by its `clip`),
+ * and the dragon's markings on their own.
+ */
+const CONTRIBUTION_HQ =
+  "https://static.igem.wiki/teams/6187/wiki/contributions/hq-petamon/"
+
 export const CONTRIBUTION_SCENE = {
   header: "Contribution",
   boxTitle: "Overview",
@@ -625,60 +648,91 @@ export const CONTRIBUTION_SCENE = {
     { name: "bg", box: [0, 0, 1110, 4000] },
     // Seedlings in the planter, behind the Dry Lab bug.
     { name: "sprouts", box: [70, 2997, 290, 3090] },
-    // Each subteam's petamon on the steps, one file each so they can move
-    // on their own. Five do what their subteam's critters do on hover (tap
+    // Each subteam's petamon on the steps, a layer each so they can move
+    // on their own. Six do what their subteam's critters do on hover (tap
     // on touch): the kangaroo throws Venture's coins, the bird loops like
-    // the Human Practices birds, the crab scuttles like Dry Lab's, the
-    // turtle gets Hardware's lightning and the axolotl hides like Wet Lab's.
+    // the Human Practices birds, Outreach's gets bonked by an acorn, the
+    // crab scuttles like Dry Lab's, the turtle gets Hardware's lightning and
+    // the axolotl hides like Wet Lab's.
     { name: "venpetamon", coinBurst: true, box: [0, 2800, 196, 3362] },
-    // Faces us; looping "rightward" rolls it counterclockwise.
-    { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
-    { name: "orpetamon", box: [222, 2806, 396, 3005] },
-    // Catches fire like the Wiki dragons: a fiery glow spreads out from
-    // behind it, from its head, its eyes glow and it trembles.
+    // Faces us; looping "rightward" rolls it counterclockwise. Cut round the
+    // kangaroo's ring, painted over its wing.
     {
-      name: "webpetamon",
-      box: [371, 2755, 644, 3004],
-      dragon: {
-        // Its haze is cut off square at the left: the glow fades out there.
-        heat: { pad: 60, fade: [362, 404] },
-        from: [452, 2930],
-        reach: 260,
-        eyes: [
-          [437.8, 2947.5],
-          [475.4, 2945.6],
-        ],
-        eyeSize: 18,
-        // Glowing markings on its grey patches, along the body's lie.
-        swirls: [
-          { at: [621, 2808], rx: 5, ry: 13, rot: 8 },
-          { at: [578, 2832], rx: 9, ry: 5, rot: -28 },
-          { at: [579, 2871], rx: 10, ry: 5.5, rot: -22 },
-          { at: [511, 2872], rx: 10, ry: 5.5, rot: -20 },
-        ],
-        hits: [[371, 2755, 644, 3004]],
-      },
+      name: "hppetamon",
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      loop: { facing: 1 },
+      box: [60, 2650, 370, 2834],
+      clip: [
+        [60, 2650], [370, 2650], [370, 2834], [126, 2834], [126, 2807],
+        [120, 2806], [114, 2809], [108, 2815], [102, 2821], [96, 2827],
+        [90, 2830], [84, 2832], [60, 2832],
+      ],
     },
+    // Outreach's: bonked by an acorn, like the Outreach squirrels.
+    {
+      name: "orpetamon",
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      box: [211, 2850, 393, 3009],
+      // Not the edge of the dragon's haze, above its tail.
+      clip: [
+        [211, 2850], [387, 2850], [387, 2938], [393, 2938], [393, 3009],
+        [211, 3009],
+      ],
+      // A smaller acorn for this smaller critter, between its ears.
+      bonk: { head: [259, 2898], acorn: { ...OUTREACH_ACORN, scale: 0.5 } },
+    },
+    // Catches fire like the Wiki dragons: a fiery glow spreads out from
+    // behind it, from its head, its eyes glow, its swirls light up and it
+    // trembles.
     // The axolotl hides like the Wet Lab ones: it lights up, hops back over
     // the floor's back edge (where the water starts) and sinks behind it,
-    // peeking over, until the pointer leaves.
+    // peeking over, until the pointer leaves. Its arm's over the dragon's
+    // tail: it hops high enough for its whisker to clear the tail, and goes
+    // behind the dragon from there.
     {
       name: "wlpetamon",
       box: [604, 2783, 805, 2910],
       // The floor's back edge slopes down to the right under it.
-      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 36 },
+      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 62, over: true },
+    },
+    {
+      name: "webpetamon",
+      // On its own, tail and all (the axolotl's arm goes over it). Its
+      // flames' wisps left of the box are over the bunny, so they're left
+      // to the bunny's crop.
+      src: "https://static.igem.wiki/teams/6187/wiki/contributions/img-3782.avif",
+      box: [386, 2815, 646, 3022],
+      dragon: {
+        // Its glow fades out to the left, off the bunny.
+        heat: { pad: 60, fade: [376, 404] },
+        markings: [
+          `${CONTRIBUTION_HQ}scales.avif`,
+          `${CONTRIBUTION_HQ}swirls.avif`,
+          `${CONTRIBUTION_HQ}eyes.avif`,
+        ],
+        swirls: `${CONTRIBUTION_HQ}swirls.avif`,
+        from: [440, 2945],
+        reach: 260,
+        eyes: [
+          [420.5, 2966],
+          [448.5, 2969.5],
+        ],
+        eyeSize: 18,
+        hits: [[392, 2815, 646, 3020]],
+      },
     },
     { name: "dlpetamon", crab: true, box: [161, 3046, 290, 3148] },
     {
       name: "hwpetamon",
-      box: [300, 3006, 541, 3210],
-      hit: [304, 3012, 534, 3202],
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      box: [326, 3024, 540, 3203],
+      hit: [328, 3028, 538, 3201],
       // The standing turtle's lightning on the Hardware plate, stretched
       // over this one.
       zap: {
         name: `${HARDWARE_SCENE.assetBase}zapzap.avif`,
         from: [122, 1830, 352, 2133],
-        box: [288, 2984, 552, 3218],
+        box: [314, 3004, 545, 3210],
       },
     },
   ],
@@ -693,10 +747,10 @@ export const CONTRIBUTION_SCENE = {
   /** Not painted: a flat box in the greenhouse's paper colour. */
   text: {
     fill: "#fdf9f0",
-    box: [90, 412, 1020, 2690],
+    box: [90, 412, 1020, 2640],
     minH: 900,
   },
-  textEndY: 2690,
+  textEndY: 2640,
   /**
    * The calendar in greenhouse colours: paper panels, sandstone lines, sage
    * for what's selected, terracotta Sundays. Subteams take the team's painted
@@ -744,7 +798,8 @@ export const CONTRIBUTION_SCENE = {
 
 /**
  * Attributions: a sunset over the Toronto skyline. No section list yet; the
- * box ends above the buildings, which (with the birds) are the ending.
+ * box runs down over the empty sunset to the dome's top, and the dome and the
+ * buildings round it (with the birds) are the ending.
  */
 export const ATTRIBUTIONS_SCENE = {
   header: "Attributions",
@@ -767,10 +822,10 @@ export const ATTRIBUTIONS_SCENE = {
   /** Not painted: a flat, faintly warm box on the sunset. */
   text: {
     fill: "#fffbf7",
-    box: [140, 412, 970, 3400],
+    box: [140, 412, 970, 3720],
     minH: 2000,
   },
-  textEndY: 3400,
+  textEndY: 3720,
 }
 
 /** Finance: one painting of snowy peaks with a mine cart of gold coins. */
@@ -822,8 +877,21 @@ export const SAFETY_SCENE = {
   accent: "#a8483a",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
-    // Strung either side of the box (the right-hand strands run behind it).
-    { name: "caution-tape", box: [0, 1664, 1072, 3712] },
+    // Strung either side of the box (the right-hand strands run behind it):
+    // each hanging strand sways in the wind from where it's tied, a little
+    // out of step with the others. The short one is hung a little right of
+    // where it's painted, so its curl clears the box's edge as it sways.
+    ...[
+      [[0, 1716, 120, 2300], 1.2, 5200, 0],
+      [[968, 1692, 1076, 1848], 3, 3900, 0.4, 16],
+      [[976, 2988, 1060, 3708], 1, 4600, 0.7],
+    ].map(([from, deg, ms, at, dx = 0]) => ({
+      name: `caution-tape-${from[1]}`,
+      src: "caution-tape",
+      from,
+      box: [from[0] + dx, from[1], from[2] + dx, from[3]],
+      sway: { deg, ms, at },
+    })),
   ],
   side: null,
   /** No menu highlight to match: the caution tape. */
@@ -838,6 +906,20 @@ export const SAFETY_SCENE = {
   textEndY: 3691,
 }
 
+/**
+ * The Engineering winch: the gear turns, winding the rope in over it and
+ * lifting the bucket WINCH_LIFT plate px, holds, then lets it back down.
+ * The gear is centred on the rope's curve over it (radius WINCH_ROPE_R), so
+ * its turn is the rope's travel.
+ */
+const WINCH_MS = 16000
+const WINCH_LIFT = 400
+const WINCH_ROPE_R = 124
+const WINCH_GEAR = [1143.6, 971.2]
+/** The full gear's hole, where it's painted on its plate. */
+const GEAR_HOLE = [495.4, 1013.1]
+const around = ([x, y], r) => [x - r, y - r, x + r, y + r]
+
 /** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
 export const ENGINEERING_SCENE = {
   header: "Engineering",
@@ -851,13 +933,40 @@ export const ENGINEERING_SCENE = {
   accent: "#b04a38",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
-    // The rope runs up behind the gear, so it swings from under it.
+    // The rope runs up behind the gear. Over it, in its shadow, the rope's
+    // plain red, so that part stays put; the striped rope below rides up
+    // and down with the bucket. The two cross-fade where they meet.
     {
-      name: "rope-bucket-only",
-      box: [960, 850, 1110, 2462],
-      swing: { pivot: [1027, 857], deg: 2, hit: [965, 2280, 1100, 2462] },
+      name: "rope-over-gear",
+      src: "full-rope",
+      box: [985, 840, 1110, 1075],
+      fadeY: [0, 30],
     },
-    { name: "gear-only", box: [985, 816, 1110, 1130] },
+    {
+      name: "rope-bucket",
+      src: "full-rope",
+      box: [960, 1045, 1110, 2462],
+      fadeY: [30, 0],
+      winch: {
+        ms: WINCH_MS,
+        lift: WINCH_LIFT,
+        // The rope bends right a little as it comes off the gear; slid up
+        // past the join, it's moved back by that much to line up with it.
+        drift: [[0, 0], [30, 1.9], [60, 3.4], [80, 4.8]],
+      },
+    },
+    {
+      name: "gear",
+      src: "full-gear",
+      from: around(GEAR_HOLE, 165),
+      box: around(WINCH_GEAR, 165),
+      winch: {
+        ms: WINCH_MS,
+        turn: (WINCH_LIFT / WINCH_ROPE_R) * (180 / Math.PI),
+        // Turned as the old, cut-off gear was painted.
+        rest: 105.5,
+      },
+    },
   ],
   side: null,
   /** No menu highlight to match: the girders' red. */
@@ -873,12 +982,173 @@ export const ENGINEERING_SCENE = {
 }
 
 /**
+ * Outreach: an autumn forest. The squirrel on the box's right edge slides
+ * down it with the reader, leaves drift across on the wind (left to right)
+ * and an acorn rolls down the log at the bottom. Hovered (tapped), each
+ * squirrel gets bonked on the head by an acorn from the top of the window.
+ */
+export const OUTREACH_SCENE = {
+  header: "Outreach",
+  hideIntro: true,
+  assetBase: "https://static.igem.wiki/teams/6187/wiki/outreach/",
+  plate: [1110, 4000],
+  background: "#3d4423",
+  skyBottom: 400,
+  /** Cream on the sunlit canopy, lifted off it with a dark shadow. */
+  headerColor: "#fff2d6",
+  headerShadow:
+    "0 0.06em 0 rgba(30, 36, 14, 0.6), 0 0.1em 0.45em rgba(0, 0, 0, 0.45)",
+  accent: "#a8642c",
+  layers: [
+    { name: "background", box: [0, 0, 1110, 4000] },
+    // The leaves on the left blow right, in behind the box; the painted
+    // ones and a few more along the page.
+    ...[
+      [[26, 2210, 238, 2318], null, [-268, -40], [334, 100], 9000, 0],
+      [[186, 2322, 310, 2414], null, [-340, -20], [174, 140], 8000, 0.45],
+      [[226, 2682, 358, 2758], null, [-388, 0], [134, 90], 8500, 0.75],
+      [[26, 1300, 238, 1408], [26, 2210, 238, 2318], [-268, 0], [334, 120], 10000, 0.2],
+      [[186, 3000, 310, 3092], [186, 2322, 310, 2414], [-340, 0], [174, 100], 9000, 0.6],
+      [[226, 1000, 358, 1076], [226, 2682, 358, 2758], [-388, 0], [134, 80], 9500, 0.1],
+    ].map(([box, from, a, b, ms, at]) => ({
+      name: `leaf-1-${box[0]}-${box[1]}`,
+      src: "leaf-1",
+      box,
+      ...(from && { from }),
+      wind: { from: a, to: b, ms, at },
+    })),
+    {
+      name: "branch-squirrel",
+      box: [84, 1636, 348, 1916],
+      bonk: { head: [282, 1738], acorn: OUTREACH_ACORN },
+    },
+    // Rolling slowly down the log (it slopes down to the left), behind the
+    // bottom squirrel's feet, from off the window's right to off its left.
+    {
+      name: "rolling-acorn",
+      src: "drop-acorn",
+      from: OUTREACH_ACORN.box,
+      box: [556, 3652, 644, 3740],
+      wind: {
+        from: [550, -94],
+        to: [-700, 119],
+        ms: 18000,
+        at: 0.3,
+        bob: 0,
+        wobble: 0,
+        // Rolling, not sliding: its turn is the distance over its radius.
+        spin: -1628,
+      },
+    },
+    {
+      name: "bottom-squirrel",
+      box: [4, 3524, 292, 3862],
+      bonk: { head: [178, 3562], acorn: OUTREACH_ACORN },
+    },
+    // The green leaves on the right: some come out from behind the box and
+    // blow off the window, some cross from one side of the window to the
+    // other (the small ones over the box, under its text and the sketchbook;
+    // the big ones behind it, so they don't sweep over the section menu).
+    ...[
+      [[996, 3162, 1108, 3278], [-133, -20], [124, 80], 4500, 0],
+      [[1050, 2970, 1108, 3100], [-133, 0], [70, 60], 4000, 0.5],
+      [[948, 3036, 996, 3092], [-21, -10], [172, 70], 4500, 0.3],
+      [[972, 3262, 1052, 3388], [-77, 0], [148, 90], 4200, 0.7],
+    ].map(([box, a, b, ms, at]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 90 },
+    })),
+    ...[
+      [[754, 3162, 974, 3334], [-994, -40], [371, 60], 22000, 0, false],
+      [[730, 3410, 830, 3500], [-850, -30], [395, 50], 20000, 0.5, false],
+      [[676, 3340, 780, 3390], [-800, -20], [449, 70], 21000, 0.25, true],
+      [[586, 3402, 662, 3446], [-682, -30], [539, 40], 19000, 0.75, true],
+    ].map(([box, a, b, ms, at, over]) => ({
+      name: `leaf-2-${box[0]}-${box[1]}`,
+      src: "leaf-2",
+      box,
+      wind: { from: a, to: b, ms, at, spin: 200 },
+      ...(over && { front: "bottom" }),
+    })),
+    // Hugging the box's right edge (its paw and head on it), a third
+    // smaller than painted; it slides down with the reader from Promo Video
+    // to Road to Jamboree (see SlideLayer). Its outline (traced 4 plate px above its top, every
+    // 4 columns) runs over its ears and raised paw.
+    {
+      name: "slide-squirrel",
+      from: [884, 1176, 1106, 2044],
+      box: [952, 1176, 1099, 1749],
+      slide: {
+        outline: [
+          [884, 1640], [888, 1640], [892, 1653], [896, 1650], [900, 1650], [904, 1649],
+          [908, 1649], [912, 1602], [916, 1590], [920, 1586], [924, 1515], [928, 1518],
+          [932, 1522], [936, 1525], [940, 1525], [944, 1523], [948, 1528], [952, 1534],
+          [956, 1534], [960, 1537], [964, 1543], [968, 1550], [972, 1560], [976, 1559],
+          [980, 1557], [984, 1555], [988, 1554], [992, 1554], [996, 1558], [1000, 1574],
+          [1004, 1575], [1008, 1509], [1012, 1506], [1016, 1503], [1020, 1500], [1024, 1500],
+          [1028, 1501], [1032, 1505], [1036, 1507], [1040, 1518], [1044, 1700], [1048, 1700],
+          [1052, 1700], [1056, 1700], [1060, 1700], [1064, 1700], [1068, 1700], [1072, 1700],
+          [1076, 1700], [1080, 1700], [1084, 1700], [1088, 1700], [1092, 1700], [1096, 1700],
+          [1100, 1700], [1106, 1700],
+        ],
+        view: "16vh",
+        between: ["promo-video", "road-to-jamboree-series"],
+      },
+      bonk: {
+        head: [955, 1530],
+        // Where it's off the box, so the box's text keeps the pointer.
+        hit: [1000, 1500, 1106, 2044],
+        acorn: OUTREACH_ACORN,
+      },
+      front: "top",
+    },
+  ],
+  side: {
+    name: "small-block",
+    box: [135, 409, 291, 1226],
+    caps: [4, 4],
+    navTop: 40,
+    linkPadY: 7,
+    linkSize: 11.5,
+    indicator: { fill: "#a8642c", box: [136, 456, 290, 518] },
+    /** The highlight's colour, for UI that matches it (footer button). */
+    highlightColor: "#a8642c",
+    /** The acorn sticker rides on the highlight's left end, drawn smaller. */
+    indicatorIcon: {
+      name: "tab-acorn",
+      from: [72, 448, 208, 584],
+      box: [98, 453, 162, 517],
+    },
+    linkIndent: 20,
+    linkColor: "#33401f",
+    activeLinkColor: "#ffffff",
+    stripColor: "#efe3c8",
+  },
+  text: {
+    name: "big-block",
+    box: [339, 404, 988, 3693],
+    caps: [4, 4],
+    minH: 2000,
+  },
+  /**
+   * Above the painted box's bottom (3693), so the ending shows the bottom
+   * squirrel and its acorn whole, under the box and the section menu that
+   * follows it down.
+   */
+  textEndY: 3420,
+}
+
+/**
  * Project Description: a night sky with two comets (the bottle and Gemy)
  * flying over the box, and the CN Tower rocket hovering over a planet below.
  * Comets and rocket burst into fireworks when clicked.
  */
 export const PROJECT_SCENE = {
   header: "Project",
+  headerSub:
+    "PetaBite: Accelerating the Discovery of Scalable Plastic-Degrading Enzymes",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/project/",
   plate: [918, 4000],
   background: "#111926",
@@ -1030,8 +1300,9 @@ export const WIKI_SCENE = {
     },
   ],
   side: {
-    // A plain box in the painted one's colour: crisp at any size.
-    fill: "#f1dece",
+    // A plain box (crisp at any size), a shade deeper than the text box's
+    // peach so the two read apart, as on the other pages.
+    fill: "#e6c4ab",
     radius: "0.6rem",
     box: [55, 160, 121, 594],
     navTop: 16,

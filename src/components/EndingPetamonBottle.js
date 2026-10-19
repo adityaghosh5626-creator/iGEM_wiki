@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react"
 import { Link, navigate } from "gatsby"
-import styled from "styled-components"
+import styled, { keyframes } from "styled-components"
 import { inputCopyCss, phone, phoneSize } from "./artScale.js"
 import { PlateImg, drawPlateRegion } from "./PlateImg.js"
 
@@ -125,7 +125,7 @@ const PIECES = [
     color: "#a07cf2",
     blurb:
       "Entrepreneurial thinking, market context, and implementation considerations.",
-    label: "Venture",
+    label: "Entrepreneurship",
     hol: "venturepurplehol.avif",
     pop: "venturepurple.avif",
     pet: "venpetamon.avif",
@@ -702,17 +702,32 @@ const EndingPetamonBottle = forwardRef(function EndingPetamonBottle(_, ref) {
               </InfoGo>
             </Info>
           ) : (
-            <Hint aria-hidden={!ready}>
-              <HintBang src={HINT_BANG_SRC} alt="" />
-              <span className="hover-copy">
-                Hover over a piece to meet its petamon, then click to visit their
-                page.
-              </span>
-              <span className="touch-copy">
-                Tap a piece to meet its petamon, then tap again to visit their
-                page.
-              </span>
-            </Hint>
+            <>
+              <Hint aria-hidden={!ready}>
+                <HintBang src={HINT_BANG_SRC} alt="" />
+                <span className="hover-copy">
+                  Hover over a piece to meet its petamon, then click to visit
+                  their page.
+                </span>
+                <span className="touch-copy">
+                  Tap a piece to meet its petamon, then tap again to visit
+                  their page.
+                </span>
+              </Hint>
+              {/* A quiet nudge, a beat later: there's more to find. */}
+              <Whisper aria-hidden={!ready}>
+                <span className="hover-copy">
+                  psst… on each subteam's page, its petamons are up to
+                  something too. Hover over anything there that looks alive
+                  (the crabs on this page are in on it too).
+                </span>
+                <span className="touch-copy">
+                  psst… on each subteam's page, its petamons are up to
+                  something too. Tap anything there that looks alive (the
+                  crabs on this page are in on it too).
+                </span>
+              </Whisper>
+            </>
           )}
         </Under>
         {PIECES.map(piece => (
@@ -913,6 +928,35 @@ const InfoGo = styled.p`
   margin: 0.9cqw 0 0;
   font-size: max(${phoneSize(0.8)}, 2.3cqw);
   font-weight: 700;
+`
+
+const whisperIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.7;
+  }
+`
+
+/** Small and faint, fading in a few seconds after the hint. */
+const Whisper = styled.p`
+  margin: 0.9cqw auto 0;
+  max-width: 64cqw;
+  color: #fff;
+  font-size: max(${phoneSize(0.68)}, 1.7cqw);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0;
+  animation: ${whisperIn} 1.6s ease 4s forwards;
+  ${inputCopyCss}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 0.7;
+  }
 `
 
 const HintBang = styled.img`

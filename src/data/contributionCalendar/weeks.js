@@ -29,21 +29,10 @@ import { buildWeekSkeleton, formatDayShort } from "./calendarUtils.js"
  * @property {Record<SubteamId, SubteamWeekContent>} subteams
  */
 
-/*
- * Sources: the leads' weekly updates and announcements on Discord, subteam
- * channels, meeting minutes and slides in the team Drive, and the Hardware and
- * Wet Lab notebooks. Milestones are the important dates (they show on the
- * calendar); the week overview and subteam entries are the sidebar; the day by
- * day specifics live in the notebooks, which the subteam entries link to.
- */
-
-/** Weeks starting before this are past: gaps say "Slow week", not "coming soon". */
 const PAST_WEEK_QUIET_BEFORE = "2026-10-11"
 
-/** The calendar opens on the latest week on the record. */
 const LATEST_WEEK_ID = "week-2026-10-04"
 
-/** Start of the week each subteam first met; earlier weeks say "Not started yet". */
 const SUBTEAM_FIRST_WEEK = {
   venture: "2026-01-04",
   outreach: "2026-01-18",
@@ -1086,8 +1075,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Skule site live.",
-        detail: "The Skule site is live; the competition wiki is built out section by section.",
+        summary: "Skule site live; enzyme battle.",
+        detail:
+          "The Skule site is live; the competition wiki is built out section by section.\n• August 24: the Dry Lab notebooks set up on the wiki.\n• August 29: the enzyme battle, opened from the PETadex browser.",
         link: WEB,
       },
     },
@@ -1124,6 +1114,12 @@ const WEEK_CONTENT_OVERRIDES = {
         detail: "Focus moved to the North American Mini Jamboree on September 12.",
         link: VENTURE,
       },
+      web: {
+        summary: "Homepage forest walk.",
+        detail:
+          "• September 4: the forest reveal on the homepage, with the shore art scaling to the window.\n• September 5: the second treatment-plant bottle, and the river bottle now waits for the reader.",
+        link: "/",
+      },
     },
   },
   "week-2026-09-06": {
@@ -1157,6 +1153,12 @@ const WEEK_CONTENT_OVERRIDES = {
           "Second place at the North American Mini Jamboree, then back to the verticals: wastewater sections and the financial projections.",
         link: VENTURE,
       },
+      web: {
+        summary: "Homepage map and splash; citations.",
+        detail:
+          "• September 6: LOGAN sample pins on the painted homepage map, bubbles on the chute bottle and splash droplets as it lands. The PETadex moved off the homepage onto its own site. Pages can now cite sources in their text and build a reference list.\n• September 10: the map's sample pins can be reached with the keyboard.\n• September 12: the homepage on phones: a fitted shore text box, all three condition cards, a bigger bottle and popups that fit the screen.",
+        link: "/",
+      },
     },
   },
   "week-2026-09-13": {
@@ -1188,6 +1190,12 @@ const WEEK_CONTENT_OVERRIDES = {
         detail:
           "Finalized content due October 9 to give Web time before the freeze. Assignments: market sizing (TAM/SAM/SOM) for every vertical, financial projections and regulatory edits.",
         link: VENTURE,
+      },
+      web: {
+        summary: "Design sketchbook; pinned top bar.",
+        detail:
+          "• September 13: the Outreach design sketchbook got its hardcover look and tabs, and the top bar now stays pinned while scrolling, with a back-to-top button.\n• September 19: the Human Practices write-up added to that page's tabs.",
+        link: OUTREACH,
       },
     },
   },
@@ -1223,9 +1231,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Pulling the wiki together.",
+        summary: "Pulling the wiki together; homepage story.",
         detail:
-          "Every subteam is writing up its work, and Web assembles it section by section.",
+          "Every subteam is writing up its work, and Web assembles it section by section.\n• September 26: the homepage copy pinned to the art, the ending bottle assembling, and the logo loading screen.",
         link: WEB,
       },
     },
@@ -1237,6 +1245,7 @@ const WEEK_CONTENT_OVERRIDES = {
       { date: "2026-09-28", label: "V2 bioreactor assembled", subteamId: "hardware" },
       { date: "2026-09-30", label: "First PETase library ordered", subteamId: "wetLab" },
       { date: "2026-10-02", label: "Venture wiki content complete", subteamId: "venture" },
+      { date: "2026-10-01", label: "Dry Lab page art", subteamId: "web" },
     ],
     subteams: {
       wetLab: {
@@ -1264,9 +1273,9 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Ticket board for the wiki.",
+        summary: "Ticket board; Dry Lab page art.",
         detail:
-          "Opened a tickets channel to track what's left on the wiki, including notebook figures and filling in this calendar.",
+          "Opened a tickets channel to track what's left on the wiki, including notebook figures and filling in this calendar.\n• September 29: new Toronto art and turtle on the homepage.\n• September 30: subteam labels around the ending bottle, each linking to its page.\n• October 1: the Dry Lab page's painted skyline, and DM Sans across the site.\n• October 3: the loading screen counts images further down the page, so its progress is truer.",
         link: WEB,
       },
     },
@@ -1275,7 +1284,10 @@ const WEEK_CONTENT_OVERRIDES = {
     overview:
       "Wet Lab ran its first co-transformations, Dry Lab organized its wiki into five pipeline components, and PetaScale was a Food Forward Summit finalist (October 8). Merch orders opened, and attribution forms are due October 11.",
     milestones: [
+      { date: "2026-10-05", label: "Entrepreneurship page live", subteamId: "web" },
+      { date: "2026-10-06", label: "Human Practices page live", subteamId: "web" },
       { date: "2026-10-08", label: "Food Forward Summit finalist", subteamId: "venture" },
+      { date: "2026-10-10", label: "Contribution and Attributions pages", subteamId: "web" },
     ],
     subteams: {
       wetLab: {
@@ -1302,21 +1314,113 @@ const WEEK_CONTENT_OVERRIDES = {
         link: VENTURE,
       },
       web: {
-        summary: "Notebooks, calendar and mobile homepage.",
+        summary: "Entrepreneurship, Human Practices, Dry Lab, Contribution and Attributions pages.",
         detail:
-          "Dry Lab pages went up, the Hardware and Wet Lab notebooks and this calendar filled in from team records, and lighter homepage images for phones.",
+          "The Hardware and Wet Lab notebooks and this calendar filled in from team records, and lighter homepage images for phones.\n• October 5: the Entrepreneurship page, with its kangaroo coin bursts.\n• October 6: the Human Practices page, and the Entrepreneurship content filled in.\n• October 7: sponsor logos, and the Hardware and Entrepreneurship footer art.\n• October 8: the Food Forward appendix on Entrepreneurship.\n• October 9: the homepage's lab section.\n• October 10: the Dry Lab Overview (with its figures), Model and Software pages, the Hardware notebook's source-code dropdowns, the Contribution and Attributions pages, the Project menu, the Wet Lab notebook, the homepage auto-scroll, and a size check that keeps the site under iGEM's upload limit.",
         link: WEB,
       },
     },
   },
   "week-2026-10-11": {
     overview: "Attribution forms close October 11. Wiki editing ahead of the October 21 freeze.",
-    milestones: [{ date: "2026-10-11", label: "Attribution forms due", subteamId: "all" }],
+    milestones: [
+      { date: "2026-10-11", label: "Attribution forms due", subteamId: "all" },
+      { date: "2026-10-12", label: "Wet Lab, Finance and Safety pages", subteamId: "web" },
+      { date: "2026-10-16", label: "Engineering, Project and Wiki pages", subteamId: "web" },
+    ],
+    subteams: {
+      web: {
+        summary: "Wet Lab, Outreach, Finance, Safety, Hardware Iterations, Engineering, Project and Wiki pages.",
+        detail:
+          "• October 11: Meet the Team's waterfall, the logo in the navbar, the enzyme favicon, the Outreach design notebook filled in, and references in IEEE style.\n• October 12: the Wet Lab sea page, the rebuilt Outreach page, the Finance and Safety pages, every image moved to iGEM's servers, and iGEM's CC BY 4.0 licence restored.\n• October 13: the Dry Lab Dataset Generation flowchart, with a section menu that can be minimised.\n• October 14: the Hardware Iterations page, with a timeline and subsystem tabs for versions 1 to 3, and the version 1 temperature page.\n• October 15: the Finance page's content and funding cycle sheet, the version 1 power page, the Outreach sketchbook's covers, inner pages and tabs, and the Attributions background.\n• October 16: the Engineering, Project Description and Wiki pages, dragons that catch fire on the Wiki and Contribution pages, the new treatment plant on the homepage, subteam badges on Meet the Team, and the Human Practices sections with their photos.",
+        link: WEB,
+      },
+    },
   },
   "week-2026-10-18": {
     overview: "Wiki freeze on October 21.",
     milestones: [{ date: "2026-10-21", label: "Wiki freeze", subteamId: "all" }],
   },
+}
+
+/**
+ * Notebook-level dates from the Wet Lab and Hardware notebooks. These only add
+ * milestones to a week (its overview and subteam copy are untouched), and any
+ * milestone already on the week is skipped.
+ */
+const NOTEBOOK_MILESTONE_PATCHES = {
+  "week-2026-05-10": [
+    { date: "2026-05-16", label: "Sensor and controller prototyping assigned", subteamId: "hardware" },
+  ],
+  "week-2026-05-31": [
+    { date: "2026-06-04", label: "Prep growth media and pour plates", subteamId: "wetLab" },
+  ],
+  "week-2026-06-07": [
+    { date: "2026-06-11", label: "Pick up cells for competent-cell prep", subteamId: "wetLab" },
+    { date: "2026-06-12", label: "Make competent cells", subteamId: "wetLab" },
+  ],
+  "week-2026-06-14": [
+    { date: "2026-06-16", label: "Optical-sensor housing prototype ordered", subteamId: "hardware" },
+    { date: "2026-06-16", label: "Make competent cells; transform team plasmids", subteamId: "wetLab" },
+    { date: "2026-06-18", label: "Save freezer stocks; purify plasmid DNA", subteamId: "wetLab" },
+    { date: "2026-06-19", label: "Pour antibiotic selection plates", subteamId: "wetLab" },
+  ],
+  "week-2026-06-21": [
+    { date: "2026-06-24", label: "Miniprep BL21; transform NEB DH5α", subteamId: "wetLab" },
+    { date: "2026-06-26", label: "Miniprep DH5α; send for sequencing", subteamId: "wetLab" },
+  ],
+  "week-2026-06-28": [
+    { date: "2026-07-03", label: "Transform DH5α with selected plasmids", subteamId: "wetLab" },
+    { date: "2026-07-04", label: "Pour selection plates", subteamId: "wetLab" },
+  ],
+  "week-2026-07-05": [
+    { date: "2026-07-08", label: "FAST-PETase expression in T7 cells", subteamId: "wetLab" },
+    { date: "2026-07-10", label: "Miniprep team plasmid set", subteamId: "wetLab" },
+  ],
+  "week-2026-07-19": [
+    { date: "2026-07-21", label: "Miniprep AS plasmids; send for sequencing", subteamId: "wetLab" },
+    { date: "2026-07-24", label: "Finish BL21 competent cells", subteamId: "wetLab" },
+  ],
+  "week-2026-07-26": [
+    { date: "2026-07-29", label: "Pour plates; test BL21 competence", subteamId: "wetLab" },
+    { date: "2026-07-31", label: "Test copper toxicity", subteamId: "wetLab" },
+  ],
+  "week-2026-08-02": [
+    { date: "2026-08-04", label: "Golden Gate assembly of AS plasmid", subteamId: "wetLab" },
+    { date: "2026-08-07", label: "Miniprep and sequence AS products", subteamId: "wetLab" },
+  ],
+  "week-2026-08-09": [
+    { date: "2026-08-10", label: "Gel check of AS GGA products", subteamId: "wetLab" },
+    { date: "2026-08-13", label: "Make trimethoprim stock; first antibiotic + copper plates", subteamId: "wetLab" },
+  ],
+  "week-2026-08-16": [
+    { date: "2026-08-18", label: "Copper mesh biosensor test", subteamId: "wetLab" },
+    { date: "2026-08-20", label: "Test AS-sul1 on sulfa + copper plates", subteamId: "wetLab" },
+  ],
+  "week-2026-08-23": [
+    { date: "2026-08-25", label: "Sequence AS empty and AS-dfr plasmids", subteamId: "wetLab" },
+    { date: "2026-08-26", label: "Start PD plasmid PCR", subteamId: "wetLab" },
+  ],
+  "week-2026-08-30": [
+    { date: "2026-08-31", label: "Assemble PD plasmid", subteamId: "wetLab" },
+    { date: "2026-09-01", label: "Start move to BioZone", subteamId: "wetLab" },
+  ],
+  "week-2026-09-06": [
+    { date: "2026-09-08", label: "Move plates and columns to BioZone", subteamId: "wetLab" },
+    { date: "2026-09-10", label: "BioZone lab tour", subteamId: "wetLab" },
+  ],
+  "week-2026-09-13": [
+    { date: "2026-09-15", label: "Move -80 °C samples to BioZone", subteamId: "wetLab" },
+    { date: "2026-09-15", label: "Restart PD plasmid assembly", subteamId: "wetLab" },
+  ],
+  "week-2026-09-20": [
+    { date: "2026-09-23", label: "Move Lash Miller samples to BioZone", subteamId: "wetLab" },
+    { date: "2026-09-24", label: "Resuspend Twist PETase inserts; set up GGAs", subteamId: "wetLab" },
+  ],
+  "week-2026-10-04": [
+    { date: "2026-10-06", label: "Assemble PD with 5 control PETases; PCR and gel", subteamId: "wetLab" },
+    { date: "2026-10-07", label: "Co-transform AS + PD into BL21(DE3)", subteamId: "wetLab" },
+  ],
 }
 
 /**
@@ -1855,27 +1959,38 @@ function notStartedPlaceholderFor(subteamId) {
   }
 }
 
-/** Swap in one subteam's entry (and add its milestones) from a patch layer. */
-function applySubteamPatch(week, patches, subteamId) {
-  const patch = patches[week.id]
-  if (!patch) return week
-
-  const milestones = [...(week.milestones || [])]
-  for (const milestone of patch.milestones || []) {
+/** Add milestones to a list, skipping any that are already there. */
+function mergeMilestones(existing, incoming) {
+  const milestones = [...(existing || [])]
+  for (const milestone of incoming || []) {
     const exists = milestones.some(
       (m) => m.date === milestone.date && m.label === milestone.label && m.subteamId === milestone.subteamId
     )
     if (!exists) milestones.push(milestone)
   }
+  return milestones
+}
+
+/** Swap in one subteam's entry (and add its milestones) from a patch layer. */
+function applySubteamPatch(week, patches, subteamId) {
+  const patch = patches[week.id]
+  if (!patch) return week
 
   return {
     ...week,
-    milestones,
+    milestones: mergeMilestones(week.milestones, patch.milestones),
     subteams: {
       ...week.subteams,
       [subteamId]: { ...patch[subteamId] },
     },
   }
+}
+
+/** Add notebook-level milestones to a week without touching its copy. */
+function applyNotebookMilestones(week) {
+  const extra = NOTEBOOK_MILESTONE_PATCHES[week.id]
+  if (!extra) return week
+  return { ...week, milestones: mergeMilestones(week.milestones, extra) }
 }
 
 /** Replace "Progress update coming soon." on past weeks for every subteam. */
@@ -1911,6 +2026,7 @@ export const CONTRIBUTION_WEEKS = buildWeekSkeleton()
   .map((sk) => mergeWeek(sk, WEEK_CONTENT_OVERRIDES[sk.id]))
   .map((week) => applySubteamPatch(week, OUTREACH_WEEK_PATCHES, "outreach"))
   .map((week) => applySubteamPatch(week, HUMAN_PRACTICES_WEEK_PATCHES, "humanPractices"))
+  .map(applyNotebookMilestones)
   .map(applyPastWeekQuietPlaceholders)
 
 /** @type {Record<string, ContributionWeek>} */

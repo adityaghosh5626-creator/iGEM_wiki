@@ -6,12 +6,15 @@ import React, {
   useRef,
   useState,
 } from "react"
+import { createPortal } from "react-dom"
 import styled from "styled-components"
+import { PopupClose } from "../PopupClose"
 import {
   DESIGN_SKETCHBOOK_PAGES,
   DESIGN_SKETCHBOOK_SECTIONS,
   PAGE_FLIP_ATTRIBUTION,
   buildSketchbookPages,
+  continuedTitle,
   getTocSections,
 } from "../../data/designSketchbookPages.js"
 
@@ -48,6 +51,12 @@ const FLIP_SETTINGS = {
 }
 
 const FLIP_WAIT_MS = FLIP_SETTINGS.flippingTime + 80
+/** The turning page's shading: a deeper shade of the paper, not black (r, g, b). */
+const FLIP_SHADE = "184, 164, 134"
+/** page-flip's shading elements, which it restyles every frame. */
+const FLIP_SHADOW = /^stf__(outer|inner|hard|hardInner)Shadow$/
+/** Black in a style as the browser writes it back (rgb at full opacity). */
+const FLIP_BLACK = /rgba?\(0, 0, 0(, [\d.]+)?\)/g
 
 /**
  * A section's photo moves to its own page when, beside the text, it would be
@@ -57,12 +66,318 @@ const MIN_PHOTO_SHARE = 0.4
 /** The page's padding and text get remeasured this long after a resize. */
 const RESIZE_SETTLE_MS = 200
 
-/** The pages whose text can crowd out their photo: each section's first page. */
+/** Each section's first page, whose photo's shape is read as it loads. */
 const SPREAD_PAGES = DESIGN_SKETCHBOOK_PAGES.filter((p) => p.variant === "spread")
+/** The pages with text, which are measured so none ever has to scroll. */
+const TEXT_PAGES = DESIGN_SKETCHBOOK_PAGES.filter(
+  (p) => ["spread", "notes", "aside"].includes(p.variant) && typeof p.body === "string" && p.body
+)
+/** Kept clear under a page's text when it's measured (px), for rounding. */
+const FIT_SLACK_PX = 6
+/** A run-on page ends on a full stop if one ends in this last share of it. */
+const SENTENCE_REACH = 0.4
+
+/** A notes page's small heading: its section, then its own title. */
+function pageLabel(page, title = page.title) {
+  const section = DESIGN_SKETCHBOOK_SECTIONS.find((s) => s.id === page.sectionId)
+  return section ? `${section.label} / ${title}` : title
+}
 
 function prefersReducedMotion() {
   if (typeof window === "undefined" || !window.matchMedia) return false
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+/**
+ * Pictures open bigger when clicked (or Enter on them): see the root's
+ * capture listeners, since page-flip moves the pages out of React's tree and
+ * would otherwise take the press as a page turn.
+ */
+const ZOOM_SELECTOR = "[data-zoom-src]"
+const zoomProps = (src, alt) => ({
+  "data-zoom-src": src,
+  "data-zoom-alt": alt || "",
+  role: "button",
+  tabIndex: 0,
+  "aria-label": alt ? `Enlarge: ${alt}` : "Enlarge picture",
+})
+
+/** Zooming in the enlarged view: up to twice the picture's own pixels, or 4×. */
+const ZOOM_MAX_MIN = 4
+/** Each −/+ (button or key) step. */
+const ZOOM_STEP = 1.6
+/** Pointer travel (px) past which a press is a drag, not a click. */
+const DRAG_SLOP = 5
+
+/**
+ * A picture enlarged over the page, closed with its ✕, Escape or a click
+ * outside. It zooms with its −/+ buttons (or the + and − keys), a pinch, or
+ * ⌘/Ctrl and scroll, at the pointer; zoomed in, it moves with a drag, scroll
+ * or the arrow keys. A click on it zooms in there (a tall one to the
+ * screen's width) or back out to fit.
+ */
+function SketchZoom({ zoom, onClose }) {
+  const closeRef = useRef(null)
+  const backdropRef = useRef(null)
+  const imgRef = useRef(null)
+  const [view, setView] = useState({ s: 1, x: 0, y: 0 })
+  const [smooth, setSmooth] = useState(true)
+  const [dragging, setDragging] = useState(false)
+  const viewRef = useRef(view)
+  viewRef.current = view
+  /** Set by a drag or pinch, so the click that ends it does nothing. */
+  const movedRef = useRef(false)
+
+  // The picture's fitted size (transforms aside); it's centred on the screen.
+  const fitted = () => ({
+    w: Math.max(1, imgRef.current?.offsetWidth || 1),
+    h: Math.max(1, imgRef.current?.offsetHeight || 1),
+  })
+  const maxScale = () =>
+    Math.max(ZOOM_MAX_MIN, (2 * (imgRef.current?.naturalWidth || 0)) / fitted().w)
+  // Bigger than the screen, it moves only as far as its edges; smaller, it stays centred.
+  const clamp = ({ s, x, y }) => {
+    const { w, h } = fitted()
+    const mx = Math.max(0, (w * s - window.innerWidth) / 2)
+    const my = Math.max(0, (h * s - window.innerHeight) / 2)
+    return { s, x: Math.min(mx, Math.max(-mx, x)), y: Math.min(my, Math.max(-my, y)) }
+  }
+  const zoomTo = (scale, px = window.innerWidth / 2, py = window.innerHeight / 2, ease = true) => {
+    const v = viewRef.current
+    const s = Math.min(maxScale(), Math.max(1, scale))
+    // Keep the point under (px, py) there.
+    const cx = window.innerWidth / 2
+    const cy = window.innerHeight / 2
+    const k = s / v.s
+    setSmooth(ease)
+    setView(clamp({ s, x: px - cx - (px - cx - v.x) * k, y: py - cy - (py - cy - v.y) * k }))
+  }
+  const panBy = (dx, dy, ease = false) => {
+    const v = viewRef.current
+    setSmooth(ease)
+    setView(clamp({ ...v, x: v.x + dx, y: v.y + dy }))
+  }
+  const fit = () => {
+    setSmooth(true)
+    setView({ s: 1, x: 0, y: 0 })
+  }
+  const toggleAt = (px, py) => {
+    if (viewRef.current.s > 1.01) return fit()
+    return zoomTo(Math.max(2.5, (window.innerWidth * 0.92) / fitted().w), px, py)
+  }
+  const handlers = useRef({})
+  handlers.current = { zoomTo, panBy, fit, clamp, onClose }
+
+  useEffect(() => {
+    if (!zoom) return undefined
+    setView({ s: 1, x: 0, y: 0 })
+    const onKey = (event) => {
+      const { zoomTo, panBy, fit, onClose } = handlers.current
+      const { s } = viewRef.current
+      if (event.key === "Escape") onClose()
+      else if (event.key === "+" || event.key === "=") zoomTo(s * ZOOM_STEP)
+      else if (event.key === "-" || event.key === "_") zoomTo(s / ZOOM_STEP)
+      else if (event.key === "0") fit()
+      else if (s > 1 && event.key.startsWith("Arrow")) {
+        const step = 80
+        const [dx, dy] = {
+          ArrowLeft: [step, 0],
+          ArrowRight: [-step, 0],
+          ArrowUp: [0, step],
+          ArrowDown: [0, -step],
+        }[event.key] || [0, 0]
+        panBy(dx, dy, true)
+      } else return
+      event.preventDefault()
+    }
+    // Not passive: scrolling here mustn't scroll the page behind.
+    const onWheel = (event) => {
+      event.preventDefault()
+      const { zoomTo, panBy } = handlers.current
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1
+      if (event.ctrlKey || event.metaKey) {
+        zoomTo(viewRef.current.s * Math.exp(-event.deltaY * unit * 0.01), event.clientX, event.clientY, false)
+      } else if (viewRef.current.s > 1) {
+        panBy(-event.deltaX * unit, -event.deltaY * unit)
+      }
+    }
+    const onResize = () => setView((v) => handlers.current.clamp(v))
+    const backdrop = backdropRef.current
+    window.addEventListener("keydown", onKey)
+    window.addEventListener("resize", onResize)
+    backdrop?.addEventListener("wheel", onWheel, { passive: false })
+    closeRef.current?.querySelector("button")?.focus()
+    const { overflow } = document.documentElement.style
+    document.documentElement.style.overflow = "hidden"
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", onResize)
+      backdrop?.removeEventListener("wheel", onWheel)
+      document.documentElement.style.overflow = overflow
+    }
+  }, [zoom])
+
+  // Drags pan; two fingers pinch (and pan with their midpoint).
+  const pointers = useRef(new Map())
+  const onPointerDown = (event) => {
+    if (event.button > 0 || event.target.closest("button")) return
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (pointers.current.size === 1) {
+      movedRef.current = false
+      const start = { x: event.clientX, y: event.clientY }
+      const move = (e) => {
+        const p = pointers.current.get(e.pointerId)
+        if (!p) return
+        const prev = [...pointers.current.values()]
+        pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        const now = [...pointers.current.values()]
+        if (now.length >= 2) {
+          movedRef.current = true
+          const [a0, b0] = prev
+          const [a1, b1] = now
+          const d0 = Math.hypot(a0.x - b0.x, a0.y - b0.y) || 1
+          const d1 = Math.hypot(a1.x - b1.x, a1.y - b1.y)
+          const mid = { x: (a1.x + b1.x) / 2, y: (a1.y + b1.y) / 2 }
+          handlers.current.panBy(mid.x - (a0.x + b0.x) / 2, mid.y - (a0.y + b0.y) / 2)
+          handlers.current.zoomTo(viewRef.current.s * (d1 / d0), mid.x, mid.y, false)
+          return
+        }
+        if (!movedRef.current && Math.hypot(e.clientX - start.x, e.clientY - start.y) < DRAG_SLOP) return
+        movedRef.current = true
+        if (viewRef.current.s > 1) {
+          setDragging(true)
+          handlers.current.panBy(e.clientX - p.x, e.clientY - p.y)
+        }
+      }
+      const up = (e) => {
+        pointers.current.delete(e.pointerId)
+        if (pointers.current.size > 0) return
+        setDragging(false)
+        window.removeEventListener("pointermove", move)
+        window.removeEventListener("pointerup", up)
+        window.removeEventListener("pointercancel", up)
+      }
+      window.addEventListener("pointermove", move)
+      window.addEventListener("pointerup", up)
+      window.addEventListener("pointercancel", up)
+    }
+  }
+
+  if (!zoom || typeof document === "undefined") return null
+  const zoomed = view.s > 1.01
+  return createPortal(
+    <ZoomBackdrop
+      ref={backdropRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={zoom.alt || "Enlarged picture"}
+      onPointerDown={onPointerDown}
+      onClick={() => {
+        if (!movedRef.current) onClose()
+      }}
+    >
+      <ZoomFigure ref={closeRef} onClick={(event) => event.stopPropagation()}>
+        <ZoomImage
+          ref={imgRef}
+          src={zoom.src}
+          alt={zoom.alt}
+          draggable={false}
+          $smooth={smooth}
+          $cursor={zoomed ? (dragging ? "grabbing" : "grab") : "zoom-in"}
+          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }}
+          onClick={(event) => {
+            if (!movedRef.current) toggleAt(event.clientX, event.clientY)
+          }}
+        />
+        {/* Zoomed, the picture's corner may be off screen: the screen's. */}
+        <ZoomClose
+          onClose={onClose}
+          style={zoomed ? { position: "fixed", top: "16px", right: "16px" } : undefined}
+        />
+      </ZoomFigure>
+      <ZoomTools onClick={(event) => event.stopPropagation()}>
+        <ZoomTool type="button" aria-label="Zoom out" title="Zoom out (−)" disabled={!zoomed} onClick={() => zoomTo(view.s / ZOOM_STEP)}>
+          −
+        </ZoomTool>
+        <ZoomTool type="button" aria-label="Fit to screen" title="Fit to screen (0)" disabled={!zoomed} onClick={fit} $wide>
+          {zoomed ? `${Math.round(view.s * 100)}%` : "Fit"}
+        </ZoomTool>
+        <ZoomTool type="button" aria-label="Zoom in" title="Zoom in (+)" disabled={view.s >= maxScale() - 0.01} onClick={() => zoomTo(view.s * ZOOM_STEP)}>
+          +
+        </ZoomTool>
+      </ZoomTools>
+    </ZoomBackdrop>,
+    document.body,
+  )
+}
+
+/**
+ * A page's `images` ({ src, alt }) in a grid that fills what's left of the
+ * page, `cols` across (up to three by default), each kept whole; one caption.
+ * An image with `crop` [x0, y0, x1, y1] (of its `size` [w, h]) shows just
+ * that part, e.g. one piece of a tall picture split side by side; it still
+ * enlarges whole. An image's `span` is how many columns it takes (`rowSpan`,
+ * rows), and the page's `rows` (one weight a row) share out the height, for
+ * wide and tall pictures mixed.
+ */
+/** Where a gallery image sits: `span` columns, `rowSpan` rows. */
+const cellStyle = ({ span, rowSpan }) =>
+  span || rowSpan
+    ? {
+        gridColumn: span ? `span ${span}` : undefined,
+        gridRow: rowSpan ? `span ${rowSpan}` : undefined,
+      }
+    : undefined
+
+function GalleryFigure({ page }) {
+  const n = page.images.length
+  const cols = page.cols || Math.min(n, 3)
+  return (
+    <GalleryWrap>
+      <GalleryGrid
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: page.rows
+            ? page.rows.map((weight) => `minmax(0, ${weight}fr)`).join(" ")
+            : `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
+        }}
+      >
+        {page.images.map((image) =>
+          image.crop ? (
+            <GalleryCrop
+              key={`${image.src}:${image.crop}`}
+              viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              preserveAspectRatio="xMidYMin meet"
+              style={cellStyle(image)}
+              {...zoomProps(image.src, image.alt)}
+            >
+              {/* Its own viewport clips the picture to the crop (the
+                  outer one shows past it where the cell is roomier). */}
+              <svg
+                x={image.crop[0]}
+                y={image.crop[1]}
+                width={image.crop[2] - image.crop[0]}
+                height={image.crop[3] - image.crop[1]}
+                viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
+              >
+                <image href={image.src} width={image.size[0]} height={image.size[1]} />
+              </svg>
+            </GalleryCrop>
+          ) : (
+            <GalleryImage
+              key={image.src}
+              src={image.src}
+              alt={image.alt || ""}
+              loading="lazy"
+              style={cellStyle(image)}
+              {...zoomProps(image.src, image.alt)}
+            />
+          ),
+        )}
+      </GalleryGrid>
+      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+    </GalleryWrap>
+  )
 }
 
 function SketchPageContent({ page }) {
@@ -100,11 +415,10 @@ function SketchPageContent({ page }) {
             <TocItem key={section.id}>
               <TocButton
                 type="button"
-                $color={section.color}
-            $crop={section.tabCrop}
+                $color={section.tabColor}
                 data-toc-section={section.id}
               >
-                <TocSwatch $color={section.color} aria-hidden />
+                <TocSwatch $color={section.tabColor} aria-hidden />
                 <TocText>
                   <TocLabel>{section.label}</TocLabel>
                   <TocProgress>{section.progress}</TocProgress>
@@ -140,9 +454,11 @@ function SketchPageContent({ page }) {
       <SketchPageInner $variant="notes">
         {label}
         {page.body && <SketchBody>{page.body}</SketchBody>}
-        {page.imageSrc ? (
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : page.imageSrc ? (
           <SketchFigure>
-            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+            <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
             {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
           </SketchFigure>
         ) : (
@@ -157,10 +473,14 @@ function SketchPageContent({ page }) {
   if (page.variant === "image") {
     return (
       <SketchPageInner $variant="image">
+        {page.images ? (
+          <GalleryFigure page={page} />
+        ) : (
         <SketchFigure $alone>
-          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
+        )}
       </SketchPageInner>
     )
   }
@@ -171,13 +491,14 @@ function SketchPageContent({ page }) {
       <SketchTitle>{page.title}</SketchTitle>
       {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
       {page.body && <SketchBody>{page.body}</SketchBody>}
+      {showMedia && page.images && <GalleryFigure page={page} />}
       {showMedia && page.imageSrc && (
         <SketchFigure>
-          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} />
+          <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
       )}
-      {showMedia && !page.imageSrc && (
+      {showMedia && !page.imageSrc && !page.images && (
         <SketchPlaceholder aria-hidden={false}>
           <SketchPlaceholderLabel>
             {page.imagePlaceholder || "Image coming soon"}
@@ -194,20 +515,26 @@ export function DesignSketchbook() {
   const pageFlipRef = useRef(null)
   const flipRunIdRef = useRef(0)
   const [ready, setReady] = useState(false)
-  /** Sections whose photo has its own page, and whether two pages show at once. */
-  const [splitIds, setSplitIds] = useState([])
+  /**
+   * How the pages fit at this size (buildSketchbookPages): pages whose photo
+   * has its own page, and where text runs on to more pages.
+   */
+  const [fit, setFit] = useState({ split: [], breaks: {} })
+  /** Whether two pages show at once. */
   const [landscape, setLandscape] = useState(true)
   /** One page's size in px, to measure the pages against. */
   const [pageBox, setPageBox] = useState(null)
   /** Height / width of each section's photo, as they load. */
   const [photoRatios, setPhotoRatios] = useState({})
+  /** Set once the web fonts are in, so the pages are measured in them. */
+  const [fontsReady, setFontsReady] = useState(false)
   const pages = useMemo(
-    () => buildSketchbookPages({ split: splitIds, pairs: landscape }),
-    [splitIds, landscape]
+    () => buildSketchbookPages({ ...fit, pairs: landscape }),
+    [fit, landscape]
   )
   const pagesRef = useRef(pages)
   pagesRef.current = pages
-  const layoutKey = `${landscape ? "pairs" : "single"}:${splitIds.join(",")}`
+  const layoutKey = `${landscape ? "pairs" : "single"}:${JSON.stringify(fit)}`
   /** Page to reopen at when the book is rebuilt with a new layout. */
   const resumePageIdRef = useRef(null)
   const measureRef = useRef(null)
@@ -484,38 +811,155 @@ export function DesignSketchbook() {
     }
   }, [])
 
-  // Lay each section's first page out at the current page size (off screen,
-  // text and caption only) and give its photo its own page if the room left
-  // would shrink the photo too far.
+  useEffect(() => {
+    let cancelled = false
+    document.fonts?.ready.then(() => {
+      if (!cancelled) setFontsReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Lay each page with text out at the current page size (off screen, text
+  // and caption only). Its photo gets its own page if the room left would
+  // shrink it too far, and text that still doesn't fit runs on over more
+  // pages, broken where a probe page fills up, so no page ever scrolls.
   useLayoutEffect(() => {
     const layer = measureRef.current
     if (!layer || !pageBox) return
-    const next = []
-    layer.querySelectorAll("[data-measure-section]").forEach((clone) => {
-      const sectionId = clone.getAttribute("data-measure-section")
-      const inner = clone.firstElementChild
-      const parts = inner ? [...inner.children] : []
-      if (!parts.length) return
+    const probeInner = layer.querySelector("[data-measure-probe]")?.firstElementChild
+    const probeLabel = probeInner?.querySelector("[data-probe-label]")
+    const probeBody = probeInner?.querySelector("[data-probe-body]")
+    if (!probeInner || !probeLabel || !probeBody) return
+    const contentBox = (inner) => {
       const style = window.getComputedStyle(inner)
       const padTop = parseFloat(style.paddingTop) || 0
       const padBottom = parseFloat(style.paddingBottom) || 0
-      const padSides = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
-      const roomH = inner.clientHeight - padTop - padBottom
-      const used =
-        parts[parts.length - 1].getBoundingClientRect().bottom -
-        parts[0].getBoundingClientRect().top
-      const left = roomH - used
-      const photoW = Math.min(inner.clientWidth - padSides, 28 * 16)
-      const photoH = photoW * (photoRatios[sectionId] ?? 1)
-      if (left < Math.min(photoH, MIN_PHOTO_SHARE * roomH)) next.push(sectionId)
+      return {
+        top: inner.getBoundingClientRect().top + padTop,
+        height: inner.clientHeight - padTop - padBottom,
+        width:
+          inner.clientWidth -
+          (parseFloat(style.paddingLeft) || 0) -
+          (parseFloat(style.paddingRight) || 0),
+      }
+    }
+    const split = []
+    const breaks = {}
+    layer.querySelectorAll("[data-measure-page]").forEach((clone) => {
+      const page = TEXT_PAGES.find((p) => p.id === clone.getAttribute("data-measure-page"))
+      const inner = clone.firstElementChild
+      const body = inner?.querySelector("[data-measure-body]")
+      if (!page || !body) return
+      const box = contentBox(inner)
+      const bodyRect = body.getBoundingClientRect()
+      const headH = bodyRect.top - box.top
+      const figure = inner.querySelector("figure")
+      const figureH = figure ? figure.getBoundingClientRect().bottom - bodyRect.bottom : 0
+      const hasPhoto = Boolean(page.imageSrc || page.images?.length)
+      if (hasPhoto) {
+        const photoW = Math.min(box.width, 28 * 16)
+        const ratio = page.variant === "spread" ? photoRatios[page.sectionId] ?? 1 : 1
+        const left = box.height - headH - bodyRect.height - figureH
+        if (left >= Math.min(photoW * ratio, MIN_PHOTO_SHARE * box.height)) return
+        split.push(page.id)
+      } else if (headH + bodyRect.height <= box.height - FIT_SLACK_PX) {
+        return
+      }
+      // Its text on its own: run it on over as many pages as it needs.
+      probeLabel.textContent = pageLabel(page, continuedTitle(page))
+      const probeBox = contentBox(probeInner)
+      const runOnRoom =
+        probeBox.height - (probeBody.getBoundingClientRect().top - probeBox.top) - FIT_SLACK_PX
+      const words = page.body.split(/\s+/).filter(Boolean)
+      const cuts = []
+      let from = 0
+      let room = box.height - headH - FIT_SLACK_PX
+      const fits = (n) => {
+        probeBody.textContent = words.slice(from, from + n).join(" ")
+        return probeBody.getBoundingClientRect().height <= room
+      }
+      while (from < words.length && !fits(words.length - from)) {
+        let lo = 1
+        let hi = words.length - from - 1
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1
+          if (fits(mid)) lo = mid
+          else hi = mid - 1
+        }
+        let n = lo
+        for (let k = n; k > Math.floor(n * (1 - SENTENCE_REACH)); k -= 1) {
+          if (/[.!?…:]["”’)]?$/.test(words[from + k - 1])) {
+            n = k
+            break
+          }
+        }
+        from += n
+        cuts.push(from)
+        room = runOnRoom
+      }
+      probeBody.textContent = ""
+      if (cuts.length) breaks[page.id] = cuts
     })
-    next.sort()
-    setSplitIds((prev) => (prev.join(",") === next.join(",") ? prev : next))
-  }, [pageBox, photoRatios])
+    split.sort()
+    const next = { split, breaks }
+    setFit((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+  }, [pageBox, photoRatios, fontsReady])
 
   const sketchRootRef = useRef(null)
   const goToSectionRef = useRef(goToSection)
   goToSectionRef.current = goToSection
+
+  const [zoom, setZoom] = useState(null)
+  const zoomFromRef = useRef(null)
+  const closeZoom = useCallback(() => {
+    setZoom(null)
+    zoomFromRef.current?.focus?.()
+  }, [])
+
+  // Pictures enlarge on click, Enter or Space. Pressing one mustn't reach
+  // page-flip (it would turn the page), so presses on them stop here.
+  useEffect(() => {
+    const root = sketchRootRef.current
+    if (!root) return undefined
+    const zoomTarget = (event) => {
+      const target = event.target instanceof Element ? event.target : null
+      const img = target?.closest?.(ZOOM_SELECTOR)
+      return img && root.contains(img) ? img : null
+    }
+    const open = (img) => {
+      zoomFromRef.current = img
+      setZoom({ src: img.getAttribute("data-zoom-src"), alt: img.getAttribute("data-zoom-alt") })
+    }
+    const onPress = (event) => {
+      if (zoomTarget(event)) event.stopPropagation()
+    }
+    const onClick = (event) => {
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const onKey = (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return
+      const img = zoomTarget(event)
+      if (!img) return
+      event.preventDefault()
+      event.stopPropagation()
+      open(img)
+    }
+    const presses = ["mousedown", "touchstart", "pointerdown"]
+    presses.forEach((type) => root.addEventListener(type, onPress, true))
+    root.addEventListener("click", onClick, true)
+    root.addEventListener("keydown", onKey, true)
+    return () => {
+      presses.forEach((type) => root.removeEventListener(type, onPress, true))
+      root.removeEventListener("click", onClick, true)
+      root.removeEventListener("keydown", onKey, true)
+    }
+  }, [])
 
   // TOC buttons live inside page-flip's reparented DOM — use capture delegation.
   useEffect(() => {
@@ -541,6 +985,16 @@ export function DesignSketchbook() {
 
     let cancelled = false
     let flipInstance = null
+    // page-flip writes its shading into each shadow's style as it turns:
+    // swap its black for the paper's shade as it does.
+    const shade = new MutationObserver((records) => {
+      records.forEach(({ target }) => {
+        if (!FLIP_SHADOW.test(target.className)) return
+        const css = target.style.cssText
+        const next = css.replace(FLIP_BLACK, (_, alpha) => `rgba(${FLIP_SHADE}${alpha || ", 1"})`)
+        if (next !== css) target.style.cssText = next
+      })
+    })
     // The pages this book is built from (the layout can change under it).
     const instancePages = pagesRef.current
     let resizeTimer = 0
@@ -605,6 +1059,7 @@ export function DesignSketchbook() {
         })
 
         flipInstance.loadFromHTML(pageEls)
+        shade.observe(host, { attributes: true, attributeFilter: ["style"], subtree: true })
         // Hover-fold on hard covers leaves a board drawn across the empty half.
         const origUserMove = flipInstance.userMove.bind(flipInstance)
         flipInstance.userMove = (pos, isTouch) => {
@@ -654,6 +1109,7 @@ export function DesignSketchbook() {
       cancelled = true
       window.removeEventListener("resize", onResize)
       window.clearTimeout(resizeTimer)
+      shade.disconnect()
       if (pageFlipRef.current) {
         resumePageIdRef.current =
           instancePages[pageFlipRef.current.getCurrentPageIndex()]?.id ?? null
@@ -822,6 +1278,7 @@ export function DesignSketchbook() {
             </ReducedMotionPage>
           ))}
         </ReducedMotionList>
+        <SketchZoom zoom={zoom} onClose={closeZoom} />
         <AttributionFooter />
       </SketchbookRoot>
     )
@@ -874,21 +1331,55 @@ export function DesignSketchbook() {
 
       {pageBox && (
         <MeasureLayer ref={measureRef} aria-hidden>
-          {SPREAD_PAGES.map((page) => (
+          {TEXT_PAGES.map((page) => (
             <SketchPage
               key={page.id}
-              data-measure-section={page.sectionId}
+              data-measure-page={page.id}
               style={{ width: pageBox.w, height: pageBox.h }}
             >
-              <SketchPageInner $variant="spread">
-                <SketchTitle>{page.title}</SketchTitle>
-                {page.body && <SketchBody>{page.body}</SketchBody>}
-                <SketchFigure>
-                  {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
-                </SketchFigure>
-              </SketchPageInner>
+              {page.variant === "spread" ? (
+                <SketchPageInner $variant="spread">
+                  <SketchTitle>{page.title}</SketchTitle>
+                  {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.images ? (
+                    <GalleryWrap style={{ flex: "none" }}>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </GalleryWrap>
+                  ) : (
+                    page.imageSrc && (
+                      <SketchFigure>
+                        {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                      </SketchFigure>
+                    )
+                  )}
+                </SketchPageInner>
+              ) : (
+                <SketchPageInner $variant={page.variant}>
+                  <SketchLabel>{pageLabel(page)}</SketchLabel>
+                  <SketchBody data-measure-body>{page.body}</SketchBody>
+                  {page.images ? (
+                    <GalleryWrap style={{ flex: "none" }}>
+                      {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                    </GalleryWrap>
+                  ) : (
+                    page.imageSrc && (
+                      <SketchFigure>
+                        {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                      </SketchFigure>
+                    )
+                  )}
+                </SketchPageInner>
+              )}
             </SketchPage>
           ))}
+          {/* A run-on page, filled word by word to find where each breaks. */}
+          <SketchPage data-measure-probe style={{ width: pageBox.w, height: pageBox.h }}>
+            <SketchPageInner $variant="aside">
+              <SketchLabel data-probe-label />
+              <SketchBody data-probe-body />
+            </SketchPageInner>
+          </SketchPage>
         </MeasureLayer>
       )}
 
@@ -920,9 +1411,11 @@ export function DesignSketchbook() {
 
       <Hint>
         Named tabs sit on the right. After you pass a section, its tab moves to the left as a
-        color stub; tap it to flip back. Open the cover for the table of contents.
+        color stub; tap it to flip back. Open the cover for the table of contents. Click any
+        picture in the book to enlarge it.
       </Hint>
 
+      <SketchZoom zoom={zoom} onClose={closeZoom} />
       <AttributionFooter />
     </SketchbookRoot>
   )
@@ -951,23 +1444,17 @@ function AttributionFooter() {
 
 export default DesignSketchbook
 
+/**
+ * The text box's full width: open, the two pages span it; shut, the cover
+ * sits where its page does (the right half), its tabs just past the box.
+ */
 const SketchbookRoot = styled.div`
+  position: relative;
+  z-index: 0;
   width: 100%;
   max-width: none;
   margin: var(--space-lg) 0;
   overflow: visible;
-
-  /*
-   * Side PageTabs leave an ~11–14rem rail for the tab list. Pull the book into
-   * that column so it can use the full article width (and grow taller with it).
-   */
-  @media (min-width: 721px) {
-    width: calc(100% + 14rem + var(--space-xl));
-    max-width: calc(100% + 14rem + var(--space-xl));
-    margin-left: calc(-14rem - var(--space-xl));
-    position: relative;
-    z-index: 0;
-  }
 `
 
 /* How far closed tabs tuck under the outer hardcover rim. */
@@ -1189,9 +1676,7 @@ const BookStage = styled.div`
   height: auto;
   min-height: 0;
   overflow: visible;
-  /* Balance the gutters so longer tabs do not pull the book left. */
-  padding-left: 7.375rem;
-  padding-right: 7.375rem;
+  padding: 0;
   box-sizing: border-box;
 
   @media (max-width: 720px) {
@@ -1323,9 +1808,9 @@ const SketchPageInner = styled.div`
     $variant === "cover" || $variant === "back" ? "center" : "left"};
   box-sizing: border-box;
   padding: clamp(0.85rem, 7.4cqw, 2rem);
-  /* Last resort when a very small page can't fit its text. */
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Never scrolls: text that wouldn't fit runs on to more pages (see the
+     layout effect that measures them). */
+  overflow: hidden;
   height: 100%;
   min-height: 100%;
   width: 100%;
@@ -1436,7 +1921,7 @@ const TocList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
   width: 100%;
 `
 
@@ -1444,23 +1929,25 @@ const TocItem = styled.li`
   margin: 0;
 `
 
+/** A row per section: its tab's colour beside its name, no box (a tint on hover). */
 const TocButton = styled.button`
   appearance: none;
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  border: 1px solid color-mix(in srgb, ${({ $color }) => $color} 40%, var(--color-border));
-  border-left: 4px solid ${({ $color }) => $color};
+  gap: 0.75rem;
+  border: 0;
   border-radius: 6px;
-  padding: 0.55rem 0.65rem;
-  background: color-mix(in srgb, ${({ $color }) => $color} 10%, #fff);
+  padding: 0.45rem 0.55rem;
+  margin-left: -0.55rem;
+  background: transparent;
   cursor: pointer;
   text-align: left;
   pointer-events: auto;
+  transition: background-color 0.15s ease;
 
   &:hover {
-    background: color-mix(in srgb, ${({ $color }) => $color} 18%, #fff);
+    background: color-mix(in srgb, ${({ $color }) => $color} 22%, transparent);
   }
 
   &:focus-visible {
@@ -1471,10 +1958,10 @@ const TocButton = styled.button`
 
 const TocSwatch = styled.span`
   flex: 0 0 auto;
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-top: 0.2rem;
-  border-radius: 2px;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.3rem;
+  border-radius: 3px;
   background: ${({ $color }) => $color};
 `
 
@@ -1487,14 +1974,14 @@ const TocText = styled.span`
 
 const TocLabel = styled.span`
   font-family: var(--font-body);
-  font-size: clamp(0.78rem, 3.3cqw, 0.9rem);
+  font-size: clamp(0.95rem, 4.6cqw, 1.25rem);
   font-weight: 700;
   color: var(--color-text);
 `
 
 const TocProgress = styled.span`
   font-family: var(--font-body);
-  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
+  font-size: clamp(0.82rem, 3.8cqw, 1.05rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
@@ -1529,8 +2016,56 @@ const SketchPlaceholderLabel = styled.span`
 `
 
 /** Takes the room left under the text; a tall image shrinks to fit the page. */
+const GalleryWrap = styled.figure`
+  margin: var(--space-sm) 0 0;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+`
+
+const GalleryGrid = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 0.5rem;
+`
+
+/** Pictures that enlarge when clicked (zoomProps). */
+const zoomable = `
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent, #6b7fe6);
+    outline-offset: 2px;
+  }
+`
+
+const GalleryImage = styled.img`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** A gallery image's `crop`, fitted in its cell like the others. */
+const GalleryCrop = styled.svg`
+  ${zoomable}
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
+`
+
+/** Centred on the page (it's narrower than a wide page). */
 const SketchFigure = styled.figure`
   margin: ${({ $alone }) => ($alone ? "0" : "var(--space-md) 0 0")};
+  align-self: center;
   width: 100%;
   max-width: 28rem;
   display: flex;
@@ -1540,13 +2075,14 @@ const SketchFigure = styled.figure`
 `
 
 const SketchImage = styled.img`
+  ${zoomable}
   display: block;
   width: 100%;
   height: auto;
   flex: 0 1 auto;
   min-height: 0;
   object-fit: contain;
-  object-position: left top;
+  object-position: center top;
   border-radius: 4px;
   /* Follows the picture rather than its box, which is wider once it shrinks. */
   filter: drop-shadow(0 1px 2px rgba(34, 34, 34, 0.18));
@@ -1583,8 +2119,8 @@ const MeasureLayer = styled.div`
 const underBook = `
   box-sizing: border-box;
   width: 100%;
-  padding-left: 3.25rem;
-  padding-right: 11.5rem;
+  padding-left: 0;
+  padding-right: 0;
 
   /* Doubled class: beats the article's \`p { max-width: 48rem }\`. */
   && {
@@ -1685,4 +2221,92 @@ const ReducedMotionPage = styled.div`
   border-radius: 6px;
   overflow: hidden;
   min-height: 10rem;
+`
+
+const ZoomBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px);
+  overflow: hidden;
+  background: rgba(28, 20, 14, 0.82);
+  cursor: zoom-out;
+  /* Its own pinches and drags, not the browser's. */
+  touch-action: none;
+`
+
+const ZoomFigure = styled.figure`
+  position: relative;
+  margin: 0;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  cursor: default;
+`
+
+/** As big as the screen allows, on the sketchbook's paper. */
+const ZoomImage = styled.img`
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(calc(100vw - 2 * clamp(16px, 4vw, 48px)), 1400px);
+  max-height: calc(100vh - 2 * clamp(28px, 5vw, 56px));
+  object-fit: contain;
+  border-radius: 6px;
+  background: ${PAPER};
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  cursor: ${({ $cursor }) => $cursor};
+  user-select: none;
+  transition: ${({ $smooth }) => ($smooth ? "transform 0.25s ease" : "none")};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`
+
+const ZoomClose = styled(PopupClose)`
+  top: -0.8em;
+  right: -0.8em;
+`
+
+/** −, fit and + along the screen's bottom. */
+const ZoomTools = styled.div`
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(20, 14, 10, 0.72);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+  cursor: default;
+`
+
+const ZoomTool = styled.button`
+  min-width: ${({ $wide }) => ($wide ? "4.2em" : "2.2em")};
+  height: 2.2em;
+  padding: 0 0.6em;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: 600 15px/1 var(--font-body, sans-serif);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 1px;
+  }
 `

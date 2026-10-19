@@ -1,11 +1,93 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Pumps design used in Version 1.
+<br />
+The peristaltic pumps subsystem controls dosing of liquids into and out of the
+bioreactor. This meets the requirements of being able to pump a range of dosages
+by being able to be controlled with different percentages of power. Multiple
+pumps are also able to be used at the same time for transferring liquid into and
+out of the bioreactor.
 
-#### Design decisions and changes
+### BoM
 
-Placeholder: explain the initial Pumps design choices.
+| Component                                                         | Purpose                                                                            | Cost                    | Sourcing Link                                                                         |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------- |
+| Peristaltic pump with tubing                                      | Peristaltic pump with motor and tubing to pump liquid in and out of the bioreactor | $24.95                  | [Adafruit](https://www.adafruit.com/product/1150)                                     |
+| Transistor (TIP142)                                               | Transistor to allow low power PWM signal to power high power motor                 | $6.98                   | [DigiKey](https://www.digikey.ca/en/products/detail/stmicroelectronics/TIP142/603566) |
+| Diode (1N5819)<br />\*Not s8050 as shown in circuit diagram below | Protects Arduino and transistor from voltage spike                                 | \*Included in a kit     | [Amazon](https://www.amazon.ca/dp/B0DXKH7B2W)                                         |
+| Arduino Nano                                                      | Microcontroller to produce PWM signal and run code                                 | $8                      | [Amazon](https://www.amazon.ca/dp/B08HVPMLKG)                                         |
+| Resistor (2.2 kΩ)                                                 | Limits current from Arduino to transistor                                          | \*Included in above kit |                                                                                       |
+| Breadboard                                                        |                                                                                    |                         |                                                                                       |
+| Power Supply (5V)                                                 | Powers pump motor separately from Arduino                                          |                         |                                                                                       |
 
-#### Testing and lessons
+The Adafruit peristaltic pump was chosen because after looking into a few DIY options with stepper motors, this component is cheaper than making it ourselves. Just the stepper motor + motor driver individually that is required for the DIY pump would be almost the same price as the Adafruit pump, not taking into account the tubing and other components. The 5V pump was chosen over the 12V pump, since 5V power supplies are cheaper and more readily available.
 
-Placeholder: add Version 1 test results, limitations, and lessons for Pumps.
+### Build, Assembly, Code
+
+The adafruit peristaltic pump works by squeezing a tube to allow liquid to flow at a constant rate. The DC motor turns a rotor with small motors, and as the rollers turn they squeeze the tube against the circular pump lid. The spot that is being squeezed moves liquid along, and as the roller leaves that spot, the tube allows more liquid to pass. This cycle allows for a constant flow supply.
+
+The development of this subsystem is to validate the pump and its associated components before integrating with the rest of the bioreactor. At this stage, the pump is only tested on its own, with only superficial connections to the bioreactor. The main things to test in this stage are that PWM control works as expected, the flow rate is constant, and each component works as intended. This is so that any problems found during integration can be traced back to a different issue than the pump subsystem itself.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/pump1.avif"
+  alt="pump1"
+/>
+
+The above image is the circuit diagram for one pump. Note that the S8050 NPN transistor was swapped for a TIP142 NPN transistor due to current constraints. The resistor used was 2.2 kΩ
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/pump2.avif"
+    alt="pump2"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/pump3.avif"
+    alt="pump3"
+  />
+</ImageGrid>
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/pump4.avif"
+  alt="pump4"
+/>
+
+The pumps could successfully be controlled with the arduino nano, and the speed changed with different PWM values that could be set by the user. This fulfilled the goal of being able to control the speed of the pump. Next, the pumps were tested with water to verify it could pump liquids in and out.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/pump5.avif"
+  alt="pump5"
+/>
+
+### Design of Experiments (DoE)
+
+#### Quantitative experiments:
+
+The first experiment was on making sure that there was a consistent flow rate, which was the mass flow rate in this case. A bowl was placed on a scale and I timed the pumps in increments of 30 seconds, measuring the total mass after each time interval. The values were pretty consistent from 60s onwards, but the 30s one is a little off. However, this could be due to the fact that during the experiment, there was still water left in the pump and after 30 seconds, there was not necessarily a consistent flow.
+
+| Time (s) | Mass (oz) | Flow rate (oz/s) | Notes                                       |
+| -------- | --------- | ---------------- | ------------------------------------------- |
+| 10       |           |                  | Too short                                   |
+| 30       | 0.26      | 0.00867          | Run for 30 secs to get rid of water in pump |
+| 60       | 0.71      | 0.0118           |                                             |
+| 90       | 1.27      | 0.0141           |                                             |
+| 120      | 1.75      | 0.0146           |                                             |
+| 150      | 2.26      | 0.0151           |                                             |
+
+The second experiment was on testing the variation of flow rates with different PWM values. For this, the time was kept constant but the PWM changed, and the mass was measured just like the previous experiment. The results showed that the flow rate varied consistently with the PWM as expected.
+
+| PWM (%) | Time (s) | Mass (oz) | Flow rate (oz/s) | Notes                                                  |
+| ------- | -------- | --------- | ---------------- | ------------------------------------------------------ |
+| 25      | 150      |           |                  | Way too low, changed amount of time but still too slow |
+| 50      | 90       |           |                  | Still really slow                                      |
+| 60      | 90       | 0.35      | 0.00389          |                                                        |
+| 70      | 90       | 0.6       | 0.00667          | Small air bubble                                       |
+| 80      | 90       | 0.77      | 0.00856          |                                                        |
+| 90      | 90       | 0.96      | 0.107            |                                                        |
+| 100     | 90       | 1.21      | 0.0134           |                                                        |
+
+#### Qualitative Observations:
+
+The pumps are housed in the circular lid. Since the pumps are designed to be squeezed by the rollers, they are very difficult to take out. As well, the lid itself has to be taken off of the motor before the pumps can be accessed. This raises a problem with autoclaving, as it is not very easily accessible.
+
+#### Next Steps
+
+Next steps for V2 include designing a more accessible cap for the pumps so the tubes could be more easily accessible for autoclaving purposes. As well, more experiments should be run to test the smallest PWM value possible, as it was seen that there was a lower limit to the PWM allowed for the pumps to run. As well, liquids with different viscosities will be tested to see if this changes the results of the experiments as well and to simulate real life conditions of the bioreactor.

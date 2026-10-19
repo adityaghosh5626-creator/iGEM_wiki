@@ -1,11 +1,132 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Temperature design used in Version 2.
+| **Requirement/Functionality**                                 | **Old Priority** | **New Priority** | **Why?**                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------- | ---------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Minimize temperature fluctuations once target is achieved** | High             | Highest          | Further research indicates that for certain types of cells (e.g. mammalian), a stable temperature is crucial for survival ([source](https://www.thermofisher.com/ca/en/home/references/gibco-cell-culture-basics/cell-culture-environment.html)). |
+| **Minimize time to achieve temperature**                      | Medium           | Low              | Compared to the length of experiments (days or weeks), heating time is relatively short even if it takes more than half an hour. Also, no user intervention is needed after setting the target, so its impact on user experience is small.        |
 
-#### Design decisions and changes
+### BoM
 
-Placeholder: explain what changed in Temperature from Version 1 to Version 2 and why.
+| **Component**                | **Purpose**                                          | **Cost (USD)** | **Sourcing Link**                                                             |
+| ---------------------------- | ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------------- |
+| FIT0845                      | Heater                                               | 3.66           | [DigiKey](https://www.digikey.ca/en/products/detail/dfrobot/FIT0845/15848056) |
+| DFR0198                      | Temperature sensing                                  | 10.78          | [DigiKey](https://www.digikey.ca/en/products/detail/dfrobot/DFR0198/7597054)  |
+| SRSZ-05VDC-SH                | Relay                                                | 4.91           | Home Hardware                                                                 |
+| Heater mount (Onyx material) | Isolate heater from temperature-sensitive components | 1.45           | 3D printed                                                                    |
 
-#### Testing and lessons
+### Component Selection Justification
 
-Placeholder: add Version 2 test results, limitations, and lessons for Temperature.
+| **Old Component** | **New Component**       | **Why?**                                                                                                          |
+| ----------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Adafruit 1467     | N/A - component removed | Limited impact on heat transfer rate. Only supports low-priority requirements (heating time, maximum temperature) |
+| Aluminum foil     | N/A - component removed | Negligible impact on heat loss. Only supports low-priority requirements (heating time, maximum temperature)       |
+
+### Design Modifications: Temperature control algorithm
+
+#### V1
+
+The V1 temperature control algorithm suffers from severe overshooting. The main problem was identified as integral windup, where the integral term in PID accumulates to unreasonably large values over the heating process, which can take 15-30 minutes. Several solutions were considered:
+
+1. Setting the integral gain low, or setting a low ceiling at which the integral term is capped. This will alleviate windup, but slower accumulation also means slower reactions to steady-state error, essentially disabling the integral term altogether.
+2. Incorporate a second sensor that measures the heater’s temperature, and use its output as a reference to adjust the target of the PID loop. This is the standard for larger-scale reactors, but also brings unwanted complexity.
+3. Use proportional-only control during initial heating, and only activate PID when temperature is near the target (0.5-1°C away)
+
+The third option was chosen because of its simplicity and apparent lack of drawbacks.
+
+#### V1.1
+
+After implementing the integral activation mechanism, other unforeseen effects surfaced, including:
+
+1. It may take up to 5-10 minutes for the liquid to heat through the last degree, during which integral windup may still occur.
+
+   **Solution for V1.2:** The integral term will only activate when the target temperature has already been achieved once. This prevents windup during initial heating while retaining the ability to adjust steady-state errors after reaching the target.
+
+2. If the proportional gain is too small and the temperature never reaches 1°C below target, the integral term will not activate and the temperature may drop. The weak proportional gain would likely not be enough to recover from this drop.
+
+   **Solution for V1.2:** This can be solved by intentionally setting the proportional gain larger, but this leads to overshoot. Overheating can be more dangerous than underheating [@tempForCell], but with no way to adjust for steady-state temperature deviations above 1°C, slight overheating brings more predictability.
+
+3. When the temperature starts to drop below target, the heater takes a long time to heat up before the temperature starts rising again. During this time, the temperature drops significantly.
+
+   **Solution for V1.2:** Add a minimum output (60%) to the PID command when the temperature drops after reaching the target.
+
+#### V1.2
+
+After implementing the three solutions and testing, the integral windup issue was largely solved, but further problems emerged.
+
+1. Setting the proportional gain high ensures the target will always be reached, but leads to significant overshoot (sometimes by more than 1°C).
+
+   **Solution for V1.3:** The integral term is still the best solution, since with the integral dynamically boosting the proportional during initial heating, the proportional gain can be reduced without risking overheating or underheating. However, integral windup will need to be regulated another way:
+   - The integral will accumulate when the temperature is below target but is dropping or stagnating. This provides the proportional term with a time-based boost.
+   - The integral term will be cleared whenever the temperature rises. This prevents windup.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/temp1.avif"
+  alt="temp1"
+/>
+
+2. The minimum output is only applied when the temperature actually starts to drop below target. This helps, but still results in lag.
+   **Solution for V1.3:** Start applying the minimum output when the temperature starts to drop but is still slightly above target (&lt;0.1°C above target). This starts reheating the heater early, so that meaningful heat transfer occurs sooner after the temperature actually starts dropping below target.
+
+#### V1.3
+
+More minor issues appeared during testing, especially when different target temperatures are set.
+
+1. The same proportional and integral gains that worked well for 30°C are not enough to push the temperature past 40°C. This is because the rate of heat loss is higher at higher temperatures, and higher heater outputs are required to compensate.
+   **Solution for V2:** calibrate proportional and integral gains for 30°C, 40°C, 45°C, and 50°C; then, fit an exponential model to the data and use the model to adjust gains based on target temperature.
+
+2. When the proportional gain is too small to the point where temperature drops during initial heating, the standard integral gain is no longer enough to help the system recover. Here, the temperature will oscillate around the point where the drop occurred without reaching the target.
+   **Solution for V2:** Apply a 10x multiplier to the integral gain when the temperature drops during initial heating, helping the heater reheat and the system recover from the drop. The 10x multiplier is cleared once the temperature starts rising again.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/temp2.avif"
+  alt="temp2"
+/>
+
+#### V2
+
+All above solutions were implemented, and the system was tested for performance with different target temperatures. The current control logic is summarized below:
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/temp3.avif"
+  alt="temp3"
+/>
+
+#### New Code
+
+<CodeDropdown file="Custom_PID.ino" description="Custom PID controller" />
+
+### New Design of Experiments (DoE)
+
+With the raised importance of the temperature control accuracy requirement, the control loop testing protocol was modified to focus on control accuracy over different temperatures. Also, based on observations from the previous round of control loop testing,
+
+- Another metric was added to evaluate the time taken to reach target temperature. This is because the previous round showed that it takes significantly longer to achieve temperatures in control loops with modulated outputs.
+- The new experiment was simplified to only use one liquid level (20mL). This is because the fluid level did not seem to impact the control accuracy significantly in the previous round of testing.
+
+**Control loop testing**
+This test measures 1. the effectiveness of the control loop at maintaining different target temperatures, and 2. the amount of time needed to achieve different temperatures.
+
+Procedure:
+
+1. Fill the vial with 20mL of water place the vial into the bioreactor
+2. Turn on the control loop and set a target temperature
+3. Record the maximum temperature and minimum temperature (after reaching the target at least once) in 60 minutes
+4. Record the time taken to achieve target temperature for the first time
+5. Repeat the experiment with a different target temperature
+
+### Metrics and Experimental Data
+
+The maximum deviation from target and time taken to achieve target were logged with a script. Since 21°C water was not readily available at the time of experiment, 25°C water was used instead. However, without a fitted model, a time offset cannot be computed as with the V1 test, and so the time to achieve the target is not directly comparable with the previous test.
+
+| **Target (°C)** | **Proportional gain (KP)** | **Time to target (min, from 25°C)** | **Control accuracy (°C)** | **Probe accuracy (°C)** | **Total accuracy (°C)** |
+| --------------- | -------------------------- | ----------------------------------- | ------------------------- | ----------------------- | ----------------------- |
+| **30**          | 800                        | 8.58                                | ±0.25                     | ±0.5                    | ±0.75                   |
+| **40**          | 1750                       | 11.72                               | ±0.45                     | ±0.5                    | ±0.95                   |
+| **45**          | 5000                       | 14.67                               | ±0.2                      | ±0.5                    | ±0.7                    |
+| **50**          | 23000                      | 33.35                               | ±0.2                      | ±0.5                    | ±0.7                    |
+
+### Next Steps
+
+<br />
+Improvements for future versions include more accurate temperature sensors
+(thermocouple with thermowell), as well as higher wattage heaters (potentially
+custom-made), which would allow more precise control and faster heating.
