@@ -6,6 +6,7 @@ import WikiLayout from "../components/layout.js"
 import Seo from "../components/seo.js"
 import { mdxComponents } from "../components/mdx/wikiComponents.js"
 import { NewTabLinks } from "../components/mdx/linkTarget.js"
+import { scrollToReference } from "../components/referenceNavigation.js"
 import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
@@ -97,7 +98,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           title={frontmatter.navTitle || frontmatter.title}
           description={frontmatter.description}
         >
-          <Article $wideProse>
+          <Article $wideProse onClickCapture={scrollToReference}>
             {content}
           </Article>
         </SubpageScene>
@@ -128,7 +129,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           <InlineDivider />
         </InlinePageHeader>
         {pageHeader}
-        <Article $wide>
+        <Article $wide onClickCapture={scrollToReference}>
           {content}
         </Article>
       </ArticleShell>
@@ -136,7 +137,7 @@ const WikiMdxTemplate = ({ data, children }) => {
   ) : (
     <ArticleShell id="page-content">
       {pageHeader}
-      <Article $wideProse={wideProse}>
+      <Article $wideProse={wideProse} onClickCapture={scrollToReference}>
         {content}
       </Article>
     </ArticleShell>

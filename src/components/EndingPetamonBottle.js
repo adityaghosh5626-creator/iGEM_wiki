@@ -125,7 +125,7 @@ const PIECES = [
     color: "#a07cf2",
     blurb:
       "Entrepreneurial thinking, market context, and implementation considerations.",
-    label: "Venture",
+    label: "Entrepreneurship",
     hol: "venturepurplehol.avif",
     pop: "venturepurple.avif",
     pet: "venpetamon.avif",

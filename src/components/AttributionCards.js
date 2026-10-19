@@ -1,13 +1,24 @@
 import React, { useId, useState } from "react"
 import styled from "styled-components"
-import people from "../data/attributions.json"
+import members from "../data/attributions.json"
+import external from "../data/externalAttributions.json"
+
+// From the attributions spreadsheet: its Team Members and External
+// Contributions tabs.
+const people = [...members, ...external]
+const GROUPS = [
+  ["Current", "Current members"],
+  ["Former", "Former members"],
+  ["Contributor", "Other contributors"],
+  ["Institution", "Supporting institutions and sponsors"],
+]
 
 export function AttributionCards() {
   const searchId = useId()
   const [query, setQuery] = useState("")
   const term = query.trim().toLocaleLowerCase()
   const matches = people.filter(person =>
-    [person.name, person.role, ...person.tasks, person.specificTasks]
+    [person.name, person.role, person.type, ...person.tasks, person.specificTasks]
       .join(" ").toLocaleLowerCase().includes(term),
   )
 
@@ -19,14 +30,14 @@ export function AttributionCards() {
         placeholder="Search by name, role, or task" />
       <ResultCount role="status">{matches.length} of {people.length} contributors</ResultCount>
       {matches.length === 0 && <p>No contributors match your search. Try another name or task.</p>}
-      {["Current", "Former"].map(section => {
-        const members = matches.filter(person => person.section === section)
-        if (!members.length) return null
+      {GROUPS.map(([section, title]) => {
+        const group = matches.filter(person => person.section === section)
+        if (!group.length) return null
         return (
-          <section key={section} aria-label={`${section} members`}>
-            <GroupTitle>{section} members</GroupTitle>
+          <section key={section} aria-label={title}>
+            <GroupTitle>{title}</GroupTitle>
             <Grid>
-              {members.map(person => <AttributionCard key={person.id} person={person} />)}
+              {group.map(person => <AttributionCard key={person.id} person={person} />)}
             </Grid>
           </section>
         )
@@ -42,7 +53,8 @@ export function AttributionCard({ person }) {
   return (
     <Card aria-labelledby={headingId}>
       <Name id={headingId}>{person.name}</Name>
-      <Role>{person.role}</Role>
+      {/* Outside the team, with the kind of institution they're from. */}
+      <Role>{person.type ? `${person.role} · ${person.type}` : person.role}</Role>
       <TaskLabel>Tasks</TaskLabel>
       <Tags aria-label="Tasks">
         {person.tasks.map(task => <li key={task}>{task}</li>)}
