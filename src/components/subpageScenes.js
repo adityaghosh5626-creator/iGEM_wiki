@@ -627,6 +627,14 @@ const OUTREACH_ACORN = {
   box: [130, 3426, 254, 3550],
 }
 
+/**
+ * Sharper petamons on the same canvas: all of them in one picture (the bird,
+ * bunny, dragon and turtle are drawn from it, each cut out by its `clip`),
+ * and the dragon's markings on their own.
+ */
+const CONTRIBUTION_HQ =
+  "https://static.igem.wiki/teams/6187/wiki/contributions/hq-petamon/"
+
 export const CONTRIBUTION_SCENE = {
   header: "Contribution",
   boxTitle: "Overview",
@@ -640,67 +648,91 @@ export const CONTRIBUTION_SCENE = {
     { name: "bg", box: [0, 0, 1110, 4000] },
     // Seedlings in the planter, behind the Dry Lab bug.
     { name: "sprouts", box: [70, 2997, 290, 3090] },
-    // Each subteam's petamon on the steps, one file each so they can move
+    // Each subteam's petamon on the steps, a layer each so they can move
     // on their own. Six do what their subteam's critters do on hover (tap
     // on touch): the kangaroo throws Venture's coins, the bird loops like
     // the Human Practices birds, Outreach's gets bonked by an acorn, the
     // crab scuttles like Dry Lab's, the turtle gets Hardware's lightning and
     // the axolotl hides like Wet Lab's.
     { name: "venpetamon", coinBurst: true, box: [0, 2800, 196, 3362] },
-    // Faces us; looping "rightward" rolls it counterclockwise.
-    { name: "hppetamon", loop: { facing: 1 }, box: [120, 2724, 348, 2822] },
+    // Faces us; looping "rightward" rolls it counterclockwise. Cut round the
+    // kangaroo's ring, painted over its wing.
+    {
+      name: "hppetamon",
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      loop: { facing: 1 },
+      box: [60, 2650, 370, 2834],
+      clip: [
+        [60, 2650], [370, 2650], [370, 2834], [126, 2834], [126, 2807],
+        [120, 2806], [114, 2809], [108, 2815], [102, 2821], [96, 2827],
+        [90, 2830], [84, 2832], [60, 2832],
+      ],
+    },
     // Outreach's: bonked by an acorn, like the Outreach squirrels.
     {
       name: "orpetamon",
-      box: [222, 2806, 396, 3005],
-      // A smaller acorn for this smaller critter.
-      bonk: { head: [272, 2878], acorn: { ...OUTREACH_ACORN, scale: 0.5 } },
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      box: [211, 2850, 393, 3009],
+      // Not the edge of the dragon's haze, above its tail.
+      clip: [
+        [211, 2850], [387, 2850], [387, 2938], [393, 2938], [393, 3009],
+        [211, 3009],
+      ],
+      // A smaller acorn for this smaller critter, between its ears.
+      bonk: { head: [259, 2898], acorn: { ...OUTREACH_ACORN, scale: 0.5 } },
     },
     // Catches fire like the Wiki dragons: a fiery glow spreads out from
-    // behind it, from its head, its eyes glow and it trembles.
-    {
-      name: "webpetamon",
-      box: [371, 2755, 644, 3004],
-      dragon: {
-        // Its haze is cut off square at the left: the glow fades out there.
-        heat: { pad: 60, fade: [362, 404] },
-        from: [452, 2930],
-        reach: 260,
-        eyes: [
-          [437.8, 2947.5],
-          [475.4, 2945.6],
-        ],
-        eyeSize: 18,
-        // Glowing markings on its grey patches, along the body's lie.
-        swirls: [
-          { at: [621, 2808], rx: 5, ry: 13, rot: 8 },
-          { at: [578, 2832], rx: 9, ry: 5, rot: -28 },
-          { at: [579, 2871], rx: 10, ry: 5.5, rot: -22 },
-          { at: [511, 2872], rx: 10, ry: 5.5, rot: -20 },
-        ],
-        hits: [[371, 2755, 644, 3004]],
-      },
-    },
+    // behind it, from its head, its eyes glow, its swirls light up and it
+    // trembles.
     // The axolotl hides like the Wet Lab ones: it lights up, hops back over
     // the floor's back edge (where the water starts) and sinks behind it,
-    // peeking over, until the pointer leaves.
+    // peeking over, until the pointer leaves. Its arm's over the dragon's
+    // tail: it hops high enough for its whisker to clear the tail, and goes
+    // behind the dragon from there.
     {
       name: "wlpetamon",
       box: [604, 2783, 805, 2910],
       // The floor's back edge slopes down to the right under it.
-      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 36 },
+      duck: { edge: [[600, 2881], [800, 2893]], show: 60, hop: 62, over: true },
+    },
+    {
+      name: "webpetamon",
+      // On its own, tail and all (the axolotl's arm goes over it). Its
+      // flames' wisps left of the box are over the bunny, so they're left
+      // to the bunny's crop.
+      src: "https://static.igem.wiki/teams/6187/wiki/contributions/img-3782.avif",
+      box: [386, 2815, 646, 3022],
+      dragon: {
+        // Its glow fades out to the left, off the bunny.
+        heat: { pad: 60, fade: [376, 404] },
+        markings: [
+          `${CONTRIBUTION_HQ}scales.avif`,
+          `${CONTRIBUTION_HQ}swirls.avif`,
+          `${CONTRIBUTION_HQ}eyes.avif`,
+        ],
+        swirls: `${CONTRIBUTION_HQ}swirls.avif`,
+        from: [440, 2945],
+        reach: 260,
+        eyes: [
+          [420.5, 2966],
+          [448.5, 2969.5],
+        ],
+        eyeSize: 18,
+        hits: [[392, 2815, 646, 3020]],
+      },
     },
     { name: "dlpetamon", crab: true, box: [161, 3046, 290, 3148] },
     {
       name: "hwpetamon",
-      box: [300, 3006, 541, 3210],
-      hit: [304, 3012, 534, 3202],
+      src: `${CONTRIBUTION_HQ}petamon.avif`,
+      box: [326, 3024, 540, 3203],
+      hit: [328, 3028, 538, 3201],
       // The standing turtle's lightning on the Hardware plate, stretched
       // over this one.
       zap: {
         name: `${HARDWARE_SCENE.assetBase}zapzap.avif`,
         from: [122, 1830, 352, 2133],
-        box: [288, 2984, 552, 3218],
+        box: [314, 3004, 545, 3210],
       },
     },
   ],
@@ -715,10 +747,10 @@ export const CONTRIBUTION_SCENE = {
   /** Not painted: a flat box in the greenhouse's paper colour. */
   text: {
     fill: "#fdf9f0",
-    box: [90, 412, 1020, 2690],
+    box: [90, 412, 1020, 2640],
     minH: 900,
   },
-  textEndY: 2690,
+  textEndY: 2640,
   /**
    * The calendar in greenhouse colours: paper panels, sandstone lines, sage
    * for what's selected, terracotta Sundays. Subteams take the team's painted
@@ -847,15 +879,17 @@ export const SAFETY_SCENE = {
     { name: "bg", box: [0, 0, 1110, 4000] },
     // Strung either side of the box (the right-hand strands run behind it):
     // each hanging strand sways in the wind from where it's tied, a little
-    // out of step with the others.
+    // out of step with the others. The short one is hung a little right of
+    // where it's painted, so its curl clears the box's edge as it sways.
     ...[
       [[0, 1716, 120, 2300], 1.2, 5200, 0],
-      [[968, 1692, 1076, 1848], 3, 3900, 0.4],
+      [[968, 1692, 1076, 1848], 3, 3900, 0.4, 16],
       [[976, 2988, 1060, 3708], 1, 4600, 0.7],
-    ].map(([box, deg, ms, at]) => ({
-      name: `caution-tape-${box[1]}`,
+    ].map(([from, deg, ms, at, dx = 0]) => ({
+      name: `caution-tape-${from[1]}`,
       src: "caution-tape",
-      box,
+      from,
+      box: [from[0] + dx, from[1], from[2] + dx, from[3]],
       sway: { deg, ms, at },
     })),
   ],
@@ -872,6 +906,20 @@ export const SAFETY_SCENE = {
   textEndY: 3691,
 }
 
+/**
+ * The Engineering winch: the gear turns, winding the rope in over it and
+ * lifting the bucket WINCH_LIFT plate px, holds, then lets it back down.
+ * The gear is centred on the rope's curve over it (radius WINCH_ROPE_R), so
+ * its turn is the rope's travel.
+ */
+const WINCH_MS = 16000
+const WINCH_LIFT = 400
+const WINCH_ROPE_R = 124
+const WINCH_GEAR = [1143.6, 971.2]
+/** The full gear's hole, where it's painted on its plate. */
+const GEAR_HOLE = [495.4, 1013.1]
+const around = ([x, y], r) => [x - r, y - r, x + r, y + r]
+
 /** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
 export const ENGINEERING_SCENE = {
   header: "Engineering",
@@ -885,13 +933,40 @@ export const ENGINEERING_SCENE = {
   accent: "#b04a38",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
-    // The rope runs up behind the gear, so it swings from under it.
+    // The rope runs up behind the gear. Over it, in its shadow, the rope's
+    // plain red, so that part stays put; the striped rope below rides up
+    // and down with the bucket. The two cross-fade where they meet.
     {
-      name: "rope-bucket-only",
-      box: [960, 850, 1110, 2462],
-      swing: { pivot: [1027, 857], deg: 2, hit: [965, 2280, 1100, 2462] },
+      name: "rope-over-gear",
+      src: "full-rope",
+      box: [985, 840, 1110, 1075],
+      fadeY: [0, 30],
     },
-    { name: "gear-only", box: [985, 816, 1110, 1130] },
+    {
+      name: "rope-bucket",
+      src: "full-rope",
+      box: [960, 1045, 1110, 2462],
+      fadeY: [30, 0],
+      winch: {
+        ms: WINCH_MS,
+        lift: WINCH_LIFT,
+        // The rope bends right a little as it comes off the gear; slid up
+        // past the join, it's moved back by that much to line up with it.
+        drift: [[0, 0], [30, 1.9], [60, 3.4], [80, 4.8]],
+      },
+    },
+    {
+      name: "gear",
+      src: "full-gear",
+      from: around(GEAR_HOLE, 165),
+      box: around(WINCH_GEAR, 165),
+      winch: {
+        ms: WINCH_MS,
+        turn: (WINCH_LIFT / WINCH_ROPE_R) * (180 / Math.PI),
+        // Turned as the old, cut-off gear was painted.
+        rest: 105.5,
+      },
+    },
   ],
   side: null,
   /** No menu highlight to match: the girders' red. */

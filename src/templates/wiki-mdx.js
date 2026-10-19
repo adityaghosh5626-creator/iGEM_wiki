@@ -434,6 +434,42 @@ const Article = styled.article`
     vertical-align: top;
   }
 
+  /* Image dimensions must not establish a table's minimum column width. */
+  table:has(img) {
+    display: table;
+    table-layout: fixed;
+  }
+
+  table:has(img) th,
+  table:has(img) td {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  table figure {
+    min-width: 0;
+  }
+
+  .od-iteration-table th:first-child {
+    width: 3.5rem;
+  }
+
+  .od-iteration-table td:first-child {
+    white-space: nowrap;
+  }
+
+  table img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 640px) {
+    table:has(img) th,
+    table:has(img) td {
+      padding: 0.35rem;
+    }
+  }
+
   th {
     color: var(--color-text);
     background: color-mix(in srgb, var(--color-accent) 15%, transparent);

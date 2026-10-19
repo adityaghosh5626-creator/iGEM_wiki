@@ -81,6 +81,26 @@ function plateOf(scene) {
         top: `${(-y0 / h) * 100}%`,
       }
     },
+    /**
+     * A layer's `clip` (an outline, plate px) on its full-plate image: only
+     * what's inside shows, for art sharing one picture with its neighbours.
+     */
+    clip: points =>
+      points && {
+        clipPath: `polygon(${points
+          .map(([x, y]) => `${((x / W) * 100).toFixed(3)}% ${((y / H) * 100).toFixed(3)}%`)
+          .join(", ")})`,
+      },
+    /**
+     * A layer's `fadeY` ([top, bottom], plate px): its window fades out over
+     * that much of its top and bottom edges.
+     */
+    fadeY: ([, y0, , y1], fade) => {
+      if (!fade) return null
+      const pct = px => `${((px / (y1 - y0)) * 100).toFixed(3)}%`
+      const mask = `linear-gradient(to bottom, transparent, #000 ${pct(fade[0])}, #000 calc(100% - ${pct(fade[1])}), transparent)`
+      return { maskImage: mask, WebkitMaskImage: mask }
+    },
     /** Background that stretches `box` of a plate over the whole element. */
     bg: (name, [x0, y0, x1, y1]) => {
       const w = x1 - x0
@@ -442,7 +462,9 @@ function ZapLayer({ plate, layer, children }) {
         style={plate.windowStyle(jolt || layer.box)}
       >
         {jolt
-          ? React.cloneElement(children, { style: plate.imgStyle(jolt) })
+          ? React.cloneElement(children, {
+              style: { ...children.props.style, ...plate.imgStyle(jolt) },
+            })
           : children}
       </ZapBody>
       <ZapBolt ref={boltRef} style={plate.windowStyle(bolt.box)}>
@@ -888,7 +910,9 @@ const DRAGON_FIRE_SOLID = 0.75
  *
  * A dragon painted as one picture (the Contribution one) gives `heat` in
  * place of the glow and fire art: a fiery glow spreads out from behind it,
- * from its head, and `eyes` (plate px) glow in and out.
+ * from its head, and `eyes` (plate px) glow in and out. Its `markings`
+ * (pictures on the same canvas) are drawn over it, and `swirls` (one of
+ * them) lights up violet-blue while it burns.
  */
 function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   const d = layer.dragon
@@ -919,13 +943,13 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   }
   // Its front part (text.front) lights it from its own hover areas.
   if (lightRef) lightRef.current = light
-  const crop = (name, box) => (
+  const crop = (name, box, clip) => (
     <CropImg
       src={plate.asset(name)}
       alt=""
       decoding="async"
       draggable={false}
-      style={plate.imgStyle(box)}
+      style={{ ...plate.imgStyle(box), ...plate.clip(clip) }}
     />
   )
   // The fire shows through a soft circle on the head, grown to cover it.
@@ -989,7 +1013,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         >
           <HaloFade style={haloFade}>
             <HeatHalo $lit={lit} style={inHalo(layer.box)}>
-              {crop(layer.src || layer.name, layer.box)}
+              {crop(layer.src || layer.name, layer.box, layer.clip)}
             </HeatHalo>
           </HaloFade>
         </DragonFire>
@@ -1000,6 +1024,9 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         style={plate.windowStyle(layer.box)}
       >
         {children}
+        {(d.markings || []).map(name => (
+          <React.Fragment key={name}>{crop(name, layer.box)}</React.Fragment>
+        ))}
       </DragonPart>
       {(d.eyes || []).map(([x, y]) => (
         <DragonEye
@@ -1025,14 +1052,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
       )}
       {d.swirls && (
         <DragonHighlight aria-hidden $lit={lit} style={plate.windowStyle(layer.box)}>
-          <SwirlSvg
-            viewBox={`${layer.box[0]} ${layer.box[1]} ${layer.box[2] - layer.box[0]} ${layer.box[3] - layer.box[1]}`}
-            preserveAspectRatio="none"
-          >
-            {d.swirls.map(sw => (
-              <path key={sw.at.join()} d={swirlPath(sw)} />
-            ))}
-          </SwirlSvg>
+          <SwirlGlow>{crop(d.swirls, layer.box)}</SwirlGlow>
         </DragonHighlight>
       )}
       {(d.highlights || []).map(h => (
@@ -1180,75 +1200,84 @@ function TextFrontArt({ plate, text, d, split, lit, light }) {
   )
 }
 
-/**
- * A glowing spiral marking, as an SVG path (plate px): `at` its middle, `rx`
- * and `ry` its outer radii, `rot` (deg) its turn, `turns` how many times it
- * winds; it ends in a short flick outward, like the Wiki dragons' markings.
- */
-function swirlPath({ at: [cx, cy], rx, ry = rx, rot = 0, turns = 2.1 }) {
-  const steps = 48
-  const a = (rot * Math.PI) / 180
-  const pts = []
-  for (let i = 0; i <= steps; i++) {
-    const k = i / steps
-    const th = k * turns * Math.PI * 2
-    const x = rx * k * Math.cos(th)
-    const y = ry * k * Math.sin(th)
-    pts.push([
-      cx + x * Math.cos(a) - y * Math.sin(a),
-      cy + x * Math.sin(a) + y * Math.cos(a),
-    ])
-  }
-  return `M${pts.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L")}`
+/** How far wound in (0–1) a winch is `t` (0–1) through its cycle. */
+function winchAt(t) {
+  const ease = p => (p < 0.5 ? 4 * p ** 3 : 1 - (2 - 2 * p) ** 3 / 2)
+  if (t < 0.05 || t >= 0.95) return 0
+  if (t < 0.45) return ease((t - 0.05) / 0.4)
+  if (t < 0.55) return 1
+  return 1 - ease((t - 0.55) / 0.4)
 }
 
-/** One swing of a hanging layer, out and back until it settles. */
-const SWING_MS = 2600
-const SWING_SWAYS = [0, -1, 0.75, -0.5, 0.28, -0.12, 0]
+/** `table` ([[x, y], …], x rising) at `x`, straight between its points. */
+function lerpTable(table, x) {
+  if (x <= table[0][0]) return table[0][1]
+  for (let i = 1; i < table.length; i++) {
+    const [x1, y1] = table[i]
+    if (x <= x1) {
+      const [x0, y0] = table[i - 1]
+      return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)
+    }
+  }
+  return table[table.length - 1][1]
+}
+
+/** Keyframes per winch cycle (the easing's sampled, so the parts keep step). */
+const WINCH_STEPS = 96
 
 /**
- * Something hanging (the Engineering bucket on its rope): hovered (tapped on
- * touch), it swings from `swing.pivot` (plate px, where it hangs from) by up
- * to `swing.deg` and settles. The hover area (`swing.hit`, else the layer)
- * stays put while it swings.
+ * One part of a winch (the Engineering gear, and the rope and bucket), all on
+ * the same cycle (`winch.ms`): wound in, held, let back out. `winch.turn`:
+ * it turns that many degrees about its box's centre, from `winch.rest` (how
+ * it's turned at rest). `winch.lift`: it rides up that many plate px inside
+ * its window (which can fade at its edges, `layer.fadeY`), moved across by
+ * `winch.drift` ([[lift, px left], …]) on the way.
  */
-function SwingLayer({ plate, layer, children }) {
+function WinchLayer({ plate, layer, children }) {
   const ref = useRef(null)
-  const anim = useRef(null)
+  const { ms, turn, rest = 0, lift, drift } = layer.winch
   const [x0, y0, x1, y1] = layer.box
-  const [px, py] = layer.swing.pivot
-  const swing = () => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
-    if (anim.current?.playState === "running") return
-    const deg = layer.swing.deg ?? 2
-    anim.current = ref.current?.animate(
-      SWING_SWAYS.map(k => ({
-        transform: `rotate(${(k * deg).toFixed(2)}deg)`,
-        easing: "ease-in-out",
-      })),
-      { duration: SWING_MS },
+  const w = x1 - x0
+  const h = y1 - y0
+  const pose = k =>
+    turn != null
+      ? `rotate(${(rest + turn * k).toFixed(3)}deg)`
+      : `translate(${(((drift ? -lerpTable(drift, lift * k) : 0) / w) * 100).toFixed(3)}%, ${(((-lift * k) / h) * 100).toFixed(3)}%)`
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el?.animate || stillPlease()) return undefined
+    const frames = Array.from({ length: WINCH_STEPS + 1 }, (_, i) => ({
+      transform: pose(winchAt(i / WINCH_STEPS)),
+    }))
+    const anim = el.animate(frames, { duration: ms, iterations: Infinity })
+    // On the page's clock, so every part of the winch is at the same point.
+    anim.startTime = 0
+    return () => anim.cancel()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `pose` only reads the layer's (fixed) config
+  }, [layer])
+
+  if (turn != null) {
+    return (
+      <CropWindow
+        ref={ref}
+        data-layer={layer.name}
+        style={{ ...plate.windowStyle(layer.box), transform: pose(0) }}
+      >
+        {children}
+      </CropWindow>
     )
   }
   return (
-    <>
-      <SwingWindow
-        ref={ref}
-        data-layer={layer.name}
-        style={{
-          ...plate.windowStyle(layer.box),
-          transformOrigin: `${(((px - x0) / (x1 - x0)) * 100).toFixed(2)}% ${(((py - y0) / (y1 - y0)) * 100).toFixed(2)}%`,
-        }}
-      >
-        {children}
-      </SwingWindow>
-      <PeekHit
-        style={plate.windowStyle(layer.swing.hit || layer.box)}
-        onMouseEnter={swing}
-        onPointerDown={event => {
-          if (event.pointerType !== "mouse") swing()
-        }}
-      />
-    </>
+    <CropWindow
+      data-layer={layer.name}
+      style={{
+        ...plate.windowStyle(layer.box),
+        ...plate.fadeY(layer.box, layer.fadeY),
+      }}
+    >
+      <WinchSlide ref={ref}>{children}</WinchSlide>
+    </CropWindow>
   )
 }
 
@@ -1593,11 +1622,15 @@ const DUCK_GLOW_PAD = 30
  * plate px of its head peeking over; when the pointer leaves it rises and
  * hops back down. `duck.edge` is two plate points on the edge (it can slope);
  * while the critter's behind it, everything below that line is cut off.
+ * `duck.over`: at rest it's drawn over the layers after it (and its hover
+ * area stays on top of theirs); from the top of its hop it's behind them,
+ * until it's back at the top on its way home.
  */
 function DuckLayer({ plate, layer, children }) {
   const winRef = useRef(null)
   const [glow, setGlow] = useState(false)
   const [clipped, setClipped] = useState(false)
+  const [away, setAway] = useState(false)
   const timers = useRef([])
   const touch = useRef(0)
   const anim = useRef(null)
@@ -1649,7 +1682,10 @@ function DuckLayer({ plate, layer, children }) {
       DUCK_HOP_MS + DUCK_SINK_MS,
     )
     // Its feet are over the edge by now: cut off what goes behind it.
-    later(() => setClipped(true), DUCK_HOP_MS)
+    later(() => {
+      setClipped(true)
+      setAway(true)
+    }, DUCK_HOP_MS)
   }
   const rise = () => {
     timers.current.forEach(window.clearTimeout)
@@ -1666,7 +1702,10 @@ function DuckLayer({ plate, layer, children }) {
       ],
       DUCK_RISE_MS + DUCK_LAND_MS,
     )
-    later(() => setClipped(false), DUCK_RISE_MS)
+    later(() => {
+      setClipped(false)
+      setAway(false)
+    }, DUCK_RISE_MS)
     later(() => setGlow(false), DUCK_RISE_MS + DUCK_LAND_MS)
   }
   return (
@@ -1674,8 +1713,9 @@ function DuckLayer({ plate, layer, children }) {
       <DuckClip
         style={{
           ...plate.windowStyle(clip),
+          zIndex: layer.duck.over && !away ? 1 : undefined,
           clipPath: clipped
-            ? `polygon(0 0, 100% 0, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
+            ? `polygon(0 -100%, 100% -100%, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
             : "none",
         }}
       >
@@ -1694,7 +1734,10 @@ function DuckLayer({ plate, layer, children }) {
         </DuckWindow>
       </DuckClip>
       <PeekHit
-        style={plate.windowStyle(layer.duck.hit || layer.box)}
+        style={{
+          ...plate.windowStyle(layer.duck.hit || layer.box),
+          zIndex: layer.duck.over ? 1 : undefined,
+        }}
         onMouseEnter={duck}
         onMouseLeave={rise}
         onPointerDown={event => {
@@ -2635,7 +2678,10 @@ export function SubpageScene({ scene, title, description, children }) {
                     alt=""
                     decoding="async"
                     draggable={false}
-                    style={plate.imgStyle(layer.from || layer.box)}
+                    style={{
+                      ...plate.imgStyle(layer.from || layer.box),
+                      ...plate.clip(layer.clip),
+                    }}
                   />
                 )
                 if (layer.flyer) {
@@ -2716,11 +2762,11 @@ export function SubpageScene({ scene, title, description, children }) {
                     </DragonLayer>
                   )
                 }
-                if (layer.swing) {
+                if (layer.winch) {
                   return (
-                    <SwingLayer key={layer.name} plate={plate} layer={layer}>
+                    <WinchLayer key={layer.name} plate={plate} layer={layer}>
                       {img}
-                    </SwingLayer>
+                    </WinchLayer>
                   )
                 }
                 if (layer.duck) {
@@ -2800,6 +2846,7 @@ export function SubpageScene({ scene, title, description, children }) {
                     data-layer={layer.name}
                     style={{
                       ...plate.windowStyle(layer.box),
+                      ...plate.fadeY(layer.box, layer.fadeY),
                       // `flip`: mirrored, to face the other way.
                       transform: layer.flip ? "scaleX(-1)" : undefined,
                     }}
@@ -3158,6 +3205,12 @@ const hangSway = keyframes`
 `
 
 /** A hanging layer swaying from its top (`layer.sway`). */
+/** The rope and bucket, riding up and down inside their window. */
+const WinchSlide = styled.div`
+  position: absolute;
+  inset: 0;
+`
+
 const HangWindow = styled(CropWindow)`
   transform-origin: 50% 0;
   animation: ${hangSway} var(--sway-ms) ease-in-out var(--sway-delay) infinite;
@@ -3807,30 +3860,16 @@ const DragonHighlight = styled.div`
   }
 `
 
-/** Drawn markings (\`dragon.swirls\`): glowing violet-blue, like the Wiki's. */
-const SwirlSvg = styled.svg`
+/**
+ * Painted markings (\`dragon.swirls\`), lit: their dark violet brightened to
+ * lavender and glowing violet-blue, like the Wiki's.
+ */
+const SwirlGlow = styled.div`
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
+  filter: brightness(3.4) drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
     drop-shadow(0 0 calc(var(--px) * 3) #5b3dff)
     drop-shadow(0 0 calc(var(--px) * 6) rgba(90, 60, 255, 0.8));
-
-  path {
-    fill: none;
-    stroke: #cfc6ff;
-    stroke-width: 2.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-`
-
-const SwingWindow = styled.div`
-  position: absolute;
-  overflow: hidden;
-  pointer-events: none;
 `
 
 /** A tail's hover area; with \`$narrowOnly\`, only where it's in the art. */

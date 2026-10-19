@@ -1,11 +1,123 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Data and controls design used in Version 2.
+<br />
 
-#### Design decisions and changes
+This iteration of the data and controls subsystem was heavily focused on improving the user interface. In addition to the basic purpose of developing the software (to receive and transmit data and controls to and from the bioreactor), making the data easy to read and making the controls easy to use were heavily emphasized.
 
-Placeholder: explain what changed in Data and controls from Version 1 to Version 2 and why.
+This was important since in the V1 iteration, the user interface was difficult to use as the user had to type in command-line prompts and read data from the serial line. This made the software unapproachable; since the user interface itself is what the users would interact with, it is important to make the software easy to use to encourage users to actually make use of it.
 
-#### Testing and lessons
+No requirements were removed, but the priority of controlling multiple bioreactors in parallel slightly decreased, as developing a full proof-of-concept for the software’s function for one bioreactor can easily allow scaling.
 
-Placeholder: add Version 2 test results, limitations, and lessons for Data and controls.
+| Requirement                                                                                                                                                                                                                                                                                                         | Old Priority | New Priority | Why?                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bioreactor data are transmitted to the computer**<br /><br />Metrics & Criteria: Data from the bioreactor are transmitted without significant lag<br /><br />Constraints: Frequency of data transmission                                                                                                          | High         | N/A          | N/A                                                                                                                                                                                                                                            |
+| **Controls are transmitted to the bioreactors**<br /><br />Metrics & Criteria: Controls from the laptop are transmitted without significant lag<br /><br />Constraints: Frequency of data transmission                                                                                                              | High         | N/A          | N/A                                                                                                                                                                                                                                            |
+| **Bioreactor Data is displayed on a user interface**<br /><br />Metrics & Criteria: Must display at least one piece of information from the bioreactor about at least the following parameters: temperature, pH, OD<br /><br />Constraints: Transmitted bioreactor data may occasionally not contain updated values | Medium       | N/A          | N/A                                                                                                                                                                                                                                            |
+| **User interface is user friendly**<br /><br />Metrics & Criteria: text must be legible, buttons should be easy to identify, software should be easy to navigate<br /><br />Constraints: Software must be built using free tools                                                                                    | Low          | Medium       | Without a user friendly interface, it is very difficult to use any of the software that is built to understand the bioreactor’s status and control it accordingly.                                                                             |
+| **Can connect multiple bioreactors to a single laptop**<br /><br />Metrics & Criteria: the more bioreactors connected to a single laptop the better<br /><br />Constraints: Limited number of USB ports in a USB hub without significant signal distortion                                                          | Medium       | Low          | Demonstrating full functionality for one connection of a data and controls transmission system is more important than implementing the ability for multiple bioreactors to be able to work in parallel. Scaling up can be done as a next step. |
+
+### BoM
+
+| Component        | Purpose                                                                                      | Cost   | Sourcing Link                                 |
+| ---------------- | -------------------------------------------------------------------------------------------- | ------ | --------------------------------------------- |
+| USB Hub          | Connect multiple Arduinos to a single port on laptop to read and write data from and to them | $15.55 | [Amazon](https://www.amazon.ca/dp/B0C2K52TMQ) |
+| Arduino Nano x 1 | To test whether the data and control transmission is working                                 |        |                                               |
+| Python           | Software development for the dashboard                                                       | Free   | [Python](https://www.python.org/)             |
+
+### Component Selection Justification
+
+No components were explicitly changed or modified, since the changes were primarily made in software. The Python and Tkinter combination was still used for the development of the user interface.
+
+### Design Modifications
+
+After receiving feedback during the poster session at the Microplastics conference, the importance of a user-friendly software interface was highlighted. Thus, the user interface was modified to become more user-friendly.
+
+First, colours were used to increase ease of navigation, the interface screen increased in size to increase the space between the components, and tabs were added to classify information based on relevance, as shown below:
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data1.avif"
+  alt="data1"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data2.avif"
+  alt="data2"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data3.avif"
+  alt="data3"
+/>
+
+While this design improved user-friendliness, the temperature and spectrophotometry graphing were not yet validated. Thus, by plotting sample data that was loaded onto the Arduino prior to the test and transmitting the information to the software and graphing tabs, these aspects were tested.
+
+In addition, Dr. Radisic and Dr. Babian highlighted the importance of including information related to the pH directly on the dashboard. Thus, the temperature graph was moved to its own tab to allow controls to make room for pH information to be displayed on the main dashboard tab without compromising the size of the temperature graph.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data4.avif"
+  alt="data4"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data5-8.avif"
+  alt="data5"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data6-9.avif"
+  alt="data6"
+/>
+Then, the procedure to run the software was tested to ensure that the user could
+run it with a minimal number of steps.
+
+Also, when using this software in the lab to monitor the graph of bacteria, the buttons and sliders were not sending controls and the OD graphing was inaccurate. Thus, corresponding functions were modified to ensure controls selected on the user interface could be transmitted to the bioreactor and the accuracy of the OD graphing would be improved.
+
+In summary, we were able to design, develop, validate, and iterate our user interface several times to improve the user-friendliness of our software based on stakeholder feedback.
+
+### New Design of Experiments
+
+#### Experiment 1: Testing the Python software compatibility with Arduino
+
+To determine whether a Python based user interface could support two-way communication with the Arduino, a prototype dashboard was developed using Tkinter. We tested whether the software could successfully receive data from the Arduino and transmit controls to the hardware.
+
+#### Experiment 2: Testing graphing functionality
+
+To validate the temperature and spectrophotometry graphing features that were implemented in this iteration, sample data were loaded onto the Arduino prior to testing. The data were then transmitted to the software and displayed in their respective graphing tabs: temperature and spectrophotometry. We evaluated whether the data could be successfully transmitted, parsed, and plotted by the software, confirming the functionality of the graphing features.
+
+#### Experiment 3: Testing ease of set up
+
+Since the goal of this iteration was to improve user-friendliness of the interface, to evaluate the accessibility of the software, the procedure required launching the user interface. We assessed the number of steps required to open the software and access the user interface, with the goal of minimizing setup complexity and making the software easier for users to utilize.
+
+### Metrics and Experimental Data
+
+#### Experiment 1: Testing the Python software compatibility with Arduino
+
+A prototype user interface was developed using Python and Tkinter to test whether it could support two-way communication with the Arduino. The software successfully received data from the Arduino and transmitted user control files to the Arduino. These results demonstrated that Python could support the subsystem's data and control transmission requirements.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data7.avif"
+  alt="data7"
+/>
+
+#### Experiment 2: Testing graphing functionality
+
+Since the data were correctly graphed in both the temperature and spectrophotometry tabs, the test successfully validated the functionality of the graphing features.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data5-8.avif"
+  alt="data5"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/data6-9.avif"
+  alt="data6"
+/>
+
+#### Experiment 3: Testing ease of set up
+
+The set up to run the entire script was able to be conducted in five short steps on a Windows laptop. The steps were as follows:
+
+1. Open device manager
+2. Check the COM port
+3. Change COM port(s) in Python script as necessary
+4. Open the Windows terminal
+5. Type: python "C:\Users\liamc\Git Projects\Bioreactor\python-ui\demo.py"
+
+### Next Steps
+
+In future iterations, the parallel bioreactor system can be fully implemented and validated. Furthermore, the user interface can be tested with real data from the bioreactors to ensure that the data from the sensors to the Arduinos can be converted to a compatible JSON file before it is transmitted to the laptop, and send controls over from the laptop to the bioreactor’s sensors; this would allow validation of the full data and controls transmission pipeline.

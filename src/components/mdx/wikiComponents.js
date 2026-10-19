@@ -242,12 +242,15 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  width: 100%;
+  min-width: 0;
   gap: var(--space-md);
   max-width: var(--wiki-block-max, 54rem);
   margin: var(--space-lg) 0;
 
   figure {
+    min-width: 0;
     margin: 0 auto;
   }
 `
