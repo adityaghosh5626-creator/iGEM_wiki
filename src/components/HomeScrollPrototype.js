@@ -4390,7 +4390,7 @@ export function HomeScrollPrototype() {
                   </Section5OceanLine>
                   <Section5Cta>
                     Discover more about{" "}
-                    <Link to="/project/description/">Petabite</Link>.
+                    <Link to="/project/description/">PetaBite</Link>.
                   </Section5Cta>
                 </Section5TextStack>
               </Section5Root>
