@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useId, useRef, useState } from "react"
 import { withPrefix } from "gatsby"
 import styled from "styled-components"
 import { useLinkTarget } from "../linkTarget.js"
@@ -123,10 +123,24 @@ const Mix = ({ mix }) => {
   )
 }
 
-/** One dataset's card. `active` is the link whose description the preview shows. */
+/** Hover and focus are tracked apart, so moving the mouse off the links does
+    not blank the preview for a link that still has keyboard focus. Touch has
+    no hover: the first tap on a link previews it, and a second tap opens it. */
 const DatasetCard = ({ d, nameTarget }) => {
-  const [active, setActive] = useState(null)
+  const [hovered, setHovered] = useState(null)
+  const [focused, setFocused] = useState(null)
+  const [tapped, setTapped] = useState(null)
+  const [touch, setTouch] = useState(false)
+  const pointer = useRef(null)
+  const id = useId()
+  useEffect(() => {
+    setTouch(window.matchMedia("(hover: none)").matches)
+  }, [])
+  const active = hovered ?? tapped ?? focused
   const shown = active === null ? null : d.links[active]
+  const hint = touch
+    ? "Tap a dataset to see what it holds, and again to open it"
+    : "Hover a dataset to see what it holds"
   return (
     <Card>
       <Kicker>{d.role}</Kicker>
@@ -148,21 +162,37 @@ const DatasetCard = ({ d, nameTarget }) => {
             href={HF + repo}
             target="_blank"
             rel="noopener noreferrer"
-            title={desc}
+            aria-describedby={`${id}-${i}`}
             $primary={primary}
             data-active={active === i || undefined}
-            onMouseEnter={() => setActive(i)}
-            onMouseLeave={() => setActive(null)}
-            onFocus={() => setActive(i)}
-            onBlur={() => setActive(null)}
+            onPointerDown={(e) => (pointer.current = e.pointerType)}
+            onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(i)}
+            onPointerLeave={(e) => e.pointerType === "mouse" && setHovered(null)}
+            onFocus={() => setFocused(i)}
+            onBlur={() => setFocused(null)}
+            onClick={(e) => {
+              const touched = pointer.current === "touch"
+              pointer.current = null
+              if (touched && tapped !== i) {
+                e.preventDefault()
+                setTapped(i)
+              }
+            }}
           >
             🤗 {label}
           </HfLink>
         ))}
       </Links>
-      <Preview aria-live="polite" $shown={Boolean(shown)}>
-        <PreviewIcon aria-hidden="true">i</PreviewIcon>
-        <span>{shown ? shown.desc : "Hover a dataset to see what it holds"}</span>
+      {d.links.map(({ repo, desc }, i) => (
+        <Hidden key={repo} id={`${id}-${i}`}>
+          {desc}
+        </Hidden>
+      ))}
+      {/* Hidden from screen readers: each link already carries its own
+          description, so announcing this too would repeat it. */}
+      <Preview aria-hidden="true" $shown={Boolean(shown)}>
+        <PreviewIcon>i</PreviewIcon>
+        <span>{shown ? shown.desc : hint}</span>
       </Preview>
     </Card>
   )
@@ -198,6 +228,7 @@ const Cards = styled.div`
 `
 
 const Card = styled.div`
+  position: relative;
   display: grid;
   align-content: start;
   gap: 0.45rem;
@@ -332,7 +363,6 @@ const HfLink = styled.a`
     font-size: 0.78rem;
     font-weight: ${({ $primary }) => ($primary ? 700 : 600)};
     text-decoration: none;
-    cursor: help;
   }
 
   &&&:hover,
@@ -359,6 +389,15 @@ const Preview = styled.p`
   font-size: 0.8rem;
   font-style: ${({ $shown }) => ($shown ? "normal" : "italic")};
   line-height: 1.35;
+`
+
+const Hidden = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 `
 
 const PreviewIcon = styled.span`

@@ -59,8 +59,11 @@ status: "draft"
       must not quote anything computed on the v1 test fold.
     - Closing the loop (from Purav, Discord 2026-10-17). Owed by Purav:
       how uncertainty is estimated, the acquisition rule, and the round 2
-      library's size and cluster count. If round 2 was not chosen this way,
-      change "was chosen" to "will be chosen".
+      library's size and cluster count. The text says round 2 "will be
+      chosen" this way; change it to "was chosen" once Purav confirms.
+    - 61,900 is the family_rep_seqs count (atlas representatives traced
+      into the corpus family_v1 layer), not the atlas's 64,730; the
+      landscape repo does not say why 2,830 are missing.
 */}
 
 <Callout title="Methods for the model's datasets">
@@ -116,9 +119,9 @@ The labels are 12,888 measurements of activity and stability on 1,219 protein se
 
 Sequence counts are each source's own and overlap between sources, so they sum to more than 1,219. The overlap is small: 358 of the 455 sequences in the LLM set carry no label from any other source, and only 14 kinetics sequences also appear in the human-scraped set.
 
-**Human-scraped.** Using the [extraction schema](/dry-lab/model/#schema-design-and-extraction-protocol), 19 curators read 65 papers over four rounds, recording each experiment and every measurement in it. This is the only source where a person read the paper, and the conditions show it: pH on 90.4% of labels and temperature on 42.8%, plus buffer, crystallinity, pretreatment, expression host and enzyme loading. 26 papers were read independently by two or more curators, so agreement between people can be measured. Curators are identified by pseudonym.
+**Human-scraped.** Using the [extraction schema](/dry-lab/model/#schema-design-and-extraction-protocol), 19 curators read 65 papers over four rounds, recording each experiment and every measurement in it; 59 of those papers yielded at least one usable label. This is the only source where a person read the paper, and the conditions show it: pH on 90.4% of labels and temperature on 42.8%, plus buffer, crystallinity, pretreatment, expression host and enzyme loading. 26 papers were read independently by two or more curators, so agreement between people can be measured. Curators are identified by pseudonym.
 
-Papers often name a mutant without printing its sequence, so the build recovers sequences four ways: rebuilding mutants from a wild type and the mutation in the enzyme's name, looking up recorded accessions, translating nucleotide entries that are complete reading frames, and linking a measurement to a sequence that another curator of the same paper supplied when every curator agreed on it. Of its 534 sequences, 367 were typed by a curator alone, 148 were never typed by a curator, and 19 arrived both ways.
+Papers often name a mutant without printing its sequence, so the build recovers sequences four ways: rebuilding mutants from a wild type and the mutation in the enzyme's name, looking up recorded accessions, translating nucleotide entries that are complete reading frames, and linking a measurement to a sequence that another curator of the same paper supplied when every curator agreed on it. Of the 534 sequences it holds, 367 were typed by a curator alone, 148 were never typed by a curator, and 19 arrived both ways. 458 of them carry a usable label, which is the count in the table above.
 
 The gaps are in the join, not the reading. 2,386 measurements carry no sequence and a further 316 are linked but hold no usable value. Most of the loss is panel papers whose enzymes were entered as internal numbers: one paper alone holds 1,377 measurements against a single sequenced enzyme.
 
@@ -150,7 +153,7 @@ All five datasets are released under CC BY 4.0. The measurements themselves are 
 
 We clustered the labelled sequences at 90%, 50% and 30% identity, giving 619, 323 and 201 clusters, and assigned whole 30% clusters to the training, validation and test folds so that close relatives never fall on both sides.
 
-The first release was homology-clean but unusable for evaluation, and the current one fixes it. Negatives are now spread across the folds, 124, 39 and 33 of them, where the first release put 7 in the test fold and none of the plate screen's 168. The share of machine-extracted labels is now even too, 39.5% in training against 39.9% in test, where it previously ran 19.6% against 62.9%: a model would have been trained on human curation and scored on unvalidated extraction.
+The first release was homology-clean but unusable for evaluation, and the current one fixes it. Negatives are now spread across the folds, 124, 39 and 33 of them, with the other 4 on sequences that have no fold (below), where the first release put 7 in the test fold and none of the plate screen's 168. The share of machine-extracted labels is now even too, 39.5% in training against 39.9% in test, where it previously ran 19.6% against 62.9%: a model would have been trained on human curation and scored on unvalidated extraction.
 
 One problem remains, and it limits what any evaluation here can claim. A single 30% cluster holds 113 of the validation fold's 171 sequences and 104 of the test fold's, so the effective diversity of an evaluation is nearer 27 enzyme families than 171 sequences. Confidence intervals must be resampled over clusters, not sequences, and results reported per cluster. A further 82 sequences carrying 3,137 labels have no fold at all because they are fragments or contained duplicates; 3,101 of those labels can be recovered by remapping onto a parent sequence that is already in a fold, which is not yet applied.
 
@@ -160,13 +163,13 @@ The labelled set sits far from the population the model is meant to screen. Only
 
 ## Closing the loop
 
-The two datasets play different roles. The corpus is the raw material for discovery: it is large and changes only when we search for more sequences. The labels are the part we can improve, and the sections above show where they are weakest: few confirmed negatives, about 70 enzyme families in training, and only 21 sequences from Logan, the population we want to screen. Every wet lab round is a chance to add labels where they help most.
+The two datasets play different roles. The corpus is the raw material for discovery: it is large and changes only when we search for more sequences. The labels are the part we can improve, and the sections above show where they are weakest: few confirmed negatives, 141 enzyme families in training, counted as clusters at 30% identity, and only 21 sequences from Logan, the population we want to screen. Every wet lab round is a chance to add labels where they help most.
 
-We treat choosing what to test as Bayesian optimisation. Testing only the candidates with the highest predicted activity would confirm what the model already believes and teach it little. Testing only the candidates it is least sure about would spend assays on clusters that are unlikely to work. We pick clusters where the model's uncertainty is high and other evidence suggests activity, so that each result either finds an active enzyme or corrects the model where it was weakest. The round 2 library was chosen this way, and its results return to the labels for the next round.
+We treat choosing what to test as Bayesian optimisation. Testing only the candidates with the highest predicted activity would confirm what the model already believes and teach it little. Testing only the candidates it is least sure about would spend assays on clusters that are unlikely to work. We pick clusters where the model's uncertainty is high and other evidence suggests activity, so that each result either finds an active enzyme or corrects the model where it was weakest. The round 2 library will be chosen this way, and its results will return to the labels for the next round.
 
 The other evidence is environmental metadata: the temperature, pH and environment of the samples a cluster was assembled from. Sequence alone cannot separate enzymes that work in different conditions. IsPETase, LCC, TfCut2 and Cut190 fall in a single enzyme family, yet IsPETase works at mild temperatures and LCC and TfCut2 near 70 °C. Mapping each region's median sample temperature over the family atlas shows the same thing in both directions: families far apart in sequence can come from equally warm or cold environments, and close relatives can come from different ones.
 
-We use this as a weak prior, not as evidence of activity. Only 0.7% of BioSamples state a temperature and 0.15% a pH, so 28,481 of 61,900 families have a temperature and 20,531 a pH. Smoothed over the atlas, temperatures mostly sit between 14 and 22 °C, and pH barely varies, from 7.0 to 7.5. We have not yet tested whether temperature is more similar between neighbouring families than chance would predict. Until we do, metadata decides between clusters the model is equally unsure about; it does not outweigh the model.
+We use this as a weak prior, not as evidence of activity. Only 0.7% of BioSamples state a temperature and 0.15% a pH, so of the 61,900 atlas families whose representative we could trace into the corpus, 28,481 have a temperature and 20,531 a pH. Smoothed over the atlas, temperatures mostly sit between 14 and 22 °C, and pH barely varies, from 7.0 to 7.5. We have not yet tested whether temperature is more similar between neighbouring families than chance would predict. Until we do, metadata decides between clusters the model is equally unsure about; it does not outweigh the model.
 
 ## Downloading the data
 

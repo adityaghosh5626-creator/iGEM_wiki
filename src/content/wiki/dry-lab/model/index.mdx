@@ -487,16 +487,17 @@ This section opens with the data the model learns from. Before trusting any pred
   Direction agreed with Purav (Discord, 2026-10-17): the candidates are the
   raw data that enables discovery; the labels are what we keep improving, in a
   loop with wet lab. The round 2 library comes from this loop.
-  CONFIRM WITH PURAV before publishing: that round 2 was chosen by model
-  uncertainty plus metadata (Bayesian optimisation), not only by predicted
-  activity. If it was not, soften the round 2 sentence to "will be".
+  CONFIRM WITH PURAV: that round 2 was chosen by model uncertainty plus
+  metadata (Bayesian optimisation), not only by predicted activity. Until
+  then the round 2 sentence says "will be chosen"; if he confirms, change it
+  to "was chosen" here and on the Methods page.
 */}
 
 The model learns from two datasets with different jobs. The PETadex corpus is the raw material: 307 million candidate enzymes that a model can train on and explore. The PETai activity labels are what we keep improving, because better labels let the model explore the candidates better. They come from three readings of the literature, by hand and by machine, plus a plate screen run by our supervising lab, and each source is published on its own alongside the merged set. Everything is open on Hugging Face (marked 🤗).
 
 <ModelDatasets />
 
-The two datasets meet in a loop. Rather than testing only the candidates the model already likes, we test the clusters it is least sure about whose environmental metadata looks promising, so each result improves the labels where the model is weakest. Our round 2 library was chosen this way.
+The two datasets meet in a loop. Rather than testing only the candidates the model already likes, we test the clusters it is least sure about whose environmental metadata looks promising, so each result improves the labels where the model is weakest. Our round 2 library will be chosen this way.
 
 <DatasetLoop />
 
