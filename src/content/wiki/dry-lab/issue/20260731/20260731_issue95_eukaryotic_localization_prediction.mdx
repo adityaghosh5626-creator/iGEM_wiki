@@ -13,7 +13,7 @@
 # PETadex DeepLoc 2.1 Pipeline
 
 > **Author:** Angela Jiang  
-> **Date Started:** 2026-07-01 **Date Finished:**2026-07-31 **Input:**
+> **Date Started:** 2026-07-01 **Date Finished:** 2026-07-31 **Input:**
 > `s3://petadex-deeploc/input/chunks/` (chunked FASTA containing all
 > ORFs from retained 90% PID clusters)  
 > **Output:** `deeploc21_orf_predictions` (PostgreSQL table); raw
@@ -49,7 +49,7 @@ mixed metadata assignments are more likely to reflect contamination,
 ambiguous sample provenance, or database noise. This restriction is also
 directly supported by internal benchmarking showing DeepLoc’s
 predictions are unreliable for bacterial sequences (§2.1). The procedure
-also produces a list of quality-controlled eukaryotic sequences, that
+also produces a list of quality-controlled eukaryotic sequences that
 could potentially be independently used for future analysis or filtering
 projects as well.
 
