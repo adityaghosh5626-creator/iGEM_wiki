@@ -203,7 +203,7 @@ const ScaledFigure = ({ href, title, dark, logical, open, frameRef }) => {
   }, [logicalW, logicalH, open, frameRef])
 
   return (
-    <FrameBox ref={boxRef} $dark={dark} $open={open}>
+    <FrameBox ref={boxRef} $dark={dark} $open={open} $aspect={`${logicalW} / ${logicalH}`}>
       <ScaledFrame ref={frameRef} src={href} title={title} loading="lazy" />
     </FrameBox>
   )
@@ -352,8 +352,9 @@ const FrameBox = styled.div`
   width: 100%;
   /* The scaled frame fills this box exactly, so the box carries the aspect and
      nothing forces it taller -- a min-height would letterbox the figure in dark
-     dead space on a narrow column. */
-  aspect-ratio: 16 / 9;
+     dead space on a narrow column. The aspect follows `logical`, so a square
+     figure gets a square box (16 / 9 by default). */
+  aspect-ratio: ${({ $aspect }) => $aspect};
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 8px;
