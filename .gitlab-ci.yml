@@ -1,4 +1,4 @@
-image: node:20.19.0
+image: node:20.19.0-alpine
 
 variables:
   GATSBY_TELEMETRY_DISABLED: "1"
@@ -9,18 +9,13 @@ variables:
 
 pages:
   stage: build
-  # Allow cold installs and production compilation to finish on shared runners.
-  # A runner-level maximum timeout still takes precedence over this value.
-  timeout: 30 minutes
-  # Restoring the old download archive can exhaust the runner before scripts start.
+  # Compilation runs on GitHub; GitLab's ten-minute job only publishes.
+  timeout: 10 minutes
   cache: []
   before_script:
-    - npm ci --cache .npm --no-audit --no-fund
-    # Installed dependencies stay in node_modules; discard only download caches.
-    - rm -rf -- .npm
+    - apk add --no-cache git
   script:
-    - npm run build:igem
-    - node scripts/trim-pages-artifact.mjs
+    - node scripts/igem-pages-bundle.mjs unpack
   artifacts:
     paths:
       - public

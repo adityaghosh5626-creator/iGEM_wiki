@@ -20,6 +20,22 @@ jobs:
       - name: Check out GitHub main
         uses: actions/checkout@v5
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Build and package iGEM Pages
+        env:
+          GATSBY_TELEMETRY_DISABLED: "1"
+          GATSBY_PATH_PREFIX: "/toronto"
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:igem
+          node scripts/trim-pages-artifact.mjs
+          node scripts/igem-pages-bundle.mjs pack
+
       # GitLab gets a snapshot of GitHub main's files as one new commit, not
       # GitHub's history: a file GitLab can't take (over 10 MB) that was later
       # fixed on GitHub would otherwise block every sync from then on.
@@ -39,7 +55,11 @@ jobs:
           git remote add igem "https://oauth2:${GITLAB_TOKEN}@gitlab.igem.org/2026/toronto.git"
           git fetch igem main
 
-          tree=$(git rev-parse "$GITHUB_SHA^{tree}")
+          # Build scripts can regenerate tracked files. Preserve the exact
+          # source commit and add only its verified deployment bundle.
+          git read-tree "$GITHUB_SHA"
+          git add -f .igem-pages/site.tar.gz .igem-pages/manifest.json
+          tree=$(git write-tree)
           if [ "$tree" = "$(git rev-parse "igem/main^{tree}")" ]; then
             echo "GitLab main already has these files."
             exit 0

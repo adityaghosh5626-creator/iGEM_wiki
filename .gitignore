@@ -95,3 +95,6 @@ dennis-scratch/
 # full size it took the iGEM build over its 5 MB upload. The card plays the
 # landscape-spin-card.mp4 re-encode; see the note in dry-lab/overview/index.mdx.
 static/figures/dry-lab-overview/landscape-spin.mp4
+
+# Built only by the GitHub sync job; included in the GitLab snapshot.
+.igem-pages/
