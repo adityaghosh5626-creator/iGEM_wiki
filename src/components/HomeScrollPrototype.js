@@ -691,22 +691,41 @@ const SECTION5_CDN =
 /** Hex field after the reef. Transparent top (~26%) fades into the honeycomb. */
 const HEX_FIELD_SRC =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/bg-new-use-this.avif"
+/** Full hex plate. The painted crop starts at row 981; the file is 1440×3831. */
+const HEX_PLATE = { w: 1440, h: 3831 }
 /** Plate % where the hex art starts, low enough to cover the bottom of the reef. */
 const HEX_FIELD_TOP_PCT = 70.6
 /**
- * Width-relative height of the hex image that sticks out past section 5.
- * hexH/W − (1 − topPct) × section5H/W
+ * "Discover more about PetaBite" ends near plate row 1512. The ending
+ * bottle sits just under that line, and the hex is cropped there: the
+ * rest of the plate is empty honeycomb and is not shown.
  */
-const HEX_FIELD_BELOW_ASPECT = "1 / 1.417"
-/** Hex art row (share of its height) where it turns fully opaque — below the reef. */
-const HEX_OPAQUE_FROM = 1202 / 3831
-/** Scroll (share of vh) the view holds on the ending bottle while petamons burst. */
-const ENDING_HOLD_VH = 1.1
+const HEX_CTA_END_ROW = 1580
+/** Gap between that line and the ending bottle, in the cropped frame. */
+const HEX_BELOW_CTA = "1.75rem"
+/** A little honeycomb left under the bottle before the crop. */
+const HEX_UNDER_BOTTLE = "2.25rem"
+/** Room under the crop for the bottle's hint, on the same dark field. */
+const HEX_HINT_ROOM = "14vh"
+/** Same cap as EndingBottleSlot, so the crop stays wrapped around the bottle. */
+const ENDING_BOTTLE_H = "min(calc(90vw * 1060 / 1340), 74vh)"
+/** Hex art through the bottle. Shares the plate's top, so the reef still lines up. */
+const HEX_ART_HEIGHT = `calc(${artPx(HEX_CTA_END_ROW)} + ${HEX_BELOW_CTA} + ${ENDING_BOTTLE_H} + ${HEX_UNDER_BOTTLE})`
+/** Cropped art plus the hint. This is the whole ending frame. */
+const HEX_BAND_HEIGHT = `calc(${HEX_ART_HEIGHT} + ${HEX_HINT_ROOM})`
 /**
- * While held, the bottle sits this share of the view below center, so the
- * descriptions that open above the top labels stay on screen.
+ * How much of section 5 is still below the hex's top, in widths.
+ * (1 − topPct) × section5H/W. The band past this is the only scroll left
+ * after the reef plate.
  */
-const ENDING_HOLD_DROP_VH = 0.05
+const HEX_SECTION5_TAIL =
+  (1 - HEX_FIELD_TOP_PCT / 100) * (4000 / 946)
+/** Hex art row (share of its height) where it turns fully opaque — below the reef. */
+const HEX_OPAQUE_FROM = 1202 / HEX_PLATE.h
+/** Scroll (share of vh) the view holds on the Discover-more frame while petamons burst. */
+const ENDING_HOLD_VH = 1.1
+/** While held, "Discover more about PetaBite" sits at this share of the view. */
+const ENDING_HOLD_CTA_VH = 0.34
 
 /**
  * The treatment plant and the sea under it, repainted as one picture on the
@@ -1611,6 +1630,7 @@ export function HomeScrollPrototype() {
   const hexOverlapRef = useRef(null)
   const endingSlotRef = useRef(null)
   const endingBottleRef = useRef(null)
+  const section5CtaRef = useRef(null)
   const endingReleasedRef = useRef(false)
   const section5FoamRef = useRef(null)
   const section5SplashLayerRef = useRef(null)
@@ -2942,7 +2962,7 @@ export function HomeScrollPrototype() {
       }
 
       // Ending bottle: pieces fly in as the hex field scrolls up, then the
-      // sticky track holds the view (bottle centered) while petamons burst out.
+      // sticky track holds the Discover-more frame while petamons burst out.
       const holdTrack = endingHoldTrackRef.current
       const holdSticky = endingHoldStickyRef.current
       const holdSpacer = endingHoldSpacerRef.current
@@ -2957,11 +2977,12 @@ export function HomeScrollPrototype() {
         const released = endingReleasedRef.current
         const holdPx = reduce || released ? 0 : Math.round(vh * ENDING_HOLD_VH)
         const hexOff = hexOverlap.offsetTop
-        const bottleOff =
-          hexOff + endingSlot.offsetTop + endingSlot.offsetHeight / 2
-        const stickyTop = Math.round(
-          vh * (0.5 + ENDING_HOLD_DROP_VH) - bottleOff,
-        )
+        const cta = section5CtaRef.current
+        const ctaWithin = cta
+          ? cta.getBoundingClientRect().top -
+            holdSticky.getBoundingClientRect().top
+          : hexOff
+        const stickyTop = Math.round(vh * ENDING_HOLD_CTA_VH - ctaWithin)
         if (holdSticky.style.top !== `${stickyTop}px`) {
           holdSticky.style.top = `${stickyTop}px`
         }
@@ -2970,9 +2991,11 @@ export function HomeScrollPrototype() {
         }
         // Track top (un-stuck flow position): assembly runs from the reef
         // leaving the top of the view (hex art fully opaque there) to the
-        // bottle reaching center.
+        // Discover-more line reaching its hold.
         const trackTop = holdTrack.getBoundingClientRect().top
-        const flyFrom = -(hexOff + HEX_OPAQUE_FROM * hexOverlap.offsetHeight)
+        const plateH =
+          hexOverlap.offsetWidth * (HEX_PLATE.h / HEX_PLATE.w)
+        const flyFrom = -(hexOff + HEX_OPAQUE_FROM * plateH)
         const assemble = reduce
           ? 1
           : clamp01((flyFrom - trackTop) / Math.max(1, flyFrom - stickyTop))
@@ -4185,7 +4208,9 @@ export function HomeScrollPrototype() {
                   ref={hexOverlapRef}
                   $topPct={HEX_FIELD_TOP_PCT}
                 >
-                  <HexFieldImg src={HEX_FIELD_SRC} alt="" />
+                  <HexFieldClip>
+                    <HexFieldImg src={HEX_FIELD_SRC} alt="" />
+                  </HexFieldClip>
                   <EndingBottleSlot ref={endingSlotRef}>
                     <EndingPetamonBottle ref={endingBottleRef} />
                   </EndingBottleSlot>
@@ -4388,7 +4413,7 @@ export function HomeScrollPrototype() {
                     and to champion the idea of plastic-degrading enzymes for
                     microplastic cleanup.
                   </Section5OceanLine>
-                  <Section5Cta>
+                  <Section5Cta ref={section5CtaRef}>
                     Discover more about{" "}
                     <Link to="/project/description/">PetaBite</Link>.
                   </Section5Cta>
@@ -4474,10 +4499,10 @@ const EndingHoldSpacer = styled.div`
 const EndingBottleSlot = styled.div`
   position: absolute;
   left: 50%;
-  /* Raised off the bottom of the hex art: some room below it before the footer. */
-  bottom: 30vh;
+  /* Just under "Discover more", inside the cropped hex — not at the bottom of the full plate. */
+  top: calc(${artPx(HEX_CTA_END_ROW)} + ${HEX_BELOW_CTA});
   z-index: 2;
-  /* As big as the view allows while held mid-screen (frame is 1340×1060),
+  /* As big as the view allows while held (frame is 1340×1060),
      leaving room for the hint under it. */
   width: min(90vw, calc(74vh * 1340 / 1060));
   width: min(90vw, calc(74svh * 1340 / 1060));
@@ -4495,33 +4520,54 @@ const Section5Root = styled.div`
   background: transparent;
 `
 
-/** Above the chute bottle (z 8) and bubbles (z 10) so they scroll underneath. */
+/**
+ * Above the chute bottle (z 8) and bubbles (z 10) so they scroll underneath.
+ * Height is the cropped frame (through the bottle and its hint), not the
+ * full 3831-row plate.
+ */
 const HexFieldOverlap = styled.div`
   position: absolute;
   left: 0;
   top: ${({ $topPct }) => `${$topPct}%`};
   z-index: 11;
   width: 100%;
+  height: ${HEX_BAND_HEIGHT};
+  background: #101133;
+  pointer-events: none;
+`
+
+/** Clips the hex plate to the cropped frame. The image stays top-aligned. */
+const HexFieldClip = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
 `
 
 const HexFieldImg = styled(PlateImg)`
+  position: absolute;
+  left: 0;
+  top: 0;
   display: block;
   width: 100%;
+  max-width: none;
   height: auto;
-  max-width: 100%;
   pointer-events: none;
   user-select: none;
 `
 
-/** Scroll space for the hex image that extends past the reef plate. */
+/** Scroll space for the cropped hex that still sticks out past the reef plate. */
 const HexFieldRoot = styled.div`
   position: relative;
   z-index: 0;
   width: 100%;
   min-width: 0;
-  aspect-ratio: ${HEX_FIELD_BELOW_ASPECT};
-  padding-bottom: 22vh;
+  height: max(
+    0px,
+    calc(
+      ${HEX_BAND_HEIGHT} - var(${ART_WIDTH_VAR}, 100vw) * ${HEX_SECTION5_TAIL}
+    )
+  );
   background: #101133;
 `
 

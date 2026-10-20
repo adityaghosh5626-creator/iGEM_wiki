@@ -70,7 +70,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     label: "Character Design",
     color: "#5A9E4B",
     tabColor: "#e89469",
-    progress: "Every subteam's PETamon, from sketch to mascot.",
+    progress: "Every subteam's PETamon, from sketch to mascot and crochet.",
     startPageId: "character-design",
   },
   {
@@ -79,7 +79,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     label: "Social",
     color: "#C45B8C",
     tabColor: "#f0b376",
-    progress: "Intro post, reels, newsletters and the promo.",
+    progress: "Intro post, reels and The Waterfront.",
     startPageId: "social",
   },
   {
@@ -411,12 +411,17 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     cols: 1,
     caption: "The Web and Hardware mascots, by Rebecca.",
   }),
+  sectionPage("character-design", "crochet", "Crochet", {
+    variant: "aside",
+    body:
+      "Isabella is designing crochet patterns so the PETamon can leave the screen. The Wet Lab axolotl is first in line to become a plush, and the plan is a pattern for every PETamon, so anyone can make one at home.",
+  }),
   {
     id: "social",
     title: "Social",
     sectionId: "social",
     body:
-      "Our social media team launched PetaBite with our first Instagram post, Project Intro. To match the earthy colours the web design team laid down, it used a pastel palette around Wet Lab's axolotl PETamon, the very first one designed. Through the summer, the Road to Jamboree reels followed the subteams at work, and from late May our monthly newsletter, The Waterfront, brought members PetaBite's progress, events and the PETase and microplastics landscape. A special edition introduced the speakers at the Microplastics Conference in August, which we promoted on Instagram.",
+      "Our social media team launched PetaBite with our first Instagram post, Project Intro, on May 21. It has since drawn more than 11.4K views, 300 engagements and more than 15 comments. To match the earthy colours the web design team laid down, it used a pastel palette around Wet Lab's axolotl PETamon, the very first one designed. Through the summer, the Road to Jamboree reels followed the subteams at work, and from late May our monthly newsletter, The Waterfront, went out to general members with PetaBite's progress, current and upcoming events, and a snapshot of the microplastics and PETase landscape. A special edition for subscribers introduced the speakers at the Microplastics Conference in August.",
     density: "soft",
     variant: "spread",
     imageSrc: NB_IMG("social-project-intro-may"),
@@ -500,14 +505,14 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   }),
   sectionPage("branding", "merch", "Merch", {
     body:
-      "Outreach made merch that captures the scale of the microplastics problem and ties it to PetaBite's north star: plastic-degrading enzymes that work in many environments. The first designs featured an enlarged PetaBite logo; the final ones show our PETase-based solution.",
+      "Outreach made merch that captures the scale of the microplastics problem and ties it to PetaBite's north star: plastic-degrading enzymes that work in many environments. The first designs put an enlarged PetaBite logo on the back and the iGEM Toronto logo on the front. They were revised to show our solution: a stonewashed t-shirt, an iGEM Toronto quarter zip, and a forest-green hoodie with our sponsors. The t-shirt and the hoodie carry the PetaBite designs.",
     imageSrc: SK_IMG("merch-catalogue-initial"),
     imageAlt: "The first merch catalogue: black t-shirts, hoodies and quarter zips",
     caption: "The first iGEM Toronto merch catalogue: a t-shirt, hoodie and quarter zip.",
   }),
   sectionPage("branding", "redesign", "Merch", {
     body:
-      "We wanted merch that looked more like the homepage's art and could be worn outside iGEM, so members of web and web design redesigned it. A stonewashed tee, a quarter zip and a forest-green hoodie with our sponsors made the cut; the tee was picked from a poll of four designs.",
+      "We wanted merch that looked more like the homepage's art and could be worn outside iGEM, so the web design team redesigned it. Sponsors were going to sit on the hoodie's sleeve; they moved, and the colours were evened out, so they frame the design on the back. The tee is a streetwear print on a stonewashed base, picked from a poll of four designs.",
     imageSrc: SK_IMG("merch-tee-final"),
     imageAlt: "The final stonewashed tee, front and back",
     caption: "The final stonewashed tee, by Kathleen (with inspiration from Abby).",
@@ -536,7 +541,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     title: "Other",
     sectionId: "other",
     body:
-      "Scripting for our two-minute promo video began in June. It gives a short introduction to the problem PetaBite addresses and a summary of the experiments that validate our solution, while staying accessible to an audience with little scientific background. We filmed across the University of Toronto campus and the Toronto Islands, and with voiceovers, animated scenes and editing, it was released on August 11.",
+      "Scripting for our two-minute promo video began in June. It gives a short introduction to the microplastics problem and a summary of the experimental workflow that validates PetaBite's technical pipeline, while staying accessible to an audience with little scientific background. We filmed across the University of Toronto campus and the city, especially the Toronto Islands, and with voiceovers, animated scenes, external audio and editing, it was released publicly on August 11.",
     density: "soft",
     variant: "spread",
     imageSrc: NB_IMG("other-promo-filming-jul26"),
@@ -550,7 +555,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     density: "soft",
     variant: "aside",
     body:
-      "Planning for the 15-minute presentation video began in early September, with filming from mid-October. Unlike the promo video, it goes into the science and rationale behind the project's technical side, for an audience with a deeper understanding of biology, and documents PetaBite's real-world impact through our stakeholder discussions, entrepreneurial analysis and outreach. It was scripted, shot and edited in October.",
+      "Planning for the 15-minute presentation video began in early September, with filming from mid-October, including sessions with Wet Lab, Hardware, Entrepreneurship and Human Practices. Unlike the promo video, it goes into the science and rationale behind the project's technical side, for an audience that already knows synthetic biology and computational systems, and documents PetaBite's real-world impact through our stakeholder discussions, entrepreneurial analysis and outreach. It was scripted, shot and edited in late October.",
   },
   {
     id: "back",
