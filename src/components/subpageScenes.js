@@ -443,6 +443,9 @@ export const HARDWARE_SCENE = {
   accent: "#6b5cb5",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
+    { name: "bg2", box: [0, 0, 1110, 4000], removeWhite: true },
+    { name: "red", box: [0, 0, 1110, 4000], removeWhite: true },
+    { name: "sparkle", box: [0, 0, 1110, 4000], fadePulse: 4000, removeWhite: true },
     // Extra lighting: glints down the walls and pillars into the pool.
     { name: "bottom-lightning-turtles", box: [127, 1985, 1088, 3942] },
     // Hover (tap on touch) the turtle: it shivers and the lightning on

@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -2231,6 +2232,7 @@ function sceneVars(scene, plate) {
 }
 
 export function SubpageScene({ scene, title, description, children }) {
+  const whiteFilterId = `scene-white-${useId().replace(/:/g, "")}`
   const plate = plateOf(scene)
   const { side, text } = scene
   // A dragon partly drawn over the text box (text.front.dragon): the line
@@ -2660,6 +2662,14 @@ export function SubpageScene({ scene, title, description, children }) {
         ...(side && compact ? railCols(scene, plate) : null),
       }}
     >
+      {scene.layers.some(layer => layer.removeWhite) && <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
+        <defs>
+          <filter id={whiteFilterId} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            {/* Remove the white canvas without darkening the coloured lights. */}
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 9" />
+          </filter>
+        </defs>
+      </svg>}
       <BgTrack aria-hidden>
         <BgFrame ref={frameRef}>
           <Art ref={artRef} style={{ aspectRatio: `${plate.W} / ${plate.H}` }}>
@@ -2681,6 +2691,7 @@ export function SubpageScene({ scene, title, description, children }) {
                     style={{
                       ...plate.imgStyle(layer.from || layer.box),
                       ...plate.clip(layer.clip),
+                      filter: layer.removeWhite ? `url(#${whiteFilterId})` : undefined,
                     }}
                   />
                 )
@@ -2844,6 +2855,7 @@ export function SubpageScene({ scene, title, description, children }) {
                   <CropWindow
                     key={layer.name}
                     data-layer={layer.name}
+                    $fadePulse={layer.fadePulse}
                     style={{
                       ...plate.windowStyle(layer.box),
                       ...plate.fadeY(layer.box, layer.fadeY),
@@ -3190,9 +3202,21 @@ const PatrolWindow = styled.div`
   }
 `
 
+const layerFadePulse = keyframes`
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+`
+
 const CropWindow = styled.div`
   position: absolute;
   overflow: hidden;
+  ${({ $fadePulse }) => $fadePulse && css`
+    animation: ${layerFadePulse} ${$fadePulse}ms ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+      opacity: 0.65;
+    }
+  `}
 `
 
 const hangSway = keyframes`
