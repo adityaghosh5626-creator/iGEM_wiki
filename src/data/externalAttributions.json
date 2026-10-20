@@ -1,0 +1,412 @@
+[
+  {
+    "id": "external-1",
+    "section": "Contributor",
+    "name": "Rayan Chikhi (Institut Pasteur)",
+    "type": "Academic",
+    "role": "Collaborator",
+    "tasks": [
+      "Data Curation",
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Data Curation - provided access to the Logan metagenomic search infrastructure used to build PETadex; (2) Fundraising - provided additional funding through the ERC Proof of Concept grant 'Enzyminer'."
+  },
+  {
+    "id": "external-2",
+    "section": "Contributor",
+    "name": "Talitha Ferro",
+    "type": "Academic",
+    "role": "Student Leader",
+    "tasks": [
+      "Project Administration",
+      "Public Engagement",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Project Administration - created the outreach deliverable list to divide and assign tasks, and aligned individual work with team deliverables; (2) Public Engagement - led outreach meetings and managed social media, including the Road to Jamboree series, Meet the Team features, interactive Instagram stories, and Instagram takeovers by division leads; (3) Visualization - oversaw and edited video presentations, wiki page designs, and social media visuals for consistent branding; (4) Writing - wrote the outreach wiki content and helped edit the promotional and presentation video scripts."
+  },
+  {
+    "id": "external-3",
+    "section": "Contributor",
+    "name": "Adanna Nmezi",
+    "type": "Academic",
+    "role": "Student Leader",
+    "tasks": [
+      "Conceptualization",
+      "Public Engagement",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - developed the ideas for the Human Practices project; (2) Public Engagement - organized the stakeholder meeting strategy; (3) Writing - wrote the Human Practices wiki strategy."
+  },
+  {
+    "id": "external-4",
+    "section": "Contributor",
+    "name": "Ipek Ilhan",
+    "type": "Academic",
+    "role": "Student",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping"
+    ],
+    "specificTasks": "(1) Background Research - researched validations and protocols for the wet lab; (2) Investigation - helped investigate the selection assay; (3) Data Curation - collected data to optimize the selection assay; (4) Notebook/record keeping - helped record progress and deviations during experiments."
+  },
+  {
+    "id": "external-5",
+    "section": "Contributor",
+    "name": "Sania Ahmad",
+    "type": "Academic",
+    "role": "Advisor",
+    "tasks": [
+      "Conceptualization",
+      "Background Research",
+      "Project Administration"
+    ],
+    "specificTasks": "(1) Conceptualization - developed wet lab assays to optimize workflow and helped develop the data scraping schema; (2) Background Research - reviewed literature on PET-hydrolyzing enzymes, copper-responsive promoters, and antibiotics for the wet lab; (3) Project Administration - mentored wet lab subteam leads on scheduling and task assignment and advised on project timelines and feasibility."
+  },
+  {
+    "id": "external-6",
+    "section": "Contributor",
+    "name": "Jaden Bhogal",
+    "type": "Academic",
+    "role": "Advisor",
+    "tasks": [
+      "Data Curation",
+      "Other"
+    ],
+    "specificTasks": "(1) Data Curation - scraped PETase activity data from 6 research papers for the team-wide data scraping effort; (2) Other - provided occasional advising to the team."
+  },
+  {
+    "id": "external-7",
+    "section": "Contributor",
+    "name": "Owen Tang",
+    "type": "Academic",
+    "role": "Advisor",
+    "tasks": [
+      "Wiki Coding"
+    ],
+    "specificTasks": "(1) Wiki Coding - helped design several wiki pages."
+  },
+  {
+    "id": "external-8",
+    "section": "Contributor",
+    "name": "Yibai Wu (Grant W. Brown Lab, University of Toronto)",
+    "type": "Academic",
+    "role": "Lab member",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "(1) Other (Materials) - provided E. coli cell lysate containing PETase."
+  },
+  {
+    "id": "external-9",
+    "section": "Contributor",
+    "name": "Prof. Christopher Lawson (BioZone, University of Toronto)",
+    "type": "Academic",
+    "role": "Collaborator",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "(1) Other - General support of the project."
+  },
+  {
+    "id": "external-10",
+    "section": "Contributor",
+    "name": "Prof. Chelsea Rochman (University of Toronto)",
+    "type": "Academic",
+    "role": "Collaborator",
+    "tasks": [
+      "Public Engagement"
+    ],
+    "specificTasks": "(1) Public Engagement - General support of the microplastic conference"
+  },
+  {
+    "id": "external-11",
+    "section": "Contributor",
+    "name": "Prof. Bo Wang (Vector Institute advisor)",
+    "type": "Non-profit",
+    "role": "Advisor",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "(1) Other - Permitted use of the Vectore Computing Cluster for Dry Lab and related work."
+  },
+  {
+    "id": "external-12",
+    "section": "Institution",
+    "name": "Centralized Process for Student Initiative Funding (CPSIF), University of Toronto",
+    "type": "Academic",
+    "role": "Funder (grant)",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - awarded a $3,700 cash grant supporting competition participation, mentorship, laboratory materials, and outreach."
+  },
+  {
+    "id": "external-13",
+    "section": "Institution",
+    "name": "Department of Ecology and Evolutionary Biology, University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $3,000 cash sponsorship for the UofT Microplastics Conference."
+  },
+  {
+    "id": "external-14",
+    "section": "Institution",
+    "name": "University of Toronto Trash Team",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising",
+      "Public Engagement"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $2,000 cash sponsorship for the UofT Microplastics Conference; (2) Public Engagement - co-organized the first University of Toronto Microplastics Conference (September 19, 2026) with iGEM Toronto."
+  },
+  {
+    "id": "external-15",
+    "section": "Institution",
+    "name": "University of Toronto Faculty of Engineering",
+    "type": "Academic",
+    "role": "Event partner",
+    "tasks": [
+      "Public Engagement"
+    ],
+    "specificTasks": "(1) Public Engagement - partnered with iGEM Toronto on the UofT Microplastics Conference"
+  },
+  {
+    "id": "external-16",
+    "section": "Institution",
+    "name": "Biomedical Engineering Teaching Lab and BioZone lab managers (University of Toronto)",
+    "type": "Academic",
+    "role": "Other",
+    "tasks": [
+      "Safety",
+      "Other"
+    ],
+    "specificTasks": "(1) Safety - provided lab access, required safety courses, and safety training sessions for wet lab members."
+  },
+  {
+    "id": "external-17",
+    "section": "Institution",
+    "name": "Human Biology Program, University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $1,000 cash sponsorship for team project support."
+  },
+  {
+    "id": "external-18",
+    "section": "Institution",
+    "name": "Centre for the Analysis of Genome Evolution and Function (CAGEF), University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $1,800 cash sponsorship for team project support."
+  },
+  {
+    "id": "external-19",
+    "section": "Institution",
+    "name": "Department of Cell and Systems Biology, University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $1,000 cash sponsorship for team project support."
+  },
+  {
+    "id": "external-20",
+    "section": "Institution",
+    "name": "Arts and Science Students' Union (ASSU), University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - awarded a $2,000 cash grant for the UofT Microplastics Conference."
+  },
+  {
+    "id": "external-21",
+    "section": "Institution",
+    "name": "Tech Future Challenge",
+    "type": "Non-profit",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - awarded a $2,500 Seed Fund project grant for project development, and reimbursed travel to Calgary for the development workshop ($1,865.11) and the prototype showcase ($3,000)."
+  },
+  {
+    "id": "external-22",
+    "section": "Institution",
+    "name": "Awesome Foundation Toronto",
+    "type": "Non-profit",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - awarded a $1,000 cash grant, used for project logistics and reimbursement."
+  },
+  {
+    "id": "external-23",
+    "section": "Institution",
+    "name": "Fraser River Junk Removal",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $500 cash sponsorship toward the UofT Microplastics Conference venue. Supported by Matthew Ison and co."
+  },
+  {
+    "id": "external-24",
+    "section": "Institution",
+    "name": "Artem Babaian Laboratory (RNAlab), University of Toronto",
+    "type": "Academic",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided $35,000 in restricted project funding, accessed through the laboratory's purchasing arrangements for project purchases."
+  },
+  {
+    "id": "external-25",
+    "section": "Institution",
+    "name": "Amazon Web Services, Spendbase, and Ukrainian Startup Fund",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided $35,364 in cloud-computing credits used for dry lab computing."
+  },
+  {
+    "id": "external-26",
+    "section": "Institution",
+    "name": "Red Bull and Microsoft Azure",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided $1,000 in Microsoft Azure cloud-computing credits used for dry lab computing."
+  },
+  {
+    "id": "external-27",
+    "section": "Institution",
+    "name": "Integrated DNA Technologies (IDT)",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided up to 40,000 base pairs of eligible gene synthesis through its iGEM offer."
+  },
+  {
+    "id": "external-28",
+    "section": "Institution",
+    "name": "GenScript",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided up to ten FLASH Gene constructs (each up to 3,000 base pairs) through its iGEM offer."
+  },
+  {
+    "id": "external-29",
+    "section": "Institution",
+    "name": "Twist Bioscience",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided 20,000 base pairs of gene synthesis."
+  },
+  {
+    "id": "external-30",
+    "section": "Institution",
+    "name": "New England Biolabs (NEB)",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided cloning, assembly, and molecular biology reagents, including NEBuilder HiFi DNA Assembly Master Mix, PaqCI, Esp3I, NEBridge Ligase Master Mix, Q5 High-Fidelity Master Mix, Monarch purification kits, and NEB Stable competent E. coli."
+  },
+  {
+    "id": "external-31",
+    "section": "Institution",
+    "name": "SnapGene",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided software licences used for genetic construct design."
+  },
+  {
+    "id": "external-32",
+    "section": "Institution",
+    "name": "BioRender",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided software licences used for scientific figures, posters, and wiki graphics."
+  },
+  {
+    "id": "external-33",
+    "section": "Institution",
+    "name": "MathWorks",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided MATLAB software and training used for numerical modelling and simulation."
+  },
+  {
+    "id": "external-34",
+    "section": "Institution",
+    "name": "Anthropic",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided Claude access used for research, coding, writing, and analysis, including the team's LLM literature extraction pipeline."
+  },
+  {
+    "id": "external-35",
+    "section": "Institution",
+    "name": "Longo's",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - provided a $500 sponsorship discount on catering for the UofT Microplastics Conference."
+  },
+  {
+    "id": "external-36",
+    "section": "Institution",
+    "name": "Jukebox",
+    "type": "Industry",
+    "role": "Sponsor",
+    "tasks": [
+      "Fundraising"
+    ],
+    "specificTasks": "(1) Fundraising - supported sticker sales at the UofT Microplastics Conference, which raised $33."
+  }
+]

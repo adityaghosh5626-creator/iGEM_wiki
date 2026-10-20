@@ -4,22 +4,17 @@ import styled, { css } from "styled-components"
 import WikiLayout from "../../components/layout.js"
 
 /*
- * Members come from src/data/team/team.csv (export it from Google Sheets as
- * CSV). The `team` column groups the cards: sections follow SECTION_ORDER,
- * then any other team names in the order they first appear.
+ * Members come from src/data/team/team.csv (from the team roster). The
+ * `level` column groups the cards, in the order of LEVELS; within a level
+ * they keep the roster's order. `subteams` lists a member's subteams ("Wet
+ * Lab; Outreach"), each shown as its symbol on the card.
  */
 
-const SECTION_ORDER = [
-  "Presidents",
-  "Team Leads",
-  "Wet Lab",
-  "Dry Lab",
-  "Hardware",
-  "Human Practices",
-  "Outreach",
-  "Venture",
-  "Web",
-  "Advisors",
+const LEVELS = [
+  ["President", "Presidents"],
+  ["Lead", "Leads"],
+  ["Member", "Members"],
+  ["Advisor", "Advisors"],
 ]
 
 /**
@@ -28,16 +23,15 @@ const SECTION_ORDER = [
  */
 const LEAD_FRAME = "#eadfc8"
 const TEAM_FRAME = "#cdeae8"
-const LEAD_SECTIONS = new Set(["Presidents", "Team Leads"])
+const LEAD_LEVELS = new Set(["President", "Lead"])
 
 const HEADING = "#1f6e69"
 const MUTED = "#4d6d69"
 
 /**
- * Subteam "types", shown like a Pokémon card's type symbol in each card's
- * corner. A member's type comes from their team, else from their role (so a
- * "Human Practices Lead" in Team Leads is Human Practices). `slug` names the
- * icon uploaded to team/icons/ on iGEM's servers.
+ * Subteam "types", shown like a Pokémon card's type symbols down each card's
+ * corner, one for each of a member's subteams. `slug` names the icon
+ * uploaded to team/icons/ on iGEM's servers.
  */
 const SUBTEAM_ICON_BASE =
   "https://static.igem.wiki/teams/6187/wiki/team/icons/"
@@ -64,7 +58,23 @@ const subteamIn = (text = "") => {
   return SUBTEAMS.find((st) => st.match.some((k) => t.includes(k)))
 }
 
-const subteamOf = (m) => subteamIn(m.team) || subteamIn(m.role)
+const subteamsOf = (m) =>
+  (m.subteams || "").split(";").map(subteamIn).filter(Boolean)
+
+/**
+ * The line under a name. Subteams already have icons, so this is only a
+ * title: President, Advisor, or the team someone leads. Anthony is both
+ * president and Entrepreneurship lead, so those join with a comma.
+ */
+const cardLabel = (m) => {
+  const parts = []
+  if (m.level === "President") parts.push("President")
+  if (m.level === "Advisor") parts.push("Advisor")
+  if (m.level === "President" || m.level === "Lead") {
+    for (const type of subteamsOf(m)) parts.push(type.label)
+  }
+  return parts.join(", ")
+}
 
 /**
  * Waterfall painting (1110×4000) behind the page. It fills the window width
@@ -73,29 +83,23 @@ const subteamOf = (m) => subteamIn(m.team) || subteamIn(m.role)
  */
 const BG_SRC = "https://static.igem.wiki/teams/6187/wiki/team/bg.avif"
 
-const photoSrc = (m) => m.photo || m.imageSrc || ""
+const photoSrc = (m) => m.photo || ""
 
-const initials = (name = "") =>
-  name
-    .split(/\s+/)
+/** First and last name's, past a nickname in brackets ("Adrija (Hiya) Paul"). */
+const initials = (name = "") => {
+  const words = name.split(/\s+/).filter((w) => w && !w.startsWith("("))
+  return [words[0], words.length > 1 && words[words.length - 1]]
     .filter(Boolean)
-    .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join("")
-
-function groupByTeam(members) {
-  const groups = new Map()
-  for (const m of members) {
-    const team = (m.team || "Team").trim()
-    if (!groups.has(team)) groups.set(team, [])
-    groups.get(team).push(m)
-  }
-  const rank = (t) => {
-    const i = SECTION_ORDER.indexOf(t)
-    return i === -1 ? SECTION_ORDER.length : i
-  }
-  return [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))
 }
+
+const groupByLevel = (members) =>
+  LEVELS.map(([level, title]) => [
+    level,
+    title,
+    members.filter((m) => m.level === level),
+  ]).filter(([, , group]) => group.length)
 
 const LinkedInIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden>
@@ -129,7 +133,7 @@ function MemberLinks({ m }) {
         </IconLink>
       )}
       {m.email && (
-        <IconLink href={`mailto:${m.email}`} onClick={stop} aria-label={`Email ${m.Name}`}>
+        <IconLink href={`mailto:${m.email}`} target="_blank" rel="noopener noreferrer" onClick={stop} aria-label={`Email ${m.Name}`}>
           <MailIcon />
         </IconLink>
       )}
@@ -138,7 +142,7 @@ function MemberLinks({ m }) {
 }
 
 const TeamPage = ({ data }) => {
-  const sections = groupByTeam(data.allTeamCsv.nodes)
+  const sections = groupByLevel(data.allTeamCsv.nodes)
   const [flipped, setFlipped] = useState(() => new Set())
   const backdropRef = useRef(null)
 
@@ -186,22 +190,36 @@ const TeamPage = ({ data }) => {
   }
 
   return (
-    <WikiLayout>
+    <WikiLayout pagePath="/team/">
       <Backdrop ref={backdropRef} aria-hidden>
         <img src={BG_SRC} alt="" />
       </Backdrop>
 
       <Content>
         <Title>Meet the Team</Title>
+        <TeamSubtitle>The team behind PetaBite.</TeamSubtitle>
+        <Legend aria-label="Subteam icons">
+          {SUBTEAMS.map((type) => (
+            <LegendItem key={type.slug}>
+              <img
+                src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
+                alt=""
+              />
+              {type.label}
+            </LegendItem>
+          ))}
+        </Legend>
 
-        {sections.map(([team, members]) => (
-          <Section key={team} aria-labelledby={`team-${team}`}>
-            <SectionTitle id={`team-${team}`}>{team}</SectionTitle>
+        {sections.map(([level, title, members]) => (
+          <Section key={level} aria-labelledby={`team-${level}`}>
+            <SectionTitle id={`team-${level}`}>{title}</SectionTitle>
             <Cards>
               {members.map((m) => {
                 const isFlipped = flipped.has(m.id)
-                const frame = LEAD_SECTIONS.has(team) ? LEAD_FRAME : TEAM_FRAME
-                const type = subteamOf(m)
+                const frame = LEAD_LEVELS.has(level) ? LEAD_FRAME : TEAM_FRAME
+                const types = subteamsOf(m)
+                const label = cardLabel(m)
+                const about = [m.major, m.year, m.school].filter(Boolean)
                 return (
                   <Card key={m.id} style={{ "--frame": frame }}>
                     <FlipInner $flipped={isFlipped}>
@@ -210,7 +228,7 @@ const TeamPage = ({ data }) => {
                         tabIndex={isFlipped ? -1 : 0}
                         aria-hidden={isFlipped}
                         aria-expanded={isFlipped}
-                        aria-label={`${m.Name}, ${m.role}. Show bio.`}
+                        aria-label={`${m.Name}${label ? `, ${label}` : ""}. Show more.`}
                         onClick={() => toggle(m.id)}
                         onKeyDown={keyToggle(m.id)}
                       >
@@ -220,19 +238,26 @@ const TeamPage = ({ data }) => {
                           ) : (
                             <Initials aria-hidden>{initials(m.Name)}</Initials>
                           )}
-                          <Caption $badge={Boolean(type)}>
-                            <Name>{m.Name}</Name>
-                            <Role>{m.role}</Role>
-                          </Caption>
-                          {type && (
-                            <TypeBadge
-                              src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
-                              alt={`${type.label} subteam`}
-                              title={type.label}
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          )}
+                          <Top>
+                            <Caption>
+                              <Name>{m.Name}</Name>
+                              {label && <Role>{label}</Role>}
+                            </Caption>
+                            {types.length > 0 && (
+                              <TypeBadges>
+                                {types.map((type) => (
+                                  <TypeBadge
+                                    key={type.slug}
+                                    src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
+                                    alt={`${type.label} subteam`}
+                                    title={type.label}
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                ))}
+                              </TypeBadges>
+                            )}
+                          </Top>
                           <MemberLinks m={m} />
                         </Photo>
                       </Front>
@@ -242,13 +267,20 @@ const TeamPage = ({ data }) => {
                         tabIndex={isFlipped ? 0 : -1}
                         aria-hidden={!isFlipped}
                         aria-expanded={isFlipped}
-                        aria-label={`${m.Name} bio. Click to flip back.`}
+                        aria-label={`More about ${m.Name}. Click to flip back.`}
                         onClick={() => toggle(m.id)}
                         onKeyDown={keyToggle(m.id)}
                       >
                         <BackInner>
                           <BackName>{m.Name}</BackName>
-                          <BackRole>{m.role}</BackRole>
+                          {label && <BackRole>{label}</BackRole>}
+                          {about.length > 0 && (
+                            <About>
+                              {about.map((line) => (
+                                <li key={line}>{line}</li>
+                              ))}
+                            </About>
+                          )}
                           <Bio>{m.description}</Bio>
                           {m.website && (
                             <TextLink href={m.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
@@ -275,10 +307,13 @@ export const query = graphql`
       nodes {
         id
         Name
+        level
         role
-        team
+        subteams
+        major
+        year
+        school
         description
-        imageSrc
         linkedIn
         email
         website
@@ -315,13 +350,41 @@ const Content = styled.div`
 `
 
 const Title = styled.h1`
-  margin: clamp(2rem, 6vw, 4rem) 0 clamp(2.5rem, 7vw, 5rem);
+  margin: clamp(2rem, 6vw, 4rem) 0 0.5rem;
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(2.5rem, 7vw, 4.25rem);
   letter-spacing: -0.01em;
+`
+
+const Legend = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem 0.75rem;
+  max-width: 46rem;
+  margin: -1.25rem auto clamp(2.5rem, 6vw, 4rem);
+  padding: 0;
+  list-style: none;
+`
+
+const LegendItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: ${HEADING};
+  font-weight: 600;
+  font-size: 0.95rem;
+
+  img {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
 `
 
 const Section = styled.section`
@@ -435,32 +498,45 @@ const Initials = styled.span`
   inset: 0;
   display: grid;
   place-items: center;
+  /* Sit below a long name instead of through the middle of it. */
+  padding-top: 2.4em;
   color: rgba(255, 255, 255, 0.85);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 2.25em;
 `
 
-const Caption = styled.div`
+/** Name on the left, subteam icons in their own column on the right. */
+const Top = styled.div`
   position: absolute;
   z-index: 1;
-  top: 0.45em;
-  left: 0.5em;
-  /* Clear of the type badge in the corner. */
-  right: ${({ $badge }) => ($badge ? "calc(24% + 0.6em)" : "0.5em")};
+  top: 0.4em;
+  left: 0.45em;
+  right: 0.35em;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+`
+
+const Caption = styled.div`
+  flex: 1 1 auto;
+  min-width: 0;
   color: #fff;
   line-height: 1.2;
 `
 
-/** The subteam's icon, top right like a Pokémon card's type symbol. */
+/** The subteams' icons, down the top right like a Pokémon card's type symbol. */
+const TypeBadges = styled.div`
+  flex: 0 0 2.15em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+`
+
 const TypeBadge = styled.img`
-  position: absolute;
-  z-index: 1;
-  top: 0.35em;
-  right: 0.35em;
   /* Over the photo's own img rule (fill the card). */
   && {
-    width: 24%;
+    width: 100%;
     height: auto;
   }
   aspect-ratio: 1;
@@ -479,8 +555,11 @@ const TypeBadge = styled.img`
 `
 
 const Name = styled.div`
-  font-size: 0.72em;
-  font-weight: 600;
+  font-size: 0.95em;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
 `
 
 const Role = styled.div`
@@ -530,13 +609,26 @@ const BackInner = styled.div`
 
 const BackName = styled.div`
   font-weight: 700;
-  font-size: 0.85em;
+  font-size: 1.05em;
 `
 
 const BackRole = styled.div`
   color: ${MUTED};
   font-size: 0.72em;
   margin-bottom: 0.4em;
+`
+
+/** Major, year and school, one to a line. */
+const About = styled.ul`
+  margin: 0 0 0.5em;
+  padding: 0;
+  list-style: none;
+  font-size: 0.68em;
+  line-height: 1.4;
+
+  li + li {
+    margin-top: 0.2em;
+  }
 `
 
 const Bio = styled.p`
@@ -554,3 +646,10 @@ const TextLink = styled.a`
   text-decoration: underline;
   text-underline-offset: 2px;
 `
+
+const TeamSubtitle = styled.p`
+  text-align: center;
+  color: ${HEADING};
+  margin: 0 0 clamp(2.5rem, 7vw, 5rem);
+  font-size: 1.2rem;
+`;

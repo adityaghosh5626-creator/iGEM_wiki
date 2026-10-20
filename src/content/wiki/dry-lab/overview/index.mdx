@@ -12,63 +12,87 @@ wideProse: true
 ---
 
 {/*
-  Narrative source: Obsidian "IGEM Wiki/05 Content/PETadex Narrative.md" §1,
-  used verbatim under the four-step spine from §3.2. Edit the narrative there
-  first, then here.
-
-  Claims still to verify before this page is final (§4 of that note):
-    - headline sequence count ("over 300 million")
-    - baseline enzyme count ("around 500")
-    - the random screen (2 of 161, and that those sequences count as PETadex)
-    - temperature and pH coverage ("most sequences")
-    - "under a minute" search, after the Next.js rebuild
-  Also unresolved: "prioritizing" vs "validating" in the closing line.
-
-  The Dry Lab writeup itself lives on the standard iGEM pages: /model and
-  /software. This page is the way in.
+  Three interactive pieces only: the landscape, the game and the calendar.
+  The Dry Lab writeup itself lives on the standard iGEM pages, /model and
+  /software. The narrative this page used to carry is in Obsidian
+  "IGEM Wiki/05 Content/PETadex Narrative.md".
 */}
 
-<Callout title="Draft">
-The figures on this page are still being confirmed.
-</Callout>
+We introduce our PetaBite model in three ways: explore our model landscape, play our game, and follow our journey.
 
-## Search
+{/*
+  The landscape card's loop is a card-sized re-encode of the 2 MB master
+  (landscape-spin.mp4, kept local and out of git): at full size the master
+  alone took the iGEM build over its 5 MB upload, and video.igem.org streams
+  HLS only, so it has no file URL a <video> tag can play. Remake it with
+    ffmpeg -i landscape-spin.mp4 -an -vf "scale=640:-2:flags=lanczos,fps=30"
+      -c:v libx264 -preset veryslow -crf 33 -tune film -profile:v high
+      -pix_fmt yuv420p -movflags +faststart landscape-spin-card.mp4
+  which gives about 0.38 MB; the card draws it ~390 px wide.
+*/}
 
-Enzymes that break down plastic offer a cleaner way to deal with plastic waste, but the field has been working from a very small pool. Only around 500 have been validated, and new ones have mostly been found piecemeal, one enzyme and one database at a time. PETadex does this search systematically and at scale, expanding this enzyme family as far as public data allows (mining NCBI-nr and the SRA, which are both public repositories). Starting from a curated set of reference enzymes, we searched public protein databases and Logan, an assembly of the world's public sequencing data. We recovered 300M unique proteins from diverse environments across the globe, ranging from bottle-recycling plants in Japan to the 400-year-old remains of a Spanish soldier, and covering enzymes for many plastics beyond PET.
+<FeatureCards>
+  <FeatureCard
+    href="#petadex-model-landscape"
+    title="PETadex Model Landscape"
+    video="/figures/dry-lab-overview/landscape-spin-card.mp4"
+    poster="/figures/dry-lab-overview/landscape-spin-poster.avif"
+    cta="Explore"
+  >
+    300 million proteins in three layers: what we found, what we know about each, and what we predict.
+  </FeatureCard>
+  <FeatureCard
+    href="#petamon-game"
+    title="PETamon Game"
+    img="/figures/dry-lab-overview/game-still.avif"
+    cta="Play"
+  >
+    One enzyme, a beach full of plastic, and a planet's worth of sites to clean up.
+  </FeatureCard>
+  <FeatureCard
+    href="#petadex-project-calendar"
+    title="PETadex Project Calendar"
+    img="/figures/dry-lab-overview/calendar-still.avif"
+    cta="See the season"
+  >
+    Our season week by week, including what went wrong and what we changed.
+  </FeatureCard>
+</FeatureCards>
 
-This scale matters. In an early random screen of just 161 of these sequences, two outperformed FAST-PETase, the field's current benchmark. That suggests many more strong enzymes are waiting in the full set.
+## PETadex Model Landscape
 
-See the search results on a map in the [ESM Atlas](/software/#esm-atlas).
+{/*
+  Adjacency landscape: the interactive version of the conference talk figures,
+  ~/Documents/projects/petadex-adjacency-landscape/web/landscape.html.
+  `node scripts/sync-landscape-figure.mjs` copies it into
+  static/figures/dry-lab-landscape/; rerun make_landscapes.py there and rerun
+  that script rather than editing the copy.
 
-## Annotate
+  The copy is the Story panel alone: the three-layer walkthrough on a dark
+  ground, each step captioned with what it adds to the argument rather than how
+  it was built. It opens there and the other panels are unreachable, so no hash
+  is needed on the src. See docs/adjacency-landscape.md.
+*/}
 
-Not every relative or homolog will work, so we then annotated each sequence in depth, checking for key catalytic features, structural family, and source environment (among many other features) to narrow the space to sequences most likely to function. Most sequences also carry the temperature and pH of the place they came from. That lets us look for enzymes suited to real-world conditions, such as a cold wastewater plant, rather than only those that work on a lab bench.
+<InteractiveEmbed
+  src="/figures/dry-lab-landscape/landscape.html"
+  title="The PETadex adjacency landscape"
+  caption="Three layers over one map of sequence space: the dataset we built, the annotations hung on it, and what we read off them. Step through with ↓ Next, pick a step from the list on the right, or move sideways through a layer's views with ‹ View / View ›; drag to orbit."
+  dark
+/>
 
-Try it on a real result in the [sharded DIAMOND search demo](/software/#sharded-diamond-search).
+## PETamon Game
 
-## Predict and test
+Gotta degrade 'em all! You start with one enzyme, IsPETase, and a beach covered in plastic film. Win a battle to sequence a new enzyme, then lead your growing team into hotter, harsher sites to battle hardier plastic types. The game takes you on an odyssey through the environments where plastic is found: a 60°C compost heap, a recycling plant reactor, a landfill full of bags with no bonds to cut, and a final boss plastic that no known enzyme can break down. No single enzyme can clean up every plastic type on Earth, so we built PETadex to find the best enzyme for each and every application.
 
-Finally, a machine learning model trained on published activity data predicts how active and stable each enzyme should be, turning a catalogue of candidates into a ranked shortlist for lab testing. Lab results feed back into the model, so each round of testing sharpens the next set of picks.
-
-Read how the predictions are made on the [Model](/model/) page, and how they are tested on the [Wet Lab](/wet-lab/overview/) page.
-
-## Open
-
-Everything is open. Anyone can search the full database on petadex.net in under a minute, and our model and training data are freely available. The result is an end-to-end framework for discovering and prioritizing enzymes, applicable to any enzyme family.
-
-## PETadex
-
-Browse PETase candidates in PETadex, then start an enzyme battle to see how each one fares against different plastics.
+*Stats are made up for play, but the problem and the story are very real.*
 
 <PetadexGame />
 
-## Our season
+## PETadex Project Calendar
 
-How the Dry Lab's work came together week by week, from the first meeting in March to the wiki in October. Each workstream has its own colour; pick a week on the calendar to see what each one did, and turn workstreams on or off above.
+How the Dry Lab's work came together week by week, from the first meeting in March to the wiki in October. Pick a week to see what each workstream did, and open anything under "What went wrong, and what we changed" to follow it from the test that caught it to the change it led to.
 
 <DryLabCalendar />
 
-## Explore the Dry Lab
-
-- [Model](/model/): how we built the corpus, annotated it, extracted activity labels from the literature and trained a model to rank candidates.
-- [Software](/software/): LOBSTER, the sharded DIAMOND search, the sequence record card and the ESM Atlas.
+<MethodsLink href="/dry-lab/overview/season/">Every iteration of the season in one place: what we expected, what happened, how we found out and what we changed.</MethodsLink>

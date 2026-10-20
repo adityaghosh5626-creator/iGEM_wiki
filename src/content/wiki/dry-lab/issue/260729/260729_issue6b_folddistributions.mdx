@@ -26,13 +26,13 @@ The goal of this notebook is to graph the following sub-experiment:
 
 ### Group B: This set of figures compares Base vs MSA (Does adding the MSAs do anything? This should be run over the full centroids)
 
-- [ ] **Ba.** *Does MSA affect TM-Score?*: TM-score(base_pred, msa_pred)
+- [ ] **Ba.** *Does MSA affect TM-score?*: TM-score(base_pred, msa_pred)
 
-- [ ] **Bb**. *Does MSA affect molecular feasibility distributions?*: Overlaid distributions of Molprobity(base_pred) and Molprobity(msa_pred)
+- [ ] **Bb**. *Does MSA affect molecular feasibility distributions?*: Overlaid distributions of MolProbity(base_pred) and MolProbity(msa_pred)
 
-- [ ] **Bc**. *Does MSA affect molecular feasibility (pointwise)?*: Molprobity score of the predicted structure itself as the coordinate
-  - Concretely, x coord: Molprobity(base_pred), y coord: Molprobity(msa_pred)
-  - want points below y=x, as lower molprobity is better
+- [ ] **Bc**. *Does MSA affect molecular feasibility (pointwise)?*: MolProbity score of the predicted structure itself as the coordinate
+  - Concretely, x coord: MolProbity(base_pred), y coord: MolProbity(msa_pred)
+  - want points below y=x, as lower MolProbity is better
   - Same data as Bb, but it is a pointwise comparison
 
 
@@ -631,10 +631,10 @@ scale_plan()
 # Bb / Bc — MolProbity
 
 **Bb.** *Does MSA affect molecular feasibility distributions?* — overlaid distributions of
-Molprobity(base_pred) and Molprobity(msa_pred).
+MolProbity(base_pred) and MolProbity(msa_pred).
 
-**Bc.** *Does MSA affect molecular feasibility (pointwise)?* — x = Molprobity(base_pred),
-y = Molprobity(msa_pred); want points **below** y = x, since lower MolProbity is better. Same data as
+**Bc.** *Does MSA affect molecular feasibility (pointwise)?* — x = MolProbity(base_pred),
+y = MolProbity(msa_pred); want points **below** y = x, since lower MolProbity is better. Same data as
 Bb, read pairwise.
 
 ---

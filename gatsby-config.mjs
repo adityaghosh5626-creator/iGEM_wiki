@@ -13,6 +13,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
  */
 const config = {
   pathPrefix: process.env.GATSBY_PATH_PREFIX || ``,
+  // gatsby develop never serves .html from public/, so self-contained HTML
+  // figures (static/figures/**/*.html, shown in iframes) are served from
+  // static/ here. Production builds copy and serve them like any static file.
+  developMiddleware: app => {
+    const figures = path.join(__dirname, `static`, `figures`)
+    app.get(/^\/figures\/.+\.html$/, (req, res, next) => {
+      const file = path.join(figures, decodeURIComponent(req.path.slice(`/figures/`.length)))
+      if (!file.startsWith(figures + path.sep)) return next()
+      res.sendFile(file, err => {
+        if (!err) return
+        // A client that goes away mid-transfer (likely: these figures are ~1 MB)
+        // errors here with the response already streaming. Handing it to the
+        // next middleware would try to set headers again and take the dev
+        // server down with ERR_HTTP_HEADERS_SENT, so only unstarted responses
+        // fall through to gatsby's 404.
+        if (res.headersSent) return res.destroy()
+        next()
+      })
+    })
+  },
   siteMetadata: {
     title: `iGEM Toronto 2026`,
     description: `iGEM Toronto 2026 Wiki`,

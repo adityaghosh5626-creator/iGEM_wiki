@@ -1,0 +1,84 @@
+---
+title: "Hardware Motivation"
+section: "Hardware"
+path: "/hardware/motivation/"
+navTitle: "Motivation"
+order: 20
+description: "Motivation, reference designs, stakeholders, and initial requirements for our hardware."
+owners: ["Hardware"]
+updated: "2026-05-30"
+status: "draft"
+preferLocal: true
+hideToc: true
+---
+
+## Problem statement
+
+Plastic degrading enzymes are a recent solution to a century old problem. With the discovery of PETases, the ability to degrade PET materials that disrupt ecosystems across Earth has become more feasible. With new PETases being discovered regularly, the need to characterize their properties is growing.
+
+### add photo [Triangle of Hardware, Wetlab, Drylab here] (I can’t find)
+
+This cycle, iGEM Toronto’s dry lab subteam has constructed the PETadex, a revolutionary database that profiles millions of plastic-degrading enzymes. To test candidate enzymes, the wet lab subteam has developed novel high-throughput selection assays to identify strong performers under one condition. Yet these assays leave a clear gap: enzymes behave differently under different conditions. Each PETase has its own optimal pH, temperatures, salt concentrations, and more. Thus, to complete the PETase-development pipeline, we require a method to characterize the “fitness landscape” of PETase activity simultaneously and return this data back to the dry lab to improve their models. How can hardware help?
+
+Behold, the bioreactor!
+
+### add photo [Image]?
+
+This year, iGEM Toronto’s hardware subteam built a bioreactor to bring enzyme screening at scale to the standard wet lab. In our case, the bioreactor was specifically designed for use in the Terrence Donnelly Centre, but it can be used elsewhere. The design retains the standard features of a bioreactor—stirring, temperature control, OD600 readings, etc.—but at a lower cost (&lt;$250 compared to $450+) and transmits data to a central PC in parallel batches of 96. These parts are also widely-accessible, making assembly and repair simpler for the wet lab audience. Finally, it relies on a single, user-validated interface that permits control of multiple bioreactors each under independent conditions.
+
+The ultimate goal? Run an assay based on PET degradation inside the bioreactor. Like wet lab’s selection assays, the degradation of a PET filament should release an indicator that is detectable via spectrophotometry, for example, or a gene inducer that identifies the most competitive enzyme hosting E. coli. But we can aim even greater. PETases are just one use case. Many other enzymes can benefit similarly from a system of parallel bioreactors.
+
+## Reference designs
+
+### 1. [Pioreactor](https://docs.pioreactor.com/user-guide/40ml-v15-hardware-setup-intro)
+
+Our bioreactor was most heavily inspired by the Pioreactor: a retail 40 mL capacity bioreactor with modular add on options ($450+). According to the CEO of Pioreactor, this design was made for hobbyists, educators, and even researchers. To begin our first design cycle (see V1), we took notes during assembly on its design, user-friendliness, and improvable qualities.
+
+#### Advantages
+
+- Highly modular design, allowing for the addition of new sensors and modules
+- Relatively straightforward instructions make assembly simple
+- Open source documentation on the website is helpful
+
+#### Challenges
+
+- 1:1 ratio between Raspberry Pi microcontrollers and Pioreactors increases unit costs and reduces maximum parallel capacity (~10-12)
+- Raspberry Pi exposed to liquid spills due to position below the vial area
+- Screws do not always fit
+- Tedious wifi/laptop connection process
+
+### 2. [Open Bioeconomy Lab](https://openbioeconomy.org/projects/open-source-bioreactor/)
+
+#### Advantages
+
+- Completely open source
+- Flow through photometer allows for reading of bacteria
+- LCD display makes control on each reactor easier
+- 3D Printed shell, easily available parts
+- Larger capacity (supports larger assays)
+
+#### Challenges
+
+- 1:1 ratio between microcontrollers and bioreactors
+- Individual use, not designed for parallel use in large batches
+- Larger capacity (bacterial cultures take longer to grow to scale)
+
+### 3. [ChiBio Bioreactor](https://chi.bio/tech-specs/)
+
+#### Advantages
+
+- Complete spectrum of wavelengths can be measured
+- Four peristaltic pumps for input and output of various contents
+- Measurements of both air and media temperature separately
+- Compact external shape allows physical proximity between reactors
+- Wires and cables not susceptible to leaks and spills
+
+#### Challenges
+
+- 1:1 ratio between microcontrollers and bioreactors
+- Custom computers raise costs, a powerful custom UI is overkill for relatively simple functions.
+
+
+## Stakeholders
+
+{/* Add detailed stakeholder interviews here. */}

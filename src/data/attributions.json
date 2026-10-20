@@ -1,0 +1,1138 @@
+[
+  {
+    "id": "1",
+    "section": "Current",
+    "name": "A.Babaian",
+    "role": "Primary PI",
+    "rosterName": "Artem Babaian",
+    "tasks": [
+      "Project Administration",
+      "Other"
+    ],
+    "specificTasks": "(1) Project Administration / Other (Supervision) - served as Primary PI and supervised the project across subteams, including the PETadex dry lab work."
+  },
+  {
+    "id": "2",
+    "section": "Current",
+    "name": "Abby",
+    "role": "Student Leader",
+    "rosterName": "Hok Wan (Abby) Lui",
+    "tasks": [
+      "Wiki Coding",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Wiki Coding - oversaw creation of the team wiki as Web Lead, reviewed member code, and implemented automated workflows where applicable; (2) Visualization - created UI elements to visualize information in wiki content."
+  },
+  {
+    "id": "3",
+    "section": "Current",
+    "name": "Adrija",
+    "role": "Student Leader",
+    "rosterName": "Adrija (Hiya) Paul",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "4",
+    "section": "Current",
+    "name": "Anthony Dinglasan",
+    "role": "Student Leader",
+    "rosterName": "Anthony Dinglasan",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Project Administration",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - helped shape the PetaBite project concept from its earliest stages and contributed to ideation throughout the project cycle; (2) Background Research - researched the microplastics problem landscape, including global production and leakage projections, human health and agricultural evidence, limitations of existing removal technologies, and the regulatory environment governing deployment; (3) Analysis - built the financial projections and burn analysis, including competitive analysis and barriers-to-entry assessments; (4) Data Curation - scraped and collected data for the benchmark dataset used by the machine learning models; (5) Investigation - conducted stakeholder interviews with researchers, regulators, plant operators, and Indigenous knowledge holders, and translated their feedback into design parameters for the technical subteams; (6) Project Administration - served as Co-President of the 70-member team and coordinated deliverables across all seven subteams; (7) Fundraising - applied to multiple grants for cash and in-kind support through prize money and institutional funding, and built sponsor relationships across University of Toronto units, industry partners, and community sponsors; (8) Public Engagement - led all campus collaborations and education initiatives, co-led all three conferences the team hosted, and directed international engagement with universities across Europe, Asia, and North America; (9) Entrepreneurship - led PetaScale venture development end to end, including customer discovery, market analysis, vertical prioritization, business model and value proposition development, and IP and incorporation strategy, and served as sole team lead at every competition entered; (10) Visualization - designed slides, figures, one-pagers, and wiki graphics for pitch decks and project documentation, including materials presented at national and international competitions; (11) Writing - led, wrote. and edited wiki content across the Entrepreneurship, Human Practices, Finance, Project Description, sections amongst others."
+  },
+  {
+    "id": "5",
+    "section": "Current",
+    "name": "Dennis Zhu",
+    "role": "Student Leader",
+    "rosterName": "Dennis Zhu",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Fundraising",
+      "Public Engagement",
+      "Software",
+      "Wiki Coding",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - helped develop the PetaBite project idea built on PETadex and the Logan index, set the dry lab's three goals (collect data at scale, analyze it, validate hits in the wet lab), and wrote the narrative for the dry lab wiki; (2) Background Research - read plastic-degrading enzyme literature to build the Plasticome reference set; (3) Investigation - collected putative plastic-degrading enzyme sequences for PETadex and coordinated the Logan metagenomic search (about 6 TB of raw data); (4) Analysis - planned analysis of the Logan search output, including HMMsearch for catalytic residues and clustering at 90/60/30% identity; (5) Data Curation - leads PETadex, a public database of putative plastic-degrading enzymes for future iGEM teams, and oversaw re-curation of the Plasticome to about 470 validated enzymes; (6) Notebook/record keeping - took minutes at every dry lab meeting and set reproducibility rules (scripts read from and write to S3; tool versions and database dates recorded); (7) Project Administration - as Dry Lab Co-Lead, ran weekly meetings, assigned and tracked member subprojects, set methods and preprint deadlines, and coordinated AWS and Azure compute with other subteams; (8) Software - built and maintains the PETadex website and backend (AWS Lambda, API Gateway, PostgreSQL) used by the dry lab and wiki; (9) Wiki Coding - set up the wiki codebase and automatic deployment, and reviewed and merged team code; (10) Visualization - added the PETadex Atlas sequence map to the wiki and planned visuals for the dry lab pages; (11) Writing - co-wrote the methods and manuscript for the dry lab preprint, wrote dry lab wiki content, and drafted the dry lab AI use policy; (12) Fundraising - wrote the dry lab budget for grant applications; (13) Public Engagement - helped organize the first University of Toronto Microplastics Conference with the U of T Trash Team."
+  },
+  {
+    "id": "6",
+    "section": "Current",
+    "name": "Lisa Chen",
+    "role": "Student Leader",
+    "rosterName": "Lisa Chen",
+    "tasks": [
+      "Fundraising",
+      "Public Engagement"
+    ],
+    "specificTasks": "(1) Fundraising - Led fundraising efforts for the project. (2) Public Engagement - Led logistics and fundraising for the microplastic conference."
+  },
+  {
+    "id": "7",
+    "section": "Current",
+    "name": "Owen",
+    "role": "Student Leader",
+    "rosterName": "Owen Poyner",
+    "tasks": [
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Public Engagement",
+      "Safety"
+    ],
+    "specificTasks": "(1) Conceptualization - developed and revised the wet lab assays and helped design the dry lab data scraping project; (2) Background Research - read literature to design the wet lab assays and to support data scraping; (3) Investigation - performed wet lab experiments; (4) Notebook/record keeping - ensured lab notes were complete, tubes and boxes were labelled with contents, lab inventory was maintained, and research was documented; (5) Project Administration - served as Wet Lab Co-Lead; (6) Public Engagement - presented iGEM Toronto work at a conference as a speaker and during the poster session; (7) Safety - enforced lab safety rules, gave safety tours, and worked with lab managers to improve safety education."
+  },
+  {
+    "id": "8",
+    "section": "Current",
+    "name": "Patricia Rea",
+    "role": "Student Leader",
+    "rosterName": "Patricia Rea",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Visualization",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - interpreted experimental results; (2) Conceptualization - brainstormed PETase assay ideas and developed the PETase assay plasmids and assay details; (3) Background Research - reviewed peer-reviewed literature and work from previous iGEM teams; (4) Investigation - organized and performed lab work; (5) Data Curation - prepared biological part documentation for the iGEM Registry; (6) Notebook/record keeping - updated the lab notebook for each shift attended; (7) Project Administration - as Wet Lab Co-Lead, hired and onboarded new wet lab members, organized shift tasks, placed reagent and DNA orders, ran subteam meetings, and kept the presidents and other subteams updated; (8) Visualization - made and edited wiki graphics; (9) Writing - wrote portions of the wet lab wiki and reviewed and edited all wet lab wiki content; (10) Safety - gave lab tours covering safety information, trained members to run experiments safely and efficiently, and supervised lab work."
+  },
+  {
+    "id": "9",
+    "section": "Current",
+    "name": "Purav Gupta",
+    "role": "Student Leader",
+    "rosterName": "Purav Gupta",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Hardware",
+      "Software",
+      "Visualization",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - analyzed dry lab model results and wet lab experimental results; (2) Conceptualization - helped develop the project idea and overall team plan, and co-created the distinction between the venture and scientific arms; (3) Background Research - reviewed the PETase and plastic-degrading enzyme literature and wrote the literature review for the team's central guiding document; (4) Investigation - helped run large-scale structure folding for the dry lab and trained the large-scale PlasticESM model; (5) Data Curation - scraped historical iGEM Toronto data for the team website, built an alumni database, and set up the Hugging Face repository and Amazon S3 buckets that publicly host dry lab data; (6) Notebook/record keeping - took and maintained minutes for All-Hands and leads meetings, and kept a weekly results log and subteam status notes; (7) Project Administration - as Co-President, oversaw operations across seven subteams, ran weekly check-ins with subteam leads, set team deadlines, and completed iGEM deliverables; (8) Fundraising - managed team finances, including budget tracking, receipts, and the Jamboree fund, and launched and promoted the team GoFundMe; (9) Public Engagement - helped organize the UofT Microplastics Conference, wrote LinkedIn announcements, created Instagram stories, and represented iGEM Toronto at competitions, events, and summits; (10) Entrepreneurship - supported the Venture team on startup planning, the business plan, VC and stakeholder meetings, and grant applications; (11) Hardware - helped define the initial goals and plan for the bioreactor system and arranged mentor meetings; (12) Software - contributed to the dry lab codebase and built the PlasticESM codebase and Hugging Face model repository; (13) Visualization - helped design wiki figures for the home, dry lab, and engineering pages; (14) Writing - wrote the team manifestos, guiding documents, and wiki pages; (15) Safety - scheduled and coordinated the Wet Lab and Hardware safety interview and helped complete safety and risk forms."
+  },
+  {
+    "id": "10",
+    "section": "Current",
+    "name": "Rebecca Tam",
+    "role": "Student Leader",
+    "rosterName": "Rebecca Tam",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Hardware",
+      "Software",
+      "Visualization",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - analyzed bioreactor run data to improve performance, and analyzed defining features of other bioreactor designs to set optimization targets; (2) Conceptualization - led development of the bioreactor subsystems and overall architecture, and reviewed each project phase to plan improvements; (3) Background Research - reviewed datasheets, other bioreactor projects, and safety guidelines for bioreactor use; (4) Investigation - performed bioreactor test runs to validate subsystem integration and performance; (5) Notebook/record keeping - maintained records of the overall design for wiki documentation and photo-documented each iteration; (6) Project Administration - co-led the Hardware subteam; (7) Hardware - designed, built, and tested bioreactor integration at the electronics, sensor, and microcontroller level; (8) Software - integrated sensor code with the UI code and validated performance; (9) Visualization - created CAD visualizations of each prototype phase and designed the Hardware team mascot, logo, and PETamon; (10) Writing - designed the outline and formatting of the Hardware wiki and co-wrote the overarching Hardware wiki pages; (11) Safety - helped submit Research Registration Forms for Hardware lab access, coordinated safe protocols with lab supervisors, and designed Design of Experiments plans with safety in mind."
+  },
+  {
+    "id": "11",
+    "section": "Current",
+    "name": "Selina",
+    "role": "Student Leader",
+    "rosterName": "Selina Liu",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Public Engagement",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - interpreted experimental results, including copper toxicity, copper promoter function, and sequencing results; (2) Conceptualization - brainstormed ideas for the wet lab assays; (3) Background Research - researched assay design decisions and protocol writing; (4) Investigation - planned and tested the protocols developed in the wet lab; (5) Data Curation - wrote experimental progress reports and scraped data for the review paper pilot project; (6) Notebook/record keeping - managed lab shift scheduling and experiment planning, tracked wet lab orders, and handled equipment bookings; (7) Project Administration - as Wet Lab Co-Lead, scheduled shifts, planned weekly meetings, managed shift attendance, handled RRF work, and communicated with advisors, graduate students, PIs, and lab managers; (8) Public Engagement - helped prepare the presentation and poster for the microplastics conference; (9) Writing - helped write the protocols and lab schedule sections of the wiki, edited the wet lab section, and compiled experimental results from lab notes into reports; (10) Safety - coordinated safety training sessions with lab managers, completed all safety courses required by the BME teaching lab and BioZone, guided new members through RRF writing, and co-created the wet lab survival guide with an advisor."
+  },
+  {
+    "id": "12",
+    "section": "Current",
+    "name": "Soham",
+    "role": "Student Leader",
+    "rosterName": "Soham Shorey",
+    "tasks": [
+      "Project Administration",
+      "Notebook/record keeping",
+      "Hardware",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Project Administration - co-led the Hardware subteam, delegated subsystem tasks, and communicated with other subteams in meetings; (2) Notebook/record keeping - outlined and co-wrote the engineering notebooks Hardware members used to record experiments and work; (3) Hardware - worked on the conceptual design of the bioreactor, conducted stakeholder interviews, helped define requirements, and designed its parts; (4) Writing - wrote the introduction and background sections of the Hardware wiki and the poster for the Microplastics Conference; (5) Visualization - created slides and posters for the Microplastics Conference and stakeholder interviews."
+  },
+  {
+    "id": "13",
+    "section": "Current",
+    "name": "Thomas Quigley",
+    "role": "Student Leader",
+    "rosterName": "Thomas Quigley",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Public Engagement",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - performed data analysis on the new PETadex dataset and mentored computational members in their analyses; (2) Conceptualization - helped lead the initial conceptualization of the project's scientific theory and scope; (3) Background Research - contributed prior knowledge from individual academic research on plastic-degrading enzymes; (4) Investigation - rebuilt PETadex and co-led (with Dennis Zhu) the experimental design and theory for all computational experiments; (5) Data Curation - cleaned PETadex and assessed the quality of the prior PETadex dataset; (6) Notebook/record keeping - kept individual notebooks and mentored members in record keeping; (7) Project Administration - co-led the Dry Lab and helped initiate and organize the Microplastics Conference; (8) Public Engagement - led initial ideation and planning for the UofT Microplastics Conference, set up its organizing team and mentorship, and presented iGEM research at the conference; (9) Visualization - mentored members in figure planning and maintained brand style for wiki figures; (10) Writing - co-led planning and writing of the dry lab wiki."
+  },
+  {
+    "id": "14",
+    "section": "Current",
+    "name": "Aayush M",
+    "role": "Student",
+    "rosterName": "Aayush Mengane",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Hardware",
+      "Visualization",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - analyzed halo, dye release, and copper toxicity assay results, determining copper detection and growth inhibition thresholds at 0.1 mM resolution and comparing dye performance across 20+ candidates; (2) Conceptualization - helped develop two novel assays: a halo assay using in-house synthesized PET nanoparticles and a dye release assay using custom inserts for high-throughput plastic-degradation screening; (3) Background Research - reviewed literature on PET nanoparticle synthesis, dye-based degradation assays, bacterial copper toxicity, and optical density measurement; (4) Investigation - performed dye release experiments (20+ dyes screened) and copper toxicity testing to define operating conditions for other assays; (5) Data Curation - organized and maintained assay and copper toxicity data for team-wide use; (6) Notebook/record keeping - documented assay development, dye screening, and copper toxicity experiments in the lab notebook; (7) Project Administration - led the copper toxicity workflow and wrote standardized protocols for assay preparation and execution; (8) Hardware - worked on custom PETG inserts compatible with standard 96-well plates and helped develop a low-cost optical density subsystem (400 to 1000 nm, built-in error correction) for the in-house bioreactor; (9) Visualization - created figures of assay and copper toxicity results for the presentation and wiki; (10) Safety - reviewed MSDS documentation to ensure all protocols were safe."
+  },
+  {
+    "id": "15",
+    "section": "Current",
+    "name": "Abdel",
+    "role": "Student",
+    "rosterName": "Abdelrahman Elshrief",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "16",
+    "section": "Current",
+    "name": "Aditya Ghosh",
+    "role": "Student",
+    "rosterName": "Aditya Ghosh",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Software",
+      "Wiki Coding",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - designed the architecture of the cyclical literature ingestion pipeline and the automated multi-stage LLM extraction system for aggregating plastic-degrading enzyme data; (2) Background Research - acquired and screened initial DOIs using the PAZy API, PETadex NR accessions, and keyword queries to build a core set of seed papers; (3) Software - engineered the automated literature scraping system with Selenium and wrote the multi-pass LLM extraction and verification scripts in Python; (4) Investigation - ran benchmarking experiments that injected synthetic protein entities into papers to measure pipeline fidelity, true positive capture, and decoy rejection; (5) Analysis - compared benchmark performance across Claude Sonnet, Haiku, and Opus models and evaluated synthetic control metrics; (6) Data Curation - filtered tens of thousands of candidate papers through a relevance triage funnel and cleaned the extracted dataset by collapsing duplicates and filtering non-numeric text; (7) Notebook/record keeping - tracked progress through GitHub issues (e.g., #103, #115) and maintained structured S3 buckets for intermediate and final data; (8) Visualization - generated 20 SVG figures, including pipeline flow charts, metric evolution graphs, and discrepancy profiles; (9) Writing - wrote the introduction, methods, results, and discussion for the LLM-based literature extraction wiki page; (10) Wiki Coding - converted project content to Markdown for the wiki and made two figures interactive."
+  },
+  {
+    "id": "17",
+    "section": "Current",
+    "name": "Akina Zhang",
+    "role": "Student",
+    "rosterName": "Zi Qi Zhang",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "18",
+    "section": "Current",
+    "name": "Alexander Leonardos",
+    "role": "Student",
+    "rosterName": "Alexander Leonardos",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Software",
+      "Writing"
+    ],
+    "specificTasks": "(1) Software - developed LOBSTER (Library Optimization for Bioprospecting Sequences Through Economical Recombination), a fragment design algorithm for wet lab DNA purchases, and ran it on the selected 90% identity clusters for bioprospecting; (2) Background Research - reviewed existing library optimization methods that use degenerate codons and Golden Gate fragment assembly to inform LOBSTER's design and novelty; (3) Data Curation - retrieved over 580,000 existing PETase structures from the AlphaFold Protein Structure Database and the ESM Metagenomic Atlas; (4) Investigation - optimized diffusion step and loop parameters for ESMFold2 on PETadex sequences; (5) Writing - wrote the wiki pages for LOBSTER and the PETase structure work."
+  },
+  {
+    "id": "19",
+    "section": "Current",
+    "name": "Amardeep Singh",
+    "role": "Student",
+    "rosterName": "Amardeep Singh",
+    "tasks": [
+      "Analysis",
+      "Background Research",
+      "Data Curation",
+      "Software",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed plastic-degrading microorganisms, enzymes, and related data from BacDive, the NCBI Sequence Read Archive, PAZy, and PlasticDB, covering species, genomic records, enzyme activity, plastic types, and degradation pathways; (2) Background Research - investigated existing research on plastic biodegradation, degrading organisms, enzymes, and plastic-related databases; (3) Data Curation - collected, cleaned, standardized, and organized metadata from PAZy and PlasticDB, verified links between organisms, enzymes, genes, substrates, and experimental findings, and resolved inconsistencies; (4) Software - wrote code and data processing workflows for metadata collection, transformation, integration, and validation; (5) Visualization - contributed to the PETadex website and built interactive visualizations of plastic-degrading species, enzymes, and substrates; (6) Writing - documented data collection and curation procedures, analytical methods, software, metadata structure, and visualization outputs."
+  },
+  {
+    "id": "20",
+    "section": "Current",
+    "name": "Amelia Dengler",
+    "role": "Student",
+    "rosterName": "Raffaele William Dengler",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed background research data and previous iGEM team results during the first half of the project cycle; (2) Conceptualization - conceptualized the AS and PD plasmid designs, copper as an inducer incorporated into PET, use of the INP, and Golden Gate Assembly for combinatorial assembly of the PETase library; (3) Background Research - led background research across multiple design iterations, including selecting papers assigned as reading to the wet lab subteam; (4) Investigation - performed early setup experiments in the wet lab; (5) Notebook/record keeping - kept lab notes on early wet lab experiments; (6) Project Administration - served as a wet lab subteam lead for the first half of the project cycle and assisted with lab technique training for wet lab members; (7) Writing - helped write the wet lab base design page of the wiki."
+  },
+  {
+    "id": "21",
+    "section": "Current",
+    "name": "Anastasia",
+    "role": "Student",
+    "rosterName": "Anastasia Butnariu",
+    "tasks": [
+      "Investigation",
+      "Public Engagement",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Writing - wrote content for the team's monthly newsletter and the 2-minute pitch; (2) Investigation - built a diffusion simulator with the dry lab to help the wet lab select a copper compound for its experiments; (3) Public Engagement - created outreach content for Instagram and volunteered with the U of T Trash Team; (4) Visualization - designed cards for the PETamon card project."
+  },
+  {
+    "id": "22",
+    "section": "Current",
+    "name": "Angela",
+    "role": "Student",
+    "rosterName": "Angela Jiang",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Software",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Conceptualization - helped design sequence analysis pipelines for PETadex sequences (signal peptide prediction, biochemical property computation, phylogenetic ordering of enzyme clusters, and DeepLoc), and developed the standardization policies for the human arm of the literature scraping project; (2) Background Research - read literature on plastic-degrading enzymes and bioinformatics tools such as SignalP to build pipelines, and gathered and scraped papers for the literature scraping project; (3) Investigation and Analysis - performed bioinformatic analysis of PETadex sequences to determine signal peptide locations and biochemical properties; (4) Data Curation - curated literature scraping data manually and with automated tools, identifying discrepancies between scrapers, malformed data, and inaccurate values; (5) Software - wrote code and AWS pipelines for PETadex sequence analysis; (6) Notebook/record keeping - produced notebooks and condensed write-ups for completed projects; (7) Project Administration - coordinated paper assignments for the human arm of the literature scraping project and tracked each participant's progress; (8) Visualization - produced graphics for poster presentations and the wiki."
+  },
+  {
+    "id": "23",
+    "section": "Current",
+    "name": "Angela Leung",
+    "role": "Student",
+    "rosterName": "Angela Tung Yan Leung",
+    "tasks": [
+      "Conceptualization",
+      "Investigation",
+      "Notebook/record keeping",
+      "Entrepreneurship",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - helped conceptualize the wet lab cloning workflow; (2) Investigation - performed wet lab experiments for the biosensor subteam; (3) Notebook/record keeping - documented experimental results in the wet lab notes; (4) Entrepreneurship - contributed to the value proposition section of the venture business plan and the iGEM Global Biohackathon pitch slides; (5) Writing - wrote the Base Design section of the wet lab wiki and sections of the business plan value proposition."
+  },
+  {
+    "id": "24",
+    "section": "Current",
+    "name": "Angirmaa",
+    "role": "Student",
+    "rosterName": "Angirmaa Tamir",
+    "tasks": [
+      "Visualization"
+    ],
+    "specificTasks": "(1) Visualization - designed and illustrated the visual assets for the promotional video."
+  },
+  {
+    "id": "25",
+    "section": "Current",
+    "name": "Austin Chiang",
+    "role": "Student",
+    "rosterName": "Austin Chiang",
+    "tasks": [
+      "Analysis",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed enzyme activity data, market sizing, and competitive landscapes to assess commercial viability and technical efficacy; (2) Entrepreneurship - completed a SWOT analysis on landfill leachate, the competitor analysis and competitor outreach for the WWTP vertical, and full market research for the degreaser vertical (target customer, technical feasibility, stakeholder insights, barriers to entry, competitor matrix, and outreach to 4 industry professionals), and developed investor-focused judging slides for the North American Mini Jamboree; (3) Writing - major contributor to the Entrepreneurship wiki, and helped create pitch decks and presentations for the North American Mini Jamboree, UofT Microplastics Conference, iGEM Startups BioHackathon, and cGEM; (4) Public Engagement - presented research through posters and presentations at the UofT Microplastics Conference and the North American Mini Jamboree, and judged high school biotechnology case competitions; (5) Fundraising - contributed to the fundraising pamphlet, contacted 5+ investors, identified UTM funding opportunities, and connected the team with Dr. McLellan (Queen's University), leading to an invitation to the Open Plastic symposium and introductions to potential investors."
+  },
+  {
+    "id": "26",
+    "section": "Current",
+    "name": "Bernice Wong",
+    "role": "Student",
+    "rosterName": "Hin Yau Bernice Wong",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched the PETase mechanism and its relevance to the project; (2) Investigation - took part in wet lab experiments and carried out experimental procedures; (3) Notebook/record keeping - recorded procedures, observations, and results in the lab notebook; (4) Writing - helped write and organize the lab schedule, lab notes, and experimental protocol sections of the wiki."
+  },
+  {
+    "id": "27",
+    "section": "Current",
+    "name": "Cindy Cheng",
+    "role": "Student",
+    "rosterName": "Cindy Cheng",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Public Engagement",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed previous iGEM team data and literature to inform assay design, plasmid construction, and troubleshooting; (2) Conceptualization - brainstormed and refined novel assay and plasmid designs; (3) Background Research - read literature to inform assay and plasmid design choices; (4) Investigation - carried out experiments in lab shifts from June to October; (5) Notebook/record keeping - maintained lab notes from shifts and brainstorming documentation; (6) Public Engagement - planned and filmed short-form Instagram content; (7) Visualization - illustrated and animated the PetaBite logo, created the conference logo, and contributed wiki illustrations (home page, wet lab subteam page); (8) Writing - helped write and edit the wet lab wiki, particularly the selection assay section."
+  },
+  {
+    "id": "28",
+    "section": "Current",
+    "name": "Claire Dumortier",
+    "role": "Student",
+    "rosterName": "Claire Dumortier",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Hardware",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis and Background Research - compared optical density sensors and CAD model configurations, then selected and tested components to establish the final bill of materials; (2) Conceptualization - developed the bioreactor CAD configuration, the optical density layout, and the general layout for integrated subsystems; (3) Investigation and Data Curation - ran experiments testing the accuracy of optical density readings, with normalized readings and spectrophotometer comparisons; (4) Notebook/record keeping - recorded progress and design-change justifications for optical density and CAD work in an engineering notebook; (5) Hardware - developed the optical density configuration, calibration, and code to report culture growth as normalized or OD600 readings, and built the CAD model integrating all bioreactor subsystems; (6) Writing - wrote the OD and CAD sections of the Hardware wiki."
+  },
+  {
+    "id": "29",
+    "section": "Current",
+    "name": "Clara Han",
+    "role": "Student",
+    "rosterName": "Clara Han",
+    "tasks": [
+      "Background Research",
+      "Project Administration",
+      "Fundraising",
+      "Public Engagement",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched ethics guidelines and ethical frameworks relevant to PetaBite, and regulations and guidance on PETases, plastics, and enzymes; (2) Project Administration - helped plan and coordinate the UofT Microplastics Conference, including venue, scheduling, catering, speakers, poster and AV needs, volunteers, and day-of planning; (3) Fundraising - sent outreach emails to potential sponsors and partners and helped coordinate Longo's sponsorship and catering support for the conference; (4) Public Engagement - helped plan and present public-facing activities, including the Microplastics Conference, the Bioethics Symposium, and Great Canadian Meetup presentations; (5) Writing - wrote and helped organize the PetaBite regulatory report, including sections on ethics, PETase and enzyme regulations, and plastics regulations."
+  },
+  {
+    "id": "30",
+    "section": "Current",
+    "name": "Clelia",
+    "role": "Student",
+    "rosterName": "Clelia Troisi",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched wastewater treatment plants (WWTPs) as a customer segment and reviewed literature on enzymes currently used in wastewater treatment; (2) Investigation - ran stakeholder outreach for the WWTP vertical, contacting 15+ operators, professors, and industry professionals, and independently interviewed 2 stakeholders; (3) Data Curation - extracted data from 6 papers for the review database paper; (4) Entrepreneurship - completed the WWTP competitor analysis, evaluated venture capital firms, contributed to Tech Futures Challenge and Biohackathon deliverables, and helped pitch at the North American Mini Jamboree and the Great Canadian Meetup; (5) Fundraising - helped write and edit grant applications and create the sponsorship package; (6) Writing - co-wrote the WWTP vertical section of the wiki and edited other sections; (7) Visualization - designed the WWTP wiki cover page and helped create slides for multiple competitions; (8) Public Engagement - volunteered at the UofT Microplastics Conference."
+  },
+  {
+    "id": "31",
+    "section": "Current",
+    "name": "Denis Rivard",
+    "role": "Student",
+    "rosterName": "Denis Rivard",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Software",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - ran computational screening and bioinformatic analyses on environmental metagenomic datasets to identify candidate plastic-degrading enzymes; (2) Conceptualization - helped formulate the computational strategy for discovering and prioritizing plastic-degrading enzymes and the dry lab architecture integrating cloud infrastructure, sequence enrichment, and downstream validation; (3) Data Curation - processed raw sequence files, standardized naming and annotations, and filtered low-confidence entries; (4) Notebook/record keeping - documented pipeline parameters, script versions, database queries, and intermediate outputs, and maintained dry lab meeting notes and workflow logs; (5) Software - wrote Python and Bash scripts and configured cloud infrastructure to automate metagenomic data processing; (6) Visualization - created plots and figures of screening metrics and pipeline logic, and summary graphics for team logos and wiki documentation; (7) Writing - wrote technical descriptions of the dry lab pipeline, tools, parameters, and filtering criteria, and contributed dry lab wiki sections."
+  },
+  {
+    "id": "32",
+    "section": "Current",
+    "name": "Francesca",
+    "role": "Student",
+    "rosterName": "Francesca Chernous",
+    "tasks": [
+      "Analysis",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Writing",
+      "Safety",
+      "Other"
+    ],
+    "specificTasks": "(1) Analysis - analyzed wet lab data, including assay development results and procedure data, and summarized stakeholder feedback into actionable tasks; (2) Background Research - read literature on plastic-degrading enzymes, biosensor assays, and copper-based assays to inform wet lab design; (3) Investigation - performed wet lab experiments and collected data from papers on plastic-degrading enzymes; (4) Data Curation - maintained literature research data; (5) Notebook/record keeping - recorded laboratory activities and maintained the lab notebook; (6) Public Engagement - attended stakeholder interviews to provide the wet lab perspective and helped with initial conference planning; (7) Entrepreneurship - participated in the Tech Futures Challenge pitch competition; (8) Writing - wrote and edited sections of the wet lab wiki; (9) Safety - attended laboratory training sessions and completed required safety courses; (10) Other - mentored wet lab members on experimental procedures and worked with Human Practices on sustainable lab practices."
+  },
+  {
+    "id": "33",
+    "section": "Current",
+    "name": "Grace Li",
+    "role": "Student",
+    "rosterName": "Grace Li",
+    "tasks": [
+      "Analysis",
+      "Background Research",
+      "Investigation",
+      "Project Administration",
+      "Fundraising",
+      "Entrepreneurship",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - contributed to PetaScale's competitive landscape analysis, including competitor matrices, entry barriers, and commercial adoption; (2) Background Research - researched enzymes, microplastics, filtration/detergent and wastewater applications, market dynamics, and investor, accelerator, and sponsorship landscapes; (3) Investigation - identified and contacted scientific, industry, and investment stakeholders for customer discovery interviews; (4) Project Administration - helped organize the UofT Microplastics Conference, coordinating logistics, partners, sponsorship, and programming; (5) Fundraising - developed sponsorship materials, sourced sponsors, secured support from IDT, GenScript, SnapGene, Twist Bioscience, BioRender, MathWorks, and NEB, and submitted CPSIF and EngSoc Special Projects Fund applications; (6) Entrepreneurship - developed PetaScale's commercial case for filtration/detergent applications, assessing use cases, market potential, and commercialization feasibility; (7) Visualization - drafted pitch decks, scripts, and visual assets for the Tech Futures Challenge, iGEM Global Biohackathon, and North American Mini Jamboree; (8) Writing - wrote the filtration/detergent and appendix sections of the Entrepreneurship wiki and reviewed the remaining Entrepreneurship wiki."
+  },
+  {
+    "id": "34",
+    "section": "Current",
+    "name": "Hillary Carlton Bongso",
+    "role": "Student",
+    "rosterName": "Hillary Carlton Bongso",
+    "tasks": [
+      "Background Research",
+      "Data Curation",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched the regulatory landscape for deploying PETase in Canadian wastewater treatment, mapping the federal CEPA New Substances Notification pathway and comparing provincial pathways in Ontario, British Columbia, Alberta, and Newfoundland and Labrador; also researched enzymatic PET degradation for textile recycling, including fibre crystallinity, pretreatment, blends, dyes and finishes, and feedstock sorting; (2) Writing - wrote the full Regulatory Landscape wiki vertical with summary tables of regulators, submission requirements, timelines, and next steps, developed major components of the Textiles wiki vertical (overview, target customer, technical feasibility, stakeholder insights, SWOT, barriers to entry), and edited both verticals for publication; (3) Entrepreneurship - built a stakeholder database of researchers at the University of Toronto, University of Waterloo, Universite de Sherbrooke, and Carleton University, drafted outreach emails and interview questions, and helped interview Prof. Grant Allen, Prof. Ramin Farnood, and Prof. Hubert Cabana on wastewater integration, feasibility, barriers, and regulation; (4) Data Curation - extracted enzyme data from 6 papers, entered it with the PETadex schema tool, and exported curated CSV entries for the PETadex database; (5) Fundraising - developed the tiered (Silver, Gold, Diamond) sponsorship package for the UofT Microplastics Conference; (6) Public Engagement - built a 60+ contact marketing list, identified and contacted 30+ prospective speakers across government, industry, and academia, designed the speaker recruitment flyer, and created social media content for student audiences."
+  },
+  {
+    "id": "35",
+    "section": "Current",
+    "name": "Ibtisaam Wasi",
+    "role": "Student",
+    "rosterName": "Ibtisaam Wasi",
+    "tasks": [
+      "Public Engagement",
+      "Writing",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Public Engagement - created content for the Road to Jamboree series; (2) Writing - scripted the iGEM Toronto promotional and presentation videos; (3) Visualization - directed the promotional and presentation videos."
+  },
+  {
+    "id": "36",
+    "section": "Current",
+    "name": "Isabella Sobec",
+    "role": "Student",
+    "rosterName": "Isabella Sobec",
+    "tasks": [
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Fundraising - helped raise funds and secure sponsors from university departments; (2) Public Engagement - participated in stakeholder outreach on public and ethical concerns and conducted stakeholder interviews in line with ethical guidelines; (3) Entrepreneurship - helped develop business models and researched additional application verticals; (4) Visualization - helped create, film, and edit the promotional and presentation videos and conference presentation videos, worked on conference slides and scripts, and photographed conferences; (5) Writing - wrote, researched, and reviewed wiki content and conference presentation scripts."
+  },
+  {
+    "id": "37",
+    "section": "Current",
+    "name": "James Zhang",
+    "role": "Student",
+    "rosterName": "James Zhang",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Hardware",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Conceptualization - designed the temperature and power subsystems for the bioreactor; (2) Background Research - reviewed component datasheets; (3) Investigation - prepared Design of Experiments plans and performed tests for the heater, temperature probe, and power supply; (4) Analysis - analyzed temperature control loop data to iterate the controller; (5) Data Curation - produced the heater heating curve (temperature over time); (6) Hardware - designed the soldered protoboard for the bioreactor circuitry; (7) Notebook/record keeping - wrote the temperature and power sections of the engineering notebook and wiki; (8) Visualization - prepared CAD models, schematics, and diagrams for the bioreactor."
+  },
+  {
+    "id": "38",
+    "section": "Current",
+    "name": "Jane Felicia Jonatan",
+    "role": "Student",
+    "rosterName": "Jane Felicia Jonatan",
+    "tasks": [
+      "Wiki Coding",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Wiki Coding - contributed to the creation of the team wiki through creating assay animations and reviewing and adding content for other subteams; (2) Visualization - created UI elements and animations to visualize information in wiki content."
+  },
+  {
+    "id": "39",
+    "section": "Current",
+    "name": "Kaitlyn Chen",
+    "role": "Student",
+    "rosterName": "Kaitlyn Chen",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - helped create the reporter plasmid and led the project direction for the biosensor assay; (2) Background Research - researched biosensor reporter plasmid design, including selection of a copper promoter, copper biosensors and troubleshooting, and assay risks such as copper toxicity, agar-copper and antibiotic-copper interactions, and the cheater effect; (3) Investigation - planned biosensor assay experiments and controls, planned troubleshooting experiments such as copper leaching from the PET mesh, tested the assays for soundness and reliability, and tested novel PETases provided by the dry lab; (4) Analysis - helped interpret experimental results; (5) Writing - helped write the biosensor section of the wiki; (6) Notebook/record keeping - recorded experimental progress and results in lab notes."
+  },
+  {
+    "id": "40",
+    "section": "Current",
+    "name": "Karys Littlejohns",
+    "role": "Student",
+    "rosterName": "Karys Littlejohns",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "41",
+    "section": "Current",
+    "name": "Kathleen N M",
+    "role": "Student",
+    "rosterName": "Kathleen Nicole Mesach",
+    "tasks": [
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - helped the wet lab develop assay ideas; (2) Background Research - researched the selection assay, including antibiotic choices and conditions for the optimal copper range; (3) Investigation - conducted wet lab experiments weekly; (4) Notebook/record keeping - updated the wet lab notebook after every shift; (5) Visualization - designed and illustrated the wiki homepage and subpages, produced animations for the promotional and presentation videos, and helped design the iGEM Toronto merchandise line; (6) Writing - wrote the safety section of the wet lab wiki."
+  },
+  {
+    "id": "42",
+    "section": "Current",
+    "name": "Komal Lalh",
+    "role": "Student",
+    "rosterName": "Komal Lalh",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "43",
+    "section": "Current",
+    "name": "Lia Mitsui Campbell",
+    "role": "Student",
+    "rosterName": "Lia Campbell",
+    "tasks": [
+      "Analysis",
+      "Investigation",
+      "Notebook/record keeping",
+      "Public Engagement",
+      "Hardware",
+      "Software",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed electronics datasheets to set component specifications and reviewed how previous iGEM teams generated bioreactor data to inform the design; (2) Investigation - interviewed 10 stakeholders to collect evidence and feedback; (3) Notebook/record keeping - took notes at most Hardware meetings and kept an engineering notebook of updates and progress; (4) Public Engagement - developed the Dry Lab interview guide and helped prepare slides for the Bioethics Symposium; (5) Hardware - helped design the data and controls system architecture for the bioreactor systems; (6) Software - developed a user interface to control the bioreactor systems; (7) Writing - co-wrote the sustainability report and wrote Hardware and Human Practices wiki sections."
+  },
+  {
+    "id": "44",
+    "section": "Current",
+    "name": "Lindsay Tu",
+    "role": "Student",
+    "rosterName": "Lingqi (Lindsay) Tu",
+    "tasks": [
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Conceptualization - helped brainstorm bioreactor design and component and part designs; (2) Background Research - reviewed project background literature; (3) Investigation - performed experiments on the function and requirements of the peristaltic pump subsystem; (4) Writing - wrote the Hardware wiki section on the peristaltic pump design process and assembly instructions; (5) Safety - followed safety procedures during experiments and prototype assembly."
+  },
+  {
+    "id": "45",
+    "section": "Current",
+    "name": "Megan Chiao",
+    "role": "Student",
+    "rosterName": "Megan Chiao",
+    "tasks": [
+      "Background Research",
+      "Public Engagement",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched open science frameworks, genetic resource sharing ethics, and dual-use research of concern frameworks and regulations; (2) Public Engagement - contacted relevant experts and stakeholders and presented at the University of Michigan Bioethics Symposium; (3) Writing - wrote sections of the UofT Microplastics Conference proposal, wrote and designed the Human Practices regulatory framework, and edited Human Practices wiki sections."
+  },
+  {
+    "id": "46",
+    "section": "Current",
+    "name": "Meghan Cao",
+    "role": "Student",
+    "rosterName": "Hongming Cao",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - analyzed previous iGEM team data and literature to inform assay design, plasmid construction, and troubleshooting experiments; (2) Conceptualization - brainstormed and refined novel assay and plasmid designs; (3) Background Research - read literature to inform assay and plasmid design choices; (4) Investigation - assisted in lab shifts from June to October and carried out experiments; (5) Notebook/record keeping - maintained lab notes from shifts and brainstorming documentation; (6) Visualization - illustrated the wiki outreach page; (7) Writing - helped write and edit the biosensor section of the wet lab wiki."
+  },
+  {
+    "id": "47",
+    "section": "Current",
+    "name": "mehrasa kheirizad",
+    "role": "Student",
+    "rosterName": "mehrasa kheirizad",
+    "tasks": [
+      "Background Research",
+      "Analysis",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - reviewed literature on PETase and MHETase enzymes, including FAST-PETase, to assess degradation of polyester microfibres captured from laundry wastewater, covering enzyme stability, reaction conditions, and limits of integration into filtration systems; (2) Analysis - evaluated the feasibility of combining laundry microfibre filtration with enzymatic PET degradation, including filter-integrated treatment, and identified technical challenges that need validation; (3) Entrepreneurship - conducted market research, competitor analysis, and commercialization assessments covering microfibre filtration technologies, potential partners, market barriers, and regulation; (4) Public Engagement - identified potential customers and collaborators, including filtration companies and appliance manufacturers, and prepared outreach templates and customer discovery questions; (5) Writing - prepared research summaries, feasibility assessments, competitor comparisons, and commercialization materials."
+  },
+  {
+    "id": "48",
+    "section": "Current",
+    "name": "Michael",
+    "role": "Student",
+    "rosterName": "Michael Pak",
+    "tasks": [
+      "Fundraising",
+      "Entrepreneurship",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Fundraising - managed finances and built the project finance dashboard; (2) Entrepreneurship - conducted cold outreach and conversations with industry professionals, presented at pitch competitions, and built financial models; (3) Visualization - built pitch decks and presentation materials."
+  },
+  {
+    "id": "49",
+    "section": "Current",
+    "name": "Muneer",
+    "role": "Student",
+    "rosterName": "Muneer Jaffery",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "50",
+    "section": "Current",
+    "name": "Nadithya Samarawickrema",
+    "role": "Student",
+    "rosterName": "Pelendi Hewage Nadithya Samarawickrema",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Public Engagement",
+      "Writing"
+    ],
+    "specificTasks": "(1) Investigation - conducted stakeholder interviews to gather perspectives and evidence informing project design and impact; (2) Public Engagement - attended wet lab meetings as the Human Practices liaison and maintained communication with stakeholders; (3) Writing - helped draft, edit, and finalize the sustainability report; (4) Background Research - researched project stakeholders and reviewed literature for the data scraping project; (5) Data Curation - organized data from research papers into a usable dataset for the data scraping project."
+  },
+  {
+    "id": "51",
+    "section": "Current",
+    "name": "Naziba Swatta Nahid",
+    "role": "Student",
+    "rosterName": "Naziba Swatta Nahid",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "52",
+    "section": "Current",
+    "name": "Nino Saeki",
+    "role": "Student",
+    "rosterName": "Nino Saeki",
+    "tasks": [
+      "Background Research",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Software",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Data Curation - converted lab data into formats usable by tools such as HMMER and InterProScan; (2) Notebook/record keeping - saved all project work to the iGEM dry lab GitHub repository; (3) Software - built and ran multiple pipelines across 5 virtual machines; (4) Visualization - visualized results in graphs and tables; (5) Background Research - researched the pipelines being replicated, the source database, and tools such as HMMER, InterProScan, and Merizo."
+  },
+  {
+    "id": "53",
+    "section": "Current",
+    "name": "Osborn Sun",
+    "role": "Student",
+    "rosterName": "Xiaosheng Sun",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched wet lab assays to verify feasibility; (2) Investigation - participated in lab work to collect data; (3) Writing - helped draft the Overview section of the wet lab wiki."
+  },
+  {
+    "id": "54",
+    "section": "Current",
+    "name": "Oscar Heath",
+    "role": "Student",
+    "rosterName": "Oscar Heath",
+    "tasks": [
+      "Analysis",
+      "Notebook/record keeping",
+      "Software",
+      "Wiki Coding",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Analysis - embedded ~60,000 PETadex enzymes and projected them to 2D with UMAP for the PETadex Atlas on petadex.net; (2) Software - wrote the embedding and UMAP workflow for the Atlas and automated conversion of dry lab notebooks to wiki-ready Markdown with GitHub Actions; (3) Notebook/record keeping - ported all dry lab experiment records to the wiki through the automated notebook pipeline; (4) Wiki Coding - led integration of all dry lab members' work and notebooks into the wiki; (5) Visualization - built the PETadex Atlas data visualization and the dry lab poster presented at the UofT Microplastics Conference; (6) Writing - contributed to the PETadex manuscript."
+  },
+  {
+    "id": "55",
+    "section": "Current",
+    "name": "Rachel Chu",
+    "role": "Student",
+    "rosterName": "Rachel Chu",
+    "tasks": [
+      "Background Research",
+      "Entrepreneurship",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched regulatory challenges for using PETases in landfills, wastewater treatment, and filtration; (2) Entrepreneurship - helped prepare slides for pitch competitions; (3) Writing - wrote up regulatory findings for the wiki."
+  },
+  {
+    "id": "56",
+    "section": "Current",
+    "name": "Sara Bou Saab",
+    "role": "Student",
+    "rosterName": "Sara Bou Saab",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Data Curation",
+      "Notebook/record keeping",
+      "Writing"
+    ],
+    "specificTasks": "(1) Investigation - performed wet lab experiments and collected experimental data; (2) Notebook/record keeping - recorded lab activities during shifts; (3) Writing - co-wrote the safety section of the wet lab wiki; (4) Background Research - reviewed published articles for the data scraping project; (5) Data Curation - scraped and compiled data from published articles for the data scraping project paper."
+  },
+  {
+    "id": "57",
+    "section": "Current",
+    "name": "Sara Habibi",
+    "role": "Student",
+    "rosterName": "Sara Habibi",
+    "tasks": [
+      "Analysis",
+      "Conceptualization",
+      "Background Research",
+      "Investigation",
+      "Project Administration",
+      "Writing"
+    ],
+    "specificTasks": "(1) Conceptualization - as Wet Lab Selection Subteam Lead, helped develop and refine the selection assay linking PETase activity to bacterial survival through antibiotic resistance; (2) Background Research - researched antibiotic resistance markers (sul1, sul2, dfrB10), including mechanisms, growth media, and limitations, as well as copper toxicity, the pCusC promoter, background resistance, and promoter leakiness; (3) Investigation - helped plan the selection assay approach, including antibiotic selection, copper induction, controls, and sources of false positives and false negatives; (4) Analysis - compared sul1, sul2, and dfrB10 performance and helped decide which approaches to pursue; (5) Project Administration - led and coordinated the Selection Subteam's research, experimental planning, and decisions; (6) Writing - wrote the selection assay section of the wiki, covering background, design rationale, methods, troubleshooting, limitations, and future directions."
+  },
+  {
+    "id": "58",
+    "section": "Current",
+    "name": "Sara Parvaresh Rizi",
+    "role": "Student",
+    "rosterName": "Sara Parvaresh Rizi",
+    "tasks": [
+      "Analysis",
+      "Background Research",
+      "Notebook/record keeping",
+      "Project Administration",
+      "Wiki Coding",
+      "Visualization"
+    ],
+    "specificTasks": "(1) Analysis - analyzed CATH and InterPro domain data to build per-family profile pages with domain-architecture comparisons, implemented patristic-distance and k-nearest-neighbour filtering in the phylogenetic tree viewer, and mapped per-residue features from the SQL database onto ORF IDs; (2) Background Research - researched and documented the team's niche CATH domains against InterPro, RCSB PDB, and EBI HMM profiles, and evaluated visualization libraries (Nightingale, feature-viewer, Skylign) before selecting the final approach; (3) Notebook/record keeping - built the hardware notebook page and the Contributions calendar and kept both current from meeting minutes; (4) Project Administration - coordinated the CATH contribution pages, standardized layout conventions across non-homepage pages, integrated other members' frontend work (90% cluster search, search hub and SRA data, SignalP, paper tree), and helped delegate tasks in web and wiki meetings; (5) Wiki Coding - built the wiki homepage (parallax illustration, animations, scroll sequence, mobile layout, new logo), the Meet the Team page, the Hardware parts page with an interactive system-architecture diagram, the Outreach flip-book page, phylogenetic tree search, and cross-page navigation for CATH domains; (6) Visualization - built the 2D protein feature visualizer with a pLDDT track, the InterPro domain-architecture viewer, and interactive HMM logos for each CATH page, and rebuilt the hardware system architecture as interactive JavaScript."
+  },
+  {
+    "id": "59",
+    "section": "Current",
+    "name": "Shivangi Roy",
+    "role": "Student",
+    "rosterName": "Shivangi Roy",
+    "tasks": [
+      "Background Research",
+      "Investigation",
+      "Public Engagement",
+      "Writing"
+    ],
+    "specificTasks": "(1) Background Research - researched the environmental, social, and ethical implications of synthetic biology innovations relevant to the project to shape stakeholder interview questions; (2) Investigation - conducted structured stakeholder meetings with industry professionals, researchers, and entrepreneurs, and brought Human Practices insights into project design and regulatory strategy; (3) Public Engagement - supported the UofT Microplastics Conference 2026 remotely; (4) Writing - co-wrote the team's sustainability report."
+  },
+  {
+    "id": "60",
+    "section": "Current",
+    "name": "Suha Ashraf",
+    "role": "Student",
+    "rosterName": "Suha Ashraf",
+    "tasks": [
+      "Analysis",
+      "Background Research",
+      "Investigation",
+      "Notebook/record keeping",
+      "Writing",
+      "Safety"
+    ],
+    "specificTasks": "(1) Analysis - performed assay tests and analyzed the data to assess assay development, including copper integration and toxicity tests; (2) Background Research - reviewed literature on integrating copper into mesh and on PET sheet types; (3) Investigation - performed lab procedures including E. coli culture, minipreps, and transformations; (4) Notebook/record keeping - updated the wet lab notebook each shift; (5) Writing - drafted and polished the dye release section of the wiki; (6) Safety - followed all safety regulations during lab shifts."
+  },
+  {
+    "id": "61",
+    "section": "Current",
+    "name": "Wineta Pangestu",
+    "role": "Student",
+    "rosterName": "Wineta Prisella Pangestu",
+    "tasks": [
+      "Public Engagement",
+      "Visualization",
+      "Writing"
+    ],
+    "specificTasks": "(1) Public Engagement - conducted NGO and university outreach for the UofT Microplastics Conference and volunteered at the event; (2) Visualization - created Instagram reels and conference promotion posts and contributed wiki design ideas; (3) Writing - researched and wrote speaker descriptions and compiled text for the conference infographics."
+  },
+  {
+    "id": "62",
+    "section": "Current",
+    "name": "Zync Infante",
+    "role": "Student",
+    "rosterName": "Zync Aggarao Infante",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "63",
+    "section": "Current",
+    "name": "Amogh Manivannan",
+    "role": "Advisor",
+    "rosterName": "Amogh Manivannan",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "64",
+    "section": "Current",
+    "name": "Chinmay Potdar",
+    "role": "Advisor",
+    "rosterName": "Chinmay Potdar",
+    "tasks": [
+      "Data Curation",
+      "Fundraising",
+      "Public Engagement",
+      "Entrepreneurship",
+      "Software",
+      "Visualization",
+      "Writing",
+      "Other"
+    ],
+    "specificTasks": "(1) Visualization - designed the team project logo used at multiple conferences and one of the PETamon promotional characters, and worked on ideation, scriptwriting, storyboarding, and filming of the promotional and presentation videos; (2) Writing and Fundraising - contributed to multiple grant, conference, and funding applications and edited Entrepreneurship wiki sections for accuracy and flow; (3) Software - wrote a Python script that generates active-site mutants with the ESM-2 protein language model; (4) Entrepreneurship - worked on part of the sponsorship package and represented the team at the Tech Futures Challenge prototype showcase in Calgary; (5) Public Engagement - contributed to stakeholder outreach, represented the team at the Great Canadian Meetup in Hamilton, and built a page of the Toronto Microplastics Conference website; (6) Data Curation - contributed to the data scraping project; (7) Other - provided general advice across multiple subteams."
+  },
+  {
+    "id": "65",
+    "section": "Former",
+    "name": "Claire Cui",
+    "role": "Advisor",
+    "rosterName": "Claire Cui",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "66",
+    "section": "Current",
+    "name": "Francesco Andreace",
+    "role": "Advisor",
+    "rosterName": "Francesco Andreace",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "67",
+    "section": "Current",
+    "name": "Henri Galez",
+    "role": "Advisor",
+    "rosterName": "Henri Galez",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  },
+  {
+    "id": "68",
+    "section": "Former",
+    "name": "Anya Mathur",
+    "role": "Student Leader",
+    "rosterName": "Anya Mathur",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "69",
+    "section": "Former",
+    "name": "Ben Outar",
+    "role": "Student",
+    "rosterName": "Benjamin Outar",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "70",
+    "section": "Former",
+    "name": "Manasvini",
+    "role": "Student",
+    "rosterName": "Manasvini Bharath",
+    "tasks": [
+      "None"
+    ],
+    "specificTasks": "None"
+  },
+  {
+    "id": "71",
+    "section": "Former",
+    "name": "Patricia Krisanti",
+    "role": "Student",
+    "rosterName": "Patricia Krisanti",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "72",
+    "section": "Former",
+    "name": "Rima Rajan",
+    "role": "Student",
+    "rosterName": "Rima Rajan",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "73",
+    "section": "Former",
+    "name": "Robinson Meng",
+    "role": "Student",
+    "rosterName": "Robinson Meng",
+    "tasks": [
+      "None"
+    ],
+    "specificTasks": "None"
+  },
+  {
+    "id": "74",
+    "section": "Former",
+    "name": "Sami Ur Rehman",
+    "role": "Student",
+    "rosterName": "Sami Ur Rehman",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "75",
+    "section": "Former",
+    "name": "Seshill Real Armas",
+    "role": "Student",
+    "rosterName": "Seshill Real Armas",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "This individual is part of our official team as a student member but is not listed under the team roster due to technical circumstances. Background research and helped with general support of the project."
+  },
+  {
+    "id": "76",
+    "section": "Former",
+    "name": "Alisha Imtiaz",
+    "role": "Advisor",
+    "rosterName": "Alisha Imtiaz",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project. "
+  },
+  {
+    "id": "77",
+    "section": "Former",
+    "name": "Shrena Sribalan",
+    "role": "Advisor",
+    "rosterName": "Shrena Sribalan",
+    "tasks": [
+      "Other"
+    ],
+    "specificTasks": "Background research and helped with general support of the project."
+  }
+]
