@@ -394,7 +394,7 @@ const SECTION4_STORY = [
     at: [1695, 69.5, 28],
     mid: true,
     phoneAt: [2040, 4, 92],
-    text: "In the biosensor, that makes cells glow green and in the selection, it turns on antibiotic resistance, so only cells with a working enzyme grow into colonies.",
+    text: "In Assay 1: Biosensor, successful PET breakdown makes cells glow green and in Assay 2: Selection, antibiotic resistance is induced, so only cells effectively breaking down PET will grow into colonies.",
   },
   // The Hardware bench: on the wall left of the bioreactor, centred on it
   // (above it on phones).
@@ -402,7 +402,7 @@ const SECTION4_STORY = [
     hold: 3,
     in: 0.02,
     out: [3, 0.26],
-    at: [2880, 3, 33],
+    at: [SECTION4_BENCH_ROWS[1], 3, 33],
     mid: true,
     phoneAt: [2300, 4, 92],
     text: "The best candidates then need to be tested under real conditions.",
@@ -411,7 +411,7 @@ const SECTION4_STORY = [
     hold: 3,
     in: 0.28,
     out: [3, 0.56],
-    at: [2880, 3, 33],
+    at: [SECTION4_BENCH_ROWS[1], 3, 33],
     mid: true,
     phoneAt: [2300, 4, 92],
     text: (
@@ -431,7 +431,7 @@ const SECTION4_STORY = [
   {
     hold: 3,
     in: 0.58,
-    at: [2880, 3, 33],
+    at: [SECTION4_BENCH_ROWS[1], 3, 33],
     mid: true,
     phoneAt: [2300, 4, 92],
     text: "The aim is to scale up to 8 units, so one experiment can compare many enzymes across many temperatures and pH values.",
@@ -1933,6 +1933,7 @@ export function HomeScrollPrototype() {
     let touching = false
     let lastScrollAt = 0
     let settleTimer = 0
+    let previousScrollY = window.scrollY
     const settled = () =>
       !coarse ||
       (!touching && performance.now() - lastScrollAt > TOUCH_SETTLE_MS)
@@ -1945,6 +1946,8 @@ export function HomeScrollPrototype() {
       const stack = stackRef.current
       const bottleSpot = bottleTouchRef.current
       const y = window.scrollY
+      const scrollingUp = y < previousScrollY
+      previousScrollY = y
 
       // Use ScrollStack bottom to know where the mockup section is in the viewport
       const stackBottom = stack
@@ -2015,6 +2018,16 @@ export function HomeScrollPrototype() {
           painting.style.width = ""
         } else if (track) {
           track.style.paddingBottom = "0px"
+          const trackDocTop = track.getBoundingClientRect().top + y
+          const pinAt = trackDocTop + forestPinY
+          // Re-arm above the forest, where adding the hold is below the reader.
+          // Do not reset during restoration of a saved position farther down.
+          if (walkReleasedRef.current && scrollingUp && y < pinAt - 32) {
+            walkReleasedRef.current = false
+            walkLatchedRef.current = false
+            birdStealPRef.current = 0
+            savePlayedBeats({ walk: false, steal: 0, ending: endingReleasedRef.current })
+          }
           if (walkReleasedRef.current) {
             // The whole beat ran to completion before unpin — keep it that way,
             // so scrolling back up here is just an ordinary scroll.
@@ -2028,8 +2041,6 @@ export function HomeScrollPrototype() {
             painting.style.width = ""
           } else {
             track.style.height = `${artH + freezePx}px`
-            const trackDocTop = track.getBoundingClientRect().top + y
-            const pinAt = trackDocTop + forestPinY
             walkProgress = Math.max(
               0,
               Math.min(1, (y - pinAt) / Math.max(1, walkPx)),
@@ -4028,7 +4039,7 @@ export function HomeScrollPrototype() {
                 <ForestRnalabMount>
                   <ForestDatasetBody>
                     We found <BigFigure>300 million</BigFigure> candidates. That
-                    is an increase of more than 600,000-fold.
+                    is an increase of more than <BigFigure>600,000-fold</BigFigure>.
                   </ForestDatasetBody>
                 </ForestRnalabMount>
               </ArtBand>
@@ -4371,7 +4382,12 @@ export function HomeScrollPrototype() {
                     <Link to="/entrepreneurship/">
                       wastewater treatment plants
                     </Link>
-                    , where microplastics concentrate in solids.
+                    , where microplastics concentrate in{" "}
+                    <ExplainTerm
+                      term="biosolids"
+                      plain
+                      explanation={<>Biosolids are nutrient-rich, organic materials derived from treated municipal wastewater solids (sewage sludge). They are also a known reservoir for microplastics. Learn more in <Link to="/entrepreneurship/#wastewater-treatment-plants">section 5.1: Wastewater Treatment Plants (WWTPs)</Link> on our entrepreneurship page.</>}
+                    />.
                   </Section5WwtpLine>
                   <Section5RecyclingLine>
                     Other avenues include trash and recycling streams and
@@ -5999,11 +6015,30 @@ const ForestDatasetMount = styled.div`
   }
 `
 
-/** A headline number in a line of copy ("300 million"), set larger. */
+const discoveryShimmer = keyframes`
+  from { background-position: 200% center; }
+  to { background-position: -200% center; }
+`
+
+/** Matching emphasis for the candidate count and fold increase. */
 const BigFigure = styled.strong`
   font-size: 1.45em;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.15;
+  color: #553273;
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    background: linear-gradient(110deg, #553273 20%, #80502a 40%, #ffe694 50%, #80502a 60%, #553273 80%);
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: ${discoveryShimmer} 5s linear infinite;
+    filter: drop-shadow(0 1px 1px #fff7d9);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-position: 0 center;
+  }
 `
 
 const ForestDatasetBody = styled.p`
@@ -6405,7 +6440,11 @@ const Section4StoryLine = styled.p`
     text-underline-offset: 0.18em;
   }
 
-  top: ${({ $at }) => ($at.at[0] / SECTION4_PLATE.h) * 100}%;
+  /* Match the hardware camera's held row, including its viewport adjustment,
+     so the text midpoint stays at the screen midpoint on wide screens. */
+  top: ${({ $at }) => $at.hold === 3
+    ? `calc(${BENCH_HOLD_ROW_CSS})`
+    : `${($at.at[0] / SECTION4_PLATE.h) * 100}%`};
   left: ${({ $at }) => $at.at[1]}%;
   width: ${({ $at }) => $at.at[2]}%;
   margin: 0;
