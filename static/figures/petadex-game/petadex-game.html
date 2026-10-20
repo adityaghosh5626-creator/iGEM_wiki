@@ -79,7 +79,15 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
 .hp.low > span { background: var(--danger); }
 .hptext { font-size: 12px; }
 .moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 8px; margin: 12px 0; }
+.moves button { text-align: left; }
 .moves button small { display: block; font-size: 11px; opacity: .75; }
+/* Role chip: what the move does, in plain game terms. Fixed fills so contrast holds in both themes. */
+.role { display: inline-block; font-size: 10px; font-weight: bold; letter-spacing: .08em;
+  padding: 1px 6px; margin-bottom: 4px; border: 1px solid #1d1d1b; }
+.role-attack  { background: #c0392b; color: #ffffff; }
+.role-amplify { background: #f2c94c; color: #1d1d1b; }
+.role-heal    { background: #2f7d5b; color: #ffffff; }
+.role-prep    { background: transparent; color: inherit; border-color: currentColor; }
 .log { list-style: none; margin: 0; padding: 8px; border: 2px solid var(--border); height: 140px;
   overflow-y: auto; font-size: 13px; background: var(--bg); }
 .log li { padding: 1px 0; }
@@ -241,6 +249,7 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
 .objective { border: 2px solid var(--border); background: var(--panel); padding: 8px 12px;
   margin: 0; font-size: 13px; flex: none; }
 .objective b { color: var(--good); }
+.obj-progress { display: block; margin-top: 4px; font-weight: bold; }
 
 /* Field coverage board */
 .coverage { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 3px solid var(--border);
@@ -354,8 +363,10 @@ body.coached .dialog { max-height: calc(100vh - 184px); }
     <h1>PETadex</h1>
     <button id="go-home">&lt; Home</button>
   </div>
-  <p class="objective"><b>Objective: find the right enzyme for each job.</b> One enzyme is never enough.
-  Win a battle to sequence a new one.</p>
+  <p class="objective"><b>Objective: beat all six sites to beat the game.</b>
+  Start at The Beach and fight your way to the Landfill Core. Every win sequences a new enzyme and
+  opens the next site. Find the right enzyme for each job: one enzyme is never enough.
+  <span class="obj-progress" id="obj-progress"></span></p>
 
   <!-- Petadex.js equivalent -->
   <section class="device" id="dex" tabindex="0" aria-label="PETadex browser. Use left and right arrow keys to browse." data-nav-skip>
@@ -699,6 +710,7 @@ function verdict(b) {
 }
 
 function renderCoverage() {
+  $('obj-progress').textContent = `Sites cleared: ${state.won.size} / ${BIOMES.length}`;
   const box = $('cov-rows'); box.innerHTML = '';
   for (const b of BIOMES) {
     const v = verdict(b);
@@ -1383,10 +1395,10 @@ function renderFighters(redraw) {
 // polyolefin that has no hydrolysable bonds to begin with.
 const BIND_BONUS = 2.1;        // multiplier Bind grants to the next Hydrolyze
 const MOVES = [
-  { id: 'hydrolyze', name: 'Hydrolyze', desc: 'Enzyme: cleave ester bonds' },
-  { id: 'bind',      name: 'Bind',      desc: 'Enzyme: next Hydrolyze x2.1' },
-  { id: 'refold',    name: 'Refold',    desc: 'Enzyme: heal 25% HP' },
-  { id: 'pretreat',  name: 'Pretreat *', desc: '* Not an enzyme. Abiotic UV/oxidation step' }
+  { id: 'hydrolyze', role: 'attack',  label: 'Attack',  name: 'Hydrolyze', desc: 'Deal damage: cleave ester bonds' },
+  { id: 'bind',      role: 'amplify', label: 'Amplify', name: 'Bind',      desc: 'Next Hydrolyze deals x2.1' },
+  { id: 'refold',    role: 'heal',    label: 'Heal',    name: 'Refold',    desc: 'Restore 25% HP' },
+  { id: 'pretreat',  role: 'prep',    label: 'Prep',    name: 'Pretreat *', desc: '* Not an enzyme. Abiotic UV/oxidation step' }
 ];
 function renderMoves() {
   const box = $('bt-moves'); box.innerHTML = '';
@@ -1395,7 +1407,8 @@ function renderMoves() {
     btn.id = 'move-' + m.id;
     let extra = '';
     if (m.id === 'refold') extra = ` (${B.refolds} left)`;
-    btn.innerHTML = `${m.name}${extra}<small>${m.desc}</small>`;
+    btn.innerHTML = `<span class="role role-${m.role}">${m.label.toUpperCase()}</span><br>${m.name}${extra}<small>${m.desc}</small>`;
+    btn.setAttribute('aria-label', `${m.label}: ${m.name}${extra}. ${m.desc}`);
     btn.disabled = B.busy || B.over
       || (m.id === 'refold' && B.refolds === 0)
       || (m.id === 'pretreat' && (!B.p.polyolefin || B.pretreated));
