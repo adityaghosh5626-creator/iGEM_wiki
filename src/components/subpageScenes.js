@@ -442,8 +442,7 @@ export const HARDWARE_SCENE = {
     "0 0 0.4em rgba(135, 123, 199, 0.6), 0 0.08em 0.3em rgba(0, 0, 0, 0.5)",
   accent: "#6b5cb5",
   layers: [
-    { name: "bg", box: [0, 0, 1110, 4000] },
-    { name: "bg2", box: [0, 0, 1110, 4000], removeWhite: true },
+    { name: "new-bg", box: [0, 0, 1110, 4000] },
     { name: "red", box: [0, 0, 1110, 4000], removeWhite: true },
     { name: "sparkle", box: [0, 0, 1110, 4000], fadePulse: 4000, removeWhite: true },
     // Extra lighting: glints down the walls and pillars into the pool.

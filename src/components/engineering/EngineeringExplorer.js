@@ -1,10 +1,9 @@
-import React, { useId, useRef, useState } from "react"
+import React, { useId, useState } from "react"
 import styled from "styled-components"
-import { ENGINEERING_ART, ENGINEERING_STAGES, ENGINEERING_TEAMS } from "../../data/engineeringCycles.js"
-import { EngineeringCycleWheel } from "./EngineeringCycleWheel.js"
+import { ENGINEERING_ART, ENGINEERING_TEAMS } from "../../data/engineeringCycles.js"
+import { CycleContent } from "./CycleContent.js"
 import { ENGINEERING_CONTENT } from "./contentRegistry.js"
 import DefaultContent from "../../content/wiki/project/engineering/_template.mdx"
-import { EngineeringStage } from "./EngineeringStage.js"
 import { EngineeringArtwork } from "./EngineeringArtwork.js"
 
 export function EngineeringExplorer({ teams = ENGINEERING_TEAMS, art = ENGINEERING_ART }) {
@@ -74,43 +73,6 @@ export function EngineeringExplorer({ teams = ENGINEERING_TEAMS, art = ENGINEERI
   )
 }
 
-function CycleContent({ Content, panelId, titleId, art }) {
-  const [activeStage, setActiveStage] = useState(ENGINEERING_STAGES[0].id)
-  const panel = useRef(null)
-  const section = stageId => panel.current?.querySelector(`[data-engineering-stage="${stageId}"]`)
-
-  const selectStage = stageId => {
-    const target = section(stageId)
-    if (!target || !panel.current) return
-    setActiveStage(stageId)
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-    panel.current.scrollTo({ top: panel.current.scrollTop + target.getBoundingClientRect().top - panel.current.getBoundingClientRect().top - 16, behavior: reduceMotion ? "instant" : "smooth" })
-  }
-
-  const syncStage = () => {
-    const root = panel.current
-    if (!root) return
-    const line = root.getBoundingClientRect().top + 32
-    let current = ENGINEERING_STAGES[0].id
-    for (const stage of ENGINEERING_STAGES) {
-      if (section(stage.id)?.getBoundingClientRect().top <= line) current = stage.id
-    }
-    setActiveStage(current)
-  }
-
-  return (
-    <CycleLayout>
-      <WheelColumn>
-        <EngineeringCycleWheel activeStage={activeStage} onSelect={selectStage} panelId={panelId} art={art} />
-        <Hint>Choose a stage, or scroll through the notes.</Hint>
-      </WheelColumn>
-      <ScrollPanel id={panelId} ref={panel} role="region" aria-labelledby={titleId}
-        tabIndex={0} onScroll={syncStage}>
-        <Content components={{ EngineeringStage }} />
-      </ScrollPanel>
-    </CycleLayout>
-  )
-}
 
 const Explorer = styled.div`
   color: #3e3128;
@@ -198,24 +160,4 @@ const VersionLabel = styled.span`font-weight: 600; small { font-weight: 400; }`
 const Arrow = styled.button`
   width: 2.75rem; height: 2.75rem; border: 1px solid #b89773; border-radius: 50%; background: #fffaf3; color: #594632;
   &:disabled { opacity: 0.35; cursor: default; }
-`
-const CycleLayout = styled.div`
-  display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 1.25rem; align-items: center;
-  @media (max-width: 760px) { grid-template-columns: 1fr; }
-`
-const WheelColumn = styled.div`min-width: 0;`
-const Hint = styled.p`&& { text-align: center; font-size: 0.85rem; color: #715c47; margin: 0.6rem 0; }`
-const ScrollPanel = styled.div`
-  position: relative;
-  height: 29rem;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
-  padding: 1rem;
-  border: 1px solid #c9b493;
-  border-radius: 0.5rem;
-  background: #fffdf8;
-  min-width: 0;
-  &:focus-visible { outline: 3px solid #805340; outline-offset: 3px; }
-  @media (max-width: 760px) { height: 25rem; }
 `
