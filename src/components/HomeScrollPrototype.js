@@ -947,15 +947,15 @@ const SHORE_BOTTLE_WATERLINE_PCT = (830 / 1640) * 100
 
 const CONDITION_CARD_IMAGES = [
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/ph.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/ph.avif",
     alt: "pH",
   },
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/temp.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/temp.avif",
     alt: "Temperature",
   },
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/surrounding-env.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/surrounding-env.avif",
     alt: "Environment",
   },
 ]
