@@ -1,11 +1,146 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the OD design used in Version 1.
+<br />
+Some microorganisms need temperatures above the ambient to survive and function.
+The temperature control system regulates the temperature of the bioreactor to
+allow these microorganisms to thrive. More specifically, the requirements for
+this subsystem include:
+<br />
 
-#### Design decisions and changes
+| Requirement                                                                                    | Priority | Why?                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Report bacterial growth as a normalized, scaled multiple of the original bacterial density** | High     | The key function of optical density readings is to quantify the change in bacterial growth rate. As this method does not require any calibration process, this is the standard default for our bioreactor.                                                                                                                       |
+| **Report nOD values that can be translated to OD600 spectrophotometer readings **              | Medium   | To quantify changes in bacterial growth that can be compared to other experiments, OD600 is required. This is because nOD is a dependent multiple of the bacterial solution it is measuring, not an independent metric applicable to a different culture in a different bioreactor (which affects our bioreactor’s scalability). |
+| **Calibrate to the environment of any user**                                                   | Low      | To account for variability between different vials, lighting (through environmental factors and LED drift), and bacterial culture. These features ensure that the general public can obtain accurate OD results regardless of the experiment being conducted.                                                                    |
 
-Placeholder: explain the initial OD design choices.
+### BoM
 
-#### Testing and lessons
+| Component    | Purpose                                                    | Cost                       | Sourcing Link                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------ | ---------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Photodiode   | Raw photodiode readings, converted to OD600 and nOD values | 19.95 per<br/>39.9 total   | [Adafruit](https://www.adafruit.com/product/6477)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| LED          | Shined through the culture to determine OD                 | $0.09                      | [Amazon](https://www.amazon.ca/Gikfun-Assorted-Arduino-100pcs-EK8437/dp/B01ER728F6/ref=sr_1_7?crid=2PON9OCDB99Q6&dib=eyJ2IjoiMSJ9.vgURJixuUw7UatfMOy99wza6v7locuEEbGR9Hh1CG-fRn2rK1gpXDX6OAxrduYtjIv0kUGhzMhFxd-itanpcMjDKzPHgdaEkKUd6F_QBdCKj-8Aw_yitN-eegxMKYwrZAvbbVyiGpumHf296OfkIYSB6DUqjDgUxDR-VkB3x1TUNLOu-tgn8uyC2TSc9vD5r8VtIitrKVFccq6UgZDIBtYKgwHmq-VlgSjO2fCKMofgOOrz-gj0ynsUKFwYE78deuNJ94D9uJYnYg4ikUATTgHjBAoLeqh4XfE2-MXNeoOI.tcs2c3yBAM9NR99ehucDySMpXDukQ1Uh1fXncD-_URY&dib_tag=se&keywords=led+breadboard&qid=1792438658&sprefix=led+breadborad%2Caps%2C142&sr=8-7)             |
+| Jumper wires | I2C wiring for photodiode sensors                          | ~$0.08per<br/>~$0.67 total | [Amazon](https://www.amazon.ca/Elegoo-120pcs-Multicolored-Breadboard-arduino/dp/B01EV70C78/ref=sr_1_6?crid=1YVH8QDGGRFU8&dib=eyJ2IjoiMSJ9.uCOb5HPboMdDvoE-0hwwkSHZ162tO6_pDczMCIn5t6AihS39Ke3JA0q-y4iRb9wydwbDCBqA8ss2zXSSj2BJMAPtsF_MuI1qHNT-1gtn-HA-g10ntY200v5FJrKwlKMoYGpfqgqvTIoS3Dz2gf8bDAJlHug1i1BrspB9DWROZGLz4qxHR3EKi4HVrPcavHGAPDTeqcMbXrV3uxFU9lstO1vwBSar-FtjFK9q8uG_qYAP2RF54yIaJWS8YprwiJzKVHEI8cIRLF_VVEaGOyfpMNkjanJpnhMr6yaVVa9_Ypc.D8yqwdO2pHcvXzbps7-o-k1y2G04kQpKX03S2mtT-g0&dib_tag=se&keywords=jumper%2Bwires&qid=1792438491&sprefix=jumper%2Bwire%2Caps%2C142&sr=8-6&th=1) |
 
-Placeholder: add Version 1 test results, limitations, and lessons for OD.
+### Build, Assembly, Code
+
+#### Bulid
+
+<ImageGrid>
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od1.avif"
+    alt="od1"
+    caption="Configuration for OD subsystem"
+  />
+  <Figure
+    src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od2.avif"
+    alt="od2"
+    caption="CAD translation"
+  />
+</ImageGrid>
+
+The LED shines red light through the glass vial, and the collecting sensor reports the amount of 600nm light that was not blocked or scattered by the bacterial culture in the vial. For a vial with high bacterial density, little light is able to pass through, leaving a low OD value (with 0 being absolute darkness). While a vial with low bacterial density allows a large amount of light to pass through, leaving a high OD value. To account for drifts in lighting that are not caused by the vial–environmental lighting or LED flickers for example–the reference sensor sits directly above the LED and subtracts this drift. The conceptual layout is shown in the pink photo, while a rough CAD layout is shown below it.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od3.avif"
+  alt="od3"
+/>
+The photodiodes utilized are AS7343s, with a visual of key features portrayed to
+the left. The green LED provides visual confirmation that the sensor is on,
+while the wiring connector + header pin location serves as VIN, GND, SCL, and
+SDA connections. The photodiode in the center filters light into their distinct
+bandwidths, with 11 channels in the visible light spectrum and 3 additional
+channels (near-infrared, clear channel, and flicker detection). The one utilized
+is 600nm wavelength, or the color orange. At 600nm, a calibration sequence can
+be created to translate OD values of the bioreactor into OD600 numbers from a
+spectrophotometer.
+
+#### Code
+
+The pseudocode summary is:
+
+1. Initialize Softwire object, allowing a different I2C address for both OD sensors
+   - Separate class that converts AS7343 commands into Softwire
+2. Startmeasurement to begin new cycle and read from one channel
+3. Read sensor values for when no vial is present in the bioreactor -> environmental factors
+4. Read sensor values when the vial is blank -> bacterial media factors
+5. Read initial sensor values -> the 1x baseline where nOD scales from
+6. Convert raw photodiode readings to nOD
+
+<br />
+
+The key variables and formulas to accomplish steps 3-6 is provided below.
+| Variables explained | Formulas explained |
+| --- | --- |
+| **1. `darkValue1` and `darkValue2`** → Sensor 1 (collector) and sensor 2 (reference) values when nothing is present in the bioreactor. This accounts for environmental lighting.<br /><br />**2. `blankOD`** → OD value with a blank culture, such as water. This accounts for variability in the vial, such as different scattering and refraction events.<br /><br />**3. `referenceOD`** → OD value at the beginning of the experiment, serving as the initial population of the bacteria. This allows the OD code to function for any bacterial culture regardless of the initial density or bacterial properties. | **1. Blank measurement**<br /><br />`blankOD = (run_sensor1() - darkValue1) / (run_sensor2() - darkValue2);`<br /><br />Collecting sensor and reference sensor ratio after subtracting environmental lighting. The subtraction removes the fixed offset/ambient light floor from each sensor, and then the ratio cancels out LED/brightness drift.<br /><br />**2. Reference measurement**<br /><br />`referenceOD = ((total_sensor1/10.0) - darkValue1) / ((total_sensor2/10.0) - darkValue2);`<br /><br />The average of the first 10 values of the collecting sensor and reference sensor at the beginning of the experiment, then ratioed with environmental lighting considered.<br /><br />**3. Normalized measurement**<br /><br />`nOD = ((run_sensor1() - darkValue1) / (run_sensor2() - darkValue2) - blankOD) / (referenceOD - blankOD);`<br /><br />Current OD ratioed with reference OD (for a normalized value), with OD error from the vial considered. |
+
+#### Assembly
+
+<div className="od-iteration-table">
+
+| V#  | Notes                                                                                                                                                        | Photo                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V0  | 2 AS7343 sensors connected to Arduino nano through I2C and software-configured I2C<br /><br />- Simple wiring                                                | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od4.avif"alt="od4"/>                                                                                                                   |
+| V1  | Initial placement of photodiode sensors in CAD model, following scattering diagram shown initially<br /><br />- Initial CAD                                  | <ImageGrid> <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od5.avif" alt="od5"/> <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od6.avif" alt="od6"/> </ImageGrid> |
+| V2  | Dedicated collecting and reference sensor compartments, with photodiodes of sensors covered completely to avoid light contamination<br /><br />- Refined CAD | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od7.avif"alt="od7"/>                                                                                                                   |
+
+</div>
+
+### Design of Experiments (DoE) + Metrics and data
+
+Three experiments were proposed to test the accuracy of the OD readings reported:
+
+1. normalized OD (nOD) and OD600 readings when varying dye concentrations
+2. nOD readings against varying temperatures.
+3. nOD readings against varying stir bar speeds.
+
+<br />
+Experiment 1 was performed with different concentrations of yeast and distilled
+water. As the concentration of yeast doubled, the nOD approached a factor of 2.0
+(meaning the solution was 2 times more concentrated than the initial recording).
+Likewise, as the concentration decreased, the nOD approached a factor of 0.25 (a
+fourth of the original concentration). These nOD values suggest that the nOD
+functions as expected, but to directly compare the accuracy to a standard
+instrument, a calibration curve was made to translate nOD values to OD600 values
+of a spectrophotometer. Below are all the graphs and points found when making a
+calibration curve. The experiments and calibration curve procedure are available
+[here](https://docs.google.com/document/d/1i8AvnuJf120IL7pGxT3GHIpCmd2ypA0TYOyODXPtp68/edit?tab=t.9u5u0jgsfacc).
+The values collected during the experiment are available
+[here](https://docs.google.com/spreadsheets/d/1eBLgzBizGIlINlMlrfyH5qaa6xYMK1pe4pPvd9v_tbk/edit?gid=0#gid=0).
+Note that nOD was reported to 10 decimal places by the bioreactor, but as the
+value fluctuated after 3 decimal places for the same yeast concentration, only 2
+decimal places were reported.
+
+#### Calibration curve accuracy with different numbers of points
+
+| Points                                        | Graph                                                                                                                                                      | Equation                                                                                   |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 2 —> first and last                           | [Desmos graph](https://www.desmos.com/calculator/cyecqbpoko) <br/><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od8a.avif"alt="od8a"/> | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od8b.avif"alt="od8b"/>   |
+| 3 —> first, middle, and last                  | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od9a.avif"alt="od9a"/>                                                                   | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od9b.avif"alt="od9b"/>   |
+| 3 —> first, alternate middle, and last        | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od10a.avif"alt="od10a"/>                                                                 | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od10b.avif"alt="od10b"/> |
+| 4 —> first, last, and two intermediate points | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od11a.avif"alt="od11a"/>                                                                 | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od11b.avif"alt="od11b"/> |
+| 10 points -> all                              | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od12a.avif"alt="od12a"/>                                                                 | <Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od12b.avif"alt="od12b"/> |
+
+CONCLUSION, first middle last seems to be fairly similar to the calibration curve for all points
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/od13.avif"
+  alt="od13"
+/>
+
+With the calibration curve, nOD values translate very closely to OD600 values, thus confirming the accuracy of the values reported by the bioreactor.
+
+Experiment 2 and 3 were conducted in V2 and V3, where subsystems became fully integrated.
+
+### Qualitative observations
+
+The key flaws observed in experiment 1 were:
+
+1. Taking the vial in and out without changing the culture density still changes the nOD values significantly. Thus, the vial position should be fixed to avoid shifting values in the OD subsystem.
+2. First 2 decimal points for nOD are constant for an unchanging cultural density, but the later decimal points fluctuate. This is likely due to light contamination
+3. The wiring for the OD600 subsystem would disconnect when the bioreactor was slightly shifted from position.
+
+These observations justify the next steps.
+
+### Next Steps
+
+From the results of experiment 1, the vial holder needs to be refined to further reduce light contamination and hopefully improve the accuracy of nOD recordings to higher than 2 decimal points. The bioreactor should then be able to detect small changes in bacterial growth, which is currently only seen in OD600 readings of a spectrophotometer. Additionally, as V1 relies on wiring to header pins which are prone to disconnecting, future versions should implement a single push connector, like the [Adafruit STEMMA QT connectors](https://www.adafruit.com/product/4424).

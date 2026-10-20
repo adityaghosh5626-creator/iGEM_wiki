@@ -312,11 +312,11 @@ Placeholder: 2.74M of 6.80M with real signal, stratified sampling.
 
 ### Localization and Signal Peptides
 
-SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, to support enzyme selection for in vitro activity testing and to produce cleaved mature sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after they complete folding respectively. SignalP classifies 5 signal peptide classes within the two pathways (SP, LIPO, TAT, TATLIPO, and PILIN). Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide, within which 92.21% of the enzymes have Sec routing and 7.79% have Tat. 90% identity enzyme clusters had on average 93.1% agreement on whether its member sequences is signal peptide-positive, and 98.3% of these positive members shared the same signal peptide class. The gap in agreement within 90% clusters is most likely due to missing N-termini from sequence fragmentation, making SignalP a useful quality check on the database. Alpha/Beta Hydrolases had a below-average percentage of signal peptide-positive sequences (10.6%) but contributed 44% of all predicted secreted ORFs.
+SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, to support enzyme selection for in vitro activity testing and to produce cleaved mature sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after they complete folding respectively. SignalP classifies 5 signal peptide classes within the two pathways (SP, LIPO, TAT, TATLIPO, and PILIN). Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide, within which 92.21% of the enzymes have Sec routing and 7.79% have Tat. 90% identity enzyme clusters had on average 93.1% agreement on whether their member sequences are signal peptide-positive, and 98.3% of these positive members shared the same signal peptide class. The gap in agreement within 90% clusters is most likely due to missing N-termini from sequence fragmentation, making SignalP a useful quality check on the database. Alpha/Beta Hydrolases had a below-average percentage of signal peptide-positive sequences (10.6%) but contributed 44% of all predicted secreted ORFs.
 
 To-Do: Repeat the pipeline on the updated database.
 
-<Figure src="/figures/dry-lab-model/signalp-composite.png" alt="SignalP composite figure" width="100%" />
+<Figure src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/signalp-composite-v2.avif" alt="SignalP composite figure" width="100%" />
 
 **Figure caption.** (A) The biological significance of the secretion pathways and signal peptide classes. (B) ORFs per signal peptide class (log scale). (C) Percentage of ORFs in each catalytic fold family with a predicted signal peptide; dashed line = database-wide rate (13.85%). (D) Agreement within clusters at 90, 60 and 30% sequence identity (singletons removed): % of secreted members matching their cluster’s majority signal type and % of all members matching their cluster’s majority signal peptide presence/absence call.
 
@@ -326,35 +326,66 @@ To-Do: Repeat the pipeline on the updated database.
 *Owner: Nino*
 
 Using the complete sequences from the input domains, InterProScan is used to determine
-all domains located within the sequence. Then, using PETadex HMMs, HMMer (a tool that
+all domains located within the sequence. Then, using PETadex HMMs, HMMER (a tool that
 searches through protein sequences to find domains corresponding to inputted HMMs)
 searches through the sequences to determine the location of PET-relevant domains in the
 sequences.
-Now the coordinates of the HMMer results are overlayed on the Interproscan results, and
-any domains that hit in both HMMer and Interproscan results are NOT accessory domains,
-so they are filtered out. Two resulting datasets are outputted. One dataset containing all its
-(including overlapping hits) from interproscan and HMMer and another dataset containing
+Now the coordinates of the HMMER results are overlaid on the InterProScan results, and
+any domains that hit in both HMMER and InterProScan results are NOT accessory domains,
+so they are filtered out. Two resulting datasets are output. One dataset contains all hits
+(including overlapping hits) from InterProScan and HMMER and another dataset contains
 only accessory domains.
 
+<Figure
+  src="/figures/dry-lab-model/PETadex_workflow_overview.svg"
+  alt="Overview of Domain Annotation on PETadex"
+  width="40%"
+/>
 ### Novel Accessory Domains
 
 *Owner: Nino*
 
-Placeholder: TED reproduction across AFDB, nr, Logan corpora.
+<SideFigure
+  src="/figures/dry-lab-model/TED_workflow_styled.svg"
+  alt="TED novelty-discovery workflow as reconstructed for PETadex"
+  width="40%"
+>
+
+At the beginning of this project, a workflow was designed to identify potentially novel protein domains. However, while researching methodological approaches, the team encountered TED (The Encyclopedia of Domains), which had also investigated novel protein domains and folds. As a result, the team decided to reconstruct TED's novelty-discovery pipeline and adapt it for PETadex.
+
+Some parameters and reference databases used in the original TED pipeline were not publicly available. Additionally, the PETadex workflow incorporates PETadex-specific hidden Markov models (HMMs), unlike the original TED implementation. Using publicly available resources, including data released through Zenodo, the pipeline was reconstructed to the greatest extent possible.
+
+Positive controls from TED were used to evaluate whether the reconstructed pipeline could recover previously identified novel-fold candidates and to identify discrepancies between the workflows. Although some positive controls were successfully retained, other candidates were eliminated, potentially because of differences in filtering thresholds, reference databases, or upstream processing.
+
+Despite these limitations, the PETadex pilot dataset produced two putative novel-domain candidates that passed the reconstructed novelty-screening pipeline. Further structural and biological validation is required to establish their novelty and potential functions.
+
+</SideFigure>
 
 ### Predicted Structures
 
 *Owner: Alex*
 
-Placeholder: AFDB, ESMFold2, Narval ESM3 folding, confidence metrics.
+Existing protein structure prediction databases such as AlphaFold DB (AFDB) [https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4] contain predicted protein structure cif files, alongside quality metrics such as pLDDT, pTM and the PAE matrix. These metrics measure structural quality and position pairwise error, which are useful for identifying domains and components. Specifically, these structures were utilized for HMM evaluation, and can also be used for further structural analysis.
 
+We searched these databases to find predicted structures for 7.83M PETadex v2 significant hits. AFDB is indexed by Uniprot accession, so PETadex accessions were converted to Uniprot accessions using the Uniprot idmapping [https://ftp.uniprot.org/pub/databases/uniprot/current_release/]. In total, structures and metrics for 580,146 PETadex v2 proteins were found in the AFDB, emphasizing the uncategorized nature of the PETadex. Below are the distributions of the downloaded structures grouped by component and domain. We found that Component 16 (Cytochrome P450) was the most common component, while Alpha/Beta hydrolase was the most common domain.
+
+<Figure
+  src="/figures/dry-lab-model/domain_distribution.avif"
+  alt="Distribution of the AFDB-downloaded PETadex structures grouped by domain, with Alpha/Beta hydrolase the most common"
+  width="100%"
+/>
+<Figure
+  src="/figures/dry-lab-model/component_distribution.avif"
+  alt="Distribution of the AFDB-downloaded PETadex structures grouped by component, with Component 16 (Cytochrome P450) the most common"
+  width="100%"
+/>
 ### Biochemical Properties and Ancestral Reconstruction
 
-Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly-sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
+Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic-degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
 
 To-Do: Repeat the pipeline on the updated database.
 
-<Figure src="/figures/dry-lab-model/biochemical-properties-composite.png" alt="Biochemical properties composite figure" width="100%" />
+<Figure src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/biochemical-properties-composite.avif" alt="Biochemical properties composite figure" width="100%" />
 
 **Figure X.** (A) Box-and-whisker distributions of the biochemical properties by catalytic fold family; dashed line = database median. (B) GRAVY vs instability index for 90% identity cluster representatives (top, all ORFs) and for secreted 90% Cluster representatives specifically (bottom, mature sequences). (C) Property Distributions of PETadex and NCBI; medians written as PETadex | NCBI.
 
@@ -378,30 +409,13 @@ Human extractors worked through the papers in replicate without language-model a
 
 ### LLM Extraction Pipeline
 
-To rapidly and accurately aggregate plastic-degrading enzyme data from academic literature, we developed an automated, high-precision extraction pipeline. Rather than relying solely on manual human curation (as is the case in other databases like PAZY) this pipeline leverages large language models (LLMs) to parse through 1000s of dense academic PDFs. The system is designed to find activity data on true plastic-degrading enzymes that were tested in primary papers ensuring the database is populated only with experimentally validated targets. This process involves a two-stage pipeline to extract relevant values, followed by numerous sanitation and verification steps to remove potential hallucinations and recover missing data. 
-Methods: 
-Articles were scraped using APIs and automated web-crawlers. An initial pool of plastic degrading papers were found using keyword searches and metadata accessions from PETadex sequences, then this pool was expanded by scraping papers cited by those papers, and papers that cited them. A combination of text extraction tools including Docling, Grobid and PyMuPDF were used to extract sectioned text from these pdfs, as well as convert figures into based encoded text. The relevancy of these papers were assessed using an LLM to remove papers with no activity data on plastic degrading enzymes. An extraction pipeline was built leveraging Claude Sonnet via AWS bedrock. The development of this pipeline came over several iterations of tests against synthetic controls and benchmarking experiments. Firstly synthetic controls were created using an LLM and human verifier to inject synthetic protein and assay data into 200 unique papers, these proteins included real plastic degrading enzymes with plausible activity data and decoy proteins that were not plastic degrading enzymes, then their capture and rejection rates were tested along the pipeline. Benchmarking experiments were run by comparing the outputs of Sonnet, Haiku, Opus and hybrid combinations (ie pass 1 using opus and pass 2 using sonnet) with each other to optimize the model used from those available. Finally results have been compared against human extracted data. Each of these testing steps were used to gauge the performance of the pipeline and improve on it for the next iteration.
-Results: 
-The final extraction pipeline involved 8 LLM steps and 3 non-LLM steps costing around 33 cents/paper: 
-Pass 1: Sonnet 4.6 generates a dossier of all the plastic degrading enzymes in the paper and the experiments those enzymes participated with the corresponding substrates in using chronological thinking (followed steps while outputting “thinking”, ie: producing a full list of proteins, then eliminating the non-plastic ones, etc).                                                                                                  
-Pass 2: using the dossier from pass 1 Sonnet 4.6 extracts the relevant protein and activity data along with the exact verbatim evidence sentence the value was pulled from.
-Verification step 1: Using regex to check if the verbatim evidence sentences truly originated from the papers or were hallucinated
-Verification step 2: Using simple python, the enzyme-substrate combinations from the dossier in pass 1 is compared to the extracted list in pass 2, any new proteins are flagged for review (making it easier for later LLM steps will check) and any missing proteins are added in a notes section for LLM review
-Verification step 3: A list of substrates is generated and compared against an exhaustive list of substrates to lightly flag any substrates not found in the list (making it easier for later LLM steps will check)
-Verification step 4: Sonnet 4.6 is given a list of the proteins extracted and their substrates and checks to see if they are actually tested on plastic substrates. Removes any proteins that aren’t with associated protein data.                                                                              
-Rescue step 4.1: Sonnet 4.6 checks if any proteins that are tested against plastic/rubber substrates, are not mentioned in the list, adds them if they are
-Verification step 5: Sonnet 4.6 is given the extracted values, the variable type (temp, ph, etc) and their associated evidence sentences to check if the values are correct and originate from the evidence sentence, the LLM will replace any incorrect values with either the correct value (if present in the evidence sentence) or “Not_Found”
-Rescue step 5.1: Sonnet 4.6 is given the full papers and the extracted values that have “Not_Found” in the list, and looks for their actual values and an accompanying evidence sentence, verification step 4 is rerun on these sentences.
-Verification step 6: Sonnet 4.6 is given the full paper and groups of variables and proteins that are associated with each other, then asked to ensure that each “relational pool” is correctly associated. Any values that aren’t are flagged.
-Rescue step 6.1: Sonnet 4.6 takes the flagged values and associates them with the correct relational pool                                                                         
-When tested against synthetic controls the final version of the pipeline scored high:                          
-100% decoy rejection rate (no false positives) 
-99.3% (152/153) Valid Spike-in Capture Rate (true positives)
-100% (152/152) Relational linkage Assays and Proteins 
-98.8% (712/720) Assay Variable Extraction Rate 
-98.0% (196/200) Activity Metric Extraction Rate 
-When benchmarked against the other anthropic models Sonnet outperformed the other models with 95.0% Precision, 87.1% Recall, 90.9% F1 Score, 97.7% Global Metric Accuracy. Haiku: 90.1% Precision, 81.5% Recall, 85.6% F1 Score, 94.4% Global Metric Accuracy. Opus: 100.0% Precision, 9.1% Recall, 16.7% F1 Score, 98.1% Global Metric Accuracy (severely limited by under-extraction). And while the proteins extracted by the models varied, the proteins the models did agree on extracted the exact same data with minor formatting differences.
-An initial run of this pipeline on ~4k papers yielded 27,244 experiments, 31,441 enzyme records (after merging 419 duplicates) and 61,771 measurement rows. PET and related compounds make up 32% of retained measurements and aliphatic polyesters (PCL, PLA, PHA, PBS) another 29%. Polyolefins are 7%, polyurethane 5% and polystyrene 4%. The most measured enzymes are Proteinase K, laccase, LCC-ICCG, PETase, IsPETase and HiC. About 19% of enzyme records are engineered mutants.
+#### Literature Ingestion Pipeline
+
+To populate the PETra database and overcome manual curation bottlenecks an automated literature ingestion pipeline was engineered. Over 11,000 initial document identifiers were gathered using the PAZy API, PETadex sequence accessions and targeted keyword searches. These were filtered into 900 highly relevant seed papers through an automated primary screen. By mapping forward and backward citations a pool of 50,000 new candidate articles was generated. This expanded pool was filtered down to roughly 4,600 critical papers during a secondary screening. Full texts were then retrieved and converted into structured JSON formats using Docling, Grobid and PyMuPDF. A preliminary extraction was run to identify tested substrates alongside metadata like country of origin and publication date. An analysis of this data spread is presented in the figure below. Moving forward the pipeline will be executed again using 3,700 newly captured papers as seeds and supplementary file scraping will be incorporated for exhaustive coverage. 
+
+#### Automated LLM Based Literature Extraction Pipeline Development
+
+To isolate experimentally validated enzymes, wet lab assays and plastic degradation activity metrics from the existing literature, an automated large language model extraction pipeline was developed. A 0% false positive rate and a 99.3% true positive capture rate were achieved during optimization against synthetic controls. In cross model benchmarking the strongest performance was delivered by Claude Sonnet (95.0% precision, 87.1% recall) outperforming Opus and Haiku. When evaluated against 32 double scraped papers zero hallucinated enzymes were reported. Key degradation activity metrics were successfully matched with human curators alongside assay conditions like temperature (90%) and plasmid construction (95%). Applied across roughly 4,000 papers a database was produced containing 51,455 cleaned measurement entries across 31,441 enzymes. Diverse plastics are covered including PET, PCL, PLA, PHA, PBS, PUR and PS. Moving forward the data will be integrated into PETadex for free public use while the pipeline is optimized to ingest supplementary files and benchmarked on a larger dataset. 
 
 
 ### Schema Design and Extraction Protocol
@@ -410,18 +424,18 @@ In addition to an automated scraping pipeline, 20+ scrapers spent 450+ hours man
 
 The schema was created under 3 guiding principles: 1) Standardization in variables, experiment conditions, and units via dropdown selections to support effective data analysis and transferability to LLM guidelines. 2) Structure & Traceability, where autogenerated experiment and enzyme IDs let every extracted data point be backsourced. 3) Guardrailing with built-in error checks to reduce human errors and missing data entries.
 
-Every paper was also independently extracted by two or more scrapers, with 78% of the corresponding raw un-reconciled data agreeing within 10%, which supports the schema's strength as an organizer. However, a non-trivial portion of data entries have no matches between pairs of scrapers as a result of scraper(s) overlooking sections of the papers. This showcases how even non-automated pipelines for data extraction are fallible to errors, lending strength to the potential benefits of a rigorous LLM-based model
+Every paper was also independently extracted by two or more scrapers, with 78% of the corresponding raw unreconciled data agreeing within 10%, which supports the schema's strength as an organizer. However, a non-trivial portion of data entries have no matches between pairs of scrapers as a result of scraper(s) overlooking sections of the papers. This showcases how even non-automated pipelines for data extraction are prone to errors, lending strength to the potential benefits of a rigorous LLM-based model.
 
 To-Do: Manually reconcile discrepancies between scrapers to create a finalized ground truth for each double-scraped paper.
 
-<Figure src="/figures/dry-lab-model/human-scraping-composite.png" alt="Human scraping composite figure" width="100%" />
+<Figure src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/human-scraping-composite-v2.avif" alt="Human scraping composite figure" width="100%" />
 
 **Figure X.** (A) Project workflow. (B) Most common substrates amongst the 61 scraped papers. (C) Most common independent variables and (D) Most common quantities measured in experiments (372 experiments tallied). (E) Melting temperature distribution of wild-type and engineered enzymes. (F) Optimum temperature distribution (G) Optimum pH distribution, split by PET-related vs other substrates; dashed line = median. (H) Agreement between scrapers (pre-reconciliation) on comparable experiment data entries.
 
 
 ### Human vs LLM Agreement
 
-Finally when checking 26 LLM extracted papers against 26 double-human verified papers large discrepancies remain both between the LLM-Human comparisons and Human-Human comparisons. The LLM found 70% of enzymes either human listed (a second human finds 83%) and 90% of those both humans agreed on. Only 7 of 180 LLM enzyme names had no human match, and those were naming variants or whole-cell entries. When the enzyme and value match, the LLM's pH agrees 80% of the time (a second human: 91%) and buffer 75% (84%). The errors are usually a condition borrowed from another assay in the same paper, like pH 7 versus 8 for IsPETase, or 37 versus 50 °C for Dkca1. Temperature (92%) and plasmid (95%) are good.
+Finally, when checking 26 LLM-extracted papers against 26 double-human-verified papers, large discrepancies remain both between the LLM-Human comparisons and Human-Human comparisons. The LLM found 70% of enzymes that either human listed (a second human finds 83%) and 90% of those both humans agreed on. Only 7 of 180 LLM enzyme names had no human match, and those were naming variants or whole-cell entries. When the enzyme and value match, the LLM's pH agrees 80% of the time (a second human: 91%) and buffer 75% (84%). The errors are usually a condition borrowed from another assay in the same paper, like pH 7 versus 8 for IsPETase, or 37 versus 50 °C for Dkca1. Temperature (92%) and plasmid (95%) are good.
 
 ### Kinetics Dataset
 
@@ -505,35 +519,30 @@ The two datasets meet in a loop. Rather than testing only the candidates the mod
 
 ### Embedding Controls
 
-Using the ESMC-XXXM Protein Language Model (PLM), we generated embeddings for X 30%pid PETadex centroids. These X dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library, resulting in Figure 1.
+Using the ESMC-600M Protein Language Model (PLM), we generated embeddings for the 30%pid PETadex centroids. These 640 dimensional embeddings were then UMAPed to 2 dimensions using the umap-learn (https://umap-learn.readthedocs.io/en/latest/) Python library.
 
-
-<Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-cath.avif"
-  alt="UMAPed enzymes, coloured by CATH domain"
-/>
-
-Noticing apparent clusters by CATH domains in the UMAP (See Figure 1), we ran further analysis to characterize these clusters, and investigate outliers. Silhouette scores found that most CATH domains were indeed highly clustered, minus Alpha/Beta Hydrolases, but since these make up ~⅔ of the PETadex, we would not expect them to be as tightly clustered. The distribution of silhouette scores per CATH domain is shown in Figure 2.
-
-<Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/silhouette.avif"
-  alt="Silhouette scores per CATH domain"
-/>
-
-Notebook: 
-https://github.com/petadex/igemtoronto/blob/main/notebooks/260324_issue51_clusterquantification.ipynb (issue #51) 
+<ImageGrid>
+  <Figure
+    src="/figures/dry-lab-model/cluster_plot.avif"
+    alt="Family atlas UMAP of PETadex centroids, coloured by CATH domain"
+  />
+  <Figure
+    src="/figures/dry-lab-model/Domain640.avif"
+    alt="Silhouette scores per domain cluster for the 640-dimensional embeddings"
+  />
+</ImageGrid>
 
 Finally, we ran controls on this UMAP to verify that this clustering does not appear by chance. Our objectives are the following: 
 Generate negative controls (random and shuffled sequences) from the 64,730 family representatives, designed to disentangle amino-acid composition from sequence order.
 Generate positive / real-world controls (random UniProt proteins, real-sequence fragments) for comparison against the real centroids.
 
-
-Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in Figure 3. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
-
 <Figure
-  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/umap-controls.avif"
-  alt="UMAP of PETadex enzymes against controls"
+  src="/figures/dry-lab-model/real_vs_controls_stacked.avif"
+  alt="Real PETadex embeddings overlaid with shuffled, 90% fragment and random UniProt controls, in three panels"
+  width="100%"
 />
+
+Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in the figure above. We found that the shuffled sequences and random/matched/empirical controls form their own "junkyard" regions, far away from PETadex sequences, UniProt embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
 
 ### Domain Adapted ESM-LoRA
 

@@ -15,7 +15,7 @@
 > **Author:** Alexander Leonardos\
 > **Date Started:** July 25th, 2026\
 > **Date Finished:** July 26th, 2026\
-> **Input:** `s3://petadex/logan/petadex.catalytic_orfs.v1.1.fa` - Note that this is from Petadex V1, which is fine for this benchmarking experiment.\
+> **Input:** `s3://petadex/logan/petadex.catalytic_orfs.v1.1.fa` - Note that this is from PETadex V1, which is fine for this benchmarking experiment.\
 > **Output:** `s3://petadex-protein-structures/esmfold2_paramsweep/`
 
 ---
@@ -83,7 +83,7 @@ print("fa  :", OUT_FASTA)
 
 ## 2. Make the Subset we will be testing on:
 
-This subset will consist of ORFs that have a ground-truth PDB. Additionally, most of this subset will have ground truths from after the ESMFold2 training cut-off, but will include some from before the training cutoff as a positive control.
+This subset will consist of ORFs that have a ground-truth PDB. Additionally, most of this subset will have ground truths from after the ESMFold2 training cutoff, but will include some from before the training cutoff as a positive control.
 
 ### 2a. Find which ORFIds have a PDB Structure, and map catalytic cores ORFIDs -> PDB structures (direct accession + via UniProt). This is ok since the cores and the full sequences from the ORFs file share the same ORFids.
 
@@ -426,8 +426,8 @@ print(f"est fold time @25.6 res/s (repeats=1): {Ls.sum()/25.6/60:.0f} min/config
 Results are reported for the following parameter combinations. Note that the Biohub paper reported results for both 10 and 20 loops, and reported that quality metrics stopped increasing after 68 diffusion steps.
 
 1.  100 Steps, 20 Loops: Upper Ceiling
-2.  68 Steps, 20 Loops Default Steps, Higher Loops
-3.  68 Steps, 10 Loops Default Steps, Lower Loops
+2.  68 Steps, 20 Loops: Default Steps, Higher Loops
+3.  68 Steps, 10 Loops: Default Steps, Lower Loops
 4.  32 Steps, 10 Loops: Lower the Steps
 5.  68 Steps, 5 Loops: Lower the Loops
 6.  32 Steps, 5 Loops: Lower Bound
@@ -1055,8 +1055,8 @@ fig.suptitle("Self-confidence across parameter configs"); fig.tight_layout(); pl
 
 ## 5. Conclusions
 
-Since there is such little difference in both the TM-ref scores and self confidence metrics between the groups, my conclusions are determined by prior research and the runtime values from this experiment.
+Since there is such little difference in both the TM-ref scores and self-confidence metrics between the groups, my conclusions are determined by prior research and the runtime values from this experiment.
 
-After doing this analysis, I think that we should proceed with the default parameters of 68 diffusion steps and 10 loops. The 10 loops will make it the full folding significantly less time-consuming while the 68 diffusion steps are supported by the original study. 
+After doing this analysis, I think that we should proceed with the default parameters of 68 diffusion steps and 10 loops. The 10 loops will make the full folding significantly less time-consuming while the 68 diffusion steps are supported by the original study. 
 
 Additionally, this experiment was originally supposed to examine active-site-specific metrics to assess if the param tuning would affect ESMFold2's PETase active site folding which is the most important region. However, given the high identity of predictions between the different param combos, I have decided to forgo this analysis.

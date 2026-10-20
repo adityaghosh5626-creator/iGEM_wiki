@@ -13,6 +13,9 @@ pages:
   # A runner-level maximum timeout still takes precedence over this value.
   timeout: 30 minutes
   cache:
+    # Reuse existing downloads without writing a new cache archive on the
+    # shared runner, which can run out of disk after the build.
+    policy: pull
     key:
       prefix: npm-node-20
       files:

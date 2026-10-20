@@ -1,0 +1,56 @@
+<EngineeringStage id="design">
+
+We assembled a reference design, the Pioreactor, identifying strengths and areas for improvement. We also discussed the importance of key features, most notably, user friendly controls, with key stakeholders: the CEO of Pioractor and Patricia, one of our wetlab members. We compiled these notes together onto a shared white-board, and used them to inform and justify our first set of requirements (link to requirements V1) and subsystems diagram. This phase also required choosing our initial components from the microcontroller to OD sensor [link].
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview1.avif"
+  alt="overview1"
+  caption="Figure 1: Sticky notes contain team thoughts on Pioreactor design and stakeholder input [Left] and fully assembled Pioreactor [Right]"
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview2.avif"
+  alt="overview2"
+  caption="Figure 2: First subsystem diagram Arrows show control signal connections between electronic components. "
+/>
+
+</EngineeringStage>
+
+<EngineeringStage id="build">
+
+In V1, we built subsystems separately to enable independent testing of temperature control, power distribution, peristaltic pumps, optical density (OD) and more. This meant wiring circuits on breadboards for quick prototyping, making separate CAD designs for different subsystem tests (i.e, a separate CAD model for OD vs temperature testing), and using substitutes for plastic where possible (i.e. cardboard to surround the heating plate or a falcon tube for mixing tests. The overall design had two power lines: external power for the power-intensive heater and pumps, and 5V power from the breadboard for sensors, smaller components, and control of pumps and heaters.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview3.avif"
+  alt="overview3"
+  caption="Figure 3: Securing heating plate with temporary cardboard holder during prototyping phase. "
+/>
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview4.avif"
+  alt="overview4"
+  caption="Figure 4: Magnetic stir bar rotates through heating plate using PC fan "
+/>
+
+</EngineeringStage>
+
+<EngineeringStage id="test">
+
+We tested the temperature control, optical density (OD), peristaltic pump, and stirring systems independently. The temperature control tests showed that the heater can raise the internal temperature to approximately 56.56 °C without insulation and sense temperature within +/- 0.5 °C. The OD sensors were shown to detect both transparent and opaque materials as changes in optical density. The peristaltic pump fluid output (oz) was measured at varying power inputs. The range of possible RPMs for the stir bar was also measured.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview5.avif"
+  alt="overview5"
+/>
+
+</EngineeringStage>
+
+<EngineeringStage id="learn">
+
+From testing, we learned that the PC fan’s lowest RPM was too high to support bacterial growth, requiring a replacement part, the OD sensor location needed to be raised to a specific height to avoid stir bar interference, and that the peristaltic pump needed a power input of at least 60%. Several circuitry bugs also surfaced, including the need for a transistor for the peristaltic pump circuit. Performing a “post mortem” on our design, we identified designing the user interface as a major next step.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/overview6.avif"
+  alt="overview6"
+/>
+
+</EngineeringStage>
+

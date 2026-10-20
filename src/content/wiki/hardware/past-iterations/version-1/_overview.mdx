@@ -1,0 +1,102 @@
+import { CycleContent } from "../../../../../components/engineering/CycleContent.js"
+import { ENGINEERING_ART } from "../../../../../data/engineeringCycles.js"
+import CycleNotes from "./_cycle.mdx"
+
+## DBTL
+
+<CycleContent
+  Content={CycleNotes}
+  stacked
+  wheelWidth="18rem"
+  panelId="hardware-version-1-cycle-content"
+  titleId="iteration-overview"
+  art={{ ...ENGINEERING_ART, centerImage: "" }}
+/>
+
+## Stakeholder Information/Interviews
+
+To inform the design of our bioreactor, we decided to consult a few key expert opinions in order to truly understand the design space and audience we are building the bioreactor for. Here is a summary of the V1 stakeholders and how their input impacted V1 of our bioreactors. For more details, please consult [the stakeholder section on our Motivation page](/hardware/motivation/#stakeholders).
+
+<br />
+
+**Dr. Artem Babaian, iGEM Toronto PI and Director of RNALab:** As the primary stakeholder for the bioreactor project, Dr. Babaian’s input guided many of the bioreactor’s constraints. These included the wattage constraints, concerns from heating and safety, restriction on Wifi as a means of communication between bioreactors. He also defined the key use case of the bioreactors: growing genetically-modified E.coli expressing PETases. He suggested that, when lysed, the PETase activity will correspond to plastic degradation of PET filament or an associated marker.
+
+<br />
+
+**Dr. Matthew Mackay, Mechanical and Mechatronics Engineering Professor:** In our two interviews with Dr. Mackay, we verified that the Raspberry Pi microcontroller was over-powered for the task of powering one single bioreactor. He recommended either using less powerful and expensive microcontrollers for a cheaper price or using one Raspberry Pi to power multiple microcontrollers. He also encouraged us to develop an intentional power-distribution budget and plan (~300 W total for 90 bioreactors), including considering scheduling of heaters and pumps to reduce peak power demands.
+
+<br />
+
+**Cameron Davidson-Pilon, CEO of Pioreactor:** Our interview with Cameron Davidson-Pilon taught us his company prioritizes an open-source and simple design that works for both hobbyists and researchers. He commented on the regrets he had when designing the Pioreactor, including having exposed wiring, using the Raspberry Pi instead of a more user-friendly microcontroller (ESP32), and the 1:1 ratio between microcontroller and Pioreactor. These comments informed testing of our microcontroller options and requirements on parallelizability and shielding of electronics from water.
+
+<br />
+
+**Patricia Rea, iGEM Toronto Wetlab Lead:** Patricia Presentation In our interview with Patricia, we learned the importance of an interface and design that appears friendly not only to engineers but also to wet lab researchers who are less familiar with setting up microcontrollers and other electronics. Her input encouraged us to design “friend-shaped” features where possible, including in connecting to and setting up the bioreactor.
+
+## Main objective
+
+<br />
+
+We wanted to first define a successful architecture for our bioreactor, prototype, and test the subsystems individually as part of our V1, so that we could focus on their integration in later iterations. These initial requirements were a foundation for all future versions of the bioreactor.
+
+## Overarching requirements
+
+<br />
+
+Listed below were our key requirements for each subsystem during our first DBTL cycle.
+
+<br />
+
+| Subsystem           | Requirements Summary                                                                                                                                                                                       | Link for More Details                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| CAD                 | The arrangement of electronics and components should be optimized to prevent heat loss from the heater, spillage of media on electronic components, and ensure overall ergonomics and structural strength. | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.hmh3dsqc2ggl)                        |
+| Temperature Control | Temperature requirements aim to maximize temperature range, minimize time to reach a target temperature, and increase temperature stability.                                                               | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.uqnrjtnw1ugr)                        |
+| Power Management    | The power supply shall be able to power all components reliably when needed and shut down in case of failure.                                                                                              | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.ryfgfmvfm6c6#heading=h.85zvw97o6t5x) |
+| Pumps               | Each pump adds a different solvent to the bioreactor solution. Pumps must provide highly controlled dosages for precise media control.                                                                     | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.v4x46r7o2gwj#heading=h.85zvw97o6t5x) |
+| OD                  | OD600 readings can be normalized, indicate bacterial growth, and be compared with other instruments.                                                                                                       | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.jggi69eglo1v)                        |
+| Data & Controls     | The bioreactors shall transfer data to a central hub with a user-friendly control system capable of controlling 96 bioreactors in parallel.                                                                | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.s252p6bh162x#heading=h.85zvw97o6t5x) |
+| Stirring            | Stirring speed is limited to a range of 150–300 RPM for optimal bacterial growth.                                                                                                                          | [View Details](https://docs.google.com/document/d/1XqDSFrKOeAtDRtfWO_U8hXKZOEX51vfcJtZGsivlTsA/edit?tab=t.4nwhsnjahan0)                        |
+
+## BoM
+
+<br />
+
+| Component                             | Price (CAD)           |
+| ------------------------------------- | --------------------- |
+| FIT0845 heater                        | $5.16                 |
+| DFR0198 temperature probe             | $15.20                |
+| SRSZ-05VDC-SH relay                   | $6.92                 |
+| Adafruit 1467 thermal interface       | $2.14                 |
+| Aluminum foil                         | $0.08                 |
+| Heater mount (Onyx, 3D printed)       | $2.04                 |
+| USB-C PD/USB-A QC trigger board       | $2.79                 |
+| 8-port 200W multi-charger (1/8 share) | $3.82                 |
+| USB C-C cable                         | $1.78                 |
+| Peristaltic pump with tubing          | $35.18                |
+| Transistor (TIP142)                   | $6.98                 |
+| Diode (1N5819)                        | Included in kit       |
+| Resistor (2.2 kΩ)                     | Included in kit       |
+| Power supply (5V)                     | Free (reused charger) |
+| Arduino Nano                          | $8.00                 |
+| USB hub                               | $15.55                |
+| USB-C to USB-C mini cable             | Included in kit       |
+| Photodiode (AS7343) ×2                | $56.26                |
+| LED                                   | $0.09                 |
+| Jumper wires                          | $0.67                 |
+| Fan (Sunon MF40201V1)                 | $17.64                |
+| Neodymium magnets                     | $4.50                 |
+| Magnetic stir bar                     | $16.00                |
+| OD / vial holder print (V1.1)         | $1.07                 |
+| Pump / protoboard holder print (V1.1) | $0.96                 |
+| **Total**                             | **$202.83**           |
+
+### Equipment
+
+<br />
+
+| Component           | Purpose                                                                                            | Cost (CAD)     | Sourcing Link                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------- |
+| Super glue          | Adhesive for attaching neodymium magnets to the fan.                                               | $14.00         | [View Product](https://www.amazon.ca/dp/B08XJGKH5J) |
+| USB Cable Multipack | USB connections for programming and reading from microcontrollers, as well as powering components. | $19.88         | [View Product](https://www.amazon.ca/dp/B0CQ9M4CMH) |
+| Circuitry Kit       | Supplies wires, resistors, and breadboards for prototyping circuit features.                       | $38.00 (for 2) | [View Product](https://www.amazon.ca/dp/B07P1GWN3F) |
+| Cable Kit           | Provides connections between components for easy wiring, specifically STEMMA QT connectors.        | $12.00         | [View Product](https://www.amazon.ca/dp/B08HQ1VSVL) |

@@ -1,11 +1,151 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Data and controls design used in Version 1.
+<br />
 
-#### Design decisions and changes
+This subsystem regulates the transfer of data from the bioreactor to software, as well as controls from software to the bioreactor.
 
-Placeholder: explain the initial Data and controls design choices.
+<br />
 
-#### Testing and lessons
+| Requirement                                                                                                                                                                                                                                                                                                         | Priority | Why (are we considering this)?                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bioreactor data are transmitted to the computer**<br /><br />Metrics & Criteria: Data from the bioreactor are transmitted without significant lag<br /><br />Constraints: Frequency of data transmission                                                                                                          | High     | This criteria is based on our findings of general necessary functions of bioreactor user interfaces through observations when building a similar device, the pioreactor.                              |
+| **Controls are transmitted to the bioreactors**<br /><br />Metrics & Criteria: Controls from the laptop are transmitted without significant lag<br /><br />Constraints: Frequency of data transmission                                                                                                              | High     | This criteria is based on our findings of general necessary functions of bioreactor user interfaces through observations when building a similar device, the pioreactor.                              |
+| **Bioreactor Data is displayed on a user interface**<br /><br />Metrics & Criteria: Must display at least one piece of information from the bioreactor about at least the following parameters: temperature, pH, OD<br /><br />Constraints: Transmitted bioreactor data may occasionally not contain updated values | Medium   | This criteria is based on our findings of general functions of bioreactor user interfaces through observations when building a similar device, the pioreactor.                                        |
+| **Can connect multiple bioreactors to a single laptop**<br /><br />Metrics & Criteria: the more bioreactors connected to a single laptop the better<br /><br />Constraints: Limited number of USB ports in a USB hub without significant signal distortion                                                          | Medium   | This criteria is based on our team’s initial goals; to efficiently conduct many bioreactor experiments in parallel.                                                                                   |
+| **User interface is user friendly**<br /><br />Metrics & Criteria: text must be legible, buttons should be easy to identify, software should be easy to navigate<br /><br />Constraints: Software must be built using free tools                                                                                    | Low      | This criteria is based on our discussion with one of the wet lab leads, Patricia, who described their desired user interface, highlighting the importance of developing software that is easy to use. |
 
-Placeholder: add Version 1 test results, limitations, and lessons for Data and controls.
+### BoM
+
+<br />
+
+<table>
+  <colgroup>
+    <col style={{ width: "26%" }} />
+    <col style={{ width: "36%" }} />
+    <col style={{ width: "23%" }} />
+    <col style={{ width: "15%" }} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th scope="col">Component</th>
+      <th scope="col">Purpose</th>
+      <th scope="col">Cost</th>
+      <th scope="col">Sourcing Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>USB Hub</td>
+      <td>Connect multiple Arduinos to a single port on laptop to read and write data from and to them</td>
+      <td>$15.55</td>
+      <td><a href="https://www.amazon.ca/dp/B0C2K52TMQ">Amazon</a></td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr><th colSpan={4} scope="rowgroup" style={{ textAlign: "center" }}>Test Equipment</th></tr>
+    <tr>
+      <td>Arduino Nano</td>
+      <td>Microcontroller to produce PWM signal and run code</td>
+      <td>$8</td>
+      <td><a href="https://www.amazon.ca/dp/B08HVPMLKG">Amazon</a></td>
+    </tr>
+    <tr>
+      <td>USB-C to USB-C mini cable (for Arduino Nano)</td>
+      <td>To connect the Arduino to the laptop</td>
+      <td>Included in kit</td>
+      <td><a href="https://www.amazon.ca/dp/B0CQ9M4CMH">Amazon</a></td>
+    </tr>
+    <tr>
+      <td>Laptop</td>
+      <td>To run the user interface</td>
+      <td>N/A</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td>Python</td>
+      <td>Software development for the dashboard</td>
+      <td>Free</td>
+      <td><a href="https://www.python.org/">Python</a></td>
+    </tr>
+  </tbody>
+</table>
+
+### Build, Assembly, Code
+
+We first started by developing a system architecture diagram to map out the data transfer between the bioreactors and the laptop.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data1.avif"
+  alt="data 1"
+/>
+
+When developing the system architecture, we explored various possible methods to connect the bioreactors to the laptop. We considered using Wi-Fi, Bluetooth, USB FlashDrive, and USB serial ports. Upon analyzing the advantages and disadvantages of each of these methods, we settled on using USB serial ports for data and controls transmission. When searching for the corresponding hardware, we came across USB hubs which connect multiple USB connections to a single port on a laptop. Then, we mapped out the following hardware flow diagram to better visualize those connections assuming we have 7 available USB ports.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data2.avif"
+  alt="data 2"
+/>
+
+<br />
+While powered and non-powered USB hubs were tested, the powered USB hubs failed
+to transmit signal and only delivered power. Thus, the team decided to use
+non-powered USB hubs.
+
+Following this decision, we developed a flowchart to understand the software flow between the user interface and the bioreactor hardware.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data3a.avif"
+  alt="data 3a"
+/>
+
+Then, the team designed a prototype representing the ideal user interface
+layout, to visualize the required content and widgets on the dashboard:
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data3b.avif"
+  alt="data 3b"
+/>
+Furthermore, a general JSON template was developed to improve compatibility
+between the Arduino and software:
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data4.avif"
+  alt="data 4"
+/>
+
+To implement this user interface, Grafana was initially used. In preliminary
+stages, the dashboard looked like below:
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data5.avif"
+  alt="data 5"
+/>
+However, upon conducting research, we realized that the Grafana dashboard did
+not permit sending controls to the Arduino. Thus, the team decided to seek
+alternative methods to develop the user interface.
+
+The next iteration of the user interface was developed in Python and was hosted on the local terminal. Since there were many bugs and the user interface did not have any visual components, it did not meet the requirements of displaying the information in a user-friendly manner. Thus, the team decided to further seek alternative methods of displaying the data.
+
+Upon exploring the development of the user interface using Python and Tkinter, the following prototype was developed:
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/data6.avif"
+  alt="data 6"
+/>
+
+While it includes several buttons and a slider and shows a sample layout that includes preliminarily necessary components of the user interface, the software does not look easy to read, there are no colours, and the graphing feature was not yet implemented. Furthermore, the connection between the Arduino and user interface was not yet implemented at this stage.
+
+### Design of Experiments (DoE)
+
+#### Testing the different USB hubs
+
+To determine which type of USB hub could reliably connect an Arduino Nano to a laptop, both powered and non-powered USB hubs were tested. We observed whether the Arduino was recognized by the laptop by observing the COM ports through device manager to ensure a serial connection was established.
+
+### Metrics and Experimental Data
+
+#### Testing the different USB hubs
+
+When the Arduino Nano was connected to the powered USB hub, the Arduino did not establish a connection with the laptop. However, when connected to the non-powered USB hub, the Arduino was successfully recognized by the laptop and appeared in Device Manager as connected through a COM port. Based on these results, we chose to use non-powered USB hubs.
+
+### Next Steps
+
+Moving forward, the user interface must be significantly improved so that the software can be accessible to researchers. This includes ensuring data can be transferred from the Arduino to the user interface, verifying that controls can be received by the Arduino, adding more buttons and sliders, building graphing features, testing whether the program can be launched with minimal steps, and ensuring that text and visuals are easy to interpret and navigate.

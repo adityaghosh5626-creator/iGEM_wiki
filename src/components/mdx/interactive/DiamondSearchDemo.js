@@ -43,10 +43,10 @@ const SOURCE_LONG = {
 /** The loading scene's length. The real search takes about 45 seconds. */
 const SCENE_MS = 2000
 
-const fmtInt = n => Number(n).toLocaleString("en-US")
+const fmtInt = (n) => Number(n).toLocaleString("en-US")
 
 /** Hits store log10(E-value); null means it underflowed past 1e-300. */
-const fmtEvalue = e => {
+const fmtEvalue = (e) => {
   if (e == null) return "< 1e-300"
   const x = Math.round(e)
   return x >= -1 ? Math.pow(10, e).toPrecision(2) : `1e${x}`
@@ -55,8 +55,8 @@ const fmtEvalue = e => {
 const coverage = (hit, queryLen) => (hit.q[1] - hit.q[0] + 1) / queryLen
 
 const SORTS = {
-  bs: { label: "Bit score", of: h => h.bs },
-  pid: { label: "Identity", of: h => h.pid },
+  bs: { label: "Bit score", of: (h) => h.bs },
+  pid: { label: "Identity", of: (h) => h.pid },
   cov: { label: "Query coverage", of: (h, len) => coverage(h, len) },
 }
 
@@ -96,7 +96,7 @@ export const DiamondSearchDemo = () => {
     const finishAt = shardRefs.current.map(() => 0.45 + Math.random() * 0.35)
     const started = performance.now()
 
-    const frame = now => {
+    const frame = (now) => {
       const f = Math.min(1, (now - started) / SCENE_MS)
       let done = 0
       shardRefs.current.forEach((el, i) => {
@@ -105,8 +105,7 @@ export const DiamondSearchDemo = () => {
         if (state === "done") done += 1
         if (el.dataset.state !== state) el.dataset.state = state
       })
-      if (barRef.current)
-        barRef.current.style.width = `${(f * 100).toFixed(1)}%`
+      if (barRef.current) barRef.current.style.width = `${(f * 100).toFixed(1)}%`
       if (stageRef.current) {
         stageRef.current.textContent =
           f < 0.12
@@ -141,18 +140,18 @@ export const DiamondSearchDemo = () => {
     const root = rootRef.current
     if (!root || typeof IntersectionObserver !== "function") return undefined
     const io = new IntersectionObserver(
-      entries => {
+      (entries) => {
         if (!entries[0].isIntersecting) return
         io.disconnect()
         play()
       },
-      { threshold: 0.35 },
+      { threshold: 0.35 }
     )
     io.observe(root)
     return () => io.disconnect()
   }, [play])
 
-  const selectQuery = i => {
+  const selectQuery = (i) => {
     setQueryIndex(i)
     setOpenRank(-1)
     play()
@@ -170,7 +169,8 @@ export const DiamondSearchDemo = () => {
       })
     const of = SORTS[sort].of
     return picked.sort(
-      (a, b) => of(b.hit, query.len) - of(a.hit, query.len) || a.rank - b.rank,
+      (a, b) =>
+        of(b.hit, query.len) - of(a.hit, query.len) || a.rank - b.rank
     )
   }, [query, source, minIdentity, sort])
 
@@ -178,199 +178,188 @@ export const DiamondSearchDemo = () => {
   // identity, not the highest identity in the list — the label says so.
   // When the query is itself in the corpus, skip its own exact match.
   const exactSelf = query.hits.length > 0 && query.hits[0].pid === 100
-  const others = query.hits.filter(h => h.pid < 100)
+  const others = query.hits.filter((h) => h.pid < 100)
   const best = (exactSelf && others.length ? others : query.hits)[0]
 
   return (
     <Wrap>
-      <ExpandWindow
-        title="DIAMOND search demo"
-        inlineTitle={false}
-        ground={PAPER}
-      >
-        {open => (
-          <Demo ref={rootRef} $open={open}>
-            <Head>
-              <div>
-                <Kicker>Demo · replays of real searches</Kicker>
-                <Title>What is this enzyme? Ask its neighbours.</Title>
-                <Sub>
-                  Pick a known plastic-degrading enzyme to replay its search
-                  against every protein in PETadex. Each result is a real search
-                  run on the live tool, trimmed to its top hits.
-                </Sub>
-              </div>
-              <Cta href={SEARCH_URL} target="_blank" rel="noopener noreferrer">
-                Search your own sequence →
-              </Cta>
-            </Head>
+      <ExpandWindow title="DIAMOND search demo" inlineTitle={false} ground={PAPER}>
+        {(open) => (
+    <Demo ref={rootRef} $open={open}>
+      <Head>
+        <div>
+          <Kicker>Demo · replays of real searches</Kicker>
+          <Title>What is this enzyme? Ask its neighbours.</Title>
+          <Sub>
+            Pick a known plastic-degrading enzyme to replay its search against
+            every protein in PETadex. Each result is a real search run on the
+            live tool, trimmed to its top hits.
+          </Sub>
+        </div>
+        <Cta href={SEARCH_URL} target="_blank" rel="noopener noreferrer">
+          Search your own sequence →
+        </Cta>
+      </Head>
 
-            <Chips role="group" aria-label="Example queries">
-              {DEMO.queries.map((q, i) => (
-                <Chip
-                  key={q.slug}
-                  type="button"
-                  title={q.org}
-                  aria-pressed={i === queryIndex}
-                  onClick={() => selectQuery(i)}
-                >
-                  {q.name}
-                </Chip>
+      <Chips role="group" aria-label="Example queries">
+        {DEMO.queries.map((q, i) => (
+          <Chip
+            key={q.slug}
+            type="button"
+            title={q.org}
+            aria-pressed={i === queryIndex}
+            onClick={() => selectQuery(i)}
+          >
+            {q.name}
+          </Chip>
+        ))}
+      </Chips>
+
+      <QueryBox>
+        <div>
+          <QueryName>{query.name}</QueryName>
+          <QueryMeta>
+            {query.org} · {query.len} aa · {query.blurb}
+          </QueryMeta>
+        </div>
+        <Go type="button" onClick={play} disabled={running}>
+          {running ? "Searching…" : "Search"}
+        </Go>
+        <Fasta aria-label="Query sequence">
+          {">"}
+          {query.name}
+          {"\n"}
+          {query.seq}
+        </Fasta>
+      </QueryBox>
+
+      <Loading hidden={!running} aria-live="polite">
+        <Stage>
+          <strong ref={stageRef}>Parsing query…</strong>
+          <Mono ref={countRef} />
+        </Stage>
+        <Shards aria-hidden="true">
+          {Array.from({ length: DEMO.db.shards }, (unused, i) => (
+            <Shard
+              key={i}
+              data-state="idle"
+              ref={(el) => {
+                shardRefs.current[i] = el
+              }}
+            />
+          ))}
+        </Shards>
+        <Progress>
+          <i ref={barRef} />
+        </Progress>
+        <Note>
+          Sped-up replay. On petadex.net, {DEMO.db.shards} cloud workers each
+          search one shard in parallel; a real search takes about 45 seconds.
+        </Note>
+      </Loading>
+
+      <Results hidden={running}>
+        <Summary>
+          <Stat>
+            <b>
+              {fmtInt(query.n)}
+              {query.n >= DEMO.db.depth ? "+" : ""}
+            </b>
+            <span>hits found (E &lt; 0.001)</span>
+          </Stat>
+          <Stat>
+            <b>{best ? `${best.pid.toFixed(1)}%` : "—"}</b>
+            <span>
+              {exactSelf
+                ? "identity of the top hit that isn't an exact match"
+                : "identity of the top-ranked hit"}
+            </span>
+          </Stat>
+          <Stat>
+            <b>{query.n ? `${Math.round((query.logan / query.n) * 100)}%` : "—"}</b>
+            <span>from Logan, not in public databases</span>
+          </Stat>
+          <Stat as={HistStat}>
+            <span>identity of all hits</span>
+            <Histogram counts={query.hist} />
+          </Stat>
+        </Summary>
+
+        <Controls>
+          <Segmented role="group" aria-label="Filter by source">
+            {SOURCE_FILTERS.map((f) => (
+              <SegButton
+                key={f.value}
+                type="button"
+                aria-pressed={source === f.value}
+                onClick={() => setSource(f.value)}
+              >
+                {f.label}
+              </SegButton>
+            ))}
+          </Segmented>
+          <label>
+            Min identity
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={minIdentity}
+              onChange={(e) => setMinIdentity(Number(e.target.value))}
+            />
+            <Mono>{minIdentity}%</Mono>
+          </label>
+          <label>
+            Sort
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              {Object.entries(SORTS).map(([value, { label }]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
-            </Chips>
+            </select>
+          </label>
+        </Controls>
 
-            <QueryBox>
-              <div>
-                <QueryName>{query.name}</QueryName>
-                <QueryMeta>
-                  {query.org} · {query.len} aa · {query.blurb}
-                </QueryMeta>
-              </div>
-              <Go type="button" onClick={play} disabled={running}>
-                {running ? "Searching…" : "Search"}
-              </Go>
-              <Fasta aria-label="Query sequence">
-                {">"}
-                {query.name}
-                {"\n"}
-                {query.seq}
-              </Fasta>
-            </QueryBox>
+        <Table>
+          <HeadRow aria-hidden="true">
+            <span>#</span>
+            <span>Hit</span>
+            <span>Identity</span>
+            <span className="c-cov">Coverage of query</span>
+            <Num className="c-e">E-value</Num>
+            <Num className="c-bs">Bits</Num>
+          </HeadRow>
+          {rows.length === 0 && <Empty>No hits match these filters.</Empty>}
+          {rows.map(({ hit, rank }) => (
+            <HitRow
+              key={rank}
+              hit={hit}
+              rank={rank}
+              queryLen={query.len}
+              open={openRank === rank}
+              onToggle={() => setOpenRank(openRank === rank ? -1 : rank)}
+            />
+          ))}
+        </Table>
 
-            <Loading hidden={!running} aria-live="polite">
-              <Stage>
-                <strong ref={stageRef}>Parsing query…</strong>
-                <Mono ref={countRef} />
-              </Stage>
-              <Shards aria-hidden="true">
-                {Array.from({ length: DEMO.db.shards }, (unused, i) => (
-                  <Shard
-                    key={i}
-                    data-state="idle"
-                    ref={el => {
-                      shardRefs.current[i] = el
-                    }}
-                  />
-                ))}
-              </Shards>
-              <Progress>
-                <i ref={barRef} />
-              </Progress>
-              <Note>
-                Sped-up replay. On petadex.net, {DEMO.db.shards} cloud workers
-                each search one shard in parallel; a real search takes about 45
-                seconds.
-              </Note>
-            </Loading>
-
-            <Results hidden={running}>
-              <Summary>
-                <Stat>
-                  <b>
-                    {fmtInt(query.n)}
-                    {query.n >= DEMO.db.depth ? "+" : ""}
-                  </b>
-                  <span>hits found (E &lt; 0.001)</span>
-                </Stat>
-                <Stat>
-                  <b>{best ? `${best.pid.toFixed(1)}%` : "—"}</b>
-                  <span>
-                    {exactSelf
-                      ? "identity of the top hit that isn't an exact match"
-                      : "identity of the top-ranked hit"}
-                  </span>
-                </Stat>
-                <Stat>
-                  <b>
-                    {query.n
-                      ? `${Math.round((query.logan / query.n) * 100)}%`
-                      : "—"}
-                  </b>
-                  <span>from Logan, not in public databases</span>
-                </Stat>
-                <Stat as={HistStat}>
-                  <span>identity of all hits</span>
-                  <Histogram counts={query.hist} />
-                </Stat>
-              </Summary>
-
-              <Controls>
-                <Segmented role="group" aria-label="Filter by source">
-                  {SOURCE_FILTERS.map(f => (
-                    <SegButton
-                      key={f.value}
-                      type="button"
-                      aria-pressed={source === f.value}
-                      onClick={() => setSource(f.value)}
-                    >
-                      {f.label}
-                    </SegButton>
-                  ))}
-                </Segmented>
-                <label>
-                  Min identity
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    value={minIdentity}
-                    onChange={e => setMinIdentity(Number(e.target.value))}
-                  />
-                  <Mono>{minIdentity}%</Mono>
-                </label>
-                <label>
-                  Sort
-                  <select value={sort} onChange={e => setSort(e.target.value)}>
-                    {Object.entries(SORTS).map(([value, { label }]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </Controls>
-
-              <Table>
-                <HeadRow aria-hidden="true">
-                  <span>#</span>
-                  <span>Hit</span>
-                  <span>Identity</span>
-                  <span className="c-cov">Coverage of query</span>
-                  <Num className="c-e">E-value</Num>
-                  <Num className="c-bs">Bits</Num>
-                </HeadRow>
-                {rows.length === 0 && (
-                  <Empty>No hits match these filters.</Empty>
-                )}
-                {rows.map(({ hit, rank }) => (
-                  <HitRow
-                    key={rank}
-                    hit={hit}
-                    rank={rank}
-                    queryLen={query.len}
-                    open={openRank === rank}
-                    onToggle={() => setOpenRank(openRank === rank ? -1 : rank)}
-                  />
-                ))}
-              </Table>
-
-              <Foot>
-                <span>
-                  Showing {rows.length} of the top {query.hits.length} of{" "}
-                  {fmtInt(query.n)} hits · searched {fmtInt(DEMO.db.sequences)}{" "}
-                  sequences · database {DEMO.db.version}
-                </span>
-                <a
-                  href={`${SITE}/results?job=${query.sid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open this full result on petadex.net →
-                </a>
-              </Foot>
-            </Results>
-          </Demo>
+        <Foot>
+          <span>
+            Showing {rows.length} of the top {query.hits.length} of{" "}
+            {fmtInt(query.n)} hits · searched {fmtInt(DEMO.db.sequences)}{" "}
+            sequences · database {DEMO.db.version}
+          </span>
+          <a
+            href={`${SITE}/results?job=${query.sid}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open this full result on petadex.net →
+          </a>
+        </Foot>
+      </Results>
+    </Demo>
         )}
       </ExpandWindow>
     </Wrap>
@@ -389,12 +378,7 @@ const HitRow = ({ hit, rank, queryLen, open, onToggle }) => {
 
   return (
     <>
-      <Row
-        type="button"
-        aria-expanded={open}
-        aria-controls={detailId}
-        onClick={onToggle}
-      >
+      <Row type="button" aria-expanded={open} aria-controls={detailId} onClick={onToggle}>
         <Rank>{rank}</Rank>
         <span>
           <HitId>
@@ -413,10 +397,7 @@ const HitRow = ({ hit, rank, queryLen, open, onToggle }) => {
         </span>
         <Meter>
           <SrOnly>identity</SrOnly>
-          <Bar
-            fraction={hit.pid / 100}
-            color={hit.s === "logan" ? LOGAN : REF}
-          />
+          <Bar fraction={hit.pid / 100} color={hit.s === "logan" ? LOGAN : REF} />
           <Num>{hit.pid.toFixed(1)}%</Num>
         </Meter>
         <Meter className="c-cov">
@@ -508,10 +489,7 @@ const HitRow = ({ hit, rank, queryLen, open, onToggle }) => {
 const ExternalHitLink = ({ hit }) => {
   const [href, label] =
     hit.s === "logan"
-      ? [
-          `https://www.ncbi.nlm.nih.gov/sra/${encodeURIComponent(hit.id)}`,
-          "SRA run",
-        ]
+      ? [`https://www.ncbi.nlm.nih.gov/sra/${encodeURIComponent(hit.id)}`, "SRA run"]
       : hit.s === "pdb"
         ? [
             `https://www.rcsb.org/structure/${encodeURIComponent(hit.id.split("_")[0])}`,
@@ -547,13 +525,7 @@ const CoverageTrack = ({ hit, queryLen }) => {
   return (
     <MeterSvg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
       <rect y="3" width="100" height="2" fill={LINE} />
-      <rect
-        x={x.toFixed(1)}
-        width={w.toFixed(1)}
-        height="8"
-        rx="2"
-        fill={COMPUTE}
-      />
+      <rect x={x.toFixed(1)} width={w.toFixed(1)} height="8" rx="2" fill={COMPUTE} />
     </MeterSvg>
   )
 }
@@ -565,18 +537,11 @@ const Alignment = ({ hit, queryLen }) => {
   const lo = Math.min(0, offset)
   const hi = Math.max(queryLen, offset + targetLen)
   const scale = 500 / (hi - lo)
-  const X = pos => 10 + (pos - lo) * scale
+  const X = (pos) => 10 + (pos - lo) * scale
 
   const bar = (y, start, len, from, to, label, color) => (
     <>
-      <rect
-        x={X(start)}
-        y={y}
-        width={len * scale}
-        height="6"
-        rx="2"
-        fill={LINE}
-      />
+      <rect x={X(start)} y={y} width={len * scale} height="6" rx="2" fill={LINE} />
       <rect
         x={X(start + from - 1)}
         y={y}
@@ -593,11 +558,7 @@ const Alignment = ({ hit, queryLen }) => {
 
   return (
     <AlignBox>
-      <svg
-        viewBox="0 0 520 44"
-        role="img"
-        aria-label="Aligned region on query and target"
-      >
+      <svg viewBox="0 0 520 44" role="img" aria-label="Aligned region on query and target">
         {bar(
           12,
           0,
@@ -605,7 +566,7 @@ const Alignment = ({ hit, queryLen }) => {
           hit.q[0],
           hit.q[1],
           `query ${hit.q[0]}–${hit.q[1]} of ${queryLen}`,
-          COMPUTE,
+          COMPUTE
         )}
         {bar(
           34,
@@ -614,7 +575,7 @@ const Alignment = ({ hit, queryLen }) => {
           hit.t[0],
           hit.t[1],
           `hit ${hit.t[0]}–${hit.t[1]}${hit.t[2] ? ` of ${hit.t[2]}` : ""}`,
-          hit.s === "logan" ? LOGAN : REF,
+          hit.s === "logan" ? LOGAN : REF
         )}
       </svg>
     </AlignBox>

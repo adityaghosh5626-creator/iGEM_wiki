@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -80,6 +81,26 @@ function plateOf(scene) {
         left: `${(-x0 / w) * 100}%`,
         top: `${(-y0 / h) * 100}%`,
       }
+    },
+    /**
+     * A layer's `clip` (an outline, plate px) on its full-plate image: only
+     * what's inside shows, for art sharing one picture with its neighbours.
+     */
+    clip: points =>
+      points && {
+        clipPath: `polygon(${points
+          .map(([x, y]) => `${((x / W) * 100).toFixed(3)}% ${((y / H) * 100).toFixed(3)}%`)
+          .join(", ")})`,
+      },
+    /**
+     * A layer's `fadeY` ([top, bottom], plate px): its window fades out over
+     * that much of its top and bottom edges.
+     */
+    fadeY: ([, y0, , y1], fade) => {
+      if (!fade) return null
+      const pct = px => `${((px / (y1 - y0)) * 100).toFixed(3)}%`
+      const mask = `linear-gradient(to bottom, transparent, #000 ${pct(fade[0])}, #000 calc(100% - ${pct(fade[1])}), transparent)`
+      return { maskImage: mask, WebkitMaskImage: mask }
     },
     /** Background that stretches `box` of a plate over the whole element. */
     bg: (name, [x0, y0, x1, y1]) => {
@@ -398,6 +419,18 @@ const ZAP_FLICKER_MS = 1100
  */
 function ZapLayer({ plate, layer, children }) {
   const bodyRef = useRef(null)
+  // `jolt`: just this part of the layer shivers (the critter and its halo);
+  // the rest, like glints painted on the pipes round it, stays put.
+  const jolt = layer.jolt
+  const [x0, y0, x1, y1] = layer.box
+  const holePct =
+    jolt &&
+    [
+      ((jolt[0] - x0) / (x1 - x0)) * 100,
+      ((jolt[1] - y0) / (y1 - y0)) * 100,
+      ((jolt[2] - x0) / (x1 - x0)) * 100,
+      ((jolt[3] - y0) / (y1 - y0)) * 100,
+    ].map(v => `${v.toFixed(2)}%`)
   const boltRef = useRef(null)
   const zap = () => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
@@ -413,12 +446,27 @@ function ZapLayer({ plate, layer, children }) {
   const bolt = layer.zap
   return (
     <>
+      {jolt && (
+        <ZapStill
+          style={{
+            ...plate.windowStyle(layer.box),
+            // Everything but the jolting part (a hole where it is).
+            clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${holePct[0]} ${holePct[1]}, ${holePct[2]} ${holePct[1]}, ${holePct[2]} ${holePct[3]}, ${holePct[0]} ${holePct[3]}, ${holePct[0]} ${holePct[1]})`,
+          }}
+        >
+          {children}
+        </ZapStill>
+      )}
       <ZapBody
         ref={bodyRef}
         data-layer={layer.name}
-        style={plate.windowStyle(layer.box)}
+        style={plate.windowStyle(jolt || layer.box)}
       >
-        {children}
+        {jolt
+          ? React.cloneElement(children, {
+              style: { ...children.props.style, ...plate.imgStyle(jolt) },
+            })
+          : children}
       </ZapBody>
       <ZapBolt ref={boltRef} style={plate.windowStyle(bolt.box)}>
         <CropImg
@@ -450,13 +498,20 @@ const PEEK_TOUCH_MS = 2500
  * `layer.peek.dx` plate px behind the text box, leaving a little peeking out;
  * when the pointer leaves it pops back out and the glow fades. The hover area
  * stays where it started, so it doesn't chase the pointer. With `from`, it's
- * drawn from there on its plates into `box`.
+ * drawn from there on its plates into `box`. `peek.fadeX` [from, to] (plate
+ * px, in `box`): the glow fades out across these columns, for a glow painted
+ * cut off at the page's edge, which would show as a line as it slides in.
  */
 function PeekLayer({ plate, layer, children }) {
   const [hidden, setHidden] = useState(false)
   const timer = useRef(0)
   useEffect(() => () => window.clearTimeout(timer.current), [])
   const [x0, , x1] = layer.box
+  const fade = layer.peek.fadeX?.map(
+    x => `${(((x - x0) / (x1 - x0)) * 100).toFixed(2)}%`,
+  )
+  const fadeMask =
+    fade && `linear-gradient(to right, #000 ${fade[0]}, transparent ${fade[1]})`
   const hide = state => {
     window.clearTimeout(timer.current)
     setHidden(state)
@@ -478,7 +533,12 @@ function PeekLayer({ plate, layer, children }) {
           draggable={false}
           style={plate.imgStyle(layer.from || layer.box)}
         />
-        <PeekGlow $hidden={hidden}>{children}</PeekGlow>
+        <PeekGlow
+          $hidden={hidden}
+          style={fadeMask && { maskImage: fadeMask, WebkitMaskImage: fadeMask }}
+        >
+          {children}
+        </PeekGlow>
       </PeekWindow>
       <PeekHit
         style={plate.windowStyle(layer.peek.hit || layer.box)}
@@ -851,7 +911,9 @@ const DRAGON_FIRE_SOLID = 0.75
  *
  * A dragon painted as one picture (the Contribution one) gives `heat` in
  * place of the glow and fire art: a fiery glow spreads out from behind it,
- * from its head, and `eyes` (plate px) glow in and out.
+ * from its head, and `eyes` (plate px) glow in and out. Its `markings`
+ * (pictures on the same canvas) are drawn over it, and `swirls` (one of
+ * them) lights up violet-blue while it burns.
  */
 function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   const d = layer.dragon
@@ -882,13 +944,13 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
   }
   // Its front part (text.front) lights it from its own hover areas.
   if (lightRef) lightRef.current = light
-  const crop = (name, box) => (
+  const crop = (name, box, clip) => (
     <CropImg
       src={plate.asset(name)}
       alt=""
       decoding="async"
       draggable={false}
-      style={plate.imgStyle(box)}
+      style={{ ...plate.imgStyle(box), ...plate.clip(clip) }}
     />
   )
   // The fire shows through a soft circle on the head, grown to cover it.
@@ -952,7 +1014,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         >
           <HaloFade style={haloFade}>
             <HeatHalo $lit={lit} style={inHalo(layer.box)}>
-              {crop(layer.src || layer.name, layer.box)}
+              {crop(layer.src || layer.name, layer.box, layer.clip)}
             </HeatHalo>
           </HaloFade>
         </DragonFire>
@@ -963,6 +1025,9 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
         style={plate.windowStyle(layer.box)}
       >
         {children}
+        {(d.markings || []).map(name => (
+          <React.Fragment key={name}>{crop(name, layer.box)}</React.Fragment>
+        ))}
       </DragonPart>
       {(d.eyes || []).map(([x, y]) => (
         <DragonEye
@@ -988,14 +1053,7 @@ function DragonLayer({ plate, layer, split, onLit, lightRef, children }) {
       )}
       {d.swirls && (
         <DragonHighlight aria-hidden $lit={lit} style={plate.windowStyle(layer.box)}>
-          <SwirlSvg
-            viewBox={`${layer.box[0]} ${layer.box[1]} ${layer.box[2] - layer.box[0]} ${layer.box[3] - layer.box[1]}`}
-            preserveAspectRatio="none"
-          >
-            {d.swirls.map(sw => (
-              <path key={sw.at.join()} d={swirlPath(sw)} />
-            ))}
-          </SwirlSvg>
+          <SwirlGlow>{crop(d.swirls, layer.box)}</SwirlGlow>
         </DragonHighlight>
       )}
       {(d.highlights || []).map(h => (
@@ -1143,74 +1201,409 @@ function TextFrontArt({ plate, text, d, split, lit, light }) {
   )
 }
 
-/**
- * A glowing spiral marking, as an SVG path (plate px): `at` its middle, `rx`
- * and `ry` its outer radii, `rot` (deg) its turn, `turns` how many times it
- * winds; it ends in a short flick outward, like the Wiki dragons' markings.
- */
-function swirlPath({ at: [cx, cy], rx, ry = rx, rot = 0, turns = 2.1 }) {
-  const steps = 48
-  const a = (rot * Math.PI) / 180
-  const pts = []
-  for (let i = 0; i <= steps; i++) {
-    const k = i / steps
-    const th = k * turns * Math.PI * 2
-    const x = rx * k * Math.cos(th)
-    const y = ry * k * Math.sin(th)
-    pts.push([
-      cx + x * Math.cos(a) - y * Math.sin(a),
-      cy + x * Math.sin(a) + y * Math.cos(a),
-    ])
-  }
-  return `M${pts.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L")}`
+/** How far wound in (0–1) a winch is `t` (0–1) through its cycle. */
+function winchAt(t) {
+  const ease = p => (p < 0.5 ? 4 * p ** 3 : 1 - (2 - 2 * p) ** 3 / 2)
+  if (t < 0.05 || t >= 0.95) return 0
+  if (t < 0.45) return ease((t - 0.05) / 0.4)
+  if (t < 0.55) return 1
+  return 1 - ease((t - 0.55) / 0.4)
 }
 
-/** One swing of a hanging layer, out and back until it settles. */
-const SWING_MS = 2600
-const SWING_SWAYS = [0, -1, 0.75, -0.5, 0.28, -0.12, 0]
+/** `table` ([[x, y], …], x rising) at `x`, straight between its points. */
+function lerpTable(table, x) {
+  if (x <= table[0][0]) return table[0][1]
+  for (let i = 1; i < table.length; i++) {
+    const [x1, y1] = table[i]
+    if (x <= x1) {
+      const [x0, y0] = table[i - 1]
+      return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)
+    }
+  }
+  return table[table.length - 1][1]
+}
+
+/** Keyframes per winch cycle (the easing's sampled, so the parts keep step). */
+const WINCH_STEPS = 96
 
 /**
- * Something hanging (the Engineering bucket on its rope): hovered (tapped on
- * touch), it swings from `swing.pivot` (plate px, where it hangs from) by up
- * to `swing.deg` and settles. The hover area (`swing.hit`, else the layer)
- * stays put while it swings.
+ * One part of a winch (the Engineering gear, and the rope and bucket), all on
+ * the same cycle (`winch.ms`): wound in, held, let back out. `winch.turn`:
+ * it turns that many degrees about its box's centre, from `winch.rest` (how
+ * it's turned at rest). `winch.lift`: it rides up that many plate px inside
+ * its window (which can fade at its edges, `layer.fadeY`), moved across by
+ * `winch.drift` ([[lift, px left], …]) on the way.
  */
-function SwingLayer({ plate, layer, children }) {
+function WinchLayer({ plate, layer, children }) {
   const ref = useRef(null)
-  const anim = useRef(null)
+  const { ms, turn, rest = 0, lift, drift } = layer.winch
   const [x0, y0, x1, y1] = layer.box
-  const [px, py] = layer.swing.pivot
-  const swing = () => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
-    if (anim.current?.playState === "running") return
-    const deg = layer.swing.deg ?? 2
-    anim.current = ref.current?.animate(
-      SWING_SWAYS.map(k => ({
-        transform: `rotate(${(k * deg).toFixed(2)}deg)`,
-        easing: "ease-in-out",
-      })),
-      { duration: SWING_MS },
+  const w = x1 - x0
+  const h = y1 - y0
+  const pose = k =>
+    turn != null
+      ? `rotate(${(rest + turn * k).toFixed(3)}deg)`
+      : `translate(${(((drift ? -lerpTable(drift, lift * k) : 0) / w) * 100).toFixed(3)}%, ${(((-lift * k) / h) * 100).toFixed(3)}%)`
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el?.animate || stillPlease()) return undefined
+    const frames = Array.from({ length: WINCH_STEPS + 1 }, (_, i) => ({
+      transform: pose(winchAt(i / WINCH_STEPS)),
+    }))
+    const anim = el.animate(frames, { duration: ms, iterations: Infinity })
+    // On the page's clock, so every part of the winch is at the same point.
+    anim.startTime = 0
+    return () => anim.cancel()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `pose` only reads the layer's (fixed) config
+  }, [layer])
+
+  if (turn != null) {
+    return (
+      <CropWindow
+        ref={ref}
+        data-layer={layer.name}
+        style={{ ...plate.windowStyle(layer.box), transform: pose(0) }}
+      >
+        {children}
+      </CropWindow>
     )
   }
   return (
+    <CropWindow
+      data-layer={layer.name}
+      style={{
+        ...plate.windowStyle(layer.box),
+        ...plate.fadeY(layer.box, layer.fadeY),
+      }}
+    >
+      <WinchSlide ref={ref}>{children}</WinchSlide>
+    </CropWindow>
+  )
+}
+
+const stillPlease = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+
+/** `part` of a layer's `box`, as a window inside the layer's own (%). */
+const partStyle = ([x0, y0, x1, y1], [px0, py0, px1, py1]) => ({
+  left: `${(((px0 - x0) / (x1 - x0)) * 100).toFixed(3)}%`,
+  top: `${(((py0 - y0) / (y1 - y0)) * 100).toFixed(3)}%`,
+  width: `${(((px1 - px0) / (x1 - x0)) * 100).toFixed(3)}%`,
+  height: `${(((py1 - py0) / (y1 - y0)) * 100).toFixed(3)}%`,
+})
+
+/** Hover (tap on touch) handlers for an art layer's hit area. */
+const hoverOrTap = act => ({
+  onMouseEnter: act,
+  onPointerDown: event => {
+    if (event.pointerType !== "mouse") act()
+  },
+})
+
+/** How long the streak lingers after the last scroll that moved the slider. */
+const SLIDE_STREAK_MS = 220
+
+/**
+ * A critter sliding down the text box's edge (Outreach's squirrel), with its
+ * motion streak painted above it (`slide.outline`: plate points, left to
+ * right, along the critter's top, between the two). Drawn over the box
+ * (`front`), it rides down with the reader between two of the box's
+ * headings (`slide.between`, their ids): its body starts level with the
+ * first; once scrolled up to `slide.view` under the header it stays there,
+ * sliding down the box's edge as the box goes up, and it stops level with
+ * the second, where the box carries it off. The streak only shows while it
+ * slides. `layer.from` is where it's painted, if `box` (where it's drawn)
+ * differs. Hovered (tapped), an acorn bonks it (`layer.bonk`, see
+ * BonkLayer; `bonk.hit` is on its painted box). In the art (narrow
+ * screens) it just clings there.
+ */
+function SlideLayer({ plate, layer, at, follow = false }) {
+  const laneRef = useRef(null)
+  const stickRef = useRef(null)
+  const streakRef = useRef(null)
+  const { box } = layer
+  const from = layer.from || box
+  const [fx0, fy0, fx1, fy1] = from
+  const { outline } = layer.slide
+  // The two sides of the outline, as clip paths over the whole crop.
+  const pt = ([x, y]) =>
+    `${(((x - fx0) / (fx1 - fx0)) * 100).toFixed(2)}% ${(((y - fy0) / (fy1 - fy0)) * 100).toFixed(2)}%`
+  const line = outline.map(pt).join(", ")
+  const lineBack = [...outline].reverse().map(pt).join(", ")
+  const streakClip = `polygon(0% 0%, 100% 0%, ${lineBack})`
+  const bodyClip = `polygon(${line}, 100% 100%, 0% 100%)`
+  // Its streak's height above the critter's top (for where it rides).
+  const streakH = Math.min(...outline.map(([, y]) => y)) - fy0
+  useEffect(() => {
+    const stick = stickRef.current
+    const streak = streakRef.current
+    if (!follow || !stick || !streak) return undefined
+    let off = 0
+    let raf = 0
+    let lastTop = null
+    const check = () => {
+      raf = 0
+      const top = stick.getBoundingClientRect().top
+      // Riding with the reader: still on screen while the page moves.
+      const lane = stick.parentElement.getBoundingClientRect()
+      const sliding =
+        lastTop !== null &&
+        Math.abs(top - lastTop) < 0.5 &&
+        top > lane.top + 1 &&
+        top + stick.offsetHeight < lane.bottom - 1
+      lastTop = top
+      if (!sliding || stillPlease()) return
+      streak.style.opacity = "1"
+      window.clearTimeout(off)
+      off = window.setTimeout(() => {
+        streak.style.opacity = "0"
+      }, SLIDE_STREAK_MS)
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check)
+    }
+    lastTop = stick.getBoundingClientRect().top
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      cancelAnimationFrame(raf)
+      window.clearTimeout(off)
+    }
+  }, [follow])
+  // Its lane, from the first heading to the second (as the box's text lays
+  // out, so again whenever the box changes size).
+  const between = layer.slide.between
+  useLayoutEffect(() => {
+    const lane = laneRef.current
+    const stick = stickRef.current
+    const box = lane?.offsetParent
+    if (!follow || !lane || !stick || !box || !between) return undefined
+    const fit = () => {
+      const [a, b] = between.map(id => box.parentElement.querySelector(`#${id}`))
+      if (!a || !b) return
+      const o = box.getBoundingClientRect().top
+      const streakPx = (stick.offsetHeight * streakH) / (fy1 - fy0)
+      const top = a.getBoundingClientRect().top - o - streakPx
+      lane.style.top = `${top.toFixed(1)}px`
+      lane.style.height = `${(b.getBoundingClientRect().top - o - streakPx - top + stick.offsetHeight).toFixed(1)}px`
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [follow, between, streakH, fy0, fy1])
+  const bonk = layer.bonk
+  const bonkMe = () =>
+    dropAcornOn(stickRef.current, layer.box, [
+      // The head, from its painted box onto where it's drawn.
+      layer.box[0] + ((bonk.head[0] - fx0) * (layer.box[2] - layer.box[0])) / (fx1 - fx0),
+      layer.box[1] + ((bonk.head[1] - fy0) * (layer.box[3] - layer.box[1])) / (fy1 - fy0),
+    ], bonk.acorn, false)
+  const part = clip => (
+    <CropWindow style={{ inset: 0, clipPath: clip }}>
+      <CropImg
+        src={plate.asset(layer.src || layer.name)}
+        alt=""
+        decoding="async"
+        draggable={false}
+        style={plate.imgStyle(from)}
+      />
+    </CropWindow>
+  )
+  const critter = (
     <>
-      <SwingWindow
-        ref={ref}
-        data-layer={layer.name}
+      <SlideStreak ref={streakRef}>{part(streakClip)}</SlideStreak>
+      {part(bodyClip)}
+    </>
+  )
+  if (!follow) {
+    return (
+      <SlideWindow data-layer={layer.name} style={at(box)}>
+        {critter}
+      </SlideWindow>
+    )
+  }
+  const [, y0, , y1] = box
+  const lane = at(box)
+  return (
+    <SlideLane
+      ref={laneRef}
+      data-layer={layer.name}
+      style={{ left: lane.left, width: lane.width, top: lane.top, height: pp(y1 - y0) }}
+    >
+      <SlideStick
+        ref={stickRef}
         style={{
-          ...plate.windowStyle(layer.box),
-          transformOrigin: `${(((px - x0) / (x1 - x0)) * 100).toFixed(2)}% ${(((py - y0) / (y1 - y0)) * 100).toFixed(2)}%`,
+          // Its body (under the streak) held `slide.view` under the header.
+          top: `calc(var(--dl-header, 0px) + ${layer.slide.view || "16vh"} - ${pp(
+            (streakH * (y1 - y0)) / (fy1 - fy0),
+          )})`,
+          height: pp(y1 - y0),
         }}
       >
-        {children}
-      </SwingWindow>
-      <PeekHit
-        style={plate.windowStyle(layer.swing.hit || layer.box)}
-        onMouseEnter={swing}
-        onPointerDown={event => {
-          if (event.pointerType !== "mouse") swing()
-        }}
+        {critter}
+        {bonk && (
+          <PeekHit style={partStyle(from, bonk.hit || from)} {...hoverOrTap(bonkMe)} />
+        )}
+      </SlideStick>
+    </SlideLane>
+  )
+}
+
+/**
+ * Leaves on the wind: each crosses from `wind.from` to `wind.to` (plate px
+ * from where it's painted), bobbing and turning, over `wind.ms`, again and
+ * again. Both ends are out of sight (off the window, or behind the text
+ * box), so none is ever seen popping in. `wind.at` (0–1) is how far along
+ * it is when the page opens, so they're spread out. `layer.from` is the
+ * leaf on its plate, if it's drawn somewhere else (`box`). `at` places it.
+ */
+function WindLayer({ plate, layer, at }) {
+  const ref = useRef(null)
+  const [x0, y0, x1, y1] = layer.box
+  const {
+    from: [fx, fy],
+    to: [tx, ty],
+    ms = 12000,
+    at: startAt = 0,
+    bob = 30,
+    spin = 120,
+    wobble = 18,
+  } = layer.wind
+  useEffect(() => {
+    const el = ref.current
+    if (!el || stillPlease()) return undefined
+    const w = x1 - x0
+    const h = y1 - y0
+    const steps = 12
+    const frames = Array.from({ length: steps + 1 }, (_, i) => {
+      const k = i / steps
+      const x = fx + (tx - fx) * k
+      const y = fy + (ty - fy) * k + bob * Math.sin(k * Math.PI * 4)
+      const r = spin * k + wobble * Math.sin(k * Math.PI * 3)
+      return {
+        transform: `translate(${((x / w) * 100).toFixed(1)}%, ${((y / h) * 100).toFixed(1)}%) rotate(${r.toFixed(1)}deg)`,
+      }
+    })
+    const anim = el.animate(frames, {
+      duration: ms,
+      iterations: Infinity,
+      easing: "linear",
+      delay: -startAt * ms,
+    })
+    return () => anim.cancel()
+  }, [x0, y0, x1, y1, fx, fy, tx, ty, ms, startAt, bob, spin, wobble])
+  return (
+    <WindWindow
+      ref={ref}
+      data-layer={layer.name}
+      style={{
+        ...at(layer.box),
+        // Out of sight at its start until the wind has it.
+        transform: `translate(${((fx / (x1 - x0)) * 100).toFixed(1)}%, ${((fy / (y1 - y0)) * 100).toFixed(1)}%)`,
+      }}
+    >
+      <CropImg
+        src={plate.asset(layer.src || layer.name)}
+        alt=""
+        decoding="async"
+        draggable={false}
+        style={plate.imgStyle(layer.from || layer.box)}
       />
+    </WindWindow>
+  )
+}
+
+/** A bonked critter's squash, from its feet. */
+const BONK_SQUASH = [
+  { transform: "scale(1, 1)" },
+  { transform: "scale(1.06, 0.88)", offset: 0.2 },
+  { transform: "scale(0.96, 1.05) rotate(-2deg)", offset: 0.5 },
+  { transform: "scale(1, 1) rotate(1.5deg)", offset: 0.75 },
+  { transform: "scale(1, 1)" },
+].map(k => ({ ...k, transformOrigin: "50% 100%" }))
+const BONK_BOUNCE_MS = 900
+
+/**
+ * Drops an acorn (`acorn`: its `src` and `box` on a `plate`-sized canvas,
+ * drawn at `scale` of its size) from the top of the window, under the site
+ * header, onto `head` (plate px, on the `box` that `el` draws). It bonks
+ * the critter, which squashes, and bounces off. Drawn fixed over the page
+ * for the moment it takes. Not when the head is hidden under the text box
+ * or the section menu (`behind`: it's in the art behind them).
+ */
+function dropAcornOn(el, box, head, acorn, behind = true) {
+  if (!el || el.dataset.bonked || stillPlease()) return
+  const r = el.getBoundingClientRect()
+  const k = r.width / (box[2] - box[0])
+  const hx = r.left + (head[0] - box[0]) * k
+  const hy = r.top + (head[1] - box[1]) * k
+  if (behind) {
+    const over = document.elementFromPoint(hx, hy + 6 * k)
+    if (over?.closest("[data-scene-text], [data-scene-strip]")) return
+  }
+  const [ax0, ay0, ax1, ay1] = acorn.box
+  const [W, H] = acorn.plate
+  const size = (ax1 - ax0) * k * (acorn.scale ?? 0.8)
+  const left = hx - size / 2
+  // It lands with its bottom just on the head.
+  const top = hy - size * 0.9
+  const header = parseFloat(getComputedStyle(el).getPropertyValue("--dl-header")) || 0
+  const fall = top - (header - size)
+  if (fall <= 0) return
+  const nut = document.createElement("div")
+  Object.assign(nut.style, {
+    position: "fixed",
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${size}px`,
+    height: `${size}px`,
+    zIndex: "40",
+    pointerEvents: "none",
+    backgroundImage: `url(${acorn.src})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${(W / (ax1 - ax0)) * 100}% ${(H / (ay1 - ay0)) * 100}%`,
+    backgroundPosition: `${(ax0 / (W - (ax1 - ax0))) * 100}% ${(ay0 / (H - (ay1 - ay0))) * 100}%`,
+  })
+  document.body.appendChild(nut)
+  // Falling faster the further it drops, as things do.
+  const fallMs = Math.min(1100, Math.max(380, Math.sqrt(fall) * 30))
+  const total = fallMs + BONK_BOUNCE_MS
+  const landed = fallMs / total
+  nut.animate(
+    [
+      { transform: `translate(0, ${-fall}px) rotate(-25deg)`, offset: 0, easing: "cubic-bezier(0.55, 0, 1, 0.8)" },
+      { transform: "translate(0, 0) rotate(0deg)", offset: landed, easing: "cubic-bezier(0.2, 0.7, 0.4, 1)" },
+      {
+        transform: `translate(${-size * 0.9}px, ${-size * 1.2}px) rotate(-110deg)`,
+        offset: landed + (1 - landed) * 0.4,
+        easing: "cubic-bezier(0.55, 0, 1, 0.6)",
+      },
+      { transform: `translate(${-size * 1.7}px, ${size * 1.4}px) rotate(-250deg)`, opacity: 0, offset: 1 },
+    ],
+    { duration: total },
+  ).onfinish = () => nut.remove()
+  el.dataset.bonked = "1"
+  el.animate(BONK_SQUASH, { duration: 700, delay: fallMs - 30, easing: "ease-out" }).onfinish =
+    () => delete el.dataset.bonked
+}
+
+/**
+ * A critter that gets bonked by an acorn when hovered (tapped on touch):
+ * `bonk.head` is where it lands (plate px), `bonk.acorn` the acorn,
+ * `bonk.hit` the hover area (else the layer).
+ */
+function BonkLayer({ plate, layer, children }) {
+  const ref = useRef(null)
+  const { head, acorn, hit } = layer.bonk
+  const bonk = () => dropAcornOn(ref.current, layer.box, head, acorn)
+  return (
+    <>
+      <BonkWindow ref={ref} data-layer={layer.name} style={plate.windowStyle(layer.box)}>
+        {children}
+      </BonkWindow>
+      <PeekHit style={plate.windowStyle(hit || layer.box)} {...hoverOrTap(bonk)} />
     </>
   )
 }
@@ -1230,11 +1623,15 @@ const DUCK_GLOW_PAD = 30
  * plate px of its head peeking over; when the pointer leaves it rises and
  * hops back down. `duck.edge` is two plate points on the edge (it can slope);
  * while the critter's behind it, everything below that line is cut off.
+ * `duck.over`: at rest it's drawn over the layers after it (and its hover
+ * area stays on top of theirs); from the top of its hop it's behind them,
+ * until it's back at the top on its way home.
  */
 function DuckLayer({ plate, layer, children }) {
   const winRef = useRef(null)
   const [glow, setGlow] = useState(false)
   const [clipped, setClipped] = useState(false)
+  const [away, setAway] = useState(false)
   const timers = useRef([])
   const touch = useRef(0)
   const anim = useRef(null)
@@ -1286,7 +1683,10 @@ function DuckLayer({ plate, layer, children }) {
       DUCK_HOP_MS + DUCK_SINK_MS,
     )
     // Its feet are over the edge by now: cut off what goes behind it.
-    later(() => setClipped(true), DUCK_HOP_MS)
+    later(() => {
+      setClipped(true)
+      setAway(true)
+    }, DUCK_HOP_MS)
   }
   const rise = () => {
     timers.current.forEach(window.clearTimeout)
@@ -1303,7 +1703,10 @@ function DuckLayer({ plate, layer, children }) {
       ],
       DUCK_RISE_MS + DUCK_LAND_MS,
     )
-    later(() => setClipped(false), DUCK_RISE_MS)
+    later(() => {
+      setClipped(false)
+      setAway(false)
+    }, DUCK_RISE_MS)
     later(() => setGlow(false), DUCK_RISE_MS + DUCK_LAND_MS)
   }
   return (
@@ -1311,8 +1714,9 @@ function DuckLayer({ plate, layer, children }) {
       <DuckClip
         style={{
           ...plate.windowStyle(clip),
+          zIndex: layer.duck.over && !away ? 1 : undefined,
           clipPath: clipped
-            ? `polygon(0 0, 100% 0, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
+            ? `polygon(0 -100%, 100% -100%, 100% ${cutAt(clip[2])}%, 0 ${cutAt(clip[0])}%)`
             : "none",
         }}
       >
@@ -1331,7 +1735,10 @@ function DuckLayer({ plate, layer, children }) {
         </DuckWindow>
       </DuckClip>
       <PeekHit
-        style={plate.windowStyle(layer.duck.hit || layer.box)}
+        style={{
+          ...plate.windowStyle(layer.duck.hit || layer.box),
+          zIndex: layer.duck.over ? 1 : undefined,
+        }}
         onMouseEnter={duck}
         onMouseLeave={rise}
         onPointerDown={event => {
@@ -1825,6 +2232,7 @@ function sceneVars(scene, plate) {
 }
 
 export function SubpageScene({ scene, title, description, children }) {
+  const whiteFilterId = `scene-white-${useId().replace(/:/g, "")}`
   const plate = plateOf(scene)
   const { side, text } = scene
   // A dragon partly drawn over the text box (text.front.dragon): the line
@@ -1838,6 +2246,21 @@ export function SubpageScene({ scene, title, description, children }) {
   }
   const [frontLit, setFrontLit] = useState(false)
   const frontLightRef = useRef(null)
+  /**
+   * Layers painted over the text box (`layer.front`): on wide screens they're
+   * drawn on the box, off its right edge and its top (`front: "top"`) or
+   * bottom (`"bottom"`) as painted, so they stay with it as it grows.
+   */
+  const boxFront = scene.layers.filter(l => l.front && !l.hidden)
+  const frontAt = ([x0, y0, x1, y1], from) => ({
+    left: `calc(100% + ${pp(x0 - text.box[2])})`,
+    top:
+      from === "top"
+        ? pp(y0 - text.box[1])
+        : `calc(100% + ${pp(y0 - text.box[3])})`,
+    width: pp(x1 - x0),
+    height: pp(y1 - y0),
+  })
   const sceneRef = useRef(null)
   const artRef = useRef(null)
   const frameRef = useRef(null)
@@ -1905,22 +2328,31 @@ export function SubpageScene({ scene, title, description, children }) {
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
-    const heads = Array.from(
-      bodyRef.current?.querySelectorAll("h2, h3") || [],
-    ).filter(el => !el.closest("details, [data-nav-skip]"))
-    const list = []
-    heads.forEach((el, i) => {
-      if (!el.id) el.id = `section-${i + 1}`
-      // A heading can name itself shorter for the menu (journal dates).
-      const item = {
-        id: el.id,
-        label: (el.dataset.navLabel || el.textContent).trim(),
-      }
-      if (el.tagName === "H2") list.push({ ...item, subs: [] })
-      else list[list.length - 1]?.subs.push(item)
-    })
-    scannedRef.current = true
-    setSections(list)
+    const body = bodyRef.current
+    if (!body) return undefined
+    const scan = () => {
+      const heads = Array.from(
+        bodyRef.current?.querySelectorAll("h2, h3") || [],
+      ).filter(el => !el.closest("details, [data-nav-skip]"))
+      const list = []
+      heads.forEach((el, i) => {
+        if (!el.id) el.id = `section-${i + 1}`
+        // A heading can name itself shorter for the menu (journal dates).
+        const item = {
+          id: el.id,
+          label: (el.dataset.navLabel || el.textContent).trim(),
+        }
+        if (el.tagName === "H2") list.push({ ...item, subs: [] })
+        else list[list.length - 1]?.subs.push(item)
+      })
+      scannedRef.current = true
+      setSections(previous => JSON.stringify(previous) === JSON.stringify(list) ? previous : list)
+    }
+    scan()
+    // Gatsby navigation and embedded MDX can render headings after mount.
+    const observer = new MutationObserver(scan)
+    observer.observe(body, { childList: true, subtree: true, characterData: true })
+    return () => observer.disconnect()
   }, [children])
 
   // Scroll-linked background + active subsection.
@@ -2239,6 +2671,14 @@ export function SubpageScene({ scene, title, description, children }) {
         ...(side && compact ? railCols(scene, plate) : null),
       }}
     >
+      {scene.layers.some(layer => layer.removeWhite) && <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
+        <defs>
+          <filter id={whiteFilterId} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            {/* Remove the white canvas without darkening the coloured lights. */}
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 9" />
+          </filter>
+        </defs>
+      </svg>}
       <BgTrack aria-hidden>
         <BgFrame ref={frameRef}>
           <Art ref={artRef} style={{ aspectRatio: `${plate.W} / ${plate.H}` }}>
@@ -2257,12 +2697,40 @@ export function SubpageScene({ scene, title, description, children }) {
                     alt=""
                     decoding="async"
                     draggable={false}
-                    style={plate.imgStyle(layer.from || layer.box)}
+                    style={{
+                      ...plate.imgStyle(layer.from || layer.box),
+                      ...plate.clip(layer.clip),
+                      filter: layer.removeWhite ? `url(#${whiteFilterId})` : undefined,
+                    }}
                   />
                 )
                 if (layer.flyer) {
                   return (
                     <BirdLayer key={layer.name} plate={plate} layer={layer} />
+                  )
+                }
+                if (layer.slide || layer.wind) {
+                  const Moving = layer.slide ? SlideLayer : WindLayer
+                  const moving = (
+                    <Moving
+                      key={layer.name}
+                      plate={plate}
+                      layer={layer}
+                      at={plate.windowStyle}
+                    />
+                  )
+                  // `front`: over the text box on wide screens (see BoxFront).
+                  return layer.front ? (
+                    <ArtOnNarrow key={layer.name}>{moving}</ArtOnNarrow>
+                  ) : (
+                    moving
+                  )
+                }
+                if (layer.bonk) {
+                  return (
+                    <BonkLayer key={layer.name} plate={plate} layer={layer}>
+                      {img}
+                    </BonkLayer>
                   )
                 }
                 if (layer.loop) {
@@ -2314,11 +2782,11 @@ export function SubpageScene({ scene, title, description, children }) {
                     </DragonLayer>
                   )
                 }
-                if (layer.swing) {
+                if (layer.winch) {
                   return (
-                    <SwingLayer key={layer.name} plate={plate} layer={layer}>
+                    <WinchLayer key={layer.name} plate={plate} layer={layer}>
                       {img}
-                    </SwingLayer>
+                    </WinchLayer>
                   )
                 }
                 if (layer.duck) {
@@ -2376,12 +2844,30 @@ export function SubpageScene({ scene, title, description, children }) {
                   >
                     <CropWindow style={{ inset: 0 }}>{img}</CropWindow>
                   </CrabScuttle>
-                ) : (
-                  <CropWindow
+                ) : layer.sway ? (
+                  // `sway`: hanging (tape, a vine), it sways in the wind
+                  // `deg` either way from its top, a whole sway every `ms`,
+                  // `at` (0–1) of the way through at the start.
+                  <HangWindow
                     key={layer.name}
                     data-layer={layer.name}
                     style={{
                       ...plate.windowStyle(layer.box),
+                      "--sway-deg": `${layer.sway.deg}deg`,
+                      "--sway-ms": `${layer.sway.ms}ms`,
+                      "--sway-delay": `${-(layer.sway.at || 0) * layer.sway.ms}ms`,
+                    }}
+                  >
+                    {img}
+                  </HangWindow>
+                ) : (
+                  <CropWindow
+                    key={layer.name}
+                    data-layer={layer.name}
+                    $fadePulse={layer.fadePulse}
+                    style={{
+                      ...plate.windowStyle(layer.box),
+                      ...plate.fadeY(layer.box, layer.fadeY),
                       // `flip`: mirrored, to face the other way.
                       transform: layer.flip ? "scaleX(-1)" : undefined,
                     }}
@@ -2398,6 +2884,7 @@ export function SubpageScene({ scene, title, description, children }) {
       {scene.header && (
         <SectionHeader>
           <SectionTitle>{scene.header}</SectionTitle>
+          {scene.headerSub && <SectionSub>{scene.headerSub}</SectionSub>}
         </SectionHeader>
       )}
 
@@ -2439,9 +2926,13 @@ export function SubpageScene({ scene, title, description, children }) {
                           filter: icon.glow
                             ? `drop-shadow(0 0 4px ${icon.glow})`
                             : undefined,
-                          transform: icon.rotate
-                            ? `rotate(${icon.rotate}deg)`
-                            : undefined,
+                          transform:
+                            [
+                              icon.rotate && `rotate(${icon.rotate}deg)`,
+                              icon.railScale && `scale(${icon.railScale})`,
+                            ]
+                              .filter(Boolean)
+                              .join(" ") || undefined,
                         }}
                       />
                     ) : (
@@ -2598,7 +3089,7 @@ export function SubpageScene({ scene, title, description, children }) {
           </SideColumn>
         )}
 
-        <TextBox ref={textBoxRef} $solo={!side}>
+        <TextBox ref={textBoxRef} $solo={!side} data-scene-text>
           {/* A box the art doesn't paint is a flat colour. */}
           {text.fill ? (
             <TextFill
@@ -2612,6 +3103,23 @@ export function SubpageScene({ scene, title, description, children }) {
               box={text.box}
               caps={text.caps}
             />
+          )}
+          {/* `layer.front`: art painted over the box, under its text. */}
+          {boxFront.length > 0 && (
+            <BoxFront aria-hidden>
+              {boxFront.map(layer => {
+                const Moving = layer.slide ? SlideLayer : WindLayer
+                return (
+                  <Moving
+                    key={layer.name}
+                    plate={plate}
+                    layer={layer}
+                    at={box => frontAt(box, layer.front)}
+                    follow
+                  />
+                )
+              })}
+            </BoxFront>
           )}
           {/* `text.front`: a dragon's tail (and its glow, fire and markings
               below `line`) over the box's lower edge, below the text, `dy`
@@ -2703,9 +3211,107 @@ const PatrolWindow = styled.div`
   }
 `
 
+const layerFadePulse = keyframes`
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+`
+
 const CropWindow = styled.div`
   position: absolute;
   overflow: hidden;
+  ${({ $fadePulse }) => $fadePulse && css`
+    animation: ${layerFadePulse} ${$fadePulse}ms ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+      opacity: 0.65;
+    }
+  `}
+`
+
+const hangSway = keyframes`
+  0%,
+  100% {
+    transform: rotate(calc(-1 * var(--sway-deg)));
+  }
+  50% {
+    transform: rotate(var(--sway-deg));
+  }
+`
+
+/** A hanging layer swaying from its top (`layer.sway`). */
+/** The rope and bucket, riding up and down inside their window. */
+const WinchSlide = styled.div`
+  position: absolute;
+  inset: 0;
+`
+
+const HangWindow = styled(CropWindow)`
+  transform-origin: 50% 0;
+  animation: ${hangSway} var(--sway-ms) ease-in-out var(--sway-delay) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const SlideWindow = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+/** From where it's painted down to where it stops (see SlideLayer). */
+const SlideLane = styled.div`
+  position: absolute;
+  pointer-events: none;
+`
+
+const SlideStick = styled.div`
+  position: sticky;
+  left: 0;
+  width: 100%;
+`
+
+/** Only while it slides (see SlideLayer). */
+const SlideStreak = styled.div`
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+`
+
+const WindWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+`
+
+const BonkWindow = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
+/** Its own place in the art on narrow screens, over the text box on wide ones. */
+const ArtOnNarrow = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  ${WIDE} {
+    display: none;
+  }
+`
+
+/** Art over the text box (\`layer.front\`): over its fill, under its text. */
+const BoxFront = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  ${NARROW} {
+    display: none;
+  }
 `
 
 const BirdWindow = styled.div`
@@ -3288,30 +3894,16 @@ const DragonHighlight = styled.div`
   }
 `
 
-/** Drawn markings (\`dragon.swirls\`): glowing violet-blue, like the Wiki's. */
-const SwirlSvg = styled.svg`
+/**
+ * Painted markings (\`dragon.swirls\`), lit: their dark violet brightened to
+ * lavender and glowing violet-blue, like the Wiki's.
+ */
+const SwirlGlow = styled.div`
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
+  filter: brightness(3.4) drop-shadow(0 0 calc(var(--px) * 1.5) #6f5bff)
     drop-shadow(0 0 calc(var(--px) * 3) #5b3dff)
     drop-shadow(0 0 calc(var(--px) * 6) rgba(90, 60, 255, 0.8));
-
-  path {
-    fill: none;
-    stroke: #cfc6ff;
-    stroke-width: 2.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-`
-
-const SwingWindow = styled.div`
-  position: absolute;
-  overflow: hidden;
-  pointer-events: none;
 `
 
 /** A tail's hover area; with \`$narrowOnly\`, only where it's in the art. */
@@ -3468,6 +4060,13 @@ const ZapBody = styled.div`
   transform-origin: 50% 40%;
 `
 
+/** The still rest of a zapped layer round its jolting part. */
+const ZapStill = styled.div`
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+`
+
 /** Lightning over a zapped layer; invisible until it flickers. */
 const ZapBolt = styled.div`
   position: absolute;
@@ -3560,8 +4159,10 @@ const SectionHeader = styled.div`
   right: 0;
   height: var(--sky-h);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
   pointer-events: none;
 
   ${NARROW} {
@@ -3578,6 +4179,19 @@ const SectionTitle = styled.p`
   font-size: min(max(3.25rem, ${ax(108)}), var(--title-fit));
   line-height: 0.95;
   letter-spacing: -0.025em;
+  text-shadow: var(--header-shadow);
+`
+
+/** A scene's `headerSub`: a line under the header, in its colour. */
+const SectionSub = styled.p`
+  max-width: 88%;
+  margin: ${ax(10)} 0 0;
+  color: var(--header-color);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: max(0.95rem, ${ax(25)});
+  line-height: 1.15;
+  text-wrap: balance;
   text-shadow: var(--header-shadow);
 `
 

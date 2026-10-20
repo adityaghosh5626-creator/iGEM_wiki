@@ -128,8 +128,11 @@ export const GlobalStyle = createGlobalStyle`
     line-height: 1.15;
   }
 
-  .references .csl-entry {
+  .references [id] {
     scroll-margin-top: 6rem;
+  }
+
+  .references .csl-entry {
     margin-bottom: var(--space-sm);
     transition: background-color 180ms ease;
   }
