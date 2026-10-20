@@ -352,7 +352,7 @@ const FrameBox = styled.div`
   width: 100%;
   /* The scaled frame fills this box exactly, so the box carries the aspect and
      nothing forces it taller -- a min-height would letterbox the figure in dark
-     dead space on a narrow column. The aspect follows `logical`, so a square
+     dead space on a narrow column. The aspect follows the logical size, so a square
      figure gets a square box (16 / 9 by default). */
   aspect-ratio: ${({ $aspect }) => $aspect};
   overflow: hidden;
