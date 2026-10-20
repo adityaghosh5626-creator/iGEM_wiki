@@ -79,7 +79,15 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
 .hp.low > span { background: var(--danger); }
 .hptext { font-size: 12px; }
 .moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 8px; margin: 12px 0; }
+.moves button { text-align: left; }
 .moves button small { display: block; font-size: 11px; opacity: .75; }
+/* Role chip: what the move does, in plain game terms. Fixed fills so contrast holds in both themes. */
+.role { display: inline-block; font-size: 10px; font-weight: bold; letter-spacing: .08em;
+  padding: 1px 6px; margin-bottom: 4px; border: 1px solid #1d1d1b; }
+.role-attack  { background: #c0392b; color: #ffffff; }
+.role-amplify { background: #f2c94c; color: #1d1d1b; }
+.role-heal    { background: #2f7d5b; color: #ffffff; }
+.role-prep    { background: transparent; color: inherit; border-color: currentColor; }
 .log { list-style: none; margin: 0; padding: 8px; border: 2px solid var(--border); height: 140px;
   overflow-y: auto; font-size: 13px; background: var(--bg); }
 .log li { padding: 1px 0; }
@@ -92,9 +100,12 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
   background: radial-gradient(120% 90% at 50% 0%, var(--screen) 0%, var(--bg) 70%); }
 .start[hidden] { display: none; }
 .start-debris { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.start-debris i { position: absolute; display: block; opacity: .55; cursor: help;
-  pointer-events: auto; animation-name: drift; animation-timing-function: linear;
+.start-debris i { position: absolute; display: block; opacity: .55; cursor: grab;
+  pointer-events: auto; touch-action: none; animation-name: drift; animation-timing-function: linear;
   animation-iteration-count: infinite; }
+/* Once grabbed, a piece leaves the CSS drift for good and the physics loop moves it. */
+.start-debris i.free { left: 0; top: 0 !important; animation: none; will-change: transform; }
+.start-debris i.held { cursor: grabbing; opacity: 1; }
 .start-debris i:hover { animation-play-state: paused; opacity: 1; }
 @keyframes drift {
   from { transform: translate3d(-14vw, 0, 0) rotate(0deg); }
@@ -175,17 +186,51 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
 .cut-context b { font-style: normal; letter-spacing: .06em; }
 .cut-context[hidden] { display: none; }
 .cut { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column;
-  justify-content: flex-end; padding: 24px 16px;
-  background: radial-gradient(120% 90% at 50% 15%, #2a1414 0%, #120a0a 75%); }
+  padding: 24px 16px; overflow-y: auto;
+  background: radial-gradient(120% 90% at 50% 15%, #2e2618 0%, #110e0a 75%); }
 .cut[hidden] { display: none; }
-.cut-stage { flex: 1; display: flex; align-items: flex-end; justify-content: space-between;
+/* No justify-content:flex-end on .cut: once a phone overflows it, the top becomes unscrollable. */
+.cut-stage { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 16px; max-width: 760px; width: 100%; margin: 0 auto 18px; }
-.cut-actor { text-align: center; transition: opacity .25s, transform .25s; opacity: .35; }
-.cut-actor .pic { width: clamp(90px, 22vw, 150px); aspect-ratio: 1; }
-.cut-actor span { display: block; margin-top: 6px; font-size: 12px; color: #f6efe6;
-  letter-spacing: .08em; }
+/* Mini PETadex. Its screen is always light, so its ink is pinned rather than themed. */
+.cut-dex { align-self: center; width: min(100%, 440px); background: #b23a3a;
+  border: 3px solid #111; border-radius: 8px 8px 8px 20px; padding: 8px;
+  transition: box-shadow .25s; }
+.cut-dex[hidden] { display: none; }
+.cut-dex.on { box-shadow: 0 0 0 3px #f2c94c; }
+.cut-dex-screen { background: #cfe3c4; color: #18301f; border: 2px solid #111;
+  border-radius: 4px; padding: 6px 8px; font-size: 12px; }
+.cut-dex-head { display: flex; justify-content: space-between; gap: 8px; font-weight: bold;
+  font-size: 11px; letter-spacing: .08em; }
+.cut-rows { list-style: none; margin: 4px 0 0; padding: 0; }
+.cut-rows li { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 6px; padding: 2px 0;
+  border-top: 1px dashed rgba(24,48,31,.4); animation: pop .35s ease-out; }
+.cut-rows .good { color: #1f5e3f; } .cut-rows .mid { color: #7a4d00; }
+.cut-arena { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.cut-side { flex: 1; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.cut-side.bin { justify-content: flex-end; }
+.cut-actor { display: none; width: clamp(60px, 14vw, 100px); text-align: center; opacity: .55;
+  transition: opacity .25s, transform .35s, filter .35s; }
+.cut-actor.in { display: block; }
+.cut-actor.prop { width: clamp(84px, 17vw, 124px); opacity: 1; }
+.cut-actor.prop .pic { aspect-ratio: 20 / 23; }
+.cut-actor .pic { width: 100%; aspect-ratio: 1; }
+.cut-actor.in .pic { animation: pop .4s ease-out; }
+.cut-actor span { display: block; margin-top: 6px; font-size: clamp(9px, 2.6vw, 11px); color: #f6efe6;
+  letter-spacing: .06em; }
+.cut-actor .tag { display: block; font-size: 10px; color: #f2c94c; white-space: normal; }
+.cut-actor .tag:empty { display: none; }
 .cut-actor.on { opacity: 1; transform: translateY(-10px); }
-.cut-box { max-width: 760px; width: 100%; margin: 0 auto; background: var(--panel);
+.cut-actor.strain .pic { animation: shake .35s 3; }
+.cut-actor.down { opacity: .45; filter: grayscale(.6); transform: translateY(10px) rotate(-8deg); }
+.cut-actor.down.on { opacity: .9; }
+.cut-actor.done { opacity: .3; filter: grayscale(1); transform: scale(.8); }
+.cut-actor.away { opacity: .35; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); } }
+.cut-speaker { min-height: 1.4em; }
+.cut-text.narr { font-style: italic; }
+.cut-box { position: sticky; bottom: 0; max-width: 760px; width: 100%; margin: 0 auto; background: var(--panel);
   border: 3px solid var(--border); box-shadow: 6px 6px 0 rgba(0,0,0,.5); padding: 14px 16px; }
 .cut-speaker { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
 .cut-text { margin: 0; min-height: 4.4em; font-size: 14px; line-height: 1.55; }
@@ -193,7 +238,10 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
   text-underline-offset: 3px; }
 .cut-text a:hover, .cut-text a:focus-visible { color: var(--warn); }
 .cut-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
-@media (prefers-reduced-motion: reduce) { .cut-actor { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .cut-actor, .cut-dex { transition: none; }
+  .cut-actor.in .pic, .cut-actor.strain .pic, .cut-rows li { animation: none; }
+}
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -201,6 +249,7 @@ canvas.sprite { image-rendering: pixelated; width: 100%; height: 100%; display: 
 .objective { border: 2px solid var(--border); background: var(--panel); padding: 8px 12px;
   margin: 0; font-size: 13px; flex: none; }
 .objective b { color: var(--good); }
+.obj-progress { display: block; margin-top: 4px; font-weight: bold; }
 
 /* Field coverage board */
 .coverage { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 3px solid var(--border);
@@ -314,8 +363,10 @@ body.coached .dialog { max-height: calc(100vh - 184px); }
     <h1>PETadex</h1>
     <button id="go-home">&lt; Home</button>
   </div>
-  <p class="objective"><b>Objective: find the right enzyme for each job.</b> One enzyme is never enough.
-  Win a battle to sequence a new one.</p>
+  <p class="objective"><b>Objective: beat all six sites to beat the game.</b>
+  Start at The Beach and fight your way to the Landfill Core. Every win sequences a new enzyme and
+  opens the next site. Find the right enzyme for each job: one enzyme is never enough.
+  <span class="obj-progress" id="obj-progress"></span></p>
 
   <!-- Petadex.js equivalent -->
   <section class="device" id="dex" tabindex="0" aria-label="PETadex browser. Use left and right arrow keys to browse." data-nav-skip>
@@ -394,18 +445,19 @@ body.coached .dialog { max-height: calc(100vh - 184px); }
 
 <div class="cut" id="cutscene" hidden>
   <p class="cut-context" id="cut-context" hidden>
-    <b>Context:</b> You've fought your way through the PETadex to the final site and been defeated by
-    Polypropylene, the one plastic that no known enzyme on earth can degrade. This is where the story
-    leaves off.
+    <b>Context:</b> You've filled the PETadex site by site, from the beach to the reactor.
+    The story picks up back home.
   </p>
   <div class="cut-stage">
-    <div class="cut-actor" id="cut-enz">
-      <div class="pic"><canvas class="sprite" id="cut-spr-e" aria-hidden="true"></canvas></div>
-      <span id="cut-name-e"></span>
+    <div class="cut-dex" id="cut-dex" hidden>
+      <div class="cut-dex-screen">
+        <div class="cut-dex-head"><span>PETADEX MATCH</span><span>HOME BIN | 20C</span></div>
+        <ol class="cut-rows" id="cut-rows"></ol>
+      </div>
     </div>
-    <div class="cut-actor" id="cut-pp">
-      <div class="pic"><canvas class="sprite" id="cut-spr-p" aria-hidden="true"></canvas></div>
-      <span>POLYPROPYLENE</span>
+    <div class="cut-arena">
+      <div class="cut-side" id="cut-team"></div>
+      <div class="cut-side bin" id="cut-bin"></div>
     </div>
   </div>
   <div class="cut-box">
@@ -433,36 +485,38 @@ body.coached .dialog { max-height: calc(100vh - 184px); }
 
 <script>
 /* ---------------- Data ---------------- */
-// Used by the closing cutscene and by the "we are working on it" button shown when a
-// player loses to the one plastic no known enzyme can degrade.
+// Used by the "we are working on it" button shown when a player loses to the one plastic
+// no known enzyme can degrade.
 const WIKI_URL = 'https://2026.igem.wiki/toronto/model/';
+// The closing cutscene points at the matching tool itself.
+const CUT_URL = 'https://2026.igem.wiki/toronto/dry-lab/overview/';
 const CLASSES = {
   PETase:   { pal: ['#24543a', '#3f8f5e', '#8fd3a6'] },
   Cutinase: { pal: ['#1d4567', '#2f6f9f', '#8cc4ea'] },
   Lipase:   { pal: ['#6e4708', '#b9770e', '#f0c26a'] },
-  Tannase:  { pal: ['#3f2456', '#6c3f8f', '#b996d9'] }
+  Amidase:  { pal: ['#4a1240', '#b02a85', '#5ee6d6'] }
 };
 
 // Multiplier of enzyme class vs plastic. Tune for balance.
+// Nylon is held together by amide bonds, so only the amidase cuts it.
 const EFFECT = {
-  PETase:   { PETa: 1.6, PETc: 1.0, PU: 0.8, PLA: 0.8, HDPE: 0.25, PP: 0.25 },
-  Cutinase: { PETa: 1.4, PETc: 1.2, PU: 1.0, PLA: 1.2, HDPE: 0.25, PP: 0.25 },
-  Lipase:   { PETa: 0.6, PETc: 0.4, PU: 1.4, PLA: 1.4, HDPE: 0.25, PP: 0.25 },
-  Tannase:  { PETa: 1.0, PETc: 0.8, PU: 0.6, PLA: 0.6, HDPE: 0.25, PP: 0.25 }
+  PETase:   { PETa: 1.6, PETc: 1.0, PU: 0.8, NY: 0.25, PP: 0.25 },
+  Cutinase: { PETa: 1.4, PETc: 1.2, PU: 1.0, NY: 0.25, PP: 0.25 },
+  Lipase:   { PETa: 0.6, PETc: 0.4, PU: 1.4, NY: 0.25, PP: 0.25 },
+  Amidase:  { PETa: 0.4, PETc: 0.4, PU: 0.6, NY: 1.6,  PP: 0.25 }
 };
 
 // Raw fields only. tm in C, act = relative activity 0-1, len = residues. Approximate, verify.
-// Listed in unlock order, so PETadex numbering follows progression: beach (start), then compost
-// and landfill (opened by clearing the beach), then reactor (opened by clearing compost).
+// The five PETamon from the art brief. home = the site each one is built for.
+// biome = where you sequence it: winning a site yields exactly one enzyme, the one the next
+// site needs, so the run is a straight line from the beach to the reactor.
+// Listed in unlock order, so PETadex numbering follows progression.
 const RAW_ENZYMES = [
-  { id: 'ispetase',   name: 'IsPETase',    cls: 'PETase',   tm: 48, act: 0.30, len: 290, biome: 'beach',    starter: true },
-  { id: 'fastpetase', name: 'FAST-PETase', cls: 'PETase',   tm: 67, act: 0.60, len: 290, biome: 'beach' },
-  { id: 'tfcut2',     name: 'TfCut2',      cls: 'Cutinase', tm: 70, act: 0.45, len: 262, biome: 'compost' },
-  { id: 'phl7',       name: 'PHL7',        cls: 'Cutinase', tm: 79, act: 0.70, len: 258, biome: 'compost' },
-  { id: 'lccicc',     name: 'LCC-ICCG',    cls: 'Cutinase', tm: 94, act: 0.85, len: 293, biome: 'compost' },
-  { id: 'calb',       name: 'CalB',        cls: 'Lipase',   tm: 60, act: 0.20, len: 317, biome: 'landfill' },
-  { id: 'mhetase',    name: 'MHETase',     cls: 'Tannase',  tm: 50, act: 0.35, len: 603, biome: 'landfill' },
-  { id: 'hotpetase',  name: 'HotPETase',   cls: 'PETase',   tm: 82, act: 0.55, len: 290, biome: 'reactor' }
+  { id: 'ispetase',   name: 'IsPETase',    cls: 'PETase',   tm: 48, act: 0.30, len: 290, home: 'beach',    biome: 'beach', starter: true },
+  { id: 'pueb',       name: 'PueB',        cls: 'Lipase',   tm: 55, act: 0.35, len: 600, home: 'landfill', biome: 'beach' },
+  { id: 'nylc',       name: 'NylC',        cls: 'Amidase',  tm: 58, act: 0.45, len: 355, home: 'nylon',    biome: 'landfill' },
+  { id: 'fastpetase', name: 'FAST-PETase', cls: 'PETase',   tm: 67, act: 0.60, len: 290, home: 'sorting',  biome: 'nylon' },
+  { id: 'lccicc',     name: 'LCC-ICCG',    cls: 'Cutinase', tm: 94, act: 0.85, len: 293, home: 'reactor',  biome: 'sorting' }
 ];
 
 function deriveStats(e) {
@@ -478,8 +532,7 @@ const PLASTICS = {
   PETa: { id: 'PETa', name: 'PET film',      hp: 70,  atk: 9,  spd: 8,  cryst: 0.10, pal: ['#4a5a66', '#8aa0b0', '#d5e2ea'] },
   PETc: { id: 'PETc', name: 'PET bottle',    hp: 110, atk: 11, spd: 6,  cryst: 0.35, pal: ['#33536b', '#5f8fb0', '#bcdcef'] },
   PU:   { id: 'PU',   name: 'PU foam',       hp: 90,  atk: 12, spd: 9,  cryst: 0.15, pal: ['#6b5a2e', '#b39b52', '#eadba6'] },
-  PLA:  { id: 'PLA',  name: 'PLA cup',       hp: 80,  atk: 10, spd: 10, cryst: 0.30, pal: ['#5a6b3a', '#94ad62', '#dbe9bd'] },
-  HDPE: { id: 'HDPE', name: 'HDPE bag',      hp: 120, atk: 12, spd: 7,  cryst: 0.60, polyolefin: true, pal: ['#555', '#999', '#eee'] },
+  NY:   { id: 'NY',   name: 'Nylon net',     hp: 100, atk: 12, spd: 7,  cryst: 0.40, pal: ['#2a3340', '#56677a', '#b8c7d6'] },
   PP:   { id: 'PP',   name: 'Polypropylene', hp: 220, atk: 15, spd: 8,  cryst: 0.50, polyolefin: true, boss: true, pal: ['#4a1f1f', '#8f3b3b', '#e0a0a0'] }
 };
 
@@ -487,29 +540,27 @@ const PLASTICS = {
 // Short hover blurbs for the title screen.
 const ENZYME_DESC = {
   ispetase:   'The original. Found outside a Japanese bottle recycling plant, 2016.',
+  pueb:       'Oozes onto polyurethane foam and waits for it to come apart. Slow, but it gets there.',
+  nylc:       'Found in nylon factory wastewater, eating a material that did not exist before 1935.',
   fastpetase: 'IsPETase redrawn by machine learning. Eats untreated plastic at 50C.',
-  tfcut2:     'Cuts PET film well, then chokes on its own waste.',
-  phl7:       'Compost heap find. One changed residue makes it shred amorphous PET.',
-  lccicc:     'Industrial benchmark. Strips PET in hours, but only when hot.',
-  calb:       'An industrial lipase. Weak on PET, happier with softer polyesters.',
-  mhetase:    'Cannot touch PET. Splits the fragments IsPETase leaves behind.',
-  hotpetase:  'Evolved to survive 82C, hot enough to bite crystalline bottles.'
+  lccicc:     'Came out of a compost heap, engineered to survive 94C. Strips PET in hours, but only when hot.'
 };
 const PLASTIC_DESC = {
   PETa: 'Loosely packed PET chains. Easy to bind, the softest target.',
   PETc: 'Same polymer as film, packed tight. Crystallinity blunts every enzyme.',
   PU:   'Cuttable esters, hidden between urethane links most enzymes cannot reach.',
-  PLA:  'Genuinely compostable, but only inside a hot industrial composter.',
-  HDPE: 'A plain carbon backbone. No bonds to cut, only oxidation.',
+  NY:   'Lost fishing line. Amide bonds, not esters, so only one enzyme can cut it.',
   PP:   'No known enzyme degrades it. Not one, anywhere.'
 };
 
 const BIOMES = [
-  { id: 'beach',     name: 'The Beach',          temp: 30, plastics: ['PETa', 'PETc'],         needs: [] },
-  { id: 'compost',   name: 'Compost Heap',       temp: 60, plastics: ['PETc', 'PLA', 'PU'],    needs: ['beach'] },
-  { id: 'landfill',  name: 'The Landfill',       temp: 40, plastics: ['HDPE', 'PETc', 'PU'],   needs: ['beach'] },
-  { id: 'reactor',   name: 'Recycling Reactor',  temp: 72, plastics: ['PETc', 'PU'],           needs: ['compost'] },
-  { id: 'petrochem', name: 'Petrochem Facility', temp: 50, plastics: ['PP'],                   needs: ['reactor', 'landfill'] }
+  { id: 'beach',    name: 'The Beach',             temp: 30, plastics: ['PETa'], needs: [] },
+  { id: 'landfill', name: 'The Landfill',          temp: 40, plastics: ['PU'],   needs: ['beach'] },
+  { id: 'nylon',    name: 'The Nylon Works',       temp: 45, plastics: ['NY'],   needs: ['landfill'] },
+  { id: 'sorting',  name: 'The Sorting Line',      temp: 50, plastics: ['PETc'], needs: ['nylon'] },
+  { id: 'reactor',  name: 'The Recycling Reactor', temp: 72, plastics: ['PETc'], needs: ['sorting'] },
+  // The boss lives deep in the landfill, behind everything else.
+  { id: 'core',     name: 'Landfill Core',         temp: 40, plastics: ['PP'],   needs: ['reactor'] }
 ];
 const biomeById = id => BIOMES.find(b => b.id === id);
 const poolFor = id => ENZYMES.filter(e => e.biome === id);
@@ -539,8 +590,45 @@ function drawSprite(canvas, seedName, pal, { hidden = false, eyes = true } = {})
     ctx.fillStyle = '#111'; ctx.fillRect(H - 3, 6, 1, 1); ctx.fillRect(H + 2, 6, 1, 1); }
 }
 
+// Hand-placed pixel art for props, one character per pixel ('.' is transparent).
+// The recycling bin that opens the closing scene, a bottle and foam poking out under the lid.
+const BIN_ART = [
+  '....ooo.............',
+  '....opo.....ooooo...',
+  '...ohpo....offfffo..',
+  '..ohhppo..offffffo..',
+  '.oooooooooooooooooo.',
+  '.ohhhhhhhhhhhhhhhho.',
+  '.oLLLLLLLLLLLLLLLLo.',
+  '.oooooooooooooooooo.',
+  '..ohBBBBBBBBBBBBbo..',
+  '..ohBBBBBBBBBBBBbo..',
+  '..ohBBBBBwwBBBBBbo..',
+  '..ohBBBBwBBwwBBBbo..',
+  '..ohBBBwwBBBwBBBbo..',
+  '..ohBBBBBBBBwwBBbo..',
+  '..ohBBwBBBBBBBBBbo..',
+  '..ohBwwBBBBBBwBBbo..',
+  '..ohBBwwwBwwwwBBbo..',
+  '..ohBBBBBBBBBBBBbo..',
+  '..ohBBBBBBBBBBBBbo..',
+  '..ohbbbbbbbbbbbbbo..',
+  '..oooooooooooooooo..',
+  '...oWWo......oWWo...',
+  '....oo........oo....'
+];
+const BIN_PAL = { o: '#111', p: '#bcdcef', f: '#eadba6', h: '#8cc4ea', L: '#1d4567',
+  B: '#2f6f9f', b: '#1d4567', w: '#eef6fb', W: '#666' };
+function drawArt(canvas, rows, pal) {
+  canvas.width = rows[0].length; canvas.height = rows.length;
+  const ctx = canvas.getContext('2d');
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch !== '.') { ctx.fillStyle = pal[ch]; ctx.fillRect(x, y, 1, 1); }
+  }));
+}
+
 /* ---------------- Game state (persisted) ---------------- */
-const SAVE_KEY = 'petadex.demo.v1';
+const SAVE_KEY = 'petadex.demo.v2';     // v2: art-brief roster and sites
 const freshState = () => ({
   idx: 0,
   caught: new Set(ENZYMES.filter(e => e.starter).map(e => e.id)), // IsPETase only
@@ -553,7 +641,7 @@ function loadState() {
     const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
     if (raw && Array.isArray(raw.caught)) {
       // Filter first: a save written by an older roster can leave nothing recognisable,
-      // and an empty roster breaks ownedEnzymes().reduce, owned[0] and currentPetamon().
+      // and an empty roster breaks ownedEnzymes().reduce and owned[0].
       const caught = new Set(raw.caught.filter(id => ENZYMES.some(e => e.id === id)));
       if (caught.size) return {
         idx: Math.min(Math.max(0, raw.idx | 0), ENZYMES.length - 1),
@@ -580,7 +668,8 @@ const $ = id => document.getElementById(id);
 const ownedEnzymes = () => ENZYMES.filter(e => state.caught.has(e.id));
 const stableIn = b => ownedEnzymes().filter(e => b.temp <= e.tm - 5);
 const effOf = (e, pid) => EFFECT[e.cls][pid];
-const effWord = v => v >= 1.4 ? 'super effective' : v >= 1.0 ? 'workable' : v >= 0.6 ? 'weak' : 'no ester bonds to cut';
+const effWord = v => v >= 1.4 ? 'super effective' : v >= 1.0 ? 'workable' : v >= 0.6 ? 'weak'
+  : v > 0.3 ? 'barely cuts it' : 'no bonds it can cut';
 const effTone = v => v >= 1.4 ? 'good-t' : v >= 1.0 ? 'mid-t' : 'bad-t';
 
 // One sentence naming the gap between your roster and a site.
@@ -621,18 +710,19 @@ function verdict(b) {
 }
 
 function renderCoverage() {
+  $('obj-progress').textContent = `Sites cleared: ${state.won.size} / ${BIOMES.length}`;
   const box = $('cov-rows'); box.innerHTML = '';
   for (const b of BIOMES) {
     const v = verdict(b);
-    const left = poolFor(b.id).filter(e => !state.caught.has(e.id)).length;
+    const left = poolFor(b.id).some(e => !state.caught.has(e.id));
     box.insertAdjacentHTML('beforeend',
       `<div class="cov-row">
          <span class="site">${b.name}${state.won.has(b.id) ? ' \u2713' : ''}</span>
          <span class="tag ${v.tone}">${v.tag}</span>
          <span><span class="${v.tone}">${v.text}</span><br>
            <small>${b.temp}C | ${b.plastics.map(pid => PLASTICS[pid].name).join(', ')}
-           | ${left ? left + ' enzyme(s) still unsequenced here'
-                : (poolFor(b.id).length ? 'all enzymes here sequenced' : 'no enzymes native to this site')}</small></span>
+           | ${left ? 'enzyme here still unsequenced'
+                : (poolFor(b.id).length ? 'enzyme here sequenced' : 'nothing to sequence here')}</small></span>
        </div>`);
   }
   tutHighlight();
@@ -652,7 +742,7 @@ function renderDex() {
     stats.insertAdjacentHTML('beforeend',
       `<span>${k}</span><span class="bar"><span style="width:${have ? Math.min(100, v / max * 100) : 0}%"></span></span><span>${shown}</span>`);
   }
-  $('dex-raw').textContent = have ? `Tm ${e.tm}C | rel. activity ${e.act} | ${e.len} aa | found in ${biomeById(e.biome).name}` : '';
+  $('dex-raw').textContent = have ? `Tm ${e.tm}C | rel. activity ${e.act} | ${e.len} aa | built for ${biomeById(e.home).name}` : '';
   $('dex-count').textContent = `${state.idx + 1} / ${ENZYMES.length}  (${state.caught.size} sequenced)`;
   $('dex-prev').disabled = state.idx === 0;
   $('dex-next').disabled = state.idx === ENZYMES.length - 1;
@@ -668,35 +758,99 @@ $('dex').addEventListener('keydown', ev => {
 });
 
 /* ---------------- Closing cutscene ---------------- */
+// who: an enzyme or plastic id from CAST, 'dex' (the readout speaks) or 'narr' (no speaker).
+// do: stage changes applied when the line first appears. See cutApply.
 const CUTSCENE = [
-  { who: 'pp',  text: 'You cannot defeat me. Mwahahahaha!' },
-  { who: 'enz', text: 'We might not be able to defeat you. But we will come back stronger.' },
-  { who: 'enz', text: 'The PETadex catalogues every plastic-degrading enzyme on record: what each one cuts, how hot it can run, and where in the world it was found.' },
-  { who: 'enz', text: 'It maps the gaps just as carefully. Nothing in it degrades you yet, and that gap is exactly where we go looking.' },
-  { who: 'enz', text: 'Every genome we mine and every variant we engineer is another candidate. Sooner or later, one of them will be your match.' },
-  { who: 'pp',  text: '...' },
-  { who: 'enz', text: 'See more at ', linkText: '2026.igem.wiki/toronto/model' }
+  { who: 'narr', text: 'Back home. The recycling bin under the sink is full again.',
+    do: { show: ['bin', 'fastpetase'], strain: ['bin'] } },
+  { who: 'fastpetase', text: 'Leave it to me. A machine learning model designed me to chew through plastic nothing else will touch.' },
+  { who: 'narr', text: 'PET film, a PET bottle, a foam cushion and a tangle of nylon line. All at once.',
+    do: { show: ['PETa', 'PETc', 'PU', 'NY'] } },
+  { who: 'fastpetase', text: "Why is this so slow? Half of this isn't even PET.", do: { strain: ['fastpetase'] } },
+  { who: 'fastpetase', text: 'Too many kinds at once... and it is freezing in here.', do: { down: ['fastpetase'] } },
+  { who: 'dex', text: 'Four plastics at 20C, and four different problems. FAST-PETase was built for PET at 50C. No single enzyme covers this bin.',
+    do: { dex: true } },
+  { who: 'dex', text: 'Matching each plastic to the enzyme, and the place, that suits it.' },
+  { who: 'dex', text: 'PET film. Loose chains at room temperature. IsPETase comes from a bacterium that lives on exactly this.',
+    do: { show: ['ispetase'], row: ['PETa', 'IsPETase', 'here, 20C', 'good'] } },
+  { who: 'ispetase', text: 'On it.', do: { clear: ['PETa'] } },
+  { who: 'dex', text: 'PU foam. Its esters hide between urethane links. PueB oozes onto foam and waits for it to come apart.',
+    do: { show: ['pueb'], row: ['PU', 'PueB', 'here, 20C', 'good'] } },
+  { who: 'pueb', text: 'No rush.', do: { clear: ['PU'] } },
+  { who: 'dex', text: 'Nylon. Amide bonds, not esters, so no PETase can touch it. NylC is the only one that cuts nylon, and it works best at the Nylon Works.',
+    do: { show: ['nylc'], row: ['NY', 'NylC', 'nylon works, 45C', 'mid'] } },
+  { who: 'nylc', text: 'One job. Done perfectly.', do: { ship: { nylc: 'to nylon works', NY: 'to nylon works' } } },
+  { who: 'dex', text: 'PET bottle. Too crystalline to finish at 20C. FAST-PETase starts it at the Sorting Line, and LCC-ICCG finishes it in the reactor.',
+    do: { up: ['fastpetase'], show: ['lccicc'], row: ['PETc', 'FAST\u2011PETase, LCC\u2011ICCG', 'sorting 50C, reactor 72C', 'mid'] } },
+  { who: 'fastpetase', text: 'Now that one is mine.' },
+  { who: 'lccicc', text: "Send me what's left once it's hot.",
+    do: { ship: { fastpetase: 'to sorting line', lccicc: 'to reactor', PETc: 'to sorting line' } } },
+  { who: 'narr', text: 'Bin cleared. Two plastics handled at home, two sent where their enzymes work best.' },
+  { who: 'ispetase', text: 'None of us could have cleared that bin alone.' },
+  { who: 'dex', text: 'The right enzyme for every plastic, and every place. See how the PETadex finds the match at ',
+    linkText: '2026.igem.wiki/toronto/dry-lab/overview' }
 ];
-let cutLine = 0, cutEnz = null, cutTimer = null, cutDone = false;
+// Everyone who can appear, in stage order.
+const CAST = [
+  ['fastpetase', 'team'], ['ispetase', 'team'], ['pueb', 'team'], ['nylc', 'team'], ['lccicc', 'team'],
+  ['bin', 'bin'], ['PETa', 'bin'], ['PETc', 'bin'], ['PU', 'bin'], ['NY', 'bin']
+];
+let cutLine = 0, cutStaged = false, cutTimer = null, cutDone = false;
 const reduceMotion = () =>
   typeof window !== 'undefined' && !!window.matchMedia &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Whoever the player would send into battle right now.
-function currentPetamon() {
-  if (picked && state.caught.has(picked)) return ENZYMES.find(e => e.id === picked);
-  const cur = ENZYMES[state.idx];
-  if (state.caught.has(cur.id)) return cur;
-  return ENZYMES.find(e => state.caught.has(e.id));
+const castName = key => key === 'bin' ? 'Recycling bin'
+  : PLASTICS[key] ? PLASTICS[key].name : ENZYMES.find(e => e.id === key).name;
+const cutActor = key => $('cutscene').querySelector(`.cut-actor[data-key="${key}"]`);
+
+function buildCast() {
+  $('cut-team').innerHTML = '';
+  $('cut-bin').innerHTML = '';
+  $('cut-rows').innerHTML = '';
+  $('cut-dex').hidden = true;
+  for (const [key, side] of CAST) {
+    const p = PLASTICS[key];
+    const el = document.createElement('div');
+    el.className = 'cut-actor' + (key === 'bin' ? ' prop' : '');
+    el.dataset.key = key;
+    el.innerHTML = '<div class="pic"><canvas class="sprite" aria-hidden="true"></canvas></div><span></span><small class="tag"></small>';
+    el.querySelector('span').textContent = castName(key).toUpperCase();
+    $(side === 'team' ? 'cut-team' : 'cut-bin').appendChild(el);
+    const c = el.querySelector('canvas');
+    if (key === 'bin') drawArt(c, BIN_ART, BIN_PAL);
+    else if (p) drawSprite(c, p.id, p.pal, { eyes: !!p.boss });   // same sprites as battle
+    else { const e = ENZYMES.find(x => x.id === key); drawSprite(c, e.id, CLASSES[e.cls].pal); }
+  }
 }
 
-function playCutscene(enzyme, fromMenu) {
-  cutEnz = enzyme || currentPetamon();
+function cutApply(fx = {}) {
+  const tag = (key, text) => { cutActor(key).querySelector('.tag').textContent = text; };
+  for (const k of fx.show || []) cutActor(k).classList.add('in');
+  for (const k of fx.strain || []) cutActor(k).classList.add('strain');
+  for (const k of fx.down || []) cutActor(k).classList.add('down');
+  for (const k of fx.up || []) cutActor(k).classList.remove('down', 'strain');
+  for (const k of fx.clear || []) { cutActor(k).classList.add('done'); tag(k, 'cleared'); }
+  for (const [k, where] of Object.entries(fx.ship || {})) { cutActor(k).classList.add('away'); tag(k, where); }
+  if (fx.dex) $('cut-dex').hidden = false;
+  if (fx.row) {
+    const [pid, match, where, tone] = fx.row;
+    const li = document.createElement('li');
+    li.className = tone;
+    for (const t of [PLASTICS[pid].name, match, where]) {
+      const s = document.createElement('span');
+      s.textContent = t;
+      li.appendChild(s);
+    }
+    $('cut-rows').appendChild(li);
+  }
+}
+
+function playCutscene(fromMenu) {
   cutLine = 0;
+  cutStaged = true;
   $('cut-context').hidden = !fromMenu;   // the real defeat needs no explaining
-  $('cut-name-e').textContent = cutEnz.name.toUpperCase();
-  drawSprite($('cut-spr-e'), cutEnz.id, CLASSES[cutEnz.cls].pal);
-  drawSprite($('cut-spr-p'), 'PP', PLASTICS.PP.pal, { eyes: true });
+  buildCast();
   $('cutscene').hidden = false;
   cutShow();
   $('cut-next').focus();
@@ -708,20 +862,22 @@ function cutPaint(line, n) {
   if (!line.linkText || n < full.length) { el.textContent = full.slice(0, n); return; }
   el.textContent = line.text;
   const a = document.createElement('a');
-  a.href = WIKI_URL; a.target = '_blank'; a.rel = 'noopener';
+  a.href = CUT_URL; a.target = '_blank'; a.rel = 'noopener';
   a.textContent = line.linkText;
   el.appendChild(a);
 }
 function cutShow() {
-  if (!cutEnz) return;                              // nothing staged yet
+  if (!cutStaged) return;                           // nothing staged yet
   const line = CUTSCENE[cutLine];
-  const isPP = line.who === 'pp';
-  $('cut-pp').classList.toggle('on', isPP);
-  $('cut-enz').classList.toggle('on', !isPP);
-  $('cut-speaker').textContent = isPP ? 'Polypropylene' : cutEnz.name;
+  cutApply(line.do);
+  for (const el of $('cutscene').querySelectorAll('.cut-actor'))
+    el.classList.toggle('on', el.dataset.key === line.who);
+  $('cut-dex').classList.toggle('on', line.who === 'dex');
+  $('cut-speaker').textContent = line.who === 'dex' ? 'PETadex' : line.who === 'narr' ? '' : castName(line.who);
+  $('cut-text').classList.toggle('narr', line.who === 'narr');
   $('cut-next').textContent = cutLine === CUTSCENE.length - 1 ? 'Close' : 'Next';
   const link = $('cut-link');
-  link.href = WIKI_URL;
+  link.href = CUT_URL;
   link.hidden = !line.linkText;
   clearInterval(cutTimer);
   const el = $('cut-text');
@@ -736,7 +892,7 @@ function cutShow() {
   }, 18);
 }
 function cutAdvance() {
-  if (!cutEnz) return;
+  if (!cutStaged) return;
   if (!cutDone) {                                   // still typing: reveal it all
     clearInterval(cutTimer);
     cutPaint(CUTSCENE[cutLine], cutFull(CUTSCENE[cutLine]).length);
@@ -815,6 +971,102 @@ function bindTip(el, heading, sub, body) {
   el.addEventListener('blur', hideTip);
 }
 
+/* ---------------- Throwable debris ---------------- */
+// Pieces you have grabbed. x/y are the top-left in px, v in px/s, rot/vr in deg and deg/s.
+const bodies = new Map();
+const DRIFT_VX = 28, DRIFT_VR = 14;     // roughly the CSS drift speed, so a settled piece blends in
+let physFrame = 0, physLast = 0;
+
+function makeThrowable(el) {
+  let held = null, dragged = false;
+  el.addEventListener('pointerdown', ev => {
+    if (ev.button !== 0) return;
+    // Freeze it exactly where the drift animation has it right now.
+    let b = bodies.get(el);
+    if (!b) {
+      const m = new DOMMatrix(getComputedStyle(el).transform);
+      b = { x: el.offsetLeft + m.e, y: el.offsetTop + m.f, vx: 0, vy: 0,
+            rot: Math.atan2(m.b, m.a) * 180 / Math.PI, vr: 0, w: el.offsetWidth };
+      bodies.set(el, b);
+      el.classList.add('free');
+    }
+    held = { b, dx: ev.clientX - b.x, dy: ev.clientY - b.y, t: ev.timeStamp, sx: ev.clientX, sy: ev.clientY };
+    b.vx = b.vy = 0;
+    b.held = true;
+    dragged = false;
+    el.classList.add('held');
+    el.setPointerCapture(ev.pointerId);
+    placeBody(el, b);
+    ev.preventDefault();
+  });
+  el.addEventListener('pointermove', ev => {
+    if (!held) return;
+    const b = held.b, dt = Math.max(1, ev.timeStamp - held.t) / 1000;
+    const nx = ev.clientX - held.dx, ny = ev.clientY - held.dy;
+    // Smoothed so the release speed reflects the flick, not the last jittery event.
+    b.vx = b.vx * 0.6 + ((nx - b.x) / dt) * 0.4;
+    b.vy = b.vy * 0.6 + ((ny - b.y) / dt) * 0.4;
+    b.x = nx; b.y = ny; held.t = ev.timeStamp;
+    if (Math.hypot(ev.clientX - held.sx, ev.clientY - held.sy) > 5 && !dragged) { dragged = true; hideTip(); }
+    placeBody(el, b);
+  });
+  const release = ev => {
+    if (!held) return;
+    const b = held.b;
+    // A pause before letting go is a drop, not a throw.
+    if (ev.timeStamp - held.t > 80) b.vx = b.vy = 0;
+    const cap = 2600, sp = Math.hypot(b.vx, b.vy);
+    if (sp > cap) { b.vx *= cap / sp; b.vy *= cap / sp; }
+    b.vr = b.vx * 0.5;
+    b.held = false;
+    held = null;
+    el.classList.remove('held');
+    startPhysics();
+  };
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('click', ev => {
+    if (dragged) { ev.stopImmediatePropagation(); dragged = false; }
+  });
+}
+function placeBody(el, b) {
+  el.style.transform = `translate3d(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px,0) rotate(${b.rot.toFixed(1)}deg)`;
+}
+function startPhysics() {
+  if (physFrame) return;
+  physLast = performance.now();
+  physFrame = requestAnimationFrame(stepPhysics);
+}
+function stepPhysics(now) {
+  physFrame = 0;
+  if ($('startscreen').hidden || !bodies.size) return;   // go-home restarts it on the next grab
+  const dt = Math.min(0.05, (now - physLast) / 1000);
+  physLast = now;
+  const W = $('start-debris').clientWidth, H = $('start-debris').clientHeight;
+  const still = reduceMotion();
+  const ease = Math.exp(-1.8 * dt);                    // throw speed bleeds off toward the drift
+  for (const [el, b] of bodies) {
+    if (b.held) continue;
+    const dvx = still ? 0 : DRIFT_VX, dvr = still ? 0 : DRIFT_VR;
+    b.vx = dvx + (b.vx - dvx) * ease;
+    b.vy *= ease;
+    b.vr = dvr + (b.vr - dvr) * ease;
+    b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
+    // Bounce off the edges while it still has throw in it; once it is just drifting,
+    // let it leave on the right and come back on the left like the rest of the litter.
+    const thrown = Math.abs(b.vx - dvx) > 60;
+    if (b.x < 0 && b.vx < 0) { b.x = 0; b.vx *= -0.6; }
+    if (b.x > W - b.w) {
+      if (thrown && b.vx > 0) { b.x = W - b.w; b.vx *= -0.6; }
+      else if (b.x > W) b.x = -b.w;
+    }
+    if (b.y < 0 && b.vy < 0) { b.y = 0; b.vy *= -0.6; }
+    if (b.y > H - b.w && b.vy > 0) { b.y = H - b.w; b.vy *= -0.6; }
+    placeBody(el, b);
+  }
+  startPhysics();
+}
+
 function buildStart() {
   // One span per letter so they can bob out of phase.
   const t = $('start-title'); t.innerHTML = '';
@@ -843,6 +1095,7 @@ function buildStart() {
 
   // Actual plastic substrates drifting across behind the title.
   const deb = $('start-debris'); deb.innerHTML = '';
+  bodies.clear();
   const kinds = Object.values(PLASTICS);
   for (let i = 0; i < 14; i++) {
     const k = kinds[i % kinds.length], el = document.createElement('i');
@@ -857,6 +1110,7 @@ function buildStart() {
     el.appendChild(c);
     deb.appendChild(el);
     drawSprite(c, k.id, k.pal, { eyes: !!k.boss });   // same sprite you fight in battle
+    makeThrowable(el);                                // before bindTip, so a drag can swallow its click
     bindTip(el, k.name, `${Math.round(k.cryst * 100)}% crystalline`, PLASTIC_DESC[k.id] || '');
   }
 
@@ -880,7 +1134,7 @@ $('startscreen').addEventListener('click', ev => {
   const t = ev.target;
   if (!t.closest || !t.closest('#start-mons button, #start-debris i')) hideTip();
 });
-$('start-cut').onclick = () => playCutscene(currentPetamon(), true);
+$('start-cut').onclick = () => playCutscene(true);
 $('go-home').onclick = () => {
   if (!$('overlay').hidden) closeBattle();
   buildStart();                       // refresh CONTINUE label and roster
@@ -916,12 +1170,11 @@ const TUT = [
     'Welcome to the PETadex. You hold exactly one enzyme: IsPETase, the mesophilic PETase from Ideonella sakaiensis ' +
     'with Tm 48C and modest activity. That is the whole starting toolkit. Press BATTLE to take it into the field.' },
   { id: 'site', on: 'start-battle', target: 'biome-beach', text:
-    'The Beach is the only site open, and the only one IsPETase can survive: 30C, weathered PET film and bottles. ' +
-    'Everywhere else is locked until you clear it. Select The Beach, read the match report, then press Start battle.' },
+    'The Beach is the only site open: 30C, weathered PET film. Every other site stays locked until you clear the ' +
+    'one before it. Select The Beach, read the match report, then press Start battle.' },
   { id: 'bind', on: 'move-bind', target: 'move-bind', text:
-    'Read the type numbers: PETase on weathered amorphous film is x1.6, super effective. The same enzyme on the ' +
-    'crystalline bottle beside it manages only x1.0, and crystallinity blunts every hit, so IsPETase cannot win that ' +
-    'fight at all. Open with Bind: adsorbing to the surface makes your next Hydrolyze 1.6x stronger.' },
+    'Read the type numbers: PETase on weathered amorphous film is x1.6, super effective. Later sites will not be ' +
+    'this kind. Open with Bind: adsorbing to the surface makes your next Hydrolyze 2.1x stronger.' },
   { id: 'hyd',  on: 'move-hydrolyze', target: 'move-hydrolyze', text:
     'Now Hydrolyze to cleave the ester bonds while you are still bound to the surface.' },
   { id: 'tips', on: 'battle-over', target: null, text:
@@ -929,12 +1182,11 @@ const TUT = [
     '65C that penalty is halved, which is exactly why thermostable enzymes and hot reactors matter. Battle again until ' +
     'you win here.' },
   { id: 'seq',  on: 'sequenced', target: 'res-seq', text:
-    'You cleared The Beach. Sequencing a sample is the only way to get a new enzyme, so press it to add one from this ' +
-    'biome to your PETadex.' },
+    'You cleared The Beach. Sequencing a sample is the only way to get a new enzyme, and each site yields exactly ' +
+    'one: the enzyme the next site needs. Press it to add it to your PETadex.' },
   { id: 'done', on: 'dismiss', target: 'res-home', text:
-    'That is the whole loop. The Beach was the easy case. IsPETase already loses to the crystalline bottle next to that ' +
-    'film, and every other site is hotter, tougher, or a polyolefin with no ester bonds at all. One enzyme cannot ' +
-    'cover them. Return to the PETadex and read the coverage board: NEED THERMOSTABILITY means the temperature beat you, ' +
+    'That is the whole loop. The Beach was the easy case. Every site after it is hotter, more crystalline, or held ' +
+    'together by bonds IsPETase cannot cut at all. One enzyme cannot cover them. Return to the PETadex and read the coverage board: NEED THERMOSTABILITY means the temperature beat you, ' +
     'NEED A NEW CLASS means the substrate did, and NEEDS CHEMISTRY means no enzyme exists yet. Go find the right tool ' +
     'for each job.' }
 ];
@@ -1095,7 +1347,7 @@ function updateReport() {
   const w = [];
   if (hot) w.push(`${b.temp}C is near or above ${e.name}'s Tm (${e.tm}C): it will denature each turn.`);
   if (b.temp >= 65) w.push('Near PET glass transition: crystallinity penalty halved.');
-  if (b.id === 'petrochem') w.push('Boss. Polyolefins have no ester bonds. Try Pretreat.');
+  if (b.id === 'core') w.push('Boss. Polyolefins have no ester bonds. Try Pretreat.');
   $('bt-warn').textContent = w.join(' ');
   tutHighlight();
 }
@@ -1108,12 +1360,7 @@ const roll = () => 0.85 + Math.random() * 0.3;
 
 function newBattle(enzymeId, biomeId) {
   const e = ENZYMES.find(x => x.id === enzymeId), b = biomeById(biomeId);
-  // During the walkthrough, serve the substrate IsPETase can actually beat (weathered amorphous film).
-  // Once the tutorial is done The Beach randomises again, and the crystalline bottle makes the point
-  // that this enzyme has run out of road.
-  const tutorialRun = state.tut < TUT.length && b.id === 'beach';
-  const p = tutorialRun ? PLASTICS.PETa
-    : PLASTICS[b.plastics[Math.floor(Math.random() * b.plastics.length)]];
+  const p = PLASTICS[b.plastics[Math.floor(Math.random() * b.plastics.length)]];
   B = { e, p, b, eHp: e.hp, pHp: p.hp, bound: false, refolds: 2, pretreated: false, busy: false, over: false };
   showScreen('battle');
   $('bt-title').textContent = `${b.name} (${b.temp}C)`;
@@ -1146,11 +1393,12 @@ function renderFighters(redraw) {
 // First three are enzyme activities. Pretreat is NOT an enzyme or an enzyme action: it is an
 // abiotic UV/thermo-oxidative process step, the only way to put attackable groups on a
 // polyolefin that has no hydrolysable bonds to begin with.
+const BIND_BONUS = 2.1;        // multiplier Bind grants to the next Hydrolyze
 const MOVES = [
-  { id: 'hydrolyze', name: 'Hydrolyze', desc: 'Enzyme: cleave ester bonds' },
-  { id: 'bind',      name: 'Bind',      desc: 'Enzyme: next Hydrolyze x1.6' },
-  { id: 'refold',    name: 'Refold',    desc: 'Enzyme: heal 25% HP' },
-  { id: 'pretreat',  name: 'Pretreat *', desc: '* Not an enzyme. Abiotic UV/oxidation step' }
+  { id: 'hydrolyze', role: 'attack',  label: 'Attack',  name: 'Hydrolyze', desc: 'Deal damage: cleave ester bonds' },
+  { id: 'bind',      role: 'amplify', label: 'Amplify', name: 'Bind',      desc: 'Next Hydrolyze deals x2.1' },
+  { id: 'refold',    role: 'heal',    label: 'Heal',    name: 'Refold',    desc: 'Restore 25% HP' },
+  { id: 'pretreat',  role: 'prep',    label: 'Prep',    name: 'Pretreat *', desc: '* Not an enzyme. Abiotic UV/oxidation step' }
 ];
 function renderMoves() {
   const box = $('bt-moves'); box.innerHTML = '';
@@ -1159,7 +1407,8 @@ function renderMoves() {
     btn.id = 'move-' + m.id;
     let extra = '';
     if (m.id === 'refold') extra = ` (${B.refolds} left)`;
-    btn.innerHTML = `${m.name}${extra}<small>${m.desc}</small>`;
+    btn.innerHTML = `<span class="role role-${m.role}">${m.label.toUpperCase()}</span><br>${m.name}${extra}<small>${m.desc}</small>`;
+    btn.setAttribute('aria-label', `${m.label}: ${m.name}${extra}. ${m.desc}`);
     btn.disabled = B.busy || B.over
       || (m.id === 'refold' && B.refolds === 0)
       || (m.id === 'pretreat' && (!B.p.polyolefin || B.pretreated));
@@ -1187,7 +1436,7 @@ function enzymeAct(move) {
     log(`Abiotic step (no enzyme): UV/oxidation adds carbonyl groups to ${p.name}, giving ${e.name} something to grip.`);
     return; }
   const eff = effectiveness();
-  let dmg = e.atk * eff * (B.bound ? 1.6 : 1);
+  let dmg = e.atk * eff * (B.bound ? BIND_BONUS : 1);
   dmg *= 1 - p.cryst * (b.temp >= 65 ? 0.4 : 0.8);
   dmg = Math.max(1, Math.round(dmg * roll()));
   B.bound = false;
@@ -1322,7 +1571,7 @@ async function finish(won) {
   if (!won && B.p.boss) {
     const ending = B;
     await wait(900);
-    if (B === ending && !$('scr-result').hidden) playCutscene(ending.e);
+    if (B === ending && !$('scr-result').hidden) playCutscene();
   }
 }
 $('res-again').onclick = () => newBattle(B.e.id, B.b.id);
