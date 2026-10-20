@@ -91,7 +91,7 @@ DeCOIL (Yang et al. 2023) — stochastic search, fitness-guided.
 
 Different objective entirely: it optimizes DC libraries to sample high-fitness and diverse variants for ML-assisted engineering, scored by a learned fitness predictor, via direct stochastic search. Relevant to you only if/when you want a "predicted-good" weight rather than pure natural-sequence coverage — but it shows the third algorithmic family (neither DP nor ILP: score-guided local search).
 
-- *interesting to hear, maybe we could pivot to/expand on this once we have a ML model that can better predict plastic degredation ability/metadata.*
+- *interesting to hear, maybe we could pivot to/expand on this once we have a ML model that can better predict plastic degradation ability/metadata.*
 
 ## Section: Brainstorming - Functions
 
@@ -110,7 +110,7 @@ Can also avoid more complex data structures and search logic by encoding the gen
 3. Create $A_\{c\}$ list, where index $i$ contains the set of amino acids that can be encoded by the degenerate codon at position i, using the result from step 2. This will be a length 20-bitmap, where amino acid $a$ will consistently be at bit position $i_a$.
 4. Loop over positions:
     a. Use $A_\{c\}[i]$ for every position $i$.
-    b, $(A_c[i] >> i_a) \& 1$: Shifts the bit that represents membership of the AA of interest to the right, returns 1 if the bit is 1.
+    b. $(A_c[i] >> i_a) \& 1$: Shifts the bit that represents membership of the AA of interest to the right, returns 1 if the bit is 1.
 5. Early return if any are impossible.
 
 
@@ -205,7 +205,7 @@ Because $Q_O$ is forced to be a **product** distribution, it can match only the 
 
 Unlimited IUPAC positions (constrained to **uniform** mixes over a base subset: $R, V, N, \dots$) plus at most **4 custom** positions with arbitrary continuous ratios. 
 
-Idea: Use greedy allocation and spend the 4 custom postiions on the positions whose family marginal is *most skewed*.
+Idea: Use greedy allocation and spend the 4 custom positions on the positions whose family marginal is *most skewed*.
 
 $$
 \Delta_c \;=\; J_\{\text\{IUPAC\}\}(c) - J_\{\text\{custom\}\}(c), \qquad \text\{pick \} \arg\text\{top-4\}\; \Delta_c .
@@ -276,7 +276,7 @@ This first prototype of the algorithm was implemented to handle the following:
 1. Greedy choice implementation for degenerate codon insertion (fragments can come later)
 2. Converting between nucleotide bases and amino acids
 
-The following simplifying assumptions are made and will be laxed over the development of the sophisticated algorithm:
+The following simplifying assumptions are made and will be relaxed over the development of the sophisticated algorithm:
 1. Preprocessing has been completed and we are running the algorithm on a selected subset of the processed orfs. We want to run on the subset where all sequences are the same length, and this is the largest subset of this sort. This should be an ok approximation for now
 
 Therefore this algorithm takes this cluster1.core.fasta and will return the best single oligo with degeneracy for this cluster.

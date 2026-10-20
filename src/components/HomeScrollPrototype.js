@@ -374,7 +374,7 @@ const SECTION4_STORY = [
         solution…
         <br />
         Our <Link to="/wet-lab/overview/">Wet Lab</Link> team has designed and
-        created 2 novel high-throughput assays!
+        created two novel high-throughput assays!
       </>
     ),
   },

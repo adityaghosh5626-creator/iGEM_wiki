@@ -33,7 +33,7 @@ Through these conversations we defined a critical market gap. Traditional techno
 
 <Dropdown title="2. Has the team shown that their solution is possible, scalable and inventive?">
 
-Yes! The RNA Lab, our associate lab, screened 161 randomly selected natural enzymes through the Logan consortium. Two outperformed FAST-PETase, a leading enzyme engineered through machine learning and rational design. This shows that natural enzymes can beat engineered benchmarks, and with that hit rate, PETAdex's 300M unique proteins should contain millions more.
+Yes! The RNAlab, our associate lab, screened 161 randomly selected natural enzymes through the Logan consortium. Two outperformed FAST-PETase, a leading enzyme engineered through machine learning and rational design. This shows that natural enzymes can beat engineered benchmarks, and with that hit rate, PETadex's 300M unique proteins should contain millions more.
 
 Furthermore, other groups optimize a handful of known enzymes through directed evolution. We search the natural sequence landscape that evolution has already refined over hundreds of millions of years, which turns enzyme engineering into bioprospecting at planetary scale.
 
@@ -51,7 +51,7 @@ We also have the resources and foresight to execute. Our advisors cover IP, WWTP
 
 <Dropdown title="4. Has the team outlined the skills, capabilities, and stakeholders required to be credible in developing their solution further?">
 
-Yes. Seven subteams cover the full range this problem demands, including computational biology and machine learning in Dry Lab, high-throughput assay design in Wet Lab, bioreactor engineering in Hardware, and commercial strategy in Entrepreneurship. The RNA Lab, the group behind the Logan dataset, supports us as our associate lab, and our advisors add IP, WWTP engineering and commercialization expertise.
+Yes. Seven subteams cover the full range this problem demands, including computational biology and machine learning in Dry Lab, high-throughput assay design in Wet Lab, bioreactor engineering in Hardware, and commercial strategy in Entrepreneurship. The RNAlab, the group behind the Logan dataset, supports us as our associate lab, and our advisors add IP, WWTP engineering and commercialization expertise.
 
 Our Human Practices team engages the three stakeholder groups that determine whether this technology reaches deployment: regulators at Environment and Climate Change Canada and the US EPA, plant operators and compliance officers across four provinces, and academic researchers with a decade of plastic degrading enzyme (PETase) expertise. This outreach has mapped the regulatory pathways we must follow, including CEPA, EPA TSCA Section 5 and provincial discharge permits, and those constraints feed directly into our technical decisions.
 
@@ -81,7 +81,7 @@ Microplastics also threaten agriculture. Microplastics that build up in soil can
 
 ### The Status Quo
 
-Current approaches to plastic waste include membrane filtration, mechanical recycling, chemical recycling, and incineration with each having major limits. Filtration captures microplastics and moves them into sludge or waste streams without breaking them down. Mechanical recycling degrades material quality with each cycle. Incineration releases emissions and destroys the material. Chemical recycling can break PET into its monomers, terephthalic acid (TPA) and ethylene glycol (EG), and rebuild them into resin, but that resin costs more than fossil-derived plastic, which limits its commercial viability. None of these approaches removes microplastics already in the environment at a cost that works at scale. The world needs a way to break plastic down into its molecular building blocks at the points where it accumulates.
+Current approaches to plastic waste include membrane filtration, mechanical recycling, chemical recycling, and incineration, with each having major limits. Filtration captures microplastics and moves them into sludge or waste streams without breaking them down. Mechanical recycling degrades material quality with each cycle. Incineration releases emissions and destroys the material. Chemical recycling can break PET into its monomers, terephthalic acid (TPA) and ethylene glycol (EG), and rebuild them into resin, but that resin costs more than fossil-derived plastic, which limits its commercial viability. None of these approaches removes microplastics already in the environment at a cost that works at scale. The world needs a way to break plastic down into its molecular building blocks at the points where it accumulates.
 
 ### Regulatory Pressure
 
@@ -116,7 +116,7 @@ Plastic-degrading enzymes (PETases) are a promising solution to microplastic pol
 
 **Our mission is to deploy the most efficient and versatile plastic-degrading enzymes at planetary scale.** Our approach differs from existing work in two ways: we search nature's full enzyme diversity and we design and test every enzyme for the specific environmental conditions where it will be used.
 
-We have already solved the first limitation: a lack of data. Before our work, researchers had characterized only about 495 plastic-degrading enzymes worldwide, far too few to train a model on which sequences degrade plastic and under what conditions. So our Dry Lab team built PETadex (petadex.net), the world's largest open-source database of plastic-degrading enzyme candidates, to close that gap. Using the Logan index, a planetary-scale metagenomic search system built from our associate lab, the RNALab identified about 300M unique proteins from environments worldwide, expanding the searchable pool more than 600,000-fold. The first screen of 161 randomly selected candidates returned two that outperformed FAST-PETase, a leading engineered benchmark, which confirms that the database contains enzymes worth finding. Finally, we made the PETadex open access so any researcher can build on this diversity, since proprietary datasets and siloed efforts have slowed the field.
+We have already solved the first limitation: a lack of data. Before our work, researchers had characterized only about 495 plastic-degrading enzymes worldwide, far too few to train a model on which sequences degrade plastic and under what conditions. So our Dry Lab team built PETadex (petadex.net), the world's largest open-source database of plastic-degrading enzyme candidates, to close that gap. Using the Logan index, a planetary-scale metagenomic search system built from our associate lab, the RNAlab identified about 300M unique proteins from environments worldwide, expanding the searchable pool more than 600,000-fold. The first screen of 161 randomly selected candidates returned two that outperformed FAST-PETase, a leading engineered benchmark, which confirms that the database contains enzymes worth finding. Finally, we made the PETadex open access so any researcher can build on this diversity, since proprietary datasets and siloed efforts have slowed the field.
 
 This iGEM cycle, we are solving the second limitation: performance outside the lab. Even the best PETases lose much of their activity in industrial conditions, at variable temperatures or alongside mixed contaminants. We are building a machine learning pipeline that uses the PETadex dataset to select and engineer enzymes for specific real-world conditions, starting with room-temperature activity. We test each candidate with high-throughput wet lab assays and an in-house bioreactor array that replicates the conditions enzymes face during deployment. Each round of testing feeds labelled data back into our models, so every cycle improves the next set of predictions. No other PETase effort we know of combines this scale of candidate discovery with systematic, condition-specific testing.
 
@@ -128,7 +128,7 @@ Every company commercializing plastic degrading enzymes today builds around one 
 
 PetaScale, on the other hand, matches the enzyme to the site. For each deployment point, we select and engineer an enzyme that works optimally at that point's existing temperature, pH and salinity, so the facility needs no heating, pretreatment or new infrastructure. This keeps retrofit costs low and lets one bioengineering platform serve multiple WWTPs, landfill leachates, facilities producing textile effluents, and appliance filtration environments.
 
-Our competitive advantage is a growing portfolio of patented optimized enzymes, each engineered for a specific real-world condition. Engineered enzymes such as FAST-PETase and LCC-ICCG come from optimizing a small handful of known enzymes, which limits how far any design can extend beyond its original operating window. Our approach starts from a much larger set of natural sequences that evolved across a wide range of environments, some of which already compete with the best engineered enzymes, such as when the two top candidates from our first screen produced about four times more TPA than FAST-PETase under identical conditions. From these starting points, we engineer variants for each deployment condition and profile them on our bioreactor array across temperature, pH and salinity. Field data from every customer deployment then guides the next round of engineering. Although the PETadex may stay open to all researchers, the engineered enzymes we build on top of it are our own, patenting each one. Every new deployment site and every new vertical adds more protected enzymes to our portfolio, so our lead widens as we grow.
+Our competitive advantage is a growing portfolio of patented optimized enzymes, each engineered for a specific real-world condition. Engineered enzymes such as FAST-PETase and LCC-ICCG come from optimizing a small handful of known enzymes, which limits how far any design can extend beyond its original operating window. Our approach starts from a much larger set of natural sequences that evolved across a wide range of environments, some of which already compete with the best engineered enzymes, such as when the two top candidates from our first screen produced about four times more TPA than FAST-PETase under identical conditions. From these starting points, we engineer variants for each deployment condition and profile them on our bioreactor array across temperature, pH and salinity. Field data from every customer deployment then guides the next round of engineering. Although the PETadex may stay open to all researchers, the engineered enzymes we build on top of it are our own, and we patent each one. Every new deployment site and every new vertical adds more protected enzymes to our portfolio, so our lead widens as we grow.
 
 ## 5. Customer Segments
 
@@ -159,8 +159,8 @@ We conducted comprehensive research across each of the four verticals, and the e
 
 - **Customer description and technical feasibility.** What the vertical is, why these customers would benefit from PetaScale’s product, the technical literature supporting deployment under their conditions, the stakeholder interviews we conducted if applicable, and a SWOT analysis.
 - **Market size and opportunity.** Total addressable market, serviceable addressable market, and serviceable obtainable market, with an estimate of the share PetaScale could realistically capture in Canada.
-- **Barriers to entry.** The obstacles that could slow adoption, including procurement cycles, and, technical validation requirements, and, how we plan to navigate each one.
-- **Competitor matrix.** The companies that operate in the vertical, what they offer, and, where their approach falls short.
+- **Barriers to entry.** The obstacles that could slow adoption, including procurement cycles and technical validation requirements, and how we plan to navigate each one.
+- **Competitor matrix.** The companies that operate in the vertical, what they offer, and where their approach falls short.
 
 **Additional context:** The vertical descriptions, particularly those for the WWTP and Textile Discardant Pellet sections, integrate quotes and insights from stakeholder interviews conducted by our team. Comprehensive documentation of all interviews is available in the _Human Practices – Stakeholder Outreach_ section.
 
@@ -191,7 +191,7 @@ We conducted comprehensive research across each of the four verticals, and the e
 - European Parliament and Council of the European Union. (2024). Directive (EU) 2024/3019 concerning urban wastewater treatment (recast). Official Journal of the European Union. [http://data.europa.eu/eli/dir/2024/3019/oj](http://data.europa.eu/eli/dir/2024/3019/oj)
 - Fighting Fibers Act of 2025, H.R. 4694, 119th Cong. (2025). [https://www.congress.gov/bill/119th-congress/house-bill/4694/text](https://www.congress.gov/bill/119th-congress/house-bill/4694/text)
 - Krzan, A. (2025, October 22). Fighting microfibers: Two steps forward, one step back. PlanetCare. [https://blog.planetcare.org/fighting-microfibers-two-steps-forward-one-step-back/](https://blog.planetcare.org/fighting-microfibers-two-steps-forward-one-step-back/)
-- Loi n° 2020-105 du 10 février 2020 relative à la lutte contre le gaspillage et à l'économie circulaire [Law No. 2020-105 of February 10, 2020 on the fight against waste and, the circular economy]. (2020). Journal officiel de la République française. [https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041553759/](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041553759/)
+- Loi n° 2020-105 du 10 février 2020 relative à la lutte contre le gaspillage et à l'économie circulaire [Law No. 2020-105 of February 10, 2020 on the fight against waste and the circular economy]. (2020). Journal officiel de la République française. [https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041553759/](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041553759/)
 - Pillefer, B. (2026, May 7). Retard de publication du décret d'application sur les filtres à microfibres plastiques [Delay in publishing the implementing decree on plastic microfibre filters] (Written Question No. 08656). Sénat. [https://www.senat.fr/questions/base/2026/qSEQ260508656.html](https://www.senat.fr/questions/base/2026/qSEQ260508656.html)
 
 </Dropdown>
@@ -267,7 +267,7 @@ We judge fit by what customers commit, since positive feedback costs a customer 
 
 ### How We Retain Customers
 
-After a contract is signed, we report PET degradation and system performance to each customer on a fixed schedule, using the testing methods agreed at the start. Regular reporting keeps results visible to the decision‑makers who approved the purchase which is very critical when contracts come up for renewal. Each deployment also feeds field data back into our engineering pipeline, enabling us to design higher‑performing enzymes for that customer and others within adjacent verticals.
+After a contract is signed, we report PET degradation and system performance to each customer on a fixed schedule, using the testing methods agreed at the start. Regular reporting keeps results visible to the decision‑makers who approved the purchase, which is very critical when contracts come up for renewal. Each deployment also feeds field data back into our engineering pipeline, enabling us to design higher‑performing enzymes for that customer and others within adjacent verticals.
 
 ## 9. Go-To-Market Timeline
 
@@ -299,7 +299,7 @@ We are currently at this milestone. Our Wet Lab and Hardware teams are producing
 
 Our central deliverable is the combined Dry Lab and Wet Lab manuscript. Drafting began in August, and we target submission for February. This submission closes the PetaBite R&D cycle and sets the IP dividing line between PetaBite and PetaScale.
 
-We also complete an intellectual property assignment sweep in this window, while the full project team is still together. Every member who contributed to the design pipeline, the enzyme candidates or the bioreactor hardware signs an assignment to the company, including members who have graduated or left the team. At the same time, we document exactly where the boundary sits between the open-source PETAdex release and the proprietary work PetaScale will own. Completing this before incorporation avoids the most common diligence problem for university spinouts, which is unassigned contributions surfacing years later.
+We also complete an intellectual property assignment sweep in this window, while the full project team is still together. Every member who contributed to the design pipeline, the enzyme candidates or the bioreactor hardware signs an assignment to the company, including members who have graduated or left the team. At the same time, we document exactly where the boundary sits between the open-source PETadex release and the proprietary work PetaScale will own. Completing this before incorporation avoids the most common diligence problem for university spinouts, which is unassigned contributions surfacing years later.
 
 Alongside this work, we continue customer discovery across our WWTP, textile effluent, landfill leachate and filtration verticals, and we evaluate incubator options. Our official raise opens with Canadian venture capital warm leads, building on early conversations with FrontRow Ventures, Northside Ventures and the MaRS Investment Accelerator Fund, among others.
 
@@ -364,7 +364,7 @@ These projections focus exclusively on PetaScale’s wastewater treatment plant 
 
 #### Price
 
-PetaScale sells enzymatic PET removal priced at $15.75 per megalitre (ML) of plant influent treated. That’s roughly 35% of what Region of Peel already spends on process chemicals, ($45.26/ML across G.E. Booth and Clarkson in 2023), so it fits within existing treatment budgets instead of requiring additional new budgeting. Variable cost is $3.02/ML: $1.62 for enzyme and $1.40 for cold-chain delivery, dosing and Py-GC/MS verification. Fully loaded cost, which adds production line operations, capex recovery and allocated G&A, is $7.51/ML, for a roughly 2.1x markup. Pilots are billed at $80,000 per pilot-year and convert to full-scale contracts once performance is validated.
+PetaScale sells enzymatic PET removal priced at $15.75 per megalitre (ML) of plant influent treated. That’s roughly 35% of what Region of Peel already spends on process chemicals ($45.26/ML across G.E. Booth and Clarkson in 2023), so it fits within existing treatment budgets instead of requiring additional new budgeting. Variable cost is $3.02/ML: $1.62 for enzyme and $1.40 for cold-chain delivery, dosing and Py-GC/MS verification. Fully loaded cost, which adds production line operations, capex recovery and allocated G&A, is $7.51/ML, for a roughly 2.1x markup. Pilots are billed at $80,000 per pilot-year and convert to full-scale contracts once performance is validated.
 
 #### Market
 
@@ -407,7 +407,7 @@ A patent protects one enzyme for a fixed term. Our pipeline and accumulating fie
 
 PetaBite grew out of a large student team, so we will complete a full intellectual property assignment sweep before incorporation, while contributors are still reachable. Every member who worked on the design pipeline, the enzyme candidates or the bioreactor hardware signs an assignment to the company, including members who have graduated.
 
-We will also document where the boundary sits between the open-source PETadex release and the proprietary work PetaScale owns. While the PETadex remains open to all researchers, the engineered enzymes belong to the company. By recording this boundary in writing, with contributor attribution on each side, prevents the ownership ambiguity that commonly delays university spinout financings.
+We will also document where the boundary sits between the open-source PETadex release and the proprietary work PetaScale owns. While the PETadex remains open to all researchers, the engineered enzymes belong to the company. Recording this boundary in writing, with contributor attribution on each side, prevents the ownership ambiguity that commonly delays university spinout financings.
 
 ### Corporate Structure
 
@@ -446,7 +446,7 @@ We will carry general coverage from incorporation and deployment-specific covera
 
 **Coverage specific to a biological product.** Deploying engineered enzymes creates several exposures we must account for:
 
-- **Environmental liability.** Covers accidental release, contamination or unintended ecological effects. Fortunately, our contained packed-bed reactor design keeps this risk very low but insurers expect the category to be covered for any biological product operating in a water system.
+- **Environmental liability.** Covers accidental release, contamination or unintended ecological effects. Fortunately, our contained packed-bed reactor design keeps this risk very low, but insurers expect the category to be covered for any biological product operating in a water system.
 - **Product liability.** Covers harm caused if an enzyme performs differently than expected or interacts with environmental substrates in an unintended way.
 - **Regulatory compliance risk.** Covers the cost of regulatory investigations or enforcement actions from environmental regulators, wastewater authorities or biosafety agencies.
 
@@ -492,7 +492,7 @@ On May 12, 2026, we won **Best Pitch at the UATech Global Pitch Competition**, w
 
 **Website:** [Gallery — TechEmbassy](https://techembassy.org/gallery/venture-night-web-summit-vancouver)
 
-#### WebSummit Vancouver: Main Stage Presenter (Top 8% of 1,200 Startups)
+#### Web Summit Vancouver: Main Stage Presenter (Top 8% of 1,200 Startups)
 
 Web Summit is a global technology conference founded in Dublin in 2009, and its flagship Lisbon event draws over 70,000 attendees from across the technology industry, venture capital and government. Web Summit Vancouver is its North American edition and it brings together founders, investors and industry leaders from around the world.
 
@@ -621,7 +621,7 @@ Out of hundreds of pre-seed and seed-stage startups, FOOD FORWARD selected PetaB
 
 Y Combinator (YC) is the startup accelerator in Mountain View, California that funds early-stage companies in exchange for equity and connects them to its founder network. It has backed Airbnb, Stripe, DoorDash, Coinbase and Reddit, and its main accelerator batches accept roughly 1% of applicants, which makes it the most selective and widely recognized startup program in the world.
 
-Co-president Purav Gupta was admitted to Y Combinator's Startup School 2026 in the **top 5% of applicants**. YC hand-selects builders from around the world for this in-person program, held July 25 and 26, 2026 in San Francisco. Purav learned directly from founders and leaders including Sam Altman, Jensen Huang, and Patrick Collison, gained exposure to YC's approach to go-to-market strategy, and connected with a network of early-stage founders.
+Co-President Purav Gupta was admitted to Y Combinator's Startup School 2026 in the **top 5% of applicants**. YC hand-selects builders from around the world for this in-person program, held July 25 and 26, 2026 in San Francisco. Purav learned directly from founders and leaders including Sam Altman, Jensen Huang, and Patrick Collison, gained exposure to YC's approach to go-to-market strategy, and connected with a network of early-stage founders.
 
 **What we learned:** YC's emphasis on speed and customer obsession gave us a valuable counterweight as a team that naturally leads with science.
 
@@ -689,7 +689,7 @@ On July 25 and 26, 2026, the Entrepreneurship team took part in the iGEM Entrepr
 
 We approached fundraising as partnership building.
 
-At the start of the season, we identified what each subteam would need: reagents and DNA synthesis for the wet lab, compute credits for the dry lab, design and illustration software for documentation, and general funding for the whole project. We then looked for university units, companies and community organizations whose work matched each need. For example, Twist Bioscience, New England Biolabs and IDT supported our wet lab work, SnapGene and BioRender supported our design and figures, and Fraser River Junk Removal helped finance our Human Practice initiatives. We gave priority to organizations that share our goal of reducing plastic pollution.
+At the start of the season, we identified what each subteam would need: reagents and DNA synthesis for the wet lab, compute credits for the dry lab, design and illustration software for documentation, and general funding for the whole project. We then looked for university units, companies and community organizations whose work matched each need. For example, Twist Bioscience, New England Biolabs and IDT supported our wet lab work, SnapGene and BioRender supported our design and figures, and Fraser River Junk Removal helped finance our Human Practices initiatives. We gave priority to organizations that share our goal of reducing plastic pollution.
 
 We tailored our outreach to each organization wherever possible. Each request explained what PetaBite aims to accomplish, why that organization's expertise or resources mattered to our work, and how supporting a student research team could create impact beyond our own experiments.
 
@@ -732,7 +732,7 @@ Fundraising also became part of our broader engagement strategy. Many of these r
 
 Lastly, PetaBite drew on expertise from research centres and faculties across the world. These institutions shaped our science, our regulatory thinking and our commercial strategy, and the pitch we present today reflects their input.
 
-So thank you to Institut Pasteur, the Laboratory for RNA-Based Lifeforms (RNA Lab), BioZone, the Donnelly Centre for Cellular and Biomolecular Research, the Acceleration Consortium, the Vector Institute and the Drinking Water Research Group. We also thank the faculty at the University of Toronto’s Institute of Biomedical Engineering, Faculty of Applied Science and Engineering, and Rotman School of Management, as well as the Tech Futures Challenge advisors at the University of Calgary and the Global Challenge pitch advisors at Imperial College London. Thank you to every researcher and advisor who shared their time with us. Our pitch and story would not be as refined as they are without your insight and support.
+So thank you to Institut Pasteur, the Laboratory for RNA-Based Lifeforms (RNAlab), BioZone, the Donnelly Centre for Cellular and Biomolecular Research, the Acceleration Consortium, the Vector Institute and the Drinking Water Research Group. We also thank the faculty at the University of Toronto’s Institute of Biomedical Engineering, Faculty of Applied Science and Engineering, and Rotman School of Management, as well as the Tech Futures Challenge advisors at the University of Calgary and the Global Challenge pitch advisors at Imperial College London. Thank you to every researcher and advisor who shared their time with us. Our pitch and story would not be as refined as they are without your insight and support.
 
 </Dropdown>
 

@@ -312,7 +312,7 @@ Placeholder: 2.74M of 6.80M with real signal, stratified sampling.
 
 ### Localization and Signal Peptides
 
-SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, to support enzyme selection for in vitro activity testing and to produce cleaved mature sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after they complete folding respectively. SignalP classifies 5 signal peptide classes within the two pathways (SP, LIPO, TAT, TATLIPO, and PILIN). Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide, within which 92.21% of the enzymes have Sec routing and 7.79% have Tat. 90% identity enzyme clusters had on average 93.1% agreement on whether its member sequences is signal peptide-positive, and 98.3% of these positive members shared the same signal peptide class. The gap in agreement within 90% clusters is most likely due to missing N-termini from sequence fragmentation, making SignalP a useful quality check on the database. Alpha/Beta Hydrolases had a below-average percentage of signal peptide-positive sequences (10.6%) but contributed 44% of all predicted secreted ORFs.
+SignalP 6.0 was run on all PETadex ORFs to identify the secreted enzymes within the database, to support enzyme selection for in vitro activity testing and to produce cleaved mature sequences for more accurate downstream analysis. Bacterial enzymes primarily employ the Sec (Secretory) and Tat (Twin-Arginine Translocation) pathways, which export proteins before and after they complete folding respectively. SignalP classifies 5 signal peptide classes within the two pathways (SP, LIPO, TAT, TATLIPO, and PILIN). Overall, 13.85% of PETadex sequences were predicted to contain a signal peptide, within which 92.21% of the enzymes have Sec routing and 7.79% have Tat. 90% identity enzyme clusters had on average 93.1% agreement on whether their member sequences are signal peptide-positive, and 98.3% of these positive members shared the same signal peptide class. The gap in agreement within 90% clusters is most likely due to missing N-termini from sequence fragmentation, making SignalP a useful quality check on the database. Alpha/Beta Hydrolases had a below-average percentage of signal peptide-positive sequences (10.6%) but contributed 44% of all predicted secreted ORFs.
 
 To-Do: Repeat the pipeline on the updated database.
 
@@ -326,14 +326,14 @@ To-Do: Repeat the pipeline on the updated database.
 *Owner: Nino*
 
 Using the complete sequences from the input domains, InterProScan is used to determine
-all domains located within the sequence. Then, using PETadex HMMs, HMMer (a tool that
+all domains located within the sequence. Then, using PETadex HMMs, HMMER (a tool that
 searches through protein sequences to find domains corresponding to inputted HMMs)
 searches through the sequences to determine the location of PET-relevant domains in the
 sequences.
-Now the coordinates of the HMMer results are overlayed on the Interproscan results, and
-any domains that hit in both HMMer and Interproscan results are NOT accessory domains,
-so they are filtered out. Two resulting datasets are outputted. One dataset containing all its
-(including overlapping hits) from interproscan and HMMer and another dataset containing
+Now the coordinates of the HMMER results are overlaid on the InterProScan results, and
+any domains that hit in both HMMER and InterProScan results are NOT accessory domains,
+so they are filtered out. Two resulting datasets are output. One dataset contains all hits
+(including overlapping hits) from InterProScan and HMMER and another dataset contains
 only accessory domains.
 
 <Figure
@@ -381,7 +381,7 @@ We searched these databases to find predicted structures for 7.83M PETadex v2 si
 />
 ### Biochemical Properties and Ancestral Reconstruction
 
-Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly-sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
+Six sequence-derived properties were calculated using Biopython ProtParam for all PETadex ORFs: length, molecular weight, isoelectric point (pI), GRAVY hydrophobicity, instability index, and aromaticity. Median values were 308 aa, 34.2 kDa, pI 6.45, GRAVY −0.165, instability 37.5, and aromaticity 0.0885. Compared with a similarly sized random sample of NCBI nr, certain property medians were generally similar (such as 289 aa, GRAVY −0.19), which strengthens PETadex being a database of real functional protein sequences. Additionally, PETadex was far narrower in GRAVY (standard deviation 0.20 vs 0.43), and had fewer comparably short, very long, or highly unstable sequences. This depletion of hydrophobic and extreme sequences is consistent with soluble catalytic domains rather than membrane proteins, supporting PETadex as a promising database for identifying plastic-degrading enzymes. Mature secreted proteins were also more hydrophilic than non-secreted proteins, and catalytic-family median GRAVY correlated strongly with secretion (Spearman ρ = −0.96). Thus the properties serve as a useful filter for sequence selection as well.
 
 To-Do: Repeat the pipeline on the updated database.
 
@@ -424,7 +424,7 @@ In addition to an automated scraping pipeline, 20+ scrapers spent 450+ hours man
 
 The schema was created under 3 guiding principles: 1) Standardization in variables, experiment conditions, and units via dropdown selections to support effective data analysis and transferability to LLM guidelines. 2) Structure & Traceability, where autogenerated experiment and enzyme IDs let every extracted data point be backsourced. 3) Guardrailing with built-in error checks to reduce human errors and missing data entries.
 
-Every paper was also independently extracted by two or more scrapers, with 78% of the corresponding raw un-reconciled data agreeing within 10%, which supports the schema's strength as an organizer. However, a non-trivial portion of data entries have no matches between pairs of scrapers as a result of scraper(s) overlooking sections of the papers. This showcases how even non-automated pipelines for data extraction are fallible to errors, lending strength to the potential benefits of a rigorous LLM-based model
+Every paper was also independently extracted by two or more scrapers, with 78% of the corresponding raw unreconciled data agreeing within 10%, which supports the schema's strength as an organizer. However, a non-trivial portion of data entries have no matches between pairs of scrapers as a result of scraper(s) overlooking sections of the papers. This showcases how even non-automated pipelines for data extraction are prone to errors, lending strength to the potential benefits of a rigorous LLM-based model.
 
 To-Do: Manually reconcile discrepancies between scrapers to create a finalized ground truth for each double-scraped paper.
 
@@ -435,7 +435,7 @@ To-Do: Manually reconcile discrepancies between scrapers to create a finalized g
 
 ### Human vs LLM Agreement
 
-Finally when checking 26 LLM extracted papers against 26 double-human verified papers large discrepancies remain both between the LLM-Human comparisons and Human-Human comparisons. The LLM found 70% of enzymes either human listed (a second human finds 83%) and 90% of those both humans agreed on. Only 7 of 180 LLM enzyme names had no human match, and those were naming variants or whole-cell entries. When the enzyme and value match, the LLM's pH agrees 80% of the time (a second human: 91%) and buffer 75% (84%). The errors are usually a condition borrowed from another assay in the same paper, like pH 7 versus 8 for IsPETase, or 37 versus 50 °C for Dkca1. Temperature (92%) and plasmid (95%) are good.
+Finally, when checking 26 LLM-extracted papers against 26 double-human-verified papers, large discrepancies remain both between the LLM-Human comparisons and Human-Human comparisons. The LLM found 70% of enzymes that either human listed (a second human finds 83%) and 90% of those both humans agreed on. Only 7 of 180 LLM enzyme names had no human match, and those were naming variants or whole-cell entries. When the enzyme and value match, the LLM's pH agrees 80% of the time (a second human: 91%) and buffer 75% (84%). The errors are usually a condition borrowed from another assay in the same paper, like pH 7 versus 8 for IsPETase, or 37 versus 50 °C for Dkca1. Temperature (92%) and plasmid (95%) are good.
 
 ### Kinetics Dataset
 
@@ -542,7 +542,7 @@ Generate positive / real-world controls (random UniProt proteins, real-sequence 
   width="100%"
 />
 
-Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in the figure above. We found that the shuffled sequences and random/matched/empirical form their own "junkyard" regions, far away from PETadex sequences, Uniprot embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
+Controls are then embedded identically to the real proteins, and UMAPed alongside them, as seen in the figure above. We found that the shuffled sequences and random/matched/empirical controls form their own "junkyard" regions, far away from PETadex sequences, UniProt embeddings are scattered randomly, and fragments hug the real data closely. These results confirmed that the clustering seen in our Atlas reflected real signal and meaning in ESMC embeddings.
 
 ### Domain Adapted ESM-LoRA
 

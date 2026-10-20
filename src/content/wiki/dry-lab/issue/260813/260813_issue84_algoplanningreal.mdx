@@ -64,10 +64,10 @@ RFMDNDTRYSTFACENPNSTRVSDFRTANCS-
 3. Use some sort of package that extracts domains from pLDDT (finding linker regions)
 4. Keep the inner important regions - is this a single domain or multiple domains?
 
-   1. **Junk Ratio Cap**: A scalar value in (0, 1) to determine what the maximum % of junk we would like to allow. This means that the algorithm must have a *manner of keeping track of how many possible proteins could be encoded for by the current solution*, which can be used to compute the junk ratio (how many aren't targets).
+   1. **Junk Ratio Cap**: A scalar value in (0, 1) to determine the maximum % of junk we would like to allow. This means that the algorithm must have a *manner of keeping track of how many possible proteins could be encoded for by the current solution*, which can be used to compute the junk ratio (how many aren't targets).
    2. **Fragment Joining Method**: This is either Golden Gate or Homologous Recombination. This defines what the junctions would be defined as. Note that due to these techniques and general plasmid design we are under the following hard constraints:
 
-      1. **CGTCTC** and **GAGACG** are BANNED from occuring ANYWHERE in the sequence.
+      1. **CGTCTC** and **GAGACG** are BANNED from occurring ANYWHERE in the sequence.
       2. No internal CGGA or GGTG overhangs for cuts as the backbone uses those two overhangs. 
    3. **K-Max**: $K$ is defined as 1 + the number of Golden Gate cuts made. This is looped over in the algorithm to test different amounts of fragmentation.
 
@@ -106,9 +106,9 @@ Let $L_O$ be the protein library encoded by our algorithm's output sequences. Th
 1. **Coverage**: A core $s \in L_T$ is *covered* if $s \in L_O$. 
    Therefore, the total coverage is defined as $\frac\{\sum_\{s \in L_O \cap L_T\} w(s)\}\{\sum_\{s \in L_T\} w(s)\}$. This is weighted by $w(s)$.
 
-2. **Junk**: This loosely means useless sequences. This can be split into two different type of junk, minimized at different points in the algorithm.
+2. **Junk**: This loosely means useless sequences. This can be split into two different types of junk, minimized at different points in the algorithm.
 
-   a. **Counting Junk**: This is $1 - \frac\{|L_T \cap L_O|\}\{|L_O|\}$. In English, this is the proportion of our output library that's *not* covering a sequence in the target library. This is the junk that represent the cap in the initial stage of the algorithm. Note that this junk cap is not a quality metric, it is a feasibility constraint. It is also not weighted, as the entries of $L_O$ do not have inherent weights, which are relevant for coverage.
+   a. **Counting Junk**: This is $1 - \frac\{|L_T \cap L_O|\}\{|L_O|\}$. In English, this is the proportion of our output library that's *not* covering a sequence in the target library. This is the junk that represents the cap in the initial stage of the algorithm. Note that this junk cap is not a quality metric, it is a feasibility constraint. It is also not weighted, as the entries of $L_O$ do not have inherent weights, which are relevant for coverage.
 
    b. **Mass Junk**: This is the probability mass of landing on non-targets. This can be influenced by *custom degenerate codon ratios*, which are a future direction for optimizing in specific species. Custom ratios cannot change $L_O$, only the distribution over it — so mass junk is optimized on the support fixed by stage 1, leaving coverage and counting junk unchanged. Note that counting junk is a special case of mass junk, under the assumption that the output library is uniformly distributed.
 
@@ -173,7 +173,7 @@ Once a particular cut is defined (approximation choice), the innermost loop loop
 
 Turn the design into a concrete set of DNA fragments to order. Check again that no forbidden recognition sites occur.
 
-Output the proper metrics and the variation introduced, over the different K values. Choose the one with the best balance sequence number-per-kilobase.
+Output the proper metrics and the variation introduced, over the different K values. Choose the one with the best balance of sequence number-per-kilobase.
 
 
 ## Key Current Approximation:
@@ -186,7 +186,7 @@ This will be a short cell as the full runtime justification would be very length
 
 # Example: 
 
-The following is an LLM-generated summary of results from 2 example 90pid clusters. These simple test cases that will be replaced by wider testing on the PETadex in the future. This is just justification that the algorithm works on a small example.
+The following is an LLM-generated summary of results from 2 example 90pid clusters. These are simple test cases that will be replaced by wider testing on the PETadex in the future. This is just justification that the algorithm works on a small example.
 
 ## Smoke Test Results
 
@@ -328,7 +328,7 @@ Codon Selection: If this isn't already accounted for by Twist Algorithms, this a
 ### Post-processing script - DONE
 
 - Needs to add:
-  - the BSMBI recognition site
+  - the BsmBI recognition site
   - the appropriate cut sites
   - spacer sequences as required
 
@@ -358,7 +358,7 @@ For the inner Junctions, include the recognition site, C as a spacer, and then t
 
 - In the final figures plan
 
-### Fold 100 of the full sequences and send them to thomas to look over
+### Fold 100 of the full sequences and send them to Thomas to look over
 
 # Algorithm Running Instructions
 
