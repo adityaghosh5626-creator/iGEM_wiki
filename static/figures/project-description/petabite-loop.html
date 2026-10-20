@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PetaBite: one loop, three engines</title>
+<style>
+  /* Palette lifted from the live Engineering page (subteam buttons + DBTL wheel). */
+  :root{
+    --bg:#ffffff; --paper:#fbf8f2; --navy:#18425a; --gold:#e8c028; --ink:#3b2f2a; --ink-2:#7a6a5f; --water:#9fbcc4; --water-2:#46737a;
+    --hw:#e9cf8a; --dl:#a9bb8b; --wl:#66917f; --eo:#3a6680; --hp:#e7a77f; --web:#d9a7c7;
+    --beam:#d8703f; --halo:#fbf8f2;
+  }
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"DM Sans","Helvetica Neue",Helvetica,Arial,sans-serif}
+  .wrap{width:800px;margin:0;padding:0}
+  svg{width:100%;height:auto;display:block}
+  .lbl{font-weight:700;letter-spacing:.02em;fill:var(--ink)}
+  .edge{font-size:12px;font-weight:600;fill:var(--water-2);
+    paint-order:stroke;stroke:var(--halo);stroke-width:4px;stroke-linejoin:round}
+  #beams text{font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--halo);stroke-width:4px;stroke-linejoin:round}
+  .ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--ink-2)}
+  button{font:inherit;color:inherit;background:none;border:1px solid #d8cbbd;border-radius:999px;padding:5px 14px;cursor:pointer}
+  button:hover{border-color:var(--ink-2)}
+  label{display:flex;align-items:center;gap:6px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg id="fig" viewBox="0 0 800 800" width="800" height="800" role="img" aria-labelledby="figtitle figdesc">
+  <title id="figtitle">PetaBite: the loop and the thrusters</title>
+  <desc id="figdesc">Three engine petamons (Dry Lab, Wet Lab, Hardware) circle the PetaBite core in a
+  design-build-test-learn loop, inside an outer ring of thruster petamons for the teams beyond the bench.
+  Rotation halts each time a thruster delivers a constraint into an engine, then resumes.</desc>
+  <defs>
+    <!-- Wobbly watercolor edge, same family as the hand-painted wiki wheel. -->
+    <filter id="wash" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="bleed" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="14"/>
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M1 1L8 5L1 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Rounded off-white card. -->
+  <rect x="14" y="14" width="772" height="772" rx="30" fill="var(--paper)" stroke="#e6ddd0" stroke-width="1.5"/>
+
+  <g id="figbody" transform="translate(20 50)">
+  <!-- Full rings, painted as soft water bands behind the discs. -->
+  <circle cx="380" cy="350" r="268" fill="none" stroke="var(--water)" stroke-opacity=".35" stroke-width="22" filter="url(#bleed)"/>
+  <circle cx="380" cy="350" r="268" fill="none" stroke="var(--water-2)" stroke-opacity=".35" stroke-width="1.2" stroke-dasharray="2 7" stroke-linecap="round"/>
+  <circle cx="380" cy="350" r="112" fill="none" stroke="var(--water)" stroke-opacity=".55" stroke-width="30" filter="url(#bleed)"/>
+  <g id="ring-i"></g>
+
+  <!-- Core -->
+  <circle cx="380" cy="350" r="46" fill="#ffffff" stroke="var(--water)" stroke-width="1.5" filter="url(#wash)"/>
+  <image href="https://static.igem.wiki/teams/6187/wiki/outreach/photos/petabite-logo-web.avif"
+    x="338" y="333" width="84" height="33.6" preserveAspectRatio="xMidYMid meet"/>
+
+  <g id="edges"></g>
+  <g id="nodes"></g>
+  <g id="beams"></g>
+  </g>
+</svg>
+
+</div>
+
+<script>
+(function () {
+  /* ---- EDIT HERE -------------------------------------------------------
+     Petamon icons are the team's own round icons (white circle, petamon
+     breaking out of it), in ./petamons/. Every file shares one 363 x 250 crop
+     window with the white circle centred at ICON.cx, ICON.cy, radius ICON.r,
+     so a single transform places any of them on its disc.
+     Colours are each subteam's colour from EndingPetamonBottle.js.
+  --------------------------------------------------------------------- */
+  var ICON = { w: 363, h: 250, cx: 181.5, cy: 125, r: 97.5 };
+  var ENGINES = [
+    { name: 'Dry lab',  icon: 'petamons/dry-lab.webp',  color: '#f2c14e' },
+    { name: 'Wet lab',  icon: 'petamons/wet-lab.webp',  color: '#55aee9' },
+    { name: 'Hardware', icon: 'petamons/hardware.webp', color: '#f08a4b' }
+  ];
+  var THRUSTERS = [
+    { name: 'Human practices',  icon: 'petamons/human-practices.webp',  color: '#ef5a5f' },
+    { name: 'Entrepreneurship', icon: 'petamons/entrepreneurship.webp', color: '#a07cf2' },
+    { name: 'Web',              icon: 'petamons/web.webp',              color: '#62c883' },
+    { name: 'Outreach',         icon: 'petamons/outreach.webp',         color: '#f27ab8' }
+  ];
+  /* Inner loop, clockwise: Dry lab -> Wet lab -> Hardware -> Dry lab. */
+  var EDGE_LABELS = ['PETase library', 'assay design', 'activity data'];
+
+  /* Three rounds. In each, Entrepreneurship and Human practices both feed the round's
+     target lab; Web and Outreach feed the other two. Arrows are two-way and drawn in the
+     sender's colour. Thrusters: 0 HP, 1 Entrepreneurship, 2 Web, 3 Outreach.
+     Engines: 0 Dry lab, 1 Wet lab, 2 Hardware. Evidence for each label: see
+     FIGURE1-HANDOFF.md, "Coupling labels". */
+  var ROUNDS = [
+    { target: 0, links: [[1, 0, 'room-temp price'], [0, 0, 'mesophilic range'],
+                         [2, 1, 'assay animations'], [3, 2, 'Hardware reels']] },
+    { target: 1, links: [[1, 1, 'purified enzyme'], [0, 1, 'no open release'],
+                         [2, 2, 'bioreactor sim'], [3, 0, 'Dry Lab reels']] },
+    { target: 2, links: [[1, 2, 'low-cost target'], [0, 2, 'microliter scale'],
+                         [2, 0, 'PETadex website'], [3, 1, 'assay explainer']] }
+  ];
+  var INK = ['#c8414a', '#7651d1', '#2f8f52', '#c4428a'];  /* darker team colours, readable on paper */
+  var STAGGER = 0.3, DRAW = 0.9;
+
+  /* Rings turn against each other: inner counter-clockwise, outer clockwise. Relative motion
+     per cycle is (12 + 8) deg/s * 6 s = 120 deg, which is exactly what brings the next target
+     lab between Entrepreneurship and HP. Change a rate or a duration and that breaks. */
+  var INNER_DEG_PER_S = -12, OUTER_DEG_PER_S = 8;
+  var T_SPIN = 5.0, T_DEC = 1.0, T_HOLD = 4.0, T_ACC = 1.0;
+  var INNER0 = 66, OUTER0 = -89;   /* start offsets: round 1 stops with Dry lab at 12 o'clock */
+  var CLIP_START = 2.0;            /* skip most of the first spin */
+  /* ---- end edit -------------------------------------------------------- */
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var C = { x: 380, y: 350 }, RI = 112, RO = 268, R_EDGE = 112, NR_I = 56, NR_O = 53;
+  var innerA = [-90, 30, 150], outerA = [-90, 0, 90, 180], edgeA = [-30, 90, 210];
+  var uid = 0;
+
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function pos(r, a) {
+    var t = a * Math.PI / 180;
+    return { x: C.x + r * Math.cos(t), y: C.y + r * Math.sin(t) };
+  }
+  function tr(e, p) { e.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')'); }
+
+  /* One petamon disc: a watercolour rim in the team colour, the team's icon inside it
+     (its petamon may break out of the circle), and the name on a tag at the bottom edge. */
+  function disc(spec, r, parent) {
+    var g = el('g', { 'class': 'node' }, parent);
+    el('circle', { r: r + 5, fill: spec.color, opacity: 0.25, filter: 'url(#bleed)' }, g);
+    el('circle', { r: r, fill: '#fffdf8', filter: 'url(#wash)' }, g);
+    var body = el('circle', { r: r, fill: spec.color, opacity: 0.55, filter: 'url(#wash)' }, g);
+    var k = (r - 6) / ICON.r;
+    el('image', { href: spec.icon, x: -ICON.cx * k, y: -ICON.cy * k, width: ICON.w * k, height: ICON.h * k }, g);
+    var fs = r < 55 ? 11 : 12, tag = el('g', { transform: 'translate(0,' + (r - 2) + ')' }, g);
+    var rect = el('rect', { y: -9.5, height: 19, rx: 9.5, fill: '#fffdf8', stroke: spec.color, 'stroke-width': 1.6 }, tag);
+    var t = el('text', { 'class': 'lbl', 'text-anchor': 'middle', 'font-size': fs, y: fs * 0.36 }, tag);
+    t.textContent = spec.name;
+    var tw = t.getComputedTextLength() + 16;
+    rect.setAttribute('x', (-tw / 2).toFixed(1)); rect.setAttribute('width', tw.toFixed(1));
+    return { g: g, body: body, r: r, tagW: tw };
+  }
+
+  var ringI = document.getElementById('ring-i');
+  for (var k = 0; k < 3; k++) {
+    /* Direction arrows sit on the band between engines. */
+    el('path', { 'class': 'flow', fill: 'none', stroke: 'var(--water-2)', 'stroke-width': 1.6,
+      'stroke-linecap': 'round', 'marker-end': 'url(#arrow)' }, ringI);
+  }
+  var flows = ringI.querySelectorAll('.flow');
+  var edgeLayer = document.getElementById('edges'), edges = [];
+  EDGE_LABELS.forEach(function (s) {
+    var t = el('text', { 'class': 'edge', 'text-anchor': 'middle', dy: 4 }, edgeLayer);
+    t.textContent = s; edges.push(t);
+  });
+  var nodeLayer = document.getElementById('nodes');
+  var outs = THRUSTERS.map(function (s) { return disc(s, NR_O, nodeLayer); });
+  var nodes = ENGINES.map(function (s) { return disc(s, NR_I, nodeLayer); });
+
+  var beamLayer = document.getElementById('beams');
+
+  var CYCLE = T_SPIN + T_DEC + T_HOLD + T_ACC;
+  var PER_CYCLE = T_SPIN + T_DEC / 2 + T_ACC / 2;
+  var CLIP_END = ROUNDS.length * CYCLE, PERIOD = CLIP_END - CLIP_START;
+
+  /* Integral of the speed multiplier, so any time t renders the exact same frame. */
+  function travelled(ph) {
+    if (ph < T_SPIN) return ph;
+    var u = ph - T_SPIN;
+    if (u < T_DEC) return T_SPIN + 0.5 * (u + T_DEC / Math.PI * Math.sin(Math.PI * u / T_DEC));
+    u -= T_DEC;
+    if (u < T_HOLD) return T_SPIN + T_DEC / 2;
+    u -= T_HOLD;
+    return T_SPIN + T_DEC / 2 + 0.5 * (u - T_ACC / Math.PI * Math.sin(Math.PI * u / T_ACC));
+  }
+  function arcD(r, a0, a1) {
+    var p0 = pos(r, a0), p1 = pos(r, a1);
+    return 'M' + p0.x.toFixed(1) + ' ' + p0.y.toFixed(1) + 'A' + r + ' ' + r + ' 0 0 1 ' + p1.x.toFixed(1) + ' ' + p1.y.toFixed(1);
+  }
+
+  /* Two-way arrowhead markers, one per sender colour. */
+  var defs = document.querySelector('#fig defs');
+  INK.forEach(function (c, j) {
+    var m = el('marker', { id: 'ah' + j, viewBox: '0 0 10 10', refX: 7, refY: 5, markerWidth: 5, markerHeight: 5,
+      orient: 'auto-start-reverse' }, defs);
+    el('path', { d: 'M1 1L8 5L1 9', fill: 'none', stroke: c, 'stroke-width': 1.8,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, m);
+  });
+
+  var beams = [0, 1, 2, 3].map(function () {
+    var g = el('g', {}, beamLayer);
+    var p = el('path', { fill: 'none', 'stroke-width': 2.2, 'stroke-linecap': 'round' }, g);
+    var d1 = el('circle', { r: 3.2 }, g), d2 = el('circle', { r: 3.2 }, g);
+    var t = el('text', { 'text-anchor': 'middle' }, g);
+    return { g: g, p: p, d1: d1, d2: d2, t: t };
+  });
+
+  function overlaps(a, b) {
+    return Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.h + b.h;
+  }
+  function tagBoxes() {
+    return nodes.concat(outs).map(function (nd) {
+      var m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(nd.g.getAttribute('transform'));
+      return { x: +m[1], y: +m[2] + nd.r - 2, w: nd.tagW + 4, h: 21 };
+    });
+  }
+  function discs() {
+    return nodes.concat(outs).map(function (nd) {
+      var m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(nd.g.getAttribute('transform'));
+      return { x: +m[1], y: +m[2], r: nd.r + 2 };
+    });
+  }
+  function hitsDisc(box, c) {
+    var dx = Math.max(Math.abs(c.x - box.x) - box.w / 2, 0), dy = Math.max(Math.abs(c.y - box.y) - box.h / 2, 0);
+    return dx * dx + dy * dy < c.r * c.r;
+  }
+  function placeLabel(b, L, nx, ny, i, round) {
+    var w = b.t.getComputedTextLength() + 8, taken = tagBoxes(), circles = discs();
+    for (var q = 0; q < i; q++) {
+      var o = beams[q];
+      if (o.spot) taken.push({ x: o.lx, y: o.ly, w: o.t.getComputedTextLength() + 8, h: 16 });
+    }
+    var ts = [0.5, 0.35, 0.65, 0.2, 0.8], ds = [15, 27, -15, -27, 39, -39, 52, -52, 66, -66];
+    for (var a = 0; a < ds.length; a++) for (var c = 0; c < ts.length; c++) {
+      var lp = b.p.getPointAtLength(L * ts[c]);
+      var box = { x: lp.x + nx * ds[a], y: lp.y + ny * ds[a], w: w, h: 16 };
+      if (!taken.some(function (t) { return overlaps(box, t); }) &&
+          !circles.some(function (cc) { return hitsDisc(box, cc); })) return [ts[c], ds[a]];
+    }
+    return [0.5, 15];  /* nothing clear: fall back to the default spot */
+  }
+
+  function render(t) {
+    var clock = CLIP_START + (((t % PERIOD) + PERIOD) % PERIOD);
+    var n = Math.min(Math.floor(clock / CYCLE), ROUNDS.length - 1), ph = clock - n * CYCLE;
+    var dist = n * PER_CYCLE + travelled(ph);
+    var ri = INNER0 + INNER_DEG_PER_S * dist, ro = OUTER0 + OUTER_DEG_PER_S * dist;
+    var round = ROUNDS[n], age = ph - T_SPIN, active = age >= 0;
+    var fade = age > T_DEC + T_HOLD ? Math.max(0, 1 - (age - T_DEC - T_HOLD) / T_ACC) : 1;
+
+    var k, pulse = 0;
+    if (active && age > T_DEC && age < T_DEC + 0.6) pulse = Math.sin(Math.PI * (age - T_DEC) / 0.6) * 4;
+    for (k = 0; k < 3; k++) {
+      var a = innerA[k] + ri;
+      tr(nodes[k].g, pos(RI, a));
+      nodes[k].body.setAttribute('r', (k === round.target ? NR_I + pulse : NR_I).toFixed(2));
+      flows[k].setAttribute('d', arcD(RI, a + 34, a + 86));
+      tr(edges[k], pos(R_EDGE + 46, edgeA[k] + ri));
+      edges[k].setAttribute('opacity', 1);
+    }
+    for (k = 0; k < 4; k++) tr(outs[k].g, pos(RO, outerA[k] + ro));
+
+    round.links.forEach(function (lk, i) {
+      var b = beams[i], j = lk[0], e = lk[1];
+      var rev = active ? Math.max(0, Math.min(1, (age - i * STAGGER) / DRAW)) : 0;
+      b.g.setAttribute('visibility', rev > 0 ? 'visible' : 'hidden');
+      if (rev <= 0) return;
+      var A = pos(RO, outerA[j] + ro), B = pos(RI, innerA[e] + ri);
+      var dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+      var p0 = { x: A.x + ux * (NR_O + 4), y: A.y + uy * (NR_O + 4) };
+      var p3 = { x: B.x - ux * (NR_I + 6), y: B.y - uy * (NR_I + 6) };
+      /* Bow each arrow away from the centre so converging arrows separate. */
+      var mx = (p0.x + p3.x) / 2, my = (p0.y + p3.y) / 2, nx = -uy, ny = ux;
+      if ((mx - C.x) * nx + (my - C.y) * ny < 0) { nx = -nx; ny = -ny; }
+      var bow = 0.2 * Math.hypot(p3.x - p0.x, p3.y - p0.y);
+      var c1 = { x: p0.x + (p3.x - p0.x) * 0.3 + nx * bow, y: p0.y + (p3.y - p0.y) * 0.3 + ny * bow };
+      var c2 = { x: p0.x + (p3.x - p0.x) * 0.7 + nx * bow, y: p0.y + (p3.y - p0.y) * 0.7 + ny * bow };
+      b.p.setAttribute('d', 'M' + p0.x.toFixed(1) + ' ' + p0.y.toFixed(1) + 'C' + c1.x.toFixed(1) + ' ' + c1.y.toFixed(1) +
+        ' ' + c2.x.toFixed(1) + ' ' + c2.y.toFixed(1) + ' ' + p3.x.toFixed(1) + ' ' + p3.y.toFixed(1));
+      b.p.setAttribute('stroke', INK[j]);
+      var L = b.p.getTotalLength(), ez = 1 - Math.pow(1 - rev, 3);
+      b.p.setAttribute('stroke-dasharray', L.toFixed(1));
+      b.p.setAttribute('stroke-dashoffset', (L * (1 - ez)).toFixed(1));
+      if (rev >= 1) { b.p.setAttribute('marker-end', 'url(#ah' + j + ')'); b.p.setAttribute('marker-start', 'url(#ah' + j + ')'); }
+      else { b.p.removeAttribute('marker-end'); b.p.removeAttribute('marker-start'); }
+      b.g.setAttribute('opacity', fade.toFixed(3));
+      /* Dots travel both ways: the exchange runs in each direction. */
+      var held = Math.max(0, age - i * STAGGER - DRAW), q = (held % 1.6) / 1.6;
+      var pt1 = b.p.getPointAtLength(L * q), pt2 = b.p.getPointAtLength(L * (1 - q));
+      b.d1.setAttribute('cx', pt1.x); b.d1.setAttribute('cy', pt1.y);
+      b.d2.setAttribute('cx', pt2.x); b.d2.setAttribute('cy', pt2.y);
+      b.d1.setAttribute('fill', INK[j]); b.d2.setAttribute('fill', INK[j]);
+      b.d1.setAttribute('opacity', rev >= 1 ? 0.9 : 0); b.d2.setAttribute('opacity', rev >= 1 ? 0.55 : 0);
+      b.t.textContent = lk[2];
+      /* Place the label clear of every name tag and of labels already placed this round.
+         The choice is made once per round, so a label never jumps mid-hold. */
+      if (b.round !== n) { b.round = n; b.spot = null; }
+      if (!b.spot && rev >= 1) b.spot = placeLabel(b, L, nx, ny, i, round);
+      var sp = b.spot || [0.5, 15];
+      var lp = b.p.getPointAtLength(L * sp[0]), lx = lp.x + nx * sp[1], ly = lp.y + ny * sp[1];
+      b.lx = lx; b.ly = ly;
+      b.t.setAttribute('fill', INK[j]);
+      b.t.setAttribute('x', lx.toFixed(1)); b.t.setAttribute('y', (ly + 4).toFixed(1));
+      b.t.setAttribute('opacity', rev >= 1 ? 1 : 0);
+      /* Step back any loop label crowding this one. */
+      var show = rev >= 1 ? fade : 0;
+      for (var q2 = 0; q2 < 3; q2++) {
+        var ep = pos(R_EDGE + 46, edgeA[q2] + ri);
+        if (Math.hypot(ep.x - lx, ep.y - ly) < 62) {
+          var o = Math.min(Number(edges[q2].getAttribute('opacity')), 1 - 0.88 * show);
+          edges[q2].setAttribute('opacity', o.toFixed(3));
+        }
+      }
+    });
+  }
+
+  window.__PERIOD = PERIOD;
+  window.__render = render;
+  var body = document.getElementById('figbody'), FADE = 0.6;
+  /* Round 1, all four arrows formed: the frame that stands in for the animation. */
+  var STILL = T_SPIN + T_DEC + 2.5 - CLIP_START;
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (/[?&]capture/.test(location.search)) render(0);
+  else if (still) render(STILL);
+  else {
+    var t0 = null;
+    requestAnimationFrame(function loop(ts) {
+      if (t0 === null) t0 = ts;
+      var t = ((ts - t0) / 1000) % PERIOD;
+      render(t);
+      /* The rings do not repeat within a period, so fade across the seam. */
+      body.style.opacity = Math.min(1, t / FADE, (PERIOD - t) / FADE).toFixed(3);
+      requestAnimationFrame(loop);
+    });
+  }
+})();
+</script>
+</body>
+</html>
