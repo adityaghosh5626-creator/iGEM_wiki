@@ -4,11 +4,13 @@ import { GlobalStyle } from "../styles/globalStyles.js"
 import { SiteLoader } from "./SiteLoader.js"
 import { SponsorCarousel } from "./SponsorCarousel.js"
 import { WikiTopBar } from "./WikiTopBar.js"
+import { footerTheme } from "../data/footerTheme.mjs"
 
 const WikiLayout = ({
   children,
   pageTitle,
   sectionLabel,
+  pagePath,
   hideSiteChrome = false,
   hideTopBar = false,
   fullBleed = false,
@@ -24,6 +26,7 @@ const WikiLayout = ({
   withToc = false,
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const theme = footerTheme(pagePath)
 
   useEffect(() => {
     const updateVisibility = () => setShowScrollTop(window.scrollY > 600)
@@ -75,8 +78,10 @@ const WikiLayout = ({
 
         <Footer
           style={{
-            "--footer-button-bg": footerButton?.bg,
-            "--footer-button-text": footerButton?.text,
+            "--footer-button-bg": theme.button || footerButton?.bg,
+            "--footer-button-text": theme.button ? "#06202B" : footerButton?.text,
+            "--footer-bottom-bg": theme.bottom,
+            "--footer-bottom-text": theme.text,
           }}
         >
             <FooterInner>
@@ -98,8 +103,9 @@ const WikiLayout = ({
                 </FooterConnect>
               </FooterTop>
 
-              <FooterRule />
-
+            </FooterInner>
+            <FooterBottom>
+              <FooterInner>
               <FooterMeta>
                 <MetaLink href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">
                   This work is licensed under CC BY 4.0
@@ -121,7 +127,11 @@ const WikiLayout = ({
                   </MetaLink>
                 </span>
               </FooterMeta>
-            </FooterInner>
+              <LandAcknowledgement>
+                iGEM Toronto respectfully acknowledges that we work and learn on the traditional territory of the Mississaugas of the Credit, the Anishinaabe, the Chippewa, the Haudenosaunee, and the Wendat Peoples. As a team working to address plastic pollution, an environmental challenge affecting waterways, ecosystems, and communities across Canada, we recognize our responsibility to advance solutions that reflect responsible stewardship of the land and waters we share.
+              </LandAcknowledgement>
+              </FooterInner>
+            </FooterBottom>
         </Footer>
 
       </SiteWrapper>
@@ -248,16 +258,30 @@ const Footer = styled.footer`
   background: var(--color-bg);
   color: var(--color-text);
   border-top: 1px solid var(--color-border);
-  padding: var(--space-xl) var(--page-padding) var(--space-lg);
+  padding-top: var(--space-xl);
 
   @media (max-width: 720px) {
-    padding: var(--space-lg) var(--page-padding) var(--space-md);
+    padding-top: var(--space-lg);
   }
 `
 
 const FooterInner = styled.div`
   max-width: var(--max-width);
   margin: 0 auto;
+  padding: 0 var(--page-padding);
+`
+
+const FooterBottom = styled.div`
+  margin-top: var(--space-lg);
+  padding: var(--space-md) 0 var(--space-lg);
+  border-top: 1px solid var(--color-muted);
+  background: var(--footer-bottom-bg, var(--color-bg));
+  color: var(--footer-bottom-text, var(--color-muted));
+
+  @media (max-width: 720px) {
+    margin-top: var(--space-md);
+    padding: var(--space-sm) 0 var(--space-md);
+  }
 `
 
 const FooterTop = styled.div`
@@ -387,16 +411,6 @@ const ConnectLink = styled.a`
   }
 `
 
-const FooterRule = styled.hr`
-  border: none;
-  border-top: 1px solid var(--color-muted);
-  margin: var(--space-lg) 0 var(--space-md);
-
-  @media (max-width: 720px) {
-    margin: var(--space-md) 0 var(--space-sm);
-  }
-`
-
 const FooterMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -405,7 +419,7 @@ const FooterMeta = styled.div`
   gap: 0.25rem 0;
   font-family: var(--font-body);
   font-size: 0.8125rem;
-  color: var(--color-muted);
+  color: inherit;
 
   @media (max-width: 720px) {
     justify-content: center;
@@ -414,16 +428,28 @@ const FooterMeta = styled.div`
   }
 `
 
+const LandAcknowledgement = styled.p`
+  margin: var(--space-md) 0 0;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+
+  @media (max-width: 720px) {
+    font-size: 0.75rem;
+  }
+`
+
 const MetaLink = styled.a`
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid var(--color-muted);
+  border-bottom: 1px solid currentColor;
   padding-bottom: 0.05rem;
   transition: color 0.2s ease, border-color 0.2s ease;
 
   &:hover {
-    color: var(--color-text);
-    border-bottom-color: var(--color-accent);
+    color: inherit;
+    border-bottom-color: transparent;
   }
 
   &:focus-visible {
@@ -436,5 +462,5 @@ const MetaLink = styled.a`
 const MetaSep = styled.span`
   margin: 0 0.5rem;
   user-select: none;
-  color: var(--color-muted);
+  color: inherit;
 `

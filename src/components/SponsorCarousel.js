@@ -5,8 +5,8 @@ import { SPONSORS } from "../data/sponsors.js"
 const AUTO_ADVANCE_MS = 4500
 const SLIDE_MS = 480
 
-/** Five strip positions map to active + (pos - 2) with wrap. */
-const STRIP_POS = [0, 1, 2, 3, 4]
+/** Seven positions leave a spare logo on each side of the five-logo view. */
+const STRIP_POS = [0, 1, 2, 3, 4, 5, 6]
 
 function wrapIndex(i, len) {
   if (len === 0) return 0
@@ -14,20 +14,20 @@ function wrapIndex(i, len) {
 }
 
 function sponsorIndexAtStripPos(active, pos, count) {
-  return wrapIndex(active + (pos - 2), count)
+  return wrapIndex(active + (pos - 3), count)
 }
 
 /**
- * Infinite-style strip: 5 sponsors in the track; viewport shows 3.
- * Resting translate shows [active-1, active, active+1]. Next slides to show
- * [active, active+1, active+2] — the +2 card is already in the DOM, so no gap.
+ * Infinite-style strip: seven sponsors; five visible on laptops, three below.
+ * CSS adds one slot to the offset for the narrower view, keeping the active
+ * sponsor centered at either size. Spare slots prevent gaps during slides.
  * Then we snap translate back (no transition) and bump active.
  */
 export function SponsorCarousel() {
   const count = SPONSORS.length
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
-  /** 1 = resting (middle trio); 2 = slid next; 0 = slid prev */
+  /** 1 = resting; 2 = slid next; 0 = slid prev (plus the CSS narrow offset). */
   const [offsetMult, setOffsetMult] = useState(1)
   const [instant, setInstant] = useState(false)
   const [slide, setSlide] = useState(null)
@@ -83,7 +83,7 @@ export function SponsorCarousel() {
   const showArrows = count > 1
 
   const trackTransform =
-    count === 1 ? "translateX(0)" : `translateX(calc(-1 * ${offsetMult} * var(--sd)))`
+    count === 1 ? "translateX(0)" : `translateX(calc(-1 * (${offsetMult} + var(--narrow-offset)) * var(--sd)))`
 
   /**
    * While the track is moving, `offsetMult` jumps (1→2 or 1→0) immediately so the next
@@ -91,7 +91,7 @@ export function SponsorCarousel() {
    * fight the transform. Only apply center vs edge when idle (`slide == null`).
    */
   const emphasize = count === 1 || slide === null
-  const centerStripPos = offsetMult + 1
+  const centerStripPos = 3
 
   return (
     <Wrap
@@ -232,16 +232,23 @@ const Row = styled.div`
 `
 
 const Viewport = styled.div`
+  --visible-slots: 3;
+  --narrow-offset: 1;
   --slot: 5.35rem;
   --sg: 0.55rem;
   --sd: calc(var(--slot) + var(--sg));
 
   width: ${(p) =>
-    p.$single ? "var(--slot)" : "calc(3 * var(--slot) + 2 * var(--sg))"};
+    p.$single ? "var(--slot)" : "calc(var(--visible-slots) * var(--sd) - var(--sg))"};
   max-width: 100%;
   overflow: hidden;
   position: relative;
   border-radius: 0.45rem;
+
+  @media (min-width: 1100px) {
+    --visible-slots: 5;
+    --narrow-offset: 0;
+  }
 
   @media (max-width: 720px) {
     --slot: 4.25rem;

@@ -51,6 +51,12 @@ const FLIP_SETTINGS = {
 }
 
 const FLIP_WAIT_MS = FLIP_SETTINGS.flippingTime + 80
+/** The turning page's shading: a deeper shade of the paper, not black (r, g, b). */
+const FLIP_SHADE = "184, 164, 134"
+/** page-flip's shading elements, which it restyles every frame. */
+const FLIP_SHADOW = /^stf__(outer|inner|hard|hardInner)Shadow$/
+/** Black in a style as the browser writes it back (rgb at full opacity). */
+const FLIP_BLACK = /rgba?\(0, 0, 0(, [\d.]+)?\)/g
 
 /**
  * A section's photo moves to its own page when, beside the text, it would be
@@ -96,30 +102,210 @@ const zoomProps = (src, alt) => ({
   "aria-label": alt ? `Enlarge: ${alt}` : "Enlarge picture",
 })
 
-/** A picture enlarged over the page, closed with its ✕, Escape or a click outside. */
+/** Zooming in the enlarged view: up to twice the picture's own pixels, or 4×. */
+const ZOOM_MAX_MIN = 4
+/** Each −/+ (button or key) step. */
+const ZOOM_STEP = 1.6
+/** Pointer travel (px) past which a press is a drag, not a click. */
+const DRAG_SLOP = 5
+
+/**
+ * A picture enlarged over the page, closed with its ✕, Escape or a click
+ * outside. It zooms with its −/+ buttons (or the + and − keys), a pinch, or
+ * ⌘/Ctrl and scroll, at the pointer; zoomed in, it moves with a drag, scroll
+ * or the arrow keys. A click on it zooms in there (a tall one to the
+ * screen's width) or back out to fit.
+ */
 function SketchZoom({ zoom, onClose }) {
   const closeRef = useRef(null)
+  const backdropRef = useRef(null)
+  const imgRef = useRef(null)
+  const [view, setView] = useState({ s: 1, x: 0, y: 0 })
+  const [smooth, setSmooth] = useState(true)
+  const [dragging, setDragging] = useState(false)
+  const viewRef = useRef(view)
+  viewRef.current = view
+  /** Set by a drag or pinch, so the click that ends it does nothing. */
+  const movedRef = useRef(false)
+
+  // The picture's fitted size (transforms aside); it's centred on the screen.
+  const fitted = () => ({
+    w: Math.max(1, imgRef.current?.offsetWidth || 1),
+    h: Math.max(1, imgRef.current?.offsetHeight || 1),
+  })
+  const maxScale = () =>
+    Math.max(ZOOM_MAX_MIN, (2 * (imgRef.current?.naturalWidth || 0)) / fitted().w)
+  // Bigger than the screen, it moves only as far as its edges; smaller, it stays centred.
+  const clamp = ({ s, x, y }) => {
+    const { w, h } = fitted()
+    const mx = Math.max(0, (w * s - window.innerWidth) / 2)
+    const my = Math.max(0, (h * s - window.innerHeight) / 2)
+    return { s, x: Math.min(mx, Math.max(-mx, x)), y: Math.min(my, Math.max(-my, y)) }
+  }
+  const zoomTo = (scale, px = window.innerWidth / 2, py = window.innerHeight / 2, ease = true) => {
+    const v = viewRef.current
+    const s = Math.min(maxScale(), Math.max(1, scale))
+    // Keep the point under (px, py) there.
+    const cx = window.innerWidth / 2
+    const cy = window.innerHeight / 2
+    const k = s / v.s
+    setSmooth(ease)
+    setView(clamp({ s, x: px - cx - (px - cx - v.x) * k, y: py - cy - (py - cy - v.y) * k }))
+  }
+  const panBy = (dx, dy, ease = false) => {
+    const v = viewRef.current
+    setSmooth(ease)
+    setView(clamp({ ...v, x: v.x + dx, y: v.y + dy }))
+  }
+  const fit = () => {
+    setSmooth(true)
+    setView({ s: 1, x: 0, y: 0 })
+  }
+  const toggleAt = (px, py) => {
+    if (viewRef.current.s > 1.01) return fit()
+    return zoomTo(Math.max(2.5, (window.innerWidth * 0.92) / fitted().w), px, py)
+  }
+  const handlers = useRef({})
+  handlers.current = { zoomTo, panBy, fit, clamp, onClose }
+
   useEffect(() => {
     if (!zoom) return undefined
+    setView({ s: 1, x: 0, y: 0 })
     const onKey = (event) => {
+      const { zoomTo, panBy, fit, onClose } = handlers.current
+      const { s } = viewRef.current
       if (event.key === "Escape") onClose()
+      else if (event.key === "+" || event.key === "=") zoomTo(s * ZOOM_STEP)
+      else if (event.key === "-" || event.key === "_") zoomTo(s / ZOOM_STEP)
+      else if (event.key === "0") fit()
+      else if (s > 1 && event.key.startsWith("Arrow")) {
+        const step = 80
+        const [dx, dy] = {
+          ArrowLeft: [step, 0],
+          ArrowRight: [-step, 0],
+          ArrowUp: [0, step],
+          ArrowDown: [0, -step],
+        }[event.key] || [0, 0]
+        panBy(dx, dy, true)
+      } else return
+      event.preventDefault()
     }
+    // Not passive: scrolling here mustn't scroll the page behind.
+    const onWheel = (event) => {
+      event.preventDefault()
+      const { zoomTo, panBy } = handlers.current
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1
+      if (event.ctrlKey || event.metaKey) {
+        zoomTo(viewRef.current.s * Math.exp(-event.deltaY * unit * 0.01), event.clientX, event.clientY, false)
+      } else if (viewRef.current.s > 1) {
+        panBy(-event.deltaX * unit, -event.deltaY * unit)
+      }
+    }
+    const onResize = () => setView((v) => handlers.current.clamp(v))
+    const backdrop = backdropRef.current
     window.addEventListener("keydown", onKey)
+    window.addEventListener("resize", onResize)
+    backdrop?.addEventListener("wheel", onWheel, { passive: false })
     closeRef.current?.querySelector("button")?.focus()
     const { overflow } = document.documentElement.style
     document.documentElement.style.overflow = "hidden"
     return () => {
       window.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", onResize)
+      backdrop?.removeEventListener("wheel", onWheel)
       document.documentElement.style.overflow = overflow
     }
-  }, [zoom, onClose])
+  }, [zoom])
+
+  // Drags pan; two fingers pinch (and pan with their midpoint).
+  const pointers = useRef(new Map())
+  const onPointerDown = (event) => {
+    if (event.button > 0 || event.target.closest("button")) return
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (pointers.current.size === 1) {
+      movedRef.current = false
+      const start = { x: event.clientX, y: event.clientY }
+      const move = (e) => {
+        const p = pointers.current.get(e.pointerId)
+        if (!p) return
+        const prev = [...pointers.current.values()]
+        pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        const now = [...pointers.current.values()]
+        if (now.length >= 2) {
+          movedRef.current = true
+          const [a0, b0] = prev
+          const [a1, b1] = now
+          const d0 = Math.hypot(a0.x - b0.x, a0.y - b0.y) || 1
+          const d1 = Math.hypot(a1.x - b1.x, a1.y - b1.y)
+          const mid = { x: (a1.x + b1.x) / 2, y: (a1.y + b1.y) / 2 }
+          handlers.current.panBy(mid.x - (a0.x + b0.x) / 2, mid.y - (a0.y + b0.y) / 2)
+          handlers.current.zoomTo(viewRef.current.s * (d1 / d0), mid.x, mid.y, false)
+          return
+        }
+        if (!movedRef.current && Math.hypot(e.clientX - start.x, e.clientY - start.y) < DRAG_SLOP) return
+        movedRef.current = true
+        if (viewRef.current.s > 1) {
+          setDragging(true)
+          handlers.current.panBy(e.clientX - p.x, e.clientY - p.y)
+        }
+      }
+      const up = (e) => {
+        pointers.current.delete(e.pointerId)
+        if (pointers.current.size > 0) return
+        setDragging(false)
+        window.removeEventListener("pointermove", move)
+        window.removeEventListener("pointerup", up)
+        window.removeEventListener("pointercancel", up)
+      }
+      window.addEventListener("pointermove", move)
+      window.addEventListener("pointerup", up)
+      window.addEventListener("pointercancel", up)
+    }
+  }
+
   if (!zoom || typeof document === "undefined") return null
+  const zoomed = view.s > 1.01
   return createPortal(
-    <ZoomBackdrop role="dialog" aria-modal="true" aria-label={zoom.alt || "Enlarged picture"} onClick={onClose}>
+    <ZoomBackdrop
+      ref={backdropRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={zoom.alt || "Enlarged picture"}
+      onPointerDown={onPointerDown}
+      onClick={() => {
+        if (!movedRef.current) onClose()
+      }}
+    >
       <ZoomFigure ref={closeRef} onClick={(event) => event.stopPropagation()}>
-        <ZoomImage src={zoom.src} alt={zoom.alt} />
-        <ZoomClose onClose={onClose} />
+        <ZoomImage
+          ref={imgRef}
+          src={zoom.src}
+          alt={zoom.alt}
+          draggable={false}
+          $smooth={smooth}
+          $cursor={zoomed ? (dragging ? "grabbing" : "grab") : "zoom-in"}
+          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }}
+          onClick={(event) => {
+            if (!movedRef.current) toggleAt(event.clientX, event.clientY)
+          }}
+        />
+        {/* Zoomed, the picture's corner may be off screen: the screen's. */}
+        <ZoomClose
+          onClose={onClose}
+          style={zoomed ? { position: "fixed", top: "16px", right: "16px" } : undefined}
+        />
       </ZoomFigure>
+      <ZoomTools onClick={(event) => event.stopPropagation()}>
+        <ZoomTool type="button" aria-label="Zoom out" title="Zoom out (−)" disabled={!zoomed} onClick={() => zoomTo(view.s / ZOOM_STEP)}>
+          −
+        </ZoomTool>
+        <ZoomTool type="button" aria-label="Fit to screen" title="Fit to screen (0)" disabled={!zoomed} onClick={fit} $wide>
+          {zoomed ? `${Math.round(view.s * 100)}%` : "Fit"}
+        </ZoomTool>
+        <ZoomTool type="button" aria-label="Zoom in" title="Zoom in (+)" disabled={view.s >= maxScale() - 0.01} onClick={() => zoomTo(view.s * ZOOM_STEP)}>
+          +
+        </ZoomTool>
+      </ZoomTools>
     </ZoomBackdrop>,
     document.body,
   )
@@ -130,8 +316,19 @@ function SketchZoom({ zoom, onClose }) {
  * page, `cols` across (up to three by default), each kept whole; one caption.
  * An image with `crop` [x0, y0, x1, y1] (of its `size` [w, h]) shows just
  * that part, e.g. one piece of a tall picture split side by side; it still
- * enlarges whole.
+ * enlarges whole. An image's `span` is how many columns it takes (`rowSpan`,
+ * rows), and the page's `rows` (one weight a row) share out the height, for
+ * wide and tall pictures mixed.
  */
+/** Where a gallery image sits: `span` columns, `rowSpan` rows. */
+const cellStyle = ({ span, rowSpan }) =>
+  span || rowSpan
+    ? {
+        gridColumn: span ? `span ${span}` : undefined,
+        gridRow: rowSpan ? `span ${rowSpan}` : undefined,
+      }
+    : undefined
+
 function GalleryFigure({ page }) {
   const n = page.images.length
   const cols = page.cols || Math.min(n, 3)
@@ -140,7 +337,9 @@ function GalleryFigure({ page }) {
       <GalleryGrid
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
+          gridTemplateRows: page.rows
+            ? page.rows.map((weight) => `minmax(0, ${weight}fr)`).join(" ")
+            : `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))`,
         }}
       >
         {page.images.map((image) =>
@@ -149,6 +348,7 @@ function GalleryFigure({ page }) {
               key={`${image.src}:${image.crop}`}
               viewBox={`${image.crop[0]} ${image.crop[1]} ${image.crop[2] - image.crop[0]} ${image.crop[3] - image.crop[1]}`}
               preserveAspectRatio="xMidYMin meet"
+              style={cellStyle(image)}
               {...zoomProps(image.src, image.alt)}
             >
               {/* Its own viewport clips the picture to the crop (the
@@ -169,6 +369,7 @@ function GalleryFigure({ page }) {
               src={image.src}
               alt={image.alt || ""}
               loading="lazy"
+              style={cellStyle(image)}
               {...zoomProps(image.src, image.alt)}
             />
           ),
@@ -214,11 +415,10 @@ function SketchPageContent({ page }) {
             <TocItem key={section.id}>
               <TocButton
                 type="button"
-                $color={section.color}
-            $crop={section.tabCrop}
+                $color={section.tabColor}
                 data-toc-section={section.id}
               >
-                <TocSwatch $color={section.color} aria-hidden />
+                <TocSwatch $color={section.tabColor} aria-hidden />
                 <TocText>
                   <TocLabel>{section.label}</TocLabel>
                   <TocProgress>{section.progress}</TocProgress>
@@ -291,13 +491,14 @@ function SketchPageContent({ page }) {
       <SketchTitle>{page.title}</SketchTitle>
       {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
       {page.body && <SketchBody>{page.body}</SketchBody>}
+      {showMedia && page.images && <GalleryFigure page={page} />}
       {showMedia && page.imageSrc && (
         <SketchFigure>
           <SketchImage src={page.imageSrc} alt={page.imageAlt || ""} {...zoomProps(page.imageSrc, page.imageAlt)} />
           {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
         </SketchFigure>
       )}
-      {showMedia && !page.imageSrc && (
+      {showMedia && !page.imageSrc && !page.images && (
         <SketchPlaceholder aria-hidden={false}>
           <SketchPlaceholderLabel>
             {page.imagePlaceholder || "Image coming soon"}
@@ -784,6 +985,16 @@ export function DesignSketchbook() {
 
     let cancelled = false
     let flipInstance = null
+    // page-flip writes its shading into each shadow's style as it turns:
+    // swap its black for the paper's shade as it does.
+    const shade = new MutationObserver((records) => {
+      records.forEach(({ target }) => {
+        if (!FLIP_SHADOW.test(target.className)) return
+        const css = target.style.cssText
+        const next = css.replace(FLIP_BLACK, (_, alpha) => `rgba(${FLIP_SHADE}${alpha || ", 1"})`)
+        if (next !== css) target.style.cssText = next
+      })
+    })
     // The pages this book is built from (the layout can change under it).
     const instancePages = pagesRef.current
     let resizeTimer = 0
@@ -848,6 +1059,7 @@ export function DesignSketchbook() {
         })
 
         flipInstance.loadFromHTML(pageEls)
+        shade.observe(host, { attributes: true, attributeFilter: ["style"], subtree: true })
         // Hover-fold on hard covers leaves a board drawn across the empty half.
         const origUserMove = flipInstance.userMove.bind(flipInstance)
         flipInstance.userMove = (pos, isTouch) => {
@@ -897,6 +1109,7 @@ export function DesignSketchbook() {
       cancelled = true
       window.removeEventListener("resize", onResize)
       window.clearTimeout(resizeTimer)
+      shade.disconnect()
       if (pageFlipRef.current) {
         resumePageIdRef.current =
           instancePages[pageFlipRef.current.getCurrentPageIndex()]?.id ?? null
@@ -1129,10 +1342,16 @@ export function DesignSketchbook() {
                   <SketchTitle>{page.title}</SketchTitle>
                   {page.subtitle && <SketchSubtitle>{page.subtitle}</SketchSubtitle>}
                   <SketchBody data-measure-body>{page.body}</SketchBody>
-                  {page.imageSrc && (
-                    <SketchFigure>
+                  {page.images ? (
+                    <GalleryWrap style={{ flex: "none" }}>
                       {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
-                    </SketchFigure>
+                    </GalleryWrap>
+                  ) : (
+                    page.imageSrc && (
+                      <SketchFigure>
+                        {page.caption && <SketchCaption>{page.caption}</SketchCaption>}
+                      </SketchFigure>
+                    )
                   )}
                 </SketchPageInner>
               ) : (
@@ -1702,7 +1921,7 @@ const TocList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
   width: 100%;
 `
 
@@ -1710,23 +1929,25 @@ const TocItem = styled.li`
   margin: 0;
 `
 
+/** A row per section: its tab's colour beside its name, no box (a tint on hover). */
 const TocButton = styled.button`
   appearance: none;
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  border: 1px solid color-mix(in srgb, ${({ $color }) => $color} 40%, var(--color-border));
-  border-left: 4px solid ${({ $color }) => $color};
+  gap: 0.75rem;
+  border: 0;
   border-radius: 6px;
-  padding: 0.55rem 0.65rem;
-  background: color-mix(in srgb, ${({ $color }) => $color} 10%, #fff);
+  padding: 0.45rem 0.55rem;
+  margin-left: -0.55rem;
+  background: transparent;
   cursor: pointer;
   text-align: left;
   pointer-events: auto;
+  transition: background-color 0.15s ease;
 
   &:hover {
-    background: color-mix(in srgb, ${({ $color }) => $color} 18%, #fff);
+    background: color-mix(in srgb, ${({ $color }) => $color} 22%, transparent);
   }
 
   &:focus-visible {
@@ -1737,10 +1958,10 @@ const TocButton = styled.button`
 
 const TocSwatch = styled.span`
   flex: 0 0 auto;
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-top: 0.2rem;
-  border-radius: 2px;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.3rem;
+  border-radius: 3px;
   background: ${({ $color }) => $color};
 `
 
@@ -1753,14 +1974,14 @@ const TocText = styled.span`
 
 const TocLabel = styled.span`
   font-family: var(--font-body);
-  font-size: clamp(0.78rem, 3.3cqw, 0.9rem);
+  font-size: clamp(0.95rem, 4.6cqw, 1.25rem);
   font-weight: 700;
   color: var(--color-text);
 `
 
 const TocProgress = styled.span`
   font-family: var(--font-body);
-  font-size: clamp(0.65rem, 2.8cqw, 0.75rem);
+  font-size: clamp(0.82rem, 3.8cqw, 1.05rem);
   line-height: 1.4;
   color: var(--color-muted);
 `
@@ -2009,8 +2230,11 @@ const ZoomBackdrop = styled.div`
   display: grid;
   place-items: center;
   padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px);
+  overflow: hidden;
   background: rgba(28, 20, 14, 0.82);
   cursor: zoom-out;
+  /* Its own pinches and drags, not the browser's. */
+  touch-action: none;
 `
 
 const ZoomFigure = styled.figure`
@@ -2031,9 +2255,58 @@ const ZoomImage = styled.img`
   border-radius: 6px;
   background: ${PAPER};
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  cursor: ${({ $cursor }) => $cursor};
+  user-select: none;
+  transition: ${({ $smooth }) => ($smooth ? "transform 0.25s ease" : "none")};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `
 
 const ZoomClose = styled(PopupClose)`
   top: -0.8em;
   right: -0.8em;
+`
+
+/** −, fit and + along the screen's bottom. */
+const ZoomTools = styled.div`
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(20, 14, 10, 0.72);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+  cursor: default;
+`
+
+const ZoomTool = styled.button`
+  min-width: ${({ $wide }) => ($wide ? "4.2em" : "2.2em")};
+  height: 2.2em;
+  padding: 0 0.6em;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: 600 15px/1 var(--font-body, sans-serif);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 1px;
+  }
 `

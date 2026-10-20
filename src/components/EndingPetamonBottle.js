@@ -125,7 +125,7 @@ const PIECES = [
     color: "#a07cf2",
     blurb:
       "Entrepreneurial thinking, market context, and implementation considerations.",
-    label: "Venture",
+    label: "Entrepreneurship",
     hol: "venturepurplehol.avif",
     pop: "venturepurple.avif",
     pet: "venpetamon.avif",
@@ -717,12 +717,14 @@ const EndingPetamonBottle = forwardRef(function EndingPetamonBottle(_, ref) {
               {/* A quiet nudge, a beat later: there's more to find. */}
               <Whisper aria-hidden={!ready}>
                 <span className="hover-copy">
-                  psst… the petamons on every page are up to something too.
-                  Hover over anything that looks alive.
+                  psst… on each subteam's page, its petamons are up to
+                  something too. Hover over anything there that looks alive
+                  (the crabs on this page are in on it too).
                 </span>
                 <span className="touch-copy">
-                  psst… the petamons on every page are up to something too.
-                  Tap anything that looks alive.
+                  psst… on each subteam's page, its petamons are up to
+                  something too. Tap anything there that looks alive (the
+                  crabs on this page are in on it too).
                 </span>
               </Whisper>
             </>

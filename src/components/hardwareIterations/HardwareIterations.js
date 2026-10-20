@@ -1,12 +1,40 @@
-import React, { useState } from "react"
-import { HARDWARE_ITERATIONS } from "../../data/hardwareIterations.js"
+import React, { useEffect, useState } from "react"
+import { HARDWARE_ITERATIONS, HARDWARE_SUBSYSTEMS } from "../../data/hardwareIterations.js"
 import { IterationTimeline } from "./IterationTimeline.js"
 import { SubsystemTabs } from "./SubsystemTabs.js"
+
+/**
+ * A link can open a subsystem: #pumps, or on a version, #version-2-pumps
+ * (the Hardware Notebook's photo links here like that).
+ */
+function fromHash(hash) {
+  const [, versionId, subsystem] =
+    hash.slice(1).match(/^(?:(version-\d+)-)?([a-z]+)$/) || []
+  if (!HARDWARE_SUBSYSTEMS.some(s => s.id === subsystem)) return null
+  const version = HARDWARE_ITERATIONS.findIndex(it => it.id === versionId)
+  return { subsystem, version: version === -1 ? null : version }
+}
 
 export function HardwareIterations() {
   const [version, setVersion] = useState(0)
   const [subsystem, setSubsystem] = useState("cad")
   const iteration = HARDWARE_ITERATIONS[version]
+
+  useEffect(() => {
+    const open = () => {
+      const target = fromHash(window.location.hash)
+      if (!target) return
+      setSubsystem(target.subsystem)
+      if (target.version !== null) setVersion(target.version)
+      requestAnimationFrame(() =>
+        document.getElementById("iteration-subsystems")?.scrollIntoView({ block: "start" })
+      )
+    }
+    open()
+    window.addEventListener("hashchange", open)
+    return () => window.removeEventListener("hashchange", open)
+  }, [])
+
   return (
     <div>
       <IterationTimeline iterations={HARDWARE_ITERATIONS} selectedIndex={version} onChange={setVersion} />

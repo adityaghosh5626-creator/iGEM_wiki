@@ -6,51 +6,39 @@ navTitle: "Wiki"
 order: 40
 description: "Design, content, accessibility, and deployment process for the iGEM Toronto 2026 wiki."
 owners: ["Web Team"]
-updated: "2026-08-09"
+updated: "2026-10-19"
 status: "draft"
 ---
 
-The iGEM Toronto 2026 wiki is a static Gatsby site built from React components and MDX content. The team uses Payload CMS for structured page editing and exports published content into the repository for validation and deployment.
+The wiki team built the platform you are currently exploring. Following last year's Astro-based wiki, this year we developed our site using **Gatsby and React**, with **Markdown and MDX** for page content. This lets us bring together scientific writing, reusable components, and interactive explanations while allowing subteams to update their content without rebuilding the page layout.
 
-## Design Goals
+- **Markdown & MDX Support**: Members write headings, paragraphs, tables, and links in Markdown, and use MDX to include React components directly within their articles.
+- **Reusable Content Components**: Shared components support figures, side-by-side image grids, callouts, dropdowns, code blocks, videos, and PDF embeds. These give authors a consistent way to present different kinds of evidence across the wiki.
+- **Interactive Project Documentation**: Our Hardware Past Iterations page combines a draggable version timeline with subsystem tabs, with separate MDX files for each version and subsystem. Interactive notebooks and the page-turning Outreach sketchbook offer additional ways to explore our work.
+- **Illustrated Page Design**: Custom artwork, layered backgrounds, and scroll-based animations give different sections their own visual identity. Shared navigation and page contents menus help readers move through the project.
+- **References**: BibTeX files and a custom citation integration generate linked IEEE-style numbered citations and bibliographies automatically, keeping references consistent as content changes.
+- **Responsive and Accessible Components**: Our shared components include responsive image layouts, keyboard controls, accessible labels, and support for reduced-motion preferences.
 
-- Make project evidence easy to find from the required iGEM award URLs.
-- Keep navigation and page structure consistent across subteams.
-- Support interactive scientific explanations without hiding essential information.
-- Provide responsive layouts and keyboard-accessible controls.
-- Respect reduced-motion preferences and maintain readable contrast.
+We use **GitHub** as our collaborative development repository. GitHub Actions runs production builds for pull requests, and an automated workflow synchronizes changes from GitHub's main branch to the official **iGEM GitLab repository**. GitLab then builds and publishes the wiki through **GitLab Pages**. This allows us to review changes on GitHub while keeping the official website within iGEM's hosting system.
 
-## Content Workflow
+To keep deployment manageable, we host large media files on the **iGEM CDN** and reference them from our pages. Our deployment script removes unused output assets and checks the estimated compressed artifact size before upload, helping us catch oversized builds earlier.
 
-1. Subteams draft and review page content with their designated owners.
-2. Published Payload content is exported to MDX where applicable.
-3. Automated validation checks frontmatter, duplicate routes, and navigation links.
-4. Pull requests run a complete Gatsby production build before merging.
-5. Changes merged into GitHub `main` are synchronized to the official iGEM GitLab repository.
+## Visual Design
 
-## Technical Stack
+We wanted the wiki to feel like a world created by our team, with a visual identity rooted in the people and ideas behind PetaBite. Throughout development, the wiki team worked closely with members of the Outreach web design team to create artwork specifically for our pages. Keeping the artists and developers in close contact helped us bring their illustrations into the website through page layouts, layered scenery, and interactive details.
 
-| Area                | Implementation                             |
-| ------------------- | ------------------------------------------ |
-| Site generator      | Gatsby                                     |
-| Interface           | React and styled-components                |
-| Content             | MDX and Payload CMS blocks                 |
-| Source control      | GitHub with synchronization to iGEM GitLab |
-| Official deployment | GitLab Pages under `/toronto`              |
+At the centre of this visual narrative are our **Petamon characters**, with different Petamon corresponding to different subteams. These characters connect the sections of the wiki into a shared story while giving each subteam its own identity. As readers move between pages, the characters, environments, and colour palettes introduce different parts of the project within the same illustrated world.
 
-## Accessibility and Testing
+Turning this artwork into a working website required collaboration between design and development. We adapted illustrated assets into backgrounds and page elements, and used movement and interaction to bring the scenes to life. Alongside these expressive elements, we kept the scientific content in readable panels with consistent navigation so readers could explore the artwork and still find the information they needed.
 
-Interactive components should remain usable[@maybe] with a keyboard, expose meaningful labels to assistive technology, and provide a non-animated experience when reduced motion is requested. Content validation and production builds run before deployment; important workflows are also checked manually across desktop and mobile layouts.
+This collaboration makes the wiki a record of our team's creative work as well as its scientific work. The Petamon narrative and custom page artwork give the site a character specific to PetaBite and reflect the contributions of the people who built it.
 
-## Citations
+## Writing Process
 
-Put a `references.bib` file beside a page's `index.mdx`, then cite its BibTeX keys with Pandoc-style syntax such as `[@rehypeCitation]`. Citations use linked IEEE numbers in square brackets, with references numbered in order of first citation. The bibliography is generated automatically at the end of the page [@rehypeCitation].
+This year, we organized the wiki around **subteam-owned MDX files**. Members can edit the page for their area directly, while the wiki team maintains the shared layouts and interactive components. This separates scientific content from presentation code and makes it easier for several subteams to contribute at once.
 
-## Attributions
+Our authoring documentation provides examples for page formatting and shared components. Authors can combine text, tables, images, and embedded documents within the same file. For more complex pages, such as Hardware Past Iterations, individual sections have their own MDX files so contributors can work on one subsystem without editing the entire page.
 
-Team responsibilities belong on the [@maybe?] [team attributions page](/team/attributions/). External libraries, media, and other site-wide acknowledgements belong on the [general attributions page](/attributions/).
+Changes are made on branches and submitted through pull requests for review by the wiki team and relevant subteam leads. Automated content validation checks page metadata, duplicate routes, and navigation links, while production builds help identify compilation errors before deployment. Local previews allow contributors to check how their writing, figures, and interactive elements appear together.
 
-<Callout title="Living documentation">
-  Update this page as the design system, content workflow, testing process, and
-  deployment architecture evolve.
-</Callout>
+The wiki team also helps translate contributed material into MDX, resolve formatting issues, and refine shared components as new content needs arise. This process lets the platform evolve alongside the project while keeping a consistent structure across the final wiki.

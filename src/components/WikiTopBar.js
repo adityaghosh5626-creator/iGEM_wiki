@@ -28,7 +28,6 @@ export const wikiNav = [
     { to: "/hardware/motivation/", label: "Motivation" },
     { to: "/hardware/past-iterations/", label: "Past Iterations" },
     { to: "/hardware/notebook/", label: "Notebook" },
-    { to: "/hardware/results/", label: "Results" },
   ]},
   { to: "/human-practices/", label: "Human Practices" },
   { to: "/beyond-the-bench/outreach/", label: "Outreach" },
@@ -45,6 +44,25 @@ const MOBILE_NAV_BREAKPOINT = "1080px"
 
 /** The PetaBite wordmark in the wiki colourway (Cindy's logo, intact frame). */
 const LOGO_SRC = "https://static.igem.wiki/teams/6187/wiki/outreach/photos/petabite-logo-web.avif"
+/** The logo's dark green (its "i" and "t"): the bar's text. */
+const LOGO_GREEN = "#34686c"
+/** A pale blue box behind a hovered title (the text stays green on it). */
+const HOVER_BG = "#cfe8f1"
+
+/**
+ * A title's hover box. Its padding is taken back by negative margins, so the
+ * bar's spacing (and where the menus drop from) stays as it was.
+ */
+const hoverBox = `
+  padding: 0.3rem 0.55rem;
+  margin: -0.3rem -0.55rem;
+  border-radius: 0.45rem;
+  transition: background-color 0.15s ease;
+`
+const hoverBoxOn = `
+  background-color: ${HOVER_BG};
+  color: ${LOGO_GREEN};
+`
 
 export function WikiTopBar({ sticky = false }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -214,12 +232,13 @@ const DesktopNav = styled.nav`
 `
 
 const DesktopLink = styled(Link)`
-  color: var(--color-muted);
+  color: ${LOGO_GREEN};
   font-size: inherit;
   text-decoration: none;
+  ${hoverBox}
 
   &:hover {
-    color: var(--color-text);
+    ${hoverBoxOn}
   }
 
   &:focus-visible {
@@ -244,12 +263,13 @@ const NavItem = styled.div`
 `
 
 const NavParent = styled.span`
-  color: var(--color-muted);
+  color: ${LOGO_GREEN};
   font-size: inherit;
   cursor: default;
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  ${hoverBox}
 
   &::after {
     content: '▾';
@@ -258,7 +278,7 @@ const NavParent = styled.span`
   }
 
   ${NavItem}:hover & {
-    color: var(--color-text);
+    ${hoverBoxOn}
     &::after { transform: rotate(180deg); }
   }
 `
@@ -288,19 +308,19 @@ const Dropdown = styled.div`
 const DropdownLink = styled(Link)`
   padding: 0.5rem 1rem;
   margin-top: 0.5rem;
-  color: var(--color-muted);
+  color: ${LOGO_GREEN};
   font-size: 1rem;
   text-decoration: none;
   white-space: nowrap;
   position: relative;
   z-index: 1;
+  transition: background-color 0.15s ease;
 
   &:first-child { margin-top: 0.75rem; }
   &:last-child { margin-bottom: 0.25rem; }
 
   &:hover {
-    color: var(--color-text);
-    background: rgba(0,0,0,0.04);
+    ${hoverBoxOn}
   }
 `
 
@@ -434,7 +454,7 @@ const MobileLinks = styled.div`
 const MobileLink = styled(Link)`
   display: block;
   padding: 0.45rem 0;
-  color: var(--color-muted);
+  color: ${LOGO_GREEN};
   font-size: 1.05rem;
   text-decoration: none;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
