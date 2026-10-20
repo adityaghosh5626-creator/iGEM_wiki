@@ -8,7 +8,7 @@
  * - tocHalf — "left" | "right" for the two-page table of contents
  *
  * A section's `color` labels its pages; `tabColor` is its painted tab's, for
- * the table of contents.
+ * the table of contents. `tabImage` is that section's cut tab, shown whole.
  *
  * With showCover + landscape, spreads are [0], [1,2], [3,4], …
  * Each section starts on a LEFT page and has an even number of pages (see
@@ -23,6 +23,9 @@ const NB_IMG = (name) =>
 /** Images from the web design team's sketchbook write-up. */
 const SK_IMG = (name) =>
   `https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/content/${name}.avif`
+/** One cut tab per section. The book draws the label in HTML. */
+const SK_TAB = (name) =>
+  `https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/tabs/${name}.avif`
 /** A gallery's images: [file name, alt text] pairs. */
 const gallery = (...images) => images.map(([name, alt]) => ({ src: SK_IMG(name), alt }))
 /**
@@ -45,7 +48,7 @@ const sectionPage = (sectionId, id, title, fields) => ({
 export const DESIGN_SKETCHBOOK_SECTIONS = [
   {
     id: "web-design",
-    tabCrop: [1486, 486, 1859, 593],
+    tabImage: SK_TAB("web-design"),
     label: "Web Design",
     color: "#3B82A0",
     tabColor: "#bb5952",
@@ -54,7 +57,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "animation",
-    tabCrop: [1485, 599, 1858, 706],
+    tabImage: SK_TAB("animation"),
     label: "Animation",
     color: "#E07A3A",
     tabColor: "#da6b5c",
@@ -63,7 +66,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "character-design",
-    tabCrop: [1484, 711, 1857, 818],
+    tabImage: SK_TAB("character-design"),
     label: "Character Design",
     color: "#5A9E4B",
     tabColor: "#e89469",
@@ -72,7 +75,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "social",
-    tabCrop: [1481, 827, 1854, 934],
+    tabImage: SK_TAB("social"),
     label: "Social",
     color: "#C45B8C",
     tabColor: "#f0b376",
@@ -81,7 +84,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "branding",
-    tabCrop: [1482, 940, 1855, 1047],
+    tabImage: SK_TAB("branding"),
     label: "Branding",
     color: "#7B5EA7",
     tabColor: "#ebd188",
@@ -90,7 +93,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
   },
   {
     id: "other",
-    tabCrop: [1481, 1054, 1854, 1161],
+    tabImage: SK_TAB("other"),
     label: "Other",
     color: "#8A8680",
     tabColor: "#acbc8a",
@@ -146,7 +149,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     title: "Web Design",
     sectionId: "web-design",
     body:
-      "At the very start, the team pooled together everyone's own ideas for how the wiki should look. A lot of our early concepts were pixel art, playing into the Pokémon-like, gamey side of the project, but we also tried out a hand-drawn style.",
+      "At the very start, the team pooled together everyone's own ideas for what aesthetic the wiki should have. A lot of our early concepts featured a pixel art style, playing into the Pokémon-like, gamey side of the project, but we also tried a hand-drawn style.",
     density: "soft",
     variant: "spread",
     // Cut in two side by side, between the PETadex screen and the projects.
@@ -182,7 +185,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   }),
   sectionPage("web-design", "biomes", "Biomes", {
     body:
-      "Another idea was to build the design around biomes, since microplastics reach so many of our environments. It also fit our Pokémon-inspired idea of gyms and regions: the PETases became PETamon, and the reader is invited to collect them from the PETadex.",
+      "Another idea was to build the design around biomes, since microplastics reach so many parts of our environments and lives. It also fit our Pokémon-inspired idea of different gyms and regions, like in the games. This is where the PETases became PETamon: the reader is invited to collect them from the PETadex.",
     imageSrc: SK_IMG("web-environment-petamon-concept"),
     imageAlt: "A pixel forest scene with a PETamon, a speech bubble and an info box",
     caption: "An early proposal for an environment and PETamon concept, by Cindy.",
@@ -209,14 +212,16 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ],
     ),
     cols: 2,
-    caption: "The first outline of the homepage, split into sections.",
+    caption:
+      "The first outline of the homepage, separated into sections for different artists on the web design team.",
   }),
   sectionPage("web-design", "story", "A story to scroll", {
     body:
-      "Every subteam was going to be a PETamon gym with a trainer and a PETamon partner, but we dropped the trainers along the way. The wiki would tell a story: you follow a bottle on a journey through Toronto as it breaks down into microplastics.",
+      "Every subteam was going to be a PETamon gym, with a trainer and a PETamon partner, but we scrapped the trainers along the way because not enough people on the team were comfortable drawing humans. The wiki would tell a story you can follow: a bottle's journey through Toronto as it breaks down into microplastics by the end of the page.",
     imageSrc: SK_IMG("web-section-1-draft-kathleen"),
     imageAlt: "A painted draft of the homepage's top: the PetaBite title over a plaza and waterfall",
-    caption: "First draft of section 1 of the homepage, by Kathleen.",
+    caption:
+      "First draft of section 1 of the homepage, by Kathleen. She also made a video concept of the animations for this section.",
   }),
   sectionPage("web-design", "drafts", "First drafts", {
     images: gallery(
@@ -224,7 +229,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["web-section-4-draft-cindy", "A red battle screen sketch reading This PETase is ready for battle, and a sketch of a cat at a tablet"],
     ),
     caption:
-      "First drafts of section 2 (Noorine) and of section 4, which later moved to the Dry Lab page (Cindy).",
+      "First draft of section 2 of the homepage, by Noorine, and the first draft of section 4, which used to be on the homepage but was moved to Dry Lab, by Cindy.",
   }),
   sectionPage("web-design", "iteration", "Next iteration", {
     images: gallery(
@@ -232,20 +237,20 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["web-section-3-4-noorine", "The lab wall with its night-sky window, shelves and a blue tube"],
     ),
     caption:
-      "The next iteration of sections 1 to 3 (Kathleen and Noorine, rendered over by Kathleen), and the section between 3 and 4 (Noorine).",
+      "The next iteration of sections 1 to 3, by Kathleen and Noorine, rendered over by Kathleen, and the section between 3 and 4, representing the technical subteams, by Noorine.",
   }),
   sectionPage("web-design", "petamon", "PETamon at work", {
     body:
-      "Once every subteam's PETamon was designed, we first planned a normal menu at the bottom with an icon for each team. Then came the idea of each PETamon breaking down a piece of the bottle, since that's what they do best: now they fill the wiki, breaking down microplastics as they go.",
+      "Once every subteam's PETamon was designed (see Character Design), we first planned a normal menu at the bottom with an icon for each team. Those icons were going to be the trainers, but the trainers were scrapped along the way. Then came the idea of each PETamon breaking down a piece of the bottle, since breaking down plastic is what they do best: now they fill the wiki, breaking down microplastics as they go.",
     images: gallery(
       ["web-sections-4-5-plant", "The treatment plant's tanks and pipe pouring into the sea"],
       ["web-sections-4-5-ocean", "The deep ocean with coral and the PETamon around a broken bottle"],
     ),
-    caption: "Sections 4 and 5, by Noorine.",
+    caption: "Sections 4 and 5 of the wiki's homepage, by Noorine.",
   }),
   sectionPage("web-design", "subpages", "Subteam pages", {
     body:
-      "Each subteam page got its own world: Wet Lab's axolotl-catfish in the ocean, Dry Lab's spider-crab-scorpion on a desert dig, Hardware's steel turtle in deep caves, Outreach's squirrel in a beret (very French and artistique!), Venture's kangaroo with its pouch of gold, Web's fire dragon in its volcano and Human Practices' dove in the sky.",
+      "The web team worked hard to make sure the animations brought each page to life and kept everything interactive. Each subpage was illustrated with a theme to match it. Wet Lab's axolotl-catfish got an ocean, Dry Lab's spider-crab-scorpion a desert dig, Hardware's steel turtle deep caves, Outreach's squirrel a beret (very French and artistique!), Venture's kangaroo a pouch of gold, Web's fire dragon its volcano and Human Practices' dove the sky.",
     // The two drafts one over the other, the tall Wet Lab page down the right.
     images: [
       ...gallery(["web-outreach-page-draft-meghan", "A draft of the Outreach page: an autumn forest around a white text box"]),
@@ -256,17 +261,17 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     ],
     cols: 2,
     caption:
-      "Drafts of the Outreach page (Meghan) and the Entrepreneurship page (Noorine), and the finished Wet Lab page (Cindy).",
+      "Draft of the Outreach page by Meghan, a draft of the Entrepreneurship page by Noorine, and the finished Wet Lab page by Cindy.",
   }),
   sectionPage("web-design", "other-pages", "Other pages", {
     body:
-      "The pages that aren't a subteam's were a chance to invent new places, and there's a Gemy easter egg on the Project Description page.",
+      "The pages that aren't a subteam's were a chance to invent new environments, and there's a Gemy easter egg on the Project Description page.",
     images: gallery(
       ["web-project-page-kathleen", "The finished Project Description page: a night sky with a rocket over a planet"],
       ["web-contribution-page-draft-noorine", "A draft of the Contribution page: sunlit stone steps in a greenhouse"],
     ),
     caption:
-      "The finished Project Description page (Kathleen) and a draft of the Contribution page (Noorine).",
+      "The finished Project Description page by Kathleen, and a draft of the Contribution page by Noorine.",
   }),
   {
     id: "web-design-build",
@@ -293,7 +298,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     density: "soft",
     variant: "aside",
     body:
-      "The final result is the wiki you're on! We hope our passion and storytelling shows through it. The web design team had a lot of fun drawing everything, and we hope you have fun exploring our pages.",
+      "The final result is the wiki you're on! We hope our passion and storytelling is visible through it. The web design team had a lot of fun drawing everything, and we hope you have fun exploring our pages.",
   },
   {
     id: "animation",

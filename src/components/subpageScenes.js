@@ -443,6 +443,25 @@ export const HARDWARE_SCENE = {
   accent: "#6b5cb5",
   layers: [
     { name: "bg", box: [0, 0, 1110, 4000] },
+    // The cave mouth above the boxes was empty. These three share the plate
+    // with `bg` (back to front): crystals, a red dusting, then sparkles.
+    {
+      name: "newtop-crystals",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/img-3853.avif",
+      box: [0, 0, 1110, 4000],
+    },
+    {
+      name: "newtop-red",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/red.avif",
+      box: [0, 0, 1110, 4000],
+    },
+    {
+      name: "newtop-sparkle",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/sparkle.avif",
+      box: [0, 0, 1110, 4000],
+      // A small drift and twinkle. Held still when motion is reduced.
+      glitter: true,
+    },
     // Extra lighting: glints down the walls and pillars into the pool.
     { name: "bottom-lightning-turtles", box: [127, 1985, 1088, 3942] },
     // Hover (tap on touch) the turtle: it shivers and the lightning on
