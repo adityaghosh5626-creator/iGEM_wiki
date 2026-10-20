@@ -1,4 +1,4 @@
-image: node:20.19.0-alpine
+image: node:20.19.0
 
 variables:
   GATSBY_TELEMETRY_DISABLED: "1"
@@ -9,13 +9,17 @@ variables:
 
 pages:
   stage: build
-  # Compilation runs on GitHub; GitLab's ten-minute job only publishes.
+  # iGEM's shared runner enforces this limit.
   timeout: 10 minutes
+  # Restoring the old download archive can exhaust the runner before scripts start.
   cache: []
   before_script:
-    - apk add --no-cache git
+    - npm ci --cache .npm --no-audit --no-fund
+    # Installed dependencies stay in node_modules; discard only download caches.
+    - rm -rf -- .npm
   script:
-    - node scripts/igem-pages-bundle.mjs unpack
+    - npm run build:igem
+    - node scripts/trim-pages-artifact.mjs
   artifacts:
     paths:
       - public
