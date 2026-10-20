@@ -12,18 +12,12 @@ pages:
   # Allow cold installs and production compilation to finish on shared runners.
   # A runner-level maximum timeout still takes precedence over this value.
   timeout: 30 minutes
-  cache:
-    # Reuse existing downloads without writing a new cache archive on the
-    # shared runner, which can run out of disk after the build.
-    policy: pull
-    key:
-      prefix: npm-node-20
-      files:
-        - package-lock.json
-    paths:
-      - .npm/
+  # Restoring the old download archive can exhaust the runner before scripts start.
+  cache: []
   before_script:
-    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+    - npm ci --cache .npm --no-audit --no-fund
+    # Installed dependencies stay in node_modules; discard only download caches.
+    - rm -rf -- .npm
   script:
     - npm run build:igem
     - node scripts/trim-pages-artifact.mjs
