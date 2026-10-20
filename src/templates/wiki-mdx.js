@@ -418,33 +418,19 @@ const Article = styled.article`
 
   table {
     width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 0.95rem;
   }
 
-  /* Wide tables scroll sideways on phones instead of widening the page. */
-  @media (max-width: 640px) {
-    table {
-      display: block;
-      overflow-x: auto;
-    }
-  }
-
+  /* All tables must fit the article, including text-only requirements tables.
+     Let long words/URLs wrap instead of setting a minimum column width. */
   th,
   td {
     padding: 0.75rem;
     border: 1px solid var(--color-border);
     vertical-align: top;
-  }
-
-  /* Image dimensions must not establish a table's minimum column width. */
-  table:has(img) {
-    display: table;
-    table-layout: fixed;
-  }
-
-  table:has(img) th,
-  table:has(img) td {
     overflow-wrap: anywhere;
     min-width: 0;
   }
@@ -453,10 +439,26 @@ const Article = styled.article`
     min-width: 0;
   }
 
+  /* Merged CAD cells share one photo and cost across their component rows. */
+  .cad-components-table th,
+  .cad-components-table td,
+  .cad-iteration-table th,
+  .cad-iteration-table td {
+    padding: 0.4rem;
+  }
+
+  .cad-components-table figure,
+  .cad-iteration-table figure {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
   .od-iteration-table th:first-child {
     width: 3.5rem;
   }
 
+  .cad-iteration-table td:first-child,
   .od-iteration-table td:first-child {
     white-space: nowrap;
   }
@@ -467,8 +469,8 @@ const Article = styled.article`
   }
 
   @media (max-width: 640px) {
-    table:has(img) th,
-    table:has(img) td {
+    th,
+    td {
       padding: 0.35rem;
     }
   }

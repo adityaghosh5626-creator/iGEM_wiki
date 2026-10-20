@@ -1,20 +1,169 @@
-#### Main Function(s) + Requirements
+### Main Function(s) + Requirements
 
-| Component                              | Requirement/Functionality | Why?           |
-| -------------------------------------- | ------------------------- | -------------- |
-| Vial Bioreactor configuration          | Add material              | Add dimensions |
-| Reference sensor + LED OD              | Add material              | Add dimensions |
-| Collecting sensor OD                   | Add material              | Add dimensions |
-| Breadboard/protoboard all subsystems   | Add material              | Add dimensions |
-| Heater Temp control                    | Add material              | Add dimensions |
-| Fan Stirring                           | Add material              | Add dimensions |
-| 3 x peristaltic pumps and tubing pumps | Add material              | Add dimensions |
-| Cap Bioreactor configuration           | Add material              | Add dimensions |
+Found below are general objectives for our CAD model.
 
-#### Design decisions and changes
+| Requirement                                                                               | Priority | Why (are we considering this)?                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Light as possible<br /><br />Metrics & Criteria: &lt;500g                                 | High     | To be portable and easy to use, the ideal weight of the CAD model should be below what a human can comfortably pick up and hold with one hand, which is approximately 1–5kg. To account for the extra weight from other components (such as the protoboard and vial), the CAD should be half of the lowest weight.                                                                                                                                                                                  |
+| Minimize exposed electronics<br /><br />Metrics & Criteria: &lt;75% of electronic surface | High     | For safety reasons, all housing for electronic components (sensors, LEDs, protoboards, etc.) should be enclosed as best as possible. As some electronics have wiring connecting to other places (such as the protoboard connecting to the user’s computer), some electronic exposure is required; it cannot be a completely isolated box. Additionally, all sensors and electronic components are safe to touch when powered; it is only when shorted with liquid that they become a safety hazard. |
+| Minimize tolerance<br /><br />Metrics & Criteria: &lt;0.3mm                               | Medium   | To ensure components do not slide or shake when using the bioreactor, the general tolerance **should** be low.<br /><br />For specific components like the vial cap or OD sensor holders—where light contamination will drastically alter results—the tolerance **must** be low. As printer accuracy is 0.1–0.5mm, 0.3mm is perfectly between the tolerance threshold.                                                                                                                              |
+| Minimize printing time<br /><br />Metrics & Criteria: &lt;6hr                             | Low      | The average 3D print time for a small to medium CAD model ranges from 2–10 hours. As the bioreactor CAD leans towards the larger side of this range, being below 6hr is a reasonable goal. This is dependent on the infill and print speed [Note: goal is 20% infill and 110% print speed].                                                                                                                                                                                                         |
 
-Placeholder: explain the initial CAD design choices.
+<br />
+Found below are specific requirements for each component in the bioreactor. For
+stability and safety purposes, all component housings should be able to support
+the component weight without any hint of buckling.
+<br />
 
-#### Testing and lessons
+| Component                                   | Requirement/Functionality                                                                 | Why?                                                                                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vial<br />Bioreactor configuration          | Refer to below relationships                                                              | Determines where other subsystems must lie.                                                                                                                                                        |
+| Reference sensor + LED<br />OD              | Must be located across the collecting sensor and on the side of the vial.                 | The angle between the collecting sensor and the LED needs to be 180 degrees, while the reference sensor needs to sit directly on the LED to account for environmental factors (such as LED drift). |
+| Collecting sensor<br />OD                   | Must be located across the LED and on the side of the vial.                               | 180 degree required. See above.                                                                                                                                                                    |
+| Breadboard/protoboard<br />All subsystems   | Can be located anywhere                                                                   | Should be a minimal distance away from electrical sensors/components so that wires do not need to extend a long distance. Other than that, there are no location constraints.                      |
+| Heater<br />Temp control                    | Must be located below the vial but cannot sit directly on the vial                        | Thank you James                                                                                                                                                                                    |
+| Fan<br />Stirring                           | Must be located below the vial                                                            | The stir bar sits on the vial floor, thus the fan stirring it must be able to affect the vial floor.                                                                                               |
+| 3 x peristaltic pumps and tubing<br />Pumps | Can be located anywhere, with a separate compartment for each peristaltic pump preferred. | No locational relationship between the pumps and the rest of the bioreactor, however should be minimal distance from the vial to prevent long tubing.                                              |
+| Cap<br />Bioreactor configuration           | On top of vial                                                                            | Minimal cap tolerance with the vial holder for maximum darkness, which equals minimal light contamination with OD.                                                                                 |
 
-Placeholder: add Version 1 test results, limitations, and lessons for CAD.
+### BoM
+
+#### V0
+
+<table className="cad-components-table">
+  <colgroup>
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "17%" }} />
+    <col style={{ width: "18%" }} />
+    <col style={{ width: "40%" }} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th scope="col">CAD for…</th>
+      <th scope="col">Subsystem</th>
+      <th scope="col">Filament (g) → Cost ($)</th>
+      <th scope="col">Visual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Reference sensor</td>
+      <td rowSpan={3}>OD</td>
+      <td rowSpan={4}>
+        43.03g PLA
+        <br />
+        <br />
+        $1.08
+      </td>
+      <td rowSpan={4}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad1-6.avif"
+          alt="Vial holder with reference sensor, LED, and collecting sensor"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Collecting sensor</td>
+    </tr>
+    <tr>
+      <td>LED</td>
+    </tr>
+    <tr>
+      <td>Vial holder</td>
+      <td>Bioreactor</td>
+    </tr>
+    <tr>
+      <td>Fan</td>
+      <td>Stirring</td>
+      <td>N/A</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td>Heater</td>
+      <td>Temp control</td>
+      <td>
+        7.34g
+        <br />
+        <br />
+        $1.45
+        <br />
+        <br />
+        <em>Printed using Markforged Onyx</em>
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad2.avif"
+          alt="Heater mount CAD model"
+        />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### V1.0
+
+<table className="cad-components-table">
+  <colgroup>
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "20%" }} />
+    <col style={{ width: "30%" }} />
+  </colgroup>
+  <thead><tr><th scope="col">CAD for…</th><th scope="col">Subsystem</th><th scope="col">Filament (g) → Cost ($)</th><th scope="col">Visual</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Reference sensor</td>
+      <td rowSpan={3}>OD</td>
+      <td rowSpan={4}>~2hr<br /><br />55.7g PLA<br /><br />$1.39</td>
+      <td rowSpan={4}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif" alt="Vial holder and OD sensor compartments" /></td>
+    </tr>
+    <tr><td>Collecting sensor</td></tr>
+    <tr><td>LED</td></tr>
+    <tr><td>Vial</td><td>Bioreactor</td></tr>
+  </tbody>
+</table>
+
+#### V1.1
+
+<table className="cad-components-table">
+  <colgroup>
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "20%" }} />
+    <col style={{ width: "30%" }} />
+  </colgroup>
+  <thead><tr><th scope="col">CAD for…</th><th scope="col">Subsystem</th><th scope="col">Filament (g) → Cost ($)</th><th scope="col">Visual</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Reference sensor</td>
+      <td rowSpan={3}>OD</td>
+      <td rowSpan={4}>~1.5hr<br /><br />45.5g PLA<br /><br />$1.07</td>
+      <td rowSpan={4}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif" alt="Vial holder and OD sensor compartments" /></td>
+    </tr>
+    <tr><td>Collecting sensor</td></tr>
+    <tr><td>LED</td></tr>
+    <tr><td>Vial</td><td>Bioreactor</td></tr>
+    <tr>
+      <td>3 x peristaltic</td><td>Pumps</td>
+      <td rowSpan={2}>~1hr<br /><br />37.9g PLA<br /><br />$0.96</td>
+      <td rowSpan={2}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad5.avif" alt="Peristaltic pump and protoboard housing" /></td>
+    </tr>
+    <tr><td>Protoboard</td><td>Bioreactor</td></tr>
+  </tbody>
+</table>
+
+### Build, Assembly, Code
+
+<table className="cad-iteration-table">
+  <colgroup>
+    <col style={{ width: "min(3.5rem, 18%)" }} />
+    <col style={{ width: "55%" }} />
+    <col />
+  </colgroup>
+  <thead><tr><th scope="col">V#</th><th scope="col">Notes</th><th scope="col">Photo</th></tr></thead>
+  <tbody>
+    <tr><td>V0</td><td>Simple holder for only the vial, no dedicated compartment for OD yet (taped inside), allowing high amount of light contamination. No dedicated compartment for any subsystem either. The vial cap does not perfectly sink into the vial holder, resulting in light contamination at the top.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad1-6.avif" alt="cad6"/></td></tr>
+    <tr><td>V1.0</td><td>Vial holder with dedicated OD compartment. However, without full encasing there is still a high amount of light contamination. The set-up however allows placing the OD sensors at different heights, avoiding interference caused by stirring.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif" alt="cad7"/></td></tr>
+    <tr><td>V1.1</td><td>Dedicated OD sensors with full enclosure to mitigate light contamination.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif" alt="cad8"/></td></tr>
+  </tbody>
+</table>
