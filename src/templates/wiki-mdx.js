@@ -6,6 +6,7 @@ import WikiLayout from "../components/layout.js"
 import Seo from "../components/seo.js"
 import { mdxComponents } from "../components/mdx/wikiComponents.js"
 import { NewTabLinks } from "../components/mdx/linkTarget.js"
+import { scrollToReference } from "../components/referenceNavigation.js"
 import { WideSideTabProvider } from "../components/PageTabs.js"
 import ScrollProgress from "../components/scrollProgress.js"
 import TableOfContents from "../components/tableOfContents.js"
@@ -82,6 +83,7 @@ const WikiMdxTemplate = ({ data, children }) => {
     return (
       <WikiLayout
         fullBleed
+        pagePath={frontmatter.path}
         // The footer button takes the colours of the page's menu highlight.
         footerButton={
           scene.footerButton || {
@@ -96,7 +98,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           title={frontmatter.navTitle || frontmatter.title}
           description={frontmatter.description}
         >
-          <Article $wideProse>
+          <Article $wideProse onClickCapture={scrollToReference}>
             {content}
           </Article>
         </SubpageScene>
@@ -127,7 +129,7 @@ const WikiMdxTemplate = ({ data, children }) => {
           <InlineDivider />
         </InlinePageHeader>
         {pageHeader}
-        <Article $wide>
+        <Article $wide onClickCapture={scrollToReference}>
           {content}
         </Article>
       </ArticleShell>
@@ -135,7 +137,7 @@ const WikiMdxTemplate = ({ data, children }) => {
   ) : (
     <ArticleShell id="page-content">
       {pageHeader}
-      <Article $wideProse={wideProse}>
+      <Article $wideProse={wideProse} onClickCapture={scrollToReference}>
         {content}
       </Article>
     </ArticleShell>
@@ -143,6 +145,7 @@ const WikiMdxTemplate = ({ data, children }) => {
 
   return (
     <WikiLayout
+      pagePath={frontmatter.path}
       pageTitle={wideSideTabs ? null : frontmatter.title}
       sectionLabel={wideSideTabs ? null : frontmatter.section}
       wideSideTabs={wideSideTabs}
@@ -415,23 +418,61 @@ const Article = styled.article`
 
   table {
     width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 0.95rem;
   }
 
-  /* Wide tables scroll sideways on phones instead of widening the page. */
-  @media (max-width: 640px) {
-    table {
-      display: block;
-      overflow-x: auto;
-    }
-  }
-
+  /* All tables must fit the article, including text-only requirements tables.
+     Let long words/URLs wrap instead of setting a minimum column width. */
   th,
   td {
     padding: 0.75rem;
     border: 1px solid var(--color-border);
     vertical-align: top;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  table figure {
+    min-width: 0;
+  }
+
+  /* Merged CAD cells share one photo and cost across their component rows. */
+  .cad-components-table th,
+  .cad-components-table td,
+  .cad-iteration-table th,
+  .cad-iteration-table td {
+    padding: 0.4rem;
+  }
+
+  .cad-components-table figure,
+  .cad-iteration-table figure {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .od-iteration-table th:first-child {
+    width: 3.5rem;
+  }
+
+  .cad-iteration-table td:first-child,
+  .od-iteration-table td:first-child {
+    white-space: nowrap;
+  }
+
+  table img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 640px) {
+    th,
+    td {
+      padding: 0.35rem;
+    }
   }
 
   th {

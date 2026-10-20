@@ -32,6 +32,8 @@ export function WeekDetailPanel({
   trackById = MILESTONE_TRACK_BY_ID,
   overviewLabel = "Team overview",
   hint = "Turn on a subteam above to see its progress this week.",
+  /** Shown after the milestones (the Dry Lab calendar's iterations this week). */
+  extra = null,
 }) {
   const linkTarget = useLinkTarget()
   if (!week) {
@@ -85,6 +87,8 @@ export function WeekDetailPanel({
           </MilestoneList>
         </OverviewCard>
       )}
+
+      {extra}
 
       <SubteamList>
         {tracks.filter((t) => activeIds.has(t.id)).map((track) => {

@@ -7,6 +7,9 @@
  * - sectionId — which tab this page belongs to
  * - tocHalf — "left" | "right" for the two-page table of contents
  *
+ * A section's `color` labels its pages; `tabColor` is its painted tab's, for
+ * the table of contents.
+ *
  * With showCover + landscape, spreads are [0], [1,2], [3,4], …
  * Each section starts on a LEFT page and has an even number of pages (see
  * buildSketchbookPages), so two different section tabs never share one open
@@ -45,6 +48,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1486, 486, 1859, 593],
     label: "Web Design",
     color: "#3B82A0",
+    tabColor: "#bb5952",
     progress: "Concepts, storyboards, drafts and the finished pages.",
     startPageId: "web-design",
   },
@@ -53,6 +57,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1485, 599, 1858, 706],
     label: "Animation",
     color: "#E07A3A",
+    tabColor: "#da6b5c",
     progress: "The logo animation and the promo video's animated part.",
     startPageId: "animation",
   },
@@ -61,6 +66,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1484, 711, 1857, 818],
     label: "Character Design",
     color: "#5A9E4B",
+    tabColor: "#e89469",
     progress: "Every subteam's PETamon, from sketch to mascot.",
     startPageId: "character-design",
   },
@@ -69,6 +75,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1481, 827, 1854, 934],
     label: "Social",
     color: "#C45B8C",
+    tabColor: "#f0b376",
     progress: "Intro post, reels, newsletters and the promo.",
     startPageId: "social",
   },
@@ -77,6 +84,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1482, 940, 1855, 1047],
     label: "Branding",
     color: "#7B5EA7",
+    tabColor: "#ebd188",
     progress: "A hand-drawn brand, trading cards and merch.",
     startPageId: "branding",
   },
@@ -85,6 +93,7 @@ export const DESIGN_SKETCHBOOK_SECTIONS = [
     tabCrop: [1481, 1054, 1854, 1161],
     label: "Other",
     color: "#8A8680",
+    tabColor: "#acbc8a",
     progress: "The promo and presentation videos.",
     startPageId: "other",
   },
@@ -140,19 +149,36 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       "At the very start, the team pooled together everyone's own ideas for how the wiki should look. A lot of our early concepts were pixel art, playing into the Pokémon-like, gamey side of the project, but we also tried out a hand-drawn style.",
     density: "soft",
     variant: "spread",
-    imageSrc: SK_IMG("web-hand-drawn-concept"),
-    imageAlt: "A tall early mockup in a hand-drawn concept-art style, with a pixel title reading Name TBA",
+    // Cut in two side by side, between the PETadex screen and the projects.
+    images: splitImage(
+      "web-hand-drawn-concept",
+      "A tall early mockup in a hand-drawn concept-art style, with a pixel title reading Name TBA",
+      [246, 1600],
+      [0, 246],
+      [
+        [0, 862],
+        [862, 1600],
+      ],
+    ),
+    cols: 2,
     caption: "An early hand-drawn concept with concept-art-style graphics, by Kathleen.",
   },
   sectionPage("web-design", "pixel", "Early concepts", {
-    images: gallery(
-      ["web-early-concept-gallery", "A pastel pixel-art mockup with card-like panels"],
-      ["web-early-concept-peta-play", "Pixel-art landing page titled PETA PLAY with an arcade machine"],
-      ["web-early-concept-pet-apult", "Pixel-art landing page titled PET-APULT on a purple sunset"],
-      ["web-early-concept-igem-to", "A busy collage-style page titled iGem TO with plastic-degrading enzymes"],
-    ),
+    // The two wide ones across the page, one over the other, then the two
+    // tall ones side by side.
+    images: [
+      ...gallery(
+        ["web-early-concept-peta-play", "Pixel-art landing page titled PETA PLAY with an arcade machine"],
+        ["web-early-concept-pet-apult", "Pixel-art landing page titled PET-APULT on a purple sunset"],
+      ).map((image) => ({ ...image, span: 2 })),
+      ...gallery(
+        ["web-early-concept-gallery", "A pastel pixel-art mockup with card-like panels"],
+        ["web-early-concept-igem-to", "A busy collage-style page titled iGem TO with plastic-degrading enzymes"],
+      ),
+    ],
     cols: 2,
-    caption: "Early pixel-style concepts for the wiki, by Hillary, Ibi, Wineta and Sara P respectively.",
+    rows: [1, 1, 1.5],
+    caption: "Early pixel-style concepts for the wiki, by Ibi, Wineta, Hillary and Sara P respectively.",
   }),
   sectionPage("web-design", "biomes", "Biomes", {
     body:
@@ -173,13 +199,13 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       "Kathleen made the first storyboard of the homepage's flow, which the homepage is still built on. It was split into sections for the different artists on the web design team.",
     // Trimmed to the drawing and cut in two between sections 3 and 4.
     images: splitImage(
-      "web-homepage-outline",
+      "wiki-concept",
       "A long pencil outline of the homepage, with numbered sections and notes",
-      [190, 1024],
-      [8, 176],
+      [740, 4000],
+      [31, 686],
       [
-        [8, 498],
-        [498, 1020],
+        [31, 1945],
+        [1945, 3984],
       ],
     ),
     cols: 2,
@@ -220,11 +246,15 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   sectionPage("web-design", "subpages", "Subteam pages", {
     body:
       "Each subteam page got its own world: Wet Lab's axolotl-catfish in the ocean, Dry Lab's spider-crab-scorpion on a desert dig, Hardware's steel turtle in deep caves, Outreach's squirrel in a beret (very French and artistique!), Venture's kangaroo with its pouch of gold, Web's fire dragon in its volcano and Human Practices' dove in the sky.",
-    images: gallery(
-      ["web-outreach-page-draft-meghan", "A draft of the Outreach page: an autumn forest around a white text box"],
-      ["web-entrepreneurship-page-draft-noorine", "A draft of the Entrepreneurship page"],
-      ["web-wet-lab-page-cindy", "The finished Wet Lab page: a sunset sea around a white text box"],
-    ),
+    // The two drafts one over the other, the tall Wet Lab page down the right.
+    images: [
+      ...gallery(["web-outreach-page-draft-meghan", "A draft of the Outreach page: an autumn forest around a white text box"]),
+      ...gallery(["web-wet-lab-page-cindy", "The finished Wet Lab page: a sunset sea around a white text box"]).map(
+        (image) => ({ ...image, rowSpan: 2 }),
+      ),
+      ...gallery(["web-entrepreneurship-page-draft-noorine", "A draft of the Entrepreneurship page"]),
+    ],
+    cols: 2,
     caption:
       "Drafts of the Outreach page (Meghan) and the Entrepreneurship page (Noorine), and the finished Wet Lab page (Cindy).",
   }),
@@ -280,20 +310,29 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   sectionPage("animation", "storyboard", "Storyboard", {
     body:
       "For the promo video, the team wanted a 30-second animated segment with a voiceover. To save time, we drew the assets as static images and animated them in After Effects rather than frame by frame. Ibi, in charge of the script, wanted a TED-Ed-inspired style, so Kathleen drafted a storyboard to match it.",
+    // Two side by side, the third under them.
     images: gallery(
       ["animation-storyboard-1", "Storyboard frames: a hand, the word Everywhere and fish"],
       ["animation-storyboard-2", "Storyboard frames of fish and shrimp, numbered shot by shot"],
       ["animation-storyboard-3", "Storyboard frames of a person eating, ending on a red heart"],
-    ),
+    ).map((image, i) => (i === 2 ? { ...image, span: 2 } : image)),
+    cols: 2,
     caption: "Storyboard for the promo video's animation, by Kathleen.",
   }),
   sectionPage("animation", "assets", "Assets", {
     body:
       "Once the storyboard was final, every asset was broken down into components so different members could draw them.",
-    images: gallery(
-      ["animation-asset-anemone-angirmaa", "A row of painted anemones and coral"],
-      ["animation-asset-water-sara", "A painted underwater background with bubbles"],
-    ),
+    // One over the other; the anemones trimmed to where they're painted.
+    images: [
+      ...gallery(["animation-asset-anemone-angirmaa", "A row of painted anemones and coral"]).map((image) => ({
+        ...image,
+        crop: [0, 380, 1280, 720],
+        size: [1280, 720],
+      })),
+      ...gallery(["animation-asset-water-sara", "A painted underwater background with bubbles"]),
+    ],
+    cols: 1,
+    rows: [1, 3.2],
     caption: "Two of the assets: an anemone by Angirmaa and the background water by Sara P.",
   }),
   sectionPage("animation", "wip", "In progress", {
@@ -335,11 +374,18 @@ export const DESIGN_SKETCHBOOK_PAGES = [
   sectionPage("character-design", "mascots", "Mascots", {
     body:
       "Human Practices is a dove for the nature of their work, in a light, muted palette with molecules all around. Venture's kangaroo, Venturoo, carries a pouch of gold coins, with hydrogen and oxygen details. Outreach's squirrel got an acorn beret, for artists (and to be more French). Hover the PETamon on each subteam page: Venturoo spits out coins and the squirrel gets hit by a stray acorn!",
-    images: gallery(
-      ["character-hp-mascot-ibi", "The Human Practices mascot: a dove, front and side"],
-      ["character-outreach-mascot-anastasia", "The Outreach mascot: a pink squirrel with a purple tail"],
-      ["character-venture-mascot-noorine", "The Venture mascot: a kangaroo with a colour palette"],
-    ),
+    // The dove across the page, then the squirrel and kangaroo side by side.
+    images: [
+      ...gallery(["character-hp-mascot-ibi", "The Human Practices mascot: a dove, front and side"]).map(
+        (image) => ({ ...image, span: 2 }),
+      ),
+      ...gallery(
+        ["character-outreach-mascot-anastasia", "The Outreach mascot: a pink squirrel with a purple tail"],
+        ["character-venture-mascot-noorine", "The Venture mascot: a kangaroo with a colour palette"],
+      ),
+    ],
+    cols: 2,
+    rows: [1.2, 1],
     caption:
       "The Human Practices mascot by Ibi, the Outreach mascot by Anastasia and the Venture mascot by Noorine.",
   }),
@@ -391,13 +437,20 @@ export const DESIGN_SKETCHBOOK_PAGES = [
     caption: "The final PetaBite logo, recoloured for merch (September 13).",
   },
   sectionPage("branding", "submissions", "Logo competition", {
-    images: gallery(
-      ["branding-logo-submission-1", "A round logo with a fluffy PETamon and the word PetaBite in vines"],
-      ["branding-logo-submission-2", "A red round logo with a PET molecule inside"],
-      ["branding-logo-submission-3", "A magnifying glass over a red PET molecule"],
-      ["branding-logo-submission-petadex", "The word PETadex in blue between two circuit-board icons"],
-    ),
+    // The two round ones side by side, then the other two across the page,
+    // one over the other.
+    images: [
+      ...gallery(
+        ["branding-logo-submission-1", "A round logo with a fluffy PETamon and the word PetaBite in vines"],
+        ["branding-logo-submission-2", "A red round logo with a PET molecule inside"],
+      ),
+      ...gallery(
+        ["branding-logo-submission-3", "A magnifying glass over a red PET molecule"],
+        ["branding-logo-submission-petadex", "The word PETadex in blue between two circuit-board icons"],
+      ).map((image) => ({ ...image, span: 2 })),
+    ],
     cols: 2,
+    rows: [1, 1.6, 0.45],
     caption: "Some of the submissions to the PetaBite logo design competition.",
   }),
   sectionPage("branding", "winner", "The winning design", {
@@ -417,6 +470,8 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["branding-conference-logo-cindy", "A bottle-shaped logo reading UofT Microplastics Conference 2026 around the CN Tower"],
       ["branding-petascale-deck", "A title slide reading PetaScale: PET-microplastic degradation at scale"],
     ),
+    // One over the other.
+    cols: 1,
     caption:
       "The UofT Microplastics Conference logo, by Cindy, and the pitch deck for PetaScale, PetaBite's business arm, by members of our Entrepreneurship team.",
   }),
@@ -429,6 +484,8 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["merch-card-5", "Reactoise, a turtle PETamon card"],
       ["merch-card-6", "A PETamon card in a lab"],
     ),
+    // In pairs, so each shows bigger.
+    cols: 2,
     caption: "PetaBite trading card designs, by various members of iGEM Toronto.",
   }),
   sectionPage("branding", "printed", "Trading cards", {
@@ -457,7 +514,8 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["merch-tee-iteration-3", "A t-shirt design, front and back"],
       ["merch-tee-iteration-4", "A t-shirt design, front and back"],
     ),
-    cols: 2,
+    // One over the other: each is a wide front-and-back pair.
+    cols: 1,
     caption: "Iterations of the t-shirt design on a plain tee, by Kathleen (with inspiration from Abby).",
   }),
   sectionPage("branding", "final", "Merch", {
@@ -465,6 +523,7 @@ export const DESIGN_SKETCHBOOK_PAGES = [
       ["merch-quarter-zip-final", "The final black quarter zip"],
       ["merch-hoodie-final", "The final forest-green hoodie, with sponsors framing the back design"],
     ),
+    cols: 1,
     caption: "The final quarter zip and hoodie.",
   }),
   {
@@ -543,7 +602,7 @@ export function buildSketchbookPages({ split = [], breaks = {}, pairs = false } 
 /** One page as it's laid out: its text over as many pages as it needs, then its picture if split. */
 function pageRun(page, isSplit, cuts) {
   if (!isSplit && !cuts.length) return [page]
-  const { imageSrc, imageAlt, images, cols, caption, body, ...text } = page
+  const { imageSrc, imageAlt, images, cols, rows, caption, body, ...text } = page
   const words = String(body || "").split(/\s+/).filter(Boolean)
   const ends = [...cuts, words.length]
   const chunk = (k) => words.slice(k ? ends[k - 1] : 0, ends[k]).join(" ")
@@ -572,6 +631,7 @@ function pageRun(page, isSplit, cuts) {
       imageAlt,
       images,
       cols,
+      rows,
       caption,
     })
   }

@@ -1,4 +1,5 @@
-import React, { useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { withPrefix } from "gatsby"
 import styled, { css } from "styled-components"
 
 /**
@@ -6,7 +7,8 @@ import styled, { css } from "styled-components"
  * box until it's given a `src`, so a page's layout can go in before its files.
  *
  * iGEM rule: files must live on iGEM's servers. PDFs go on static.igem.wiki
- * and videos on video.igem.wiki; Google Docs/Sheets/Slides and YouTube
+ * and videos on video.igem.org (PeerTube; it streams HLS only, so a raw
+ * <video src> cannot play from it); Google Docs/Sheets/Slides and YouTube
  * links can't be embedded.
  */
 
@@ -71,7 +73,7 @@ export const SheetEmbed = ({ src, title }) => (
   </EmbedFigure>
 )
 
-/** 16:9 video from video.igem.wiki. */
+/** 16:9 video from video.igem.org, as its PeerTube embed URL. */
 export const VideoEmbed = ({ src, title }) => (
   <EmbedFigure>
     {title && (
@@ -132,9 +134,103 @@ function Photo({ src, alt }) {
   )
 }
 
+/**
+ * A self-contained HTML figure from static/ (e.g. a three.js scene) in a 16:9
+ * frame that expands to full screen in place. `dark` matches the frame to a
+ * figure that draws on a dark ground, so the page doesn't flash light around it
+ * while the iframe loads.
+ *
+ * The frame renders the figure at `logical` size and scales the result to fit,
+ * rather than handing it the box's own dimensions. These figures size their type
+ * off the viewport but lay out their chrome — step lists, view tabs, callouts —
+ * in fixed pixels, so at a prose-width box the chrome keeps its pixel size while
+ * the art shrinks around it and the two collide. Scaling a design-size render
+ * keeps that proportion fixed, whatever the column is. Full screen has the room
+ * to render at its true size instead, which keeps the canvas and the type crisp.
+ */
+const LOGICAL = [1600, 900]
+
+export const InteractiveEmbed = ({ src, title, caption, dark = false, logical = LOGICAL }) => {
+  const href = src.startsWith("/") ? withPrefix(src) : src
+  const boxRef = useRef(null)
+  const frameRef = useRef(null)
+  const [full, setFull] = useState(false)
+  const [logicalW, logicalH] = logical
+
+  useEffect(() => {
+    const box = boxRef.current
+    const frame = frameRef.current
+    if (!box || !frame) return undefined
+
+    const layout = () => {
+      const isFull = document.fullscreenElement === box
+      const { clientWidth: w, clientHeight: h } = box
+      setFull(isFull)
+      if (isFull) {
+        Object.assign(frame.style, { width: `${w}px`, height: `${h}px`, transform: "none" })
+      } else {
+        Object.assign(frame.style, {
+          width: `${logicalW}px`,
+          height: `${logicalH}px`,
+          transform: `scale(${w / logicalW})`,
+        })
+      }
+    }
+
+    layout()
+    const observer = new ResizeObserver(layout)
+    observer.observe(box)
+    document.addEventListener("fullscreenchange", layout)
+    return () => {
+      observer.disconnect()
+      document.removeEventListener("fullscreenchange", layout)
+    }
+  }, [logicalW, logicalH])
+
+  const toggleFull = useCallback(() => {
+    const box = boxRef.current
+    if (!box) return
+    if (document.fullscreenElement === box) {
+      document.exitFullscreen?.()
+      return
+    }
+    const request = box.requestFullscreen || box.webkitRequestFullscreen
+    // Where full screen is refused (an older browser, or a policy that blocks it)
+    // the figure still has its own page to fall back to.
+    if (!request) {
+      window.open(href, "_blank", "noopener")
+      return
+    }
+    Promise.resolve(request.call(box)).catch(() => {
+      window.open(href, "_blank", "noopener")
+    })
+  }, [href])
+
+  return (
+    <EmbedFigure>
+      <EmbedHead>
+        {title && <EmbedTitle>{title}</EmbedTitle>}
+        <FrameButton type="button" onClick={toggleFull} aria-pressed={full}>
+          {full ? "Exit full screen" : "Full screen ⤢"}
+        </FrameButton>
+      </EmbedHead>
+      <FrameBox ref={boxRef} $dark={dark}>
+        <ScaledFrame
+          ref={frameRef}
+          src={href}
+          title={title || "Interactive figure"}
+          loading="lazy"
+        />
+      </FrameBox>
+      {caption && <EmbedCaption>{caption}</EmbedCaption>}
+    </EmbedFigure>
+  )
+}
+
 export const embedComponents = {
   Dropdown,
   Photos,
+  InteractiveEmbed,
   PdfEmbed,
   SheetEmbed,
   VideoEmbed,
@@ -267,6 +363,66 @@ const VideoFrame = styled.iframe`
   ${frameBox}
   aspect-ratio: 16 / 9;
   height: auto;
+`
+
+const FrameButton = styled.button`
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-link, inherit);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+`
+
+const FrameBox = styled.div`
+  position: relative;
+  width: 100%;
+  /* The scaled frame fills this box exactly, so the box carries the aspect and
+     nothing forces it taller -- a min-height would letterbox the figure in dark
+     dead space on a narrow column. */
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: ${({ $dark }) => ($dark ? "#0b1220" : "#f8fafc")};
+
+  ${({ $dark }) =>
+    $dark &&
+    css`
+      border-color: #0b1220;
+    `}
+
+  /* Full screen is sized by the browser, so the 16:9 box and its chrome go. */
+  &:fullscreen {
+    aspect-ratio: auto;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+`
+
+/* Width, height and scale are set from JS, which knows the box's real size.
+   Without JS these keep the frame usable at the box's own dimensions. */
+const ScaledFrame = styled.iframe`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  transform-origin: top left;
+`
+
+const EmbedCaption = styled.figcaption`
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 `
 
 const Pending = styled.div`
