@@ -21,7 +21,6 @@ export const wikiNav = [
     { to: "/wet-lab/parts/", label: "Parts" },
     { to: "/wet-lab/notebook/", label: "Notebook" },
     { to: "/wet-lab/results/", label: "Results" },
-    { to: "/wet-lab/milestones/", label: "Pivotal Changes and Milestones" },
   ]},
   { label: "Hardware", children: [
     { to: "/hardware/", label: "Overview" },

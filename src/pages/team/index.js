@@ -197,6 +197,7 @@ const TeamPage = ({ data }) => {
 
       <Content>
         <Title>Meet the Team</Title>
+        <TeamSubtitle>The team behind PetaBite.</TeamSubtitle>
         <Legend aria-label="Subteam icons">
           {SUBTEAMS.map((type) => (
             <LegendItem key={type.slug}>
@@ -349,7 +350,7 @@ const Content = styled.div`
 `
 
 const Title = styled.h1`
-  margin: clamp(2rem, 6vw, 4rem) 0 clamp(2.5rem, 7vw, 5rem);
+  margin: clamp(2rem, 6vw, 4rem) 0 0.5rem;
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
@@ -645,3 +646,10 @@ const TextLink = styled.a`
   text-decoration: underline;
   text-underline-offset: 2px;
 `
+
+const TeamSubtitle = styled.p`
+  text-align: center;
+  color: ${HEADING};
+  margin: 0 0 clamp(2.5rem, 7vw, 5rem);
+  font-size: 1.2rem;
+`;

@@ -2328,22 +2328,31 @@ export function SubpageScene({ scene, title, description, children }) {
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
-    const heads = Array.from(
-      bodyRef.current?.querySelectorAll("h2, h3") || [],
-    ).filter(el => !el.closest("details, [data-nav-skip]"))
-    const list = []
-    heads.forEach((el, i) => {
-      if (!el.id) el.id = `section-${i + 1}`
-      // A heading can name itself shorter for the menu (journal dates).
-      const item = {
-        id: el.id,
-        label: (el.dataset.navLabel || el.textContent).trim(),
-      }
-      if (el.tagName === "H2") list.push({ ...item, subs: [] })
-      else list[list.length - 1]?.subs.push(item)
-    })
-    scannedRef.current = true
-    setSections(list)
+    const body = bodyRef.current
+    if (!body) return undefined
+    const scan = () => {
+      const heads = Array.from(
+        bodyRef.current?.querySelectorAll("h2, h3") || [],
+      ).filter(el => !el.closest("details, [data-nav-skip]"))
+      const list = []
+      heads.forEach((el, i) => {
+        if (!el.id) el.id = `section-${i + 1}`
+        // A heading can name itself shorter for the menu (journal dates).
+        const item = {
+          id: el.id,
+          label: (el.dataset.navLabel || el.textContent).trim(),
+        }
+        if (el.tagName === "H2") list.push({ ...item, subs: [] })
+        else list[list.length - 1]?.subs.push(item)
+      })
+      scannedRef.current = true
+      setSections(previous => JSON.stringify(previous) === JSON.stringify(list) ? previous : list)
+    }
+    scan()
+    // Gatsby navigation and embedded MDX can render headings after mount.
+    const observer = new MutationObserver(scan)
+    observer.observe(body, { childList: true, subtree: true, characterData: true })
+    return () => observer.disconnect()
   }, [children])
 
   // Scroll-linked background + active subsection.
