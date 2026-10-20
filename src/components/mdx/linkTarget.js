@@ -13,7 +13,8 @@ export const NewTabLinks = ({ enabled, children }) => (
 
 export const useNewTabLinks = () => useContext(NewTabContext)
 
-const NEW_TAB = { target: "_blank", rel: "noopener noreferrer" }
+/** A link that always opens in a new tab (the calendar's, whatever page it is on). */
+export const NEW_TAB = { target: "_blank", rel: "noopener noreferrer" }
 
 /** The target/rel props a link to `href` should carry on this page. */
 export const useLinkTarget = (href = "") => {

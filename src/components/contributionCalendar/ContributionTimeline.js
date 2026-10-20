@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
 import {
   CONTRIBUTION_WEEK_BY_ID,
@@ -19,6 +19,7 @@ import { WeekNav } from "./WeekNav.js"
 import { PanelChrome, RestorePanelBar } from "./PanelChrome.js"
 import { SubteamFilterBar } from "./SubteamFilterBar.js"
 import { useSplitPane } from "./useSplitPane.js"
+import { ExpandContext } from "../mdx/ExpandWindow.js"
 import { VintageMonthGrid } from "./VintageMonthGrid.js"
 import { WeekDetailPanel } from "./WeekDetailPanel.js"
 import { IterationThread, WeekIterations } from "./IterationThread.js"
@@ -78,7 +79,9 @@ function firstWeekIdForMonth(weeks, monthKey, fallbackId) {
 
 export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDAR }) {
   const { weeks, weekById, months, tracks, trackById, parseHash, labels } = calendar
-  const fit = Boolean(calendar.fit)
+  // In an Expand window, fit mode fills the window instead of the screen.
+  const windowed = useContext(ExpandContext)
+  const fit = Boolean(calendar.fit) || windowed
   const iter = calendar.iterations
   const initialWeekId = calendar.defaultWeekId
   const initialMonth =
@@ -231,7 +234,7 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
   }, [iter, openIteration, parseHash, selectWeek])
 
   return (
-    <TimelineRoot ref={rootRef} $embedded={embedded} $fit={fit}>
+    <TimelineRoot ref={rootRef} $embedded={embedded} $fit={fit} $windowed={windowed}>
       <SubteamNavRow>
         <SubteamFilterBar
           layout="navbar"
@@ -387,6 +390,18 @@ const TimelineRoot = styled.div`
     /* Narrow pages pin the section strip under the header too. */
     @media (max-width: 860px) {
       height: clamp(24rem, calc(100svh - var(--dl-header, 4.75rem) - 5rem), 52rem);
+    }
+  `}
+
+  /* In an Expand window: whatever height the window leaves it. Below 20rem
+     the month no longer reads, so the window scrolls instead. */
+  ${({ $windowed }) =>
+    $windowed &&
+    `
+    &&& {
+      flex: 1 1 auto;
+      height: auto;
+      min-height: 20rem;
     }
   `}
 `

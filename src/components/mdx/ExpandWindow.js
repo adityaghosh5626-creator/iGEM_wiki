@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { createContext, useEffect, useRef, useState } from "react"
 import styled, { css, keyframes } from "styled-components"
 
 /**
@@ -20,6 +20,13 @@ import styled, { css, keyframes } from "styled-components"
  * `inlineTitle={false}` keeps the title to the window's bar, for a figure that
  * already sits under a heading saying the same thing.
  */
+/**
+ * True inside an open window. A figure that sizes itself off the screen (the
+ * calendar's fit mode) reads it to fill the window's height instead, which
+ * figures nested in MDX (<Expandable>) can't get as a prop.
+ */
+export const ExpandContext = createContext(false)
+
 export const ExpandWindow = ({
   title,
   inlineTitle = true,
@@ -54,6 +61,18 @@ export const ExpandWindow = ({
     root.style.overflow = "hidden"
     document.addEventListener("keydown", onKey)
 
+    // The window can only stack as high as the layers it sits in, and the page
+    // column is a z-index 1 layer under the site header (110). Lift each
+    // ancestor that sets a z-index above the header while the window is up.
+    const lifted = []
+    for (let el = stageRef.current?.parentElement; el && el !== document.body; el = el.parentElement) {
+      const { position, zIndex } = getComputedStyle(el)
+      if (position !== "static" && zIndex !== "auto") {
+        lifted.push([el, el.style.zIndex])
+        el.style.zIndex = "10000"
+      }
+    }
+
     const target = focusRef?.current || bodyRef.current
     // Keys pressed inside an iframe never reach this document, so Escape is
     // also heard in the frame's own window -- possible only for a same-origin
@@ -74,6 +93,7 @@ export const ExpandWindow = ({
     return () => {
       root.style.overflow = prevOverflow
       document.removeEventListener("keydown", onKey)
+      for (const [el, z] of lifted) el.style.zIndex = z
       try {
         frameWin?.removeEventListener("keydown", onKey)
       } catch {
@@ -113,7 +133,7 @@ export const ExpandWindow = ({
           )}
         </Bar>
         <Body ref={bodyRef} $open={open} tabIndex={open && !focusRef ? -1 : undefined}>
-          {children(open)}
+          <ExpandContext.Provider value={open}>{children(open)}</ExpandContext.Provider>
         </Body>
       </Stage>
     </>
@@ -147,23 +167,34 @@ const ExpandableBlock = styled.div`
   margin: var(--space-lg) 0;
 `
 
-/* In the window the content is held to a readable width with room round it.
+/* In the window the content is held to a readable width with room round it,
+   and is one window tall: a child that fills the window (the calendar) takes
+   whatever height the others leave, so the whole run fits without scrolling.
    Its first and last children keep their page margins inline, so they are
    trimmed only here. */
 const ExpandableBody = styled.div`
   ${({ $open }) =>
     $open &&
     css`
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
       width: 100%;
       max-width: 80rem;
       margin: 0 auto;
-      padding: 1.25rem 2rem 2rem;
+      padding: 1rem 1.5rem 1.25rem;
 
-      > :first-child {
+      > * {
+        flex: none;
+      }
+
+      /* Doubled up past the &&& that page components use on their margins. */
+      &&&& > :first-child {
         margin-top: 0;
       }
 
-      > :last-child {
+      &&&& > :last-child {
         margin-bottom: 0;
       }
     `}
