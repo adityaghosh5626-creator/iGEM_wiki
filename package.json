@@ -12,10 +12,9 @@
     "serve": "gatsby serve",
     "clean": "gatsby clean",
     "build:calendar": "node scripts/build-contribution-weeks.mjs src/data/contributionCalendar/timeline.md src/data/contributionCalendar/contributionWeeks.generated.js --max-bullets=12",
-    "check:calendar": "node scripts/build-contribution-weeks.mjs src/data/contributionCalendar/timeline.md src/data/contributionCalendar/contributionWeeks.generated.js --check --max-bullets=12",
+    "check:calendar": "node scripts/check-calendar.mjs",
     "sync:igem": "node scripts/sync-igem.mjs",
     "validate:content": "node scripts/validate-content.mjs",
-    "check:calendar": "node scripts/check-calendar.mjs",
     "payload:develop": "npm --prefix cms/payload-app run dev -- --webpack",
     "payload:export": "node scripts/export-payload-content.mjs",
     "payload:import-mdx": "npm --prefix cms/payload-app run import:mdx",
@@ -46,5 +45,8 @@
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^3.0.1",
     "styled-components": "^6.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
