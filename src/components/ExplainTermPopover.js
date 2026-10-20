@@ -568,6 +568,8 @@ const TermRoot = styled.span`
  */
 const TermButton = styled.span`
   display: inline;
+  /* Terms remain interactive inside decorative layers that ignore pointers. */
+  pointer-events: auto;
   margin: 0;
   padding: 0 0.12em;
   border: none;
@@ -661,12 +663,8 @@ const PlainBox = styled.div`
   position: relative;
   width: ${PLAIN_BOX_W * 100}%;
   box-sizing: border-box;
-  padding: 3.4cqi 6cqi 4.2cqi 5cqi;
-  /* The corner sticker extends into the tilted box. On small screens the
-     text wraps into that corner, so reserve space above the first line. */
-  @media (max-width: 700px) {
-    padding-top: 10cqi;
-  }
+  /* The sticker overlaps the box at every viewport size, including desktop. */
+  padding: 10cqi 6cqi 4.2cqi 5cqi;
   background: #000;
   transform: skewY(-${PLAIN_TILT_DEG}deg);
   transform-origin: 0 0;
