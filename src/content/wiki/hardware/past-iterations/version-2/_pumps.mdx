@@ -1,11 +1,167 @@
-#### Design
+### Main Function(s) + Requirements
 
-Placeholder: describe the Pumps design used in Version 2.
+In the V2 pump design, the main priority was the accessibility aspect of being able to easily assemble and disassemble the pump and tubing for autoclaving purposes. This was due to observations of the Adafruit pump lid that was not able to be easily assembled. All of the base functionality requirements from V1 were kept, with the assembly and autoclavable requirements getting a higher priority. As well, new requirements were added based on the V2 design to be able to withstand forces of the pump running and also be able to pump fluids of different viscosities.
 
-#### Design decisions and changes
+<div className="priority-comparison-table">
 
-Placeholder: explain what changed in Pumps from Version 1 to Version 2 and why.
+| Requirement/Functionality                                                                                                                                                     | Old Priority          | New Priority | Why?                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Easy to assemble & autoclavable                                                                                                                                               | Medium                | High         | After ordering and prototyping with the Adafruit pump, we realized it was really hard to take apart the tubes for assembly and autoclaving purposes. This led us to look at this in more detail in V2 to try to make it easier to assemble/disassemble specifically for the purpose of autoclaving. The metric is to have it take less time to be assembled than the previous prototype. |
+| Should be able to withstand outer forces against walls from running over time. The more time the pump can withstand the better.                                               | N/A (new requirement) | High         | Since the new V2 pump design can come apart at the sides, it is important that it is able to withstand forces while the pump is running without falling apart.                                                                                                                                                                                                                           |
+| Can pump a wide range of dosages with different PWM control values. The wider the range the better.                                                                           | High                  | High         | This function is necessary to maintain different flow rates for different dosage input and output of the pumps.                                                                                                                                                                                                                                                                          |
+| Multiple pumps can be used to transfer fluid into and out of the bioreactor. The more pumps that can be used the better, with a minimum of 2 pumps, one inlet and one outlet. | High                  | High         | This function is necessary so inlet and outlet pumps can be used at the same time to pump fluids in and out of the bioreactor.                                                                                                                                                                                                                                                           |
+| Able to pump fluids of different viscosities. The more viscose the fluid able to be pumped the better.                                                                        | N/A (new requirement) | Medium       | The pumps should be able to pump different reagents into and out of the pump, which may have different viscosities, so this should be a requirement for the system.                                                                                                                                                                                                                      |
+| The pumps shall maintain a consistent flow rate while running. The less variability between flow rates the better.                                                            | Medium                | Medium       | The pumps should maintain a consistent flow rate to not disturb the bacteria.                                                                                                                                                                                                                                                                                                            |
 
-#### Testing and lessons
+</div>
 
-Placeholder: add Version 2 test results, limitations, and lessons for Pumps.
+### BoM
+
+<table className="pump-bom-table">
+  <colgroup>
+    <col style={{ width: "28%" }} />
+    <col style={{ width: "38%" }} />
+    <col style={{ width: "20%" }} />
+    <col style={{ width: "14%" }} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th scope="col">Component</th>
+      <th scope="col">Purpose</th>
+      <th scope="col">Cost</th>
+      <th scope="col">Sourcing Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Peristaltic pump with tubing</td>
+      <td>Peristaltic pump with motor and tubing to pump liquid in and out of the bioreactor</td>
+      <td>$24.95</td>
+      <td><a href="https://www.adafruit.com/product/1150">Source</a></td>
+    </tr>
+    <tr>
+      <td>Transistor (TIP142)</td>
+      <td>Transistor to allow low power PWM signal to power high power motor</td>
+      <td>$6.98</td>
+      <td><a href="https://www.digikey.ca/en/products/detail/stmicroelectronics/TIP142/603566">Source</a></td>
+    </tr>
+    <tr>
+      <td>Diode (1N5819) <br/> <em>Not S8050 as shown in circuit diagram below</em></td>
+      <td>Protects Arduino and transistor from voltage spike</td>
+      <td><em>Included in a kit</em></td>
+      <td><a href="https://www.amazon.ca/dp/B0DXKH7B2W">Source</a></td>
+    </tr>
+    <tr>
+      <td>Arduino Nano</td>
+      <td>Microcontroller to produce PWM signal and run code</td>
+      <td>$8</td>
+      <td><a href="https://www.amazon.ca/dp/B08HVPMLKG">Source</a></td>
+    </tr>
+    <tr>
+      <td>Resistor (2.2 kΩ)</td>
+      <td>Limits current from Arduino to transistor</td>
+      <td><em>Included in above kit</em></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>3D print of pump lid designs (3 designs)</td>
+      <td>Prototype the pump lid design</td>
+      <td>$2.50 (see CAD V2)</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th colSpan={4} style={{ textAlign: "center" }}>Equipment</th>
+    </tr>
+    <tr>
+      <td>Power Supply (5V)</td>
+      <td>Powers pump motor separately from Arduino</td>
+      <td>Old iPhone charger (free)</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Breadboard</td>
+      <td></td>
+      <td>Included in kit</td>
+      <td><a href="https://www.amazon.ca/dp/B07P1GWN3F">Source</a></td>
+    </tr>
+    <tr>
+      <td>Wires</td>
+      <td></td>
+      <td>Included in above kit</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Laptop</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>USB-C to USB-C mini cable (for Arduino Nano)</td>
+      <td></td>
+      <td>Included in kit</td>
+      <td><a href="https://www.amazon.ca/dp/B0CQ9M4CMH">Source</a></td>
+    </tr>
+  </tbody>
+</table>
+
+### Design Modifications
+
+I designed a new pump lid design so that the tubing would be easier to take out and put in.
+
+The first design was to have both of the sides and tops removable, and to reverse the direction the rollers are put in so the entire pump does not have to be disassembled. The top and sides would snap together with a snap-fit mechanism. This would make it easy to put in and out the tubing but has a lot of loose pieces so there is the potential of losing pieces in the assembly process.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/pump1.avif"
+  alt="pump1"
+/>
+
+The second mechanism was to only have the sides removable while the top is attached to the roller holder on the inside. The sides in this case are held together by snap-fit but it needs to be strong enough so when the pumps operate it does not break apart.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/pump2.avif"
+  alt="pump2"
+/>
+
+The third design was to use the same design as before, just change the roller holder to be attached on the other side. This way, the rollers will be able to come out without disassembling the entire pump, but the tubing may still be hard to put in.
+
+#### BUILD
+
+I modelled the first and second designs in Fusion360. Since the third design was the same as the initial pump design, just with the roller holder switched, I did not prototype another version.
+
+1st design: [design 1](https://drive.google.com/drive/u/0/folders/1PwGNIcLtrS1LvDGZ6ajDf0cgagOZCyAe)
+
+2nd design: [design 2](https://drive.google.com/drive/u/0/folders/1dGtecF07jqlXRbvpkOVJ5rDKdKlyE3vT)
+
+#### TEST
+
+I printed each of these out and designed new tests to see if the snap-fit mechanisms worked (see below in DoE) and if they could withstand the operating conditions.
+
+#### LEARN
+
+Based on the tests, I realized the “flaps” used for the snap-fit on the sides need to be longer, as they did not “snap” together and still had a bit of distance between them. This could also be due to the geometry of the sides, as it is circular, so I will also look into different mechanisms to keep this closed.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/pump3.avif"
+  alt="pump3"
+/>
+
+### New Design of Experiments (DoE)
+
+The first experiment I designed is to test how long it takes for the lid to snap on and off with and without the tubing. For this experiment, the 3D prints of each of the designs are needed and how long it takes to snap the design together and take apart are recorded, first without the tubing and then with the tubing attached. This experiment is also done with the original design and the two are compared to verify the new design takes less time to be assembled and disassembled than the previous V1 design. This experiment was not done, since the lid did not effectively snap on, but will be done in a future prototype version.
+
+The second experiment is to test whether the V2 design is able to handle the outer forces from running the pump. This is necessary as the lid design was changed for the sides to snap together, but this may fail at smaller forces pressing against the walls. For this design, the pump is run with PWM values ranging from 50 to 100 in increments of 10, each for 90 seconds. For each test, there is a pass/fail criteria, where the pump passes if it stays intact, but fails if it gets disassembled. Again, this experiment was not completed in this version since the lid did not snap on, but it is expected that a lid that functions correctly will be able to withstand the forces of the pump from previous qualitative observations.
+
+The third experiment is to test the new pump design with the barbed luer connectors. These connectors are used to manage flow rate between the pumps and the flow of liquid into the bioreactor. For this experiment, the mass flow rate is measured with varying PWM values of 50 to 100 in increments of 10, each for 90 seconds. This experiment is done with the V1 pump lid and the V2 pump lid to validate that the V2 pump lid matches the flow rate of the V1 pump lid. **Due to an alternate run where this was successfully implemented, this experiment was partially validated. **
+
+Based on previous experiments, there was a lower limit to the PWM value, so the fourth experiment is to test the smallest PWM value possible for the pumps. For this experiment, the PWM value starting from 50 will be run in increments of -2 for 600 seconds and the volume of water that exits the pump will be measured. The lowest PWM value will be the value that allows no water to exit. This experiment is to inform future experiments on the lowest limit possible. Due to observations from previous experiments,** this value should be close to 50% of the power, but a more precise number can be found from more rigorous validation. **
+
+Since the previous experiments were all done with water, the fifth experiment is to test liquids of different viscosities. This experiment will include different liquids: water, milk, and heavy whipping cream. The pump will be run on different PWM values starting from 50 to 100 in increments of 10 for 90 seconds each, and the flow rate will be measured and compared. This experiment is important because different reagents may be added to the bioreactors, so the pump needs to function with liquids of different viscosities. This experiment was not run, **but it is expected that the pump would be able to work with liquids of all viscosities due to the theory of peristaltic pumps. **
+
+### Next Steps
+
+For V3, the snap-fit mechanism of the sides of the pump lid needs to be improved. I will do more research into the different types of mechanisms that may be used in place of the snap-fit mechanism, especially for circular prototypes. I will prototype a new lid with a longer “flap” for the snap-lid to see if my hypothesis is right that it will make it snap together better, while also designing new prototypes for new mechanisms.
+
+### GitHub Link
+
+All the Arduino code used to run the experiments are included in our [GitHub](https://github.com/igem-toronto/Bioreactor/tree/main/Pumps).
