@@ -1,4 +1,4 @@
-import { SUBTEAM_BY_ID, SUBTEAM_IDS } from "../subteamTracks.js"
+import { SUBTEAM_BY_ID, SUBTEAM_IDS, WHOLE_TEAM_TRACK } from "../subteamTracks.js"
 import { buildWeekSkeleton, formatDayShort } from "./calendarUtils.js"
 import { GENERATED_WEEKS, GENERATED_META } from "./contributionWeeks.generated.js"
 
@@ -2005,22 +2005,16 @@ function applyGenerated(week) {
     const current = subteams[id]
     const isPlaceholder = !current || current.summary === "Progress update coming soon."
     if (PREFER_GENERATED || isPlaceholder) {
-      subteams[id] = { ...entry, link: SUBTEAM_BY_ID[id]?.href || "/" }
+      subteams[id] = { ...entry, link: SUBTEAM_BY_ID[id]?.href || current?.link || "/" }
     }
   }
 
-  const overviewIsDefault = week.overview.startsWith("Team progress for this week will be updated soon")
-  const overview =
-    gen.overview && (PREFER_GENERATED || overviewIsDefault) ? gen.overview : week.overview
-
   let milestones = week.milestones
   if (gen.milestones?.length) {
-    milestones = PREFER_GENERATED
-      ? [...gen.milestones]
-      : mergeMilestones(week.milestones, gen.milestones)
+    milestones = PREFER_GENERATED ? [...gen.milestones] : mergeMilestones(week.milestones, gen.milestones)
   }
 
-  return { ...week, overview, milestones, subteams }
+  return { ...week, milestones, subteams }
 }
 
 /** Replace "Progress update coming soon." on past weeks for every subteam. */
@@ -2051,6 +2045,13 @@ function mergeWeek(skeleton, override = {}) {
   }
 }
 
+const VALID_MILESTONE_IDS = new Set([...SUBTEAM_IDS, WHOLE_TEAM_TRACK.id])
+
+function sanitizeMilestones(week) {
+  const milestones = (week.milestones || []).filter((m) => VALID_MILESTONE_IDS.has(m.subteamId))
+  return milestones.length === (week.milestones || []).length ? week : { ...week, milestones }
+}
+
 /** @type {ContributionWeek[]} */
 export const CONTRIBUTION_WEEKS = buildWeekSkeleton()
   .map((sk) => mergeWeek(sk, WEEK_CONTENT_OVERRIDES[sk.id]))
@@ -2058,6 +2059,7 @@ export const CONTRIBUTION_WEEKS = buildWeekSkeleton()
   .map((week) => applySubteamPatch(week, HUMAN_PRACTICES_WEEK_PATCHES, "humanPractices"))
   .map(applyGenerated)
   .map(applyNotebookMilestones)
+  .map(sanitizeMilestones)
   .map(applyPastWeekQuietPlaceholders)
 
 /** @type {Record<string, ContributionWeek>} */

@@ -35,18 +35,18 @@ if (!INPUT || !OUTPUT) {
   console.error("Usage: build-contribution-weeks.mjs <timeline.mdx> <out.generated.js> [--check]")
   process.exit(2)
 }
-
 const CONFIG = {
   maxBullets: Number(flags["max-bullets"] ?? 5),
   maxChars: Number(flags["max-chars"] ?? 450),
   datePrefix: !flags["no-date-prefix"],
   milestones: !flags["no-milestones"],
   maxMilestonesPerWeek: 3,
-  maxOverviewSentences: 2,
-  dedupeSimilarity: 0.55,
+  maxTeamMilestonesPerWeek: 3,
+  summaryChars: 200,
+  milestoneChars: 200,
+  dedupeSimilarity: 0.4,
 }
 
-// Timeline subteam name -> calendar SubteamId
 const SUBTEAM_MAP = {
   "Wet Lab": "wetLab",
   "Dry Lab": "dryLab",
@@ -56,27 +56,34 @@ const SUBTEAM_MAP = {
   Outreach: "outreach",
   Web: "web",
 }
-// Not subteams on the calendar: these feed the week overview and "all" milestones
+// Team-wide streams become whole-team milestones. They never write the overview.
 const TEAM_WIDE = new Set(["Cross-Team", "Leadership", "Finance", "Competitions"])
+const WHOLE_TEAM_ID = "all" // must match WHOLE_TEAM_TRACK.id in subteamTracks.js
 
-// Safety net on top of the timeline's own exclusions (absences, health, personnel).
 const DENYLIST =
   /\b(unwell|contagious|self-isolate|out of office|without gloves|accused|on vacation|laptop malfunction)\b/i
-// Entries that only confirm a meeting was scheduled, or are pure media dumps.
 const NOISE = /^(Calendar event:|.*\(images only\)\.?$)/i
 
+// Milestones must LEAD with the achievement. Passing mentions ("... Update: won X")
+// no longer match, and logistics/planning bullets are rejected outright.
 const MILESTONE_RE =
-  /\b(won|second place|took (first|second)|went live|launched|arrived|published|released|secured|declared done|first validated|finished its entire)\b|^Milestone:/i
+  /^(Milestone:|.{0,70}?\b(won|took (first|second)|second place|placed \d|went live|launched|declared done|first validated|finished its entire)\b)/i
 const IMPORTANT_RE =
   /\b(won|placed|launched|went live|secured|confirmed|completed|finished|arrived|submitted|decided|decision|first|passed|released|published|finalized|locked|milestone)\b/i
-
+const NOT_MILESTONE =
+  /^(No |Request|Reminder|Plan|Goal|Deadline|Members? |Anthony .* shares|.* shares )/i
+  
 // ----------------------------------------------------------------- parse ----
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const DAY_RE = /^###\s+(\d{4}-\d{2}-\d{2})\s+\(/
 const EVENT_RE = /^-\s+\[([^\]]+)\]\s+(.*)$/
-
-const clean = (s) => s.replace(/â‰¥/g, "≥").replace(/\s+/g, " ").trim()
-
+const clean = (s) =>
+  s
+    .replace(/â‰¥/g, "≥")
+    .replace(/\s+/g, " ")
+    .replace(/^Week (of [A-Z][a-z]{2} \d+|\d+ of [A-Z][a-z]+):\s*/, "")
+    .trim()
+    
 function parseTimeline(raw) {
   const events = []
   let date = null
@@ -128,9 +135,7 @@ function shortDate(dateStr) {
 function firstSentence(text, max) {
   const m = text.match(/^.*?[.!?](?=\s|$)/)
   let s = (m ? m[0] : text).replace(/[.!?]$/, "").replace(/^Milestone:\s*/i, "")
-  if (s.length > max) {
-    s = s.slice(0, max).replace(/\s+\S*$/, "") + "…"
-  }
+  if (s.length > max) s = s.slice(0, max).replace(/\s+\S*$/, "") + "…"
   return s
 }
 const tokens = (s) =>
@@ -182,47 +187,48 @@ function build(events) {
     if (!byWeek.has(wk)) byWeek.set(wk, [])
     byWeek.get(wk).push(e)
   }
-
   const weeks = {}
   for (const [wk, list] of [...byWeek.entries()].sort()) {
     const out = { subteams: {}, milestones: [] }
 
-    // Per-subteam summary + detail
     for (const [teamName, id] of Object.entries(SUBTEAM_MAP)) {
       const mine = dedupe(list.filter((e) => e.team === teamName))
       if (!mine.length) continue
-      const top = mine.slice(0, CONFIG.maxBullets)
-      const bullets = [...top]
+      const bullets = mine
+        .slice(0, CONFIG.maxBullets)
         .sort((a, b) => a.date.localeCompare(b.date) || a.order - b.order)
         .map((e) => `• ${CONFIG.datePrefix ? shortDate(e.date) + ": " : ""}${e.text}`)
       out.subteams[id] = {
-        summary: firstSentence(mine[0].text, 90),
+        summary: firstSentence(mine[0].text, CONFIG.summaryChars),
         detail: bullets.join("\n"),
       }
     }
 
-    // Overview from team-wide entries (verbatim first sentences)
-    const teamWide = dedupe(list.filter((e) => TEAM_WIDE.has(e.team)))
-    if (teamWide.length) {
-      out.overview = teamWide
-        .slice(0, CONFIG.maxOverviewSentences)
-        .map((e) => firstSentence(e.text, 220) + ".")
-        .join(" ")
-    }
-
-    // Milestones: strong-signal events only
     if (CONFIG.milestones) {
-      const cands = dedupe(list.filter((e) => MILESTONE_RE.test(e.text) && e.text.length <= 220))
-      out.milestones = cands.slice(0, CONFIG.maxMilestonesPerWeek).map((e) => ({
-        date: e.date,
-        label: firstSentence(e.text, 70),
-        subteamId: SUBTEAM_MAP[e.team] || "all",
-      }))
-      out.milestones.sort((a, b) => a.date.localeCompare(b.date))
+      const trackFor = (e) =>
+        TEAM_WIDE.has(e.team) ? WHOLE_TEAM_ID : SUBTEAM_MAP[e.team]
+
+      const all = list.filter((e) => trackFor(e))
+      const kept = []
+      for (const e of all.sort((a, b) => b.score - a.score)) {
+        e.tok = tokens(e.text)
+        const dup = kept.some(
+          (k) => trackFor(k) === trackFor(e) && k.date === e.date && similarity(k.tok, e.tok) >= 0.7
+        )
+        if (!dup) kept.push(e)
+      }
+
+      out.milestones = kept
+        .map((e) => ({
+          date: e.date,
+          label: firstSentence(e.text, CONFIG.milestoneChars),
+          subteamId: trackFor(e),
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date))
     }
     if (!out.milestones.length) delete out.milestones
     if (!Object.keys(out.subteams).length) delete out.subteams
-    weeks[`week-${wk}`] = out
+    if (Object.keys(out).length) weeks[`week-${wk}`] = out
   }
   return weeks
 }
