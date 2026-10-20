@@ -26,7 +26,7 @@ const MODEL = "/dry-lab/model/"
 const SW = "/dry-lab/software/"
 
 /** Wiki sections the calendar links to, as [label, href]. */
-const S = {
+export const S = {
   whatModel: ["What our model does", `${MODEL}#what-our-model-does`],
   plasticome: ["Plasticome curation", `${MODEL}#plasticome-reference-curation`],
   cath: ["CATH assignment", `${MODEL}#cath-assignment`],
@@ -64,7 +64,7 @@ const S = {
   record: ["Sequence record card", `${SW}#sequence-record-card`],
   atlas: ["ESM Atlas", `${SW}#esm-atlas`],
   availability: ["Availability", `${SW}#availability-and-licensing`],
-  overview: ["Dry Lab overview", "/dry-lab/overview/#search"],
+  overview: ["Dry Lab overview", "/dry-lab/overview/#petadex-model-landscape"],
   wetLab: ["Wet Lab", "/wet-lab/overview/"],
   hpInterviews: ["Database interviews", "/human-practices/#global-consolidated-database-interviews"],
   hpConference: ["Microplastics Conference", "/human-practices/#education-and-multi-directional-feedback"],

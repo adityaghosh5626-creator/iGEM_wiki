@@ -6,6 +6,7 @@ import { BioreactorRequirements } from "../bioreactorRequirements/BioreactorRequ
 import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
 import { DryLabCalendar } from "../dryLabCalendar/DryLabCalendar.js"
+import { DryLabIterations } from "../dryLabCalendar/IterationLedger.js"
 import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
 import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
 import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
@@ -14,6 +15,8 @@ import { HardwareArchitectureDiagram } from "../hardwareArchitecture/HardwareArc
 import { PageTab, PageTabs } from "../PageTabs.js"
 import AtlasMap from "../AtlasMap.js"
 import PetadexGame from "../PetadexGame.js"
+import { FeatureCard, FeatureCards } from "./FeatureCards.js"
+import { Expandable } from "./ExpandWindow.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import {
@@ -25,6 +28,7 @@ import {
   DiamondSearchHero,
   MethodsLink,
 } from "./interactive/DiamondSearch.js"
+import { DiamondSearchDemo } from "./interactive/DiamondSearchDemo.js"
 import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import { embedComponents } from "./embeds.js"
@@ -102,6 +106,7 @@ export const mdxComponents = {
   ContributionCalendar,
   ContributionTimeline,
   DryLabCalendar,
+  DryLabIterations,
   DesignSketchbook,
   HardwareNotebookSandbox,
   HardwareJournal,
@@ -117,6 +122,7 @@ export const mdxComponents = {
   DatasetFlowchartFigure,
   ArchitectureFigure,
   DiamondSearchHero,
+  DiamondSearchDemo,
   MethodsLink,
   ModelDatasets,
   DatasetLoop,
@@ -129,6 +135,9 @@ export const mdxComponents = {
   Spreadsheet,
   AtlasMap,
   PetadexGame,
+  FeatureCards,
+  FeatureCard,
+  Expandable,
 }
 
 const toneStyles = {
