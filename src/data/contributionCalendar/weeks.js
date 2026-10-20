@@ -1,5 +1,6 @@
-import { SUBTEAM_BY_ID, SUBTEAM_IDS } from "../subteamTracks.js"
+import { SUBTEAM_BY_ID, SUBTEAM_IDS, WHOLE_TEAM_TRACK } from "../subteamTracks.js"
 import { buildWeekSkeleton, formatDayShort } from "./calendarUtils.js"
+import { GENERATED_WEEKS, GENERATED_META } from "./contributionWeeks.generated.js"
 
 /** @typedef {import('../subteamTracks.js').SubteamId} SubteamId */
 /** @typedef {import('../subteamTracks.js').MilestoneTrackId} MilestoneTrackId */
@@ -29,9 +30,11 @@ import { buildWeekSkeleton, formatDayShort } from "./calendarUtils.js"
  * @property {Record<SubteamId, SubteamWeekContent>} subteams
  */
 
-const PAST_WEEK_QUIET_BEFORE = "2026-10-11"
+const PAST_WEEK_QUIET_BEFORE = GENERATED_META.quietBefore
 
-const LATEST_WEEK_ID = "week-2026-10-04"
+const LATEST_WEEK_ID = GENERATED_META.latestWeekId
+
+const PREFER_GENERATED = true
 
 const SUBTEAM_FIRST_WEEK = {
   venture: "2026-01-04",
@@ -1993,6 +1996,27 @@ function applyNotebookMilestones(week) {
   return { ...week, milestones: mergeMilestones(week.milestones, extra) }
 }
 
+function applyGenerated(week) {
+  const gen = GENERATED_WEEKS[week.id]
+  if (!gen) return week
+
+  const subteams = { ...week.subteams }
+  for (const [id, entry] of Object.entries(gen.subteams || {})) {
+    const current = subteams[id]
+    const isPlaceholder = !current || current.summary === "Progress update coming soon."
+    if (PREFER_GENERATED || isPlaceholder) {
+      subteams[id] = { ...entry, link: SUBTEAM_BY_ID[id]?.href || current?.link || "/" }
+    }
+  }
+
+  let milestones = week.milestones
+  if (gen.milestones?.length) {
+    milestones = PREFER_GENERATED ? [...gen.milestones] : mergeMilestones(week.milestones, gen.milestones)
+  }
+
+  return { ...week, milestones, subteams }
+}
+
 /** Replace "Progress update coming soon." on past weeks for every subteam. */
 function applyPastWeekQuietPlaceholders(week) {
   if (week.start >= PAST_WEEK_QUIET_BEFORE) return week
@@ -2021,12 +2045,21 @@ function mergeWeek(skeleton, override = {}) {
   }
 }
 
+const VALID_MILESTONE_IDS = new Set([...SUBTEAM_IDS, WHOLE_TEAM_TRACK.id])
+
+function sanitizeMilestones(week) {
+  const milestones = (week.milestones || []).filter((m) => VALID_MILESTONE_IDS.has(m.subteamId))
+  return milestones.length === (week.milestones || []).length ? week : { ...week, milestones }
+}
+
 /** @type {ContributionWeek[]} */
 export const CONTRIBUTION_WEEKS = buildWeekSkeleton()
   .map((sk) => mergeWeek(sk, WEEK_CONTENT_OVERRIDES[sk.id]))
   .map((week) => applySubteamPatch(week, OUTREACH_WEEK_PATCHES, "outreach"))
   .map((week) => applySubteamPatch(week, HUMAN_PRACTICES_WEEK_PATCHES, "humanPractices"))
+  .map(applyGenerated)
   .map(applyNotebookMilestones)
+  .map(sanitizeMilestones)
   .map(applyPastWeekQuietPlaceholders)
 
 /** @type {Record<string, ContributionWeek>} */
