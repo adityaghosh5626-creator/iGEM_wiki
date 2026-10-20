@@ -74,27 +74,23 @@
 <script>
 (function () {
   /* ---- EDIT HERE -------------------------------------------------------
-     Petamon art is the upright set from the Engineering page sprite sheet
-     (button-petamon.avif, 1110 x 4000 canvas; see
-     iGEM_wiki/src/data/engineeringCycles.js). The three engines use the
-     subteam-button crops verbatim; the four outer teams are cut from the
-     "Full Team" strip. box = [x, y, w, h] on that canvas. White paper is
-     dropped with mix-blend-mode: multiply, as EngineeringArtwork.js does.
-     Team -> petamon identity checked against EndingPetamonBottle.js.
+     Petamon icons are the team's own round icons (white circle, petamon
+     breaking out of it), in ./petamons/. Every file shares one 363 x 250 crop
+     window with the white circle centred at ICON.cx, ICON.cy, radius ICON.r,
+     so a single transform places any of them on its disc.
      Colours are each subteam's colour from EndingPetamonBottle.js.
   --------------------------------------------------------------------- */
-  var SHEET = 'https://static.igem.wiki/teams/6187/wiki/engineering/content/button-petamon.avif';
-  var CANVAS = [1110, 4000];
+  var ICON = { w: 363, h: 250, cx: 181.5, cy: 125, r: 97.5 };
   var ENGINES = [
-    { name: 'Dry lab',  box: [364, 1137, 174, 131], color: '#f2c14e' },
-    { name: 'Wet lab',  box: [565, 1137, 174, 134], color: '#55aee9' },
-    { name: 'Hardware', box: [174, 1137, 174, 135], color: '#f08a4b' }
+    { name: 'Dry lab',  icon: 'petamons/dry-lab.webp',  color: '#f2c14e' },
+    { name: 'Wet lab',  icon: 'petamons/wet-lab.webp',  color: '#55aee9' },
+    { name: 'Hardware', icon: 'petamons/hardware.webp', color: '#f08a4b' }
   ];
   var THRUSTERS = [
-    { name: 'Human practices',  box: [194, 1440, 140, 96],  color: '#ef5a5f', oval: true },
-    { name: 'Entrepreneurship', box: [850, 1138, 128, 130], color: '#a07cf2', oval: true },
-    { name: 'Web',              box: [690, 1432, 86, 116],  color: '#62c883', oval: true },
-    { name: 'Outreach',         box: [781, 1442, 94, 92],   color: '#f27ab8', oval: true }
+    { name: 'Human practices',  icon: 'petamons/human-practices.webp',  color: '#ef5a5f' },
+    { name: 'Entrepreneurship', icon: 'petamons/entrepreneurship.webp', color: '#a07cf2' },
+    { name: 'Web',              icon: 'petamons/web.webp',              color: '#62c883' },
+    { name: 'Outreach',         icon: 'petamons/outreach.webp',         color: '#f27ab8' }
   ];
   /* Inner loop, clockwise: Dry lab -> Wet lab -> Hardware -> Dry lab. */
   var EDGE_LABELS = ['PETase library', 'assay design', 'activity data'];
@@ -141,32 +137,22 @@
   }
   function tr(e, p) { e.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')'); }
 
-  /* One petamon disc: watercolor wash in the team colour, art on top, name on the lower rim. */
+  /* One petamon disc: a watercolour rim in the team colour, the team's icon inside it
+     (its petamon may break out of the circle), and the name on a tag at the bottom edge. */
   function disc(spec, r, parent) {
-    var id = 'd' + (uid++);
     var g = el('g', { 'class': 'node' }, parent);
-    var defs = el('defs', {}, g);
-    var rl = r - 13;
-    el('path', { id: id + 'p', d: 'M' + (-rl) + ' 0A' + rl + ' ' + rl + ' 0 0 0 ' + rl + ' 0' }, defs);
-    el('circle', { r: r + 5, fill: spec.color, opacity: 0.22, filter: 'url(#bleed)' }, g);
+    el('circle', { r: r + 5, fill: spec.color, opacity: 0.25, filter: 'url(#bleed)' }, g);
     el('circle', { r: r, fill: '#fffdf8', filter: 'url(#wash)' }, g);
-    var body = el('circle', { r: r, fill: spec.color, opacity: 0.42, filter: 'url(#wash)' }, g);
-    el('circle', { r: r - 9, fill: '#fffdf8', opacity: 0.35 }, g);
-    var b = spec.box, w = r * 1.62, h = r * 1.2;
-    var sv = el('svg', { x: -w / 2, y: -r * 0.9, width: w, height: h,
-      viewBox: b.join(' '), preserveAspectRatio: 'xMidYMid meet',
-      style: 'mix-blend-mode:multiply' }, g);
-    var img = el('image', { href: SHEET, x: 0, y: 0, width: CANVAS[0], height: CANVAS[1] }, sv);
-    if (spec.oval) {
-      /* Strip crops overlap their neighbours; an oval trims the corners where they intrude. */
-      var oc = el('clipPath', { id: id + 'o' }, el('defs', {}, sv));
-      el('ellipse', { cx: b[0] + b[2] / 2, cy: b[1] + b[3] / 2, rx: b[2] / 2, ry: b[3] / 2 }, oc);
-      img.setAttribute('clip-path', 'url(#' + id + 'o)');
-    }
-    var t = el('text', { 'class': 'lbl', 'text-anchor': 'middle', 'font-size': r < 58 ? 11.5 : 13 }, g);
-    var tp = el('textPath', { href: '#' + id + 'p', startOffset: '50%' }, t);
-    tp.textContent = spec.name;
-    return { g: g, body: body, r: r };
+    var body = el('circle', { r: r, fill: spec.color, opacity: 0.55, filter: 'url(#wash)' }, g);
+    var k = (r - 6) / ICON.r;
+    el('image', { href: spec.icon, x: -ICON.cx * k, y: -ICON.cy * k, width: ICON.w * k, height: ICON.h * k }, g);
+    var fs = r < 55 ? 11 : 12, tag = el('g', { transform: 'translate(0,' + (r - 2) + ')' }, g);
+    var rect = el('rect', { y: -9.5, height: 19, rx: 9.5, fill: '#fffdf8', stroke: spec.color, 'stroke-width': 1.6 }, tag);
+    var t = el('text', { 'class': 'lbl', 'text-anchor': 'middle', 'font-size': fs, y: fs * 0.36 }, tag);
+    t.textContent = spec.name;
+    var tw = t.getComputedTextLength() + 16;
+    rect.setAttribute('x', (-tw / 2).toFixed(1)); rect.setAttribute('width', tw.toFixed(1));
+    return { g: g, body: body, r: r, tagW: tw };
   }
 
   var ringI = document.getElementById('ring-i');
@@ -223,6 +209,41 @@
     return { g: g, p: p, d1: d1, d2: d2, t: t };
   });
 
+  function overlaps(a, b) {
+    return Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.h + b.h;
+  }
+  function tagBoxes() {
+    return nodes.concat(outs).map(function (nd) {
+      var m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(nd.g.getAttribute('transform'));
+      return { x: +m[1], y: +m[2] + nd.r - 2, w: nd.tagW + 4, h: 21 };
+    });
+  }
+  function discs() {
+    return nodes.concat(outs).map(function (nd) {
+      var m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(nd.g.getAttribute('transform'));
+      return { x: +m[1], y: +m[2], r: nd.r + 2 };
+    });
+  }
+  function hitsDisc(box, c) {
+    var dx = Math.max(Math.abs(c.x - box.x) - box.w / 2, 0), dy = Math.max(Math.abs(c.y - box.y) - box.h / 2, 0);
+    return dx * dx + dy * dy < c.r * c.r;
+  }
+  function placeLabel(b, L, nx, ny, i, round) {
+    var w = b.t.getComputedTextLength() + 8, taken = tagBoxes(), circles = discs();
+    for (var q = 0; q < i; q++) {
+      var o = beams[q];
+      if (o.spot) taken.push({ x: o.lx, y: o.ly, w: o.t.getComputedTextLength() + 8, h: 16 });
+    }
+    var ts = [0.5, 0.35, 0.65, 0.2, 0.8], ds = [15, 27, -15, -27, 39, -39, 52, -52, 66, -66];
+    for (var a = 0; a < ds.length; a++) for (var c = 0; c < ts.length; c++) {
+      var lp = b.p.getPointAtLength(L * ts[c]);
+      var box = { x: lp.x + nx * ds[a], y: lp.y + ny * ds[a], w: w, h: 16 };
+      if (!taken.some(function (t) { return overlaps(box, t); }) &&
+          !circles.some(function (cc) { return hitsDisc(box, cc); })) return [ts[c], ds[a]];
+    }
+    return [0.5, 15];  /* nothing clear: fall back to the default spot */
+  }
+
   function render(t) {
     var clock = CLIP_START + (((t % PERIOD) + PERIOD) % PERIOD);
     var n = Math.min(Math.floor(clock / CYCLE), ROUNDS.length - 1), ph = clock - n * CYCLE;
@@ -274,8 +295,14 @@
       b.d2.setAttribute('cx', pt2.x); b.d2.setAttribute('cy', pt2.y);
       b.d1.setAttribute('fill', INK[j]); b.d2.setAttribute('fill', INK[j]);
       b.d1.setAttribute('opacity', rev >= 1 ? 0.9 : 0); b.d2.setAttribute('opacity', rev >= 1 ? 0.55 : 0);
-      var lp = b.p.getPointAtLength(L * 0.5), lx = lp.x + nx * 15, ly = lp.y + ny * 15;
       b.t.textContent = lk[2];
+      /* Place the label clear of every name tag and of labels already placed this round.
+         The choice is made once per round, so a label never jumps mid-hold. */
+      if (b.round !== n) { b.round = n; b.spot = null; }
+      if (!b.spot && rev >= 1) b.spot = placeLabel(b, L, nx, ny, i, round);
+      var sp = b.spot || [0.5, 15];
+      var lp = b.p.getPointAtLength(L * sp[0]), lx = lp.x + nx * sp[1], ly = lp.y + ny * sp[1];
+      b.lx = lx; b.ly = ly;
       b.t.setAttribute('fill', INK[j]);
       b.t.setAttribute('x', lx.toFixed(1)); b.t.setAttribute('y', (ly + 4).toFixed(1));
       b.t.setAttribute('opacity', rev >= 1 ? 1 : 0);
