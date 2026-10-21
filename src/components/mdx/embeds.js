@@ -21,6 +21,40 @@ export const Dropdown = ({ title, open = false, spotlight = false, children }) =
   </DropdownBox>
 )
 
+/* No green token in global styles (accent is red). Deep green stays
+   readable on the light text box. */
+const SPOTLIGHT_GREEN = "#2c4f43"
+
+const SpotlightFrame = styled.div`
+  container-type: inline-size;
+  margin: var(--space-lg) 0;
+`
+
+const SpotlightHeadingTitle = styled.p`
+  && {
+    max-width: none;
+    margin: 0;
+    color: ${SPOTLIGHT_GREEN};
+    /* Larger than section titles (those top out near 2.6rem). The floor
+       keeps it a heading when the column is narrow; balance wraps on words. */
+    font-size: clamp(2.35rem, 8.4cqi, 3.35rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+`
+
+/**
+ * One flagship title on the Outreach page. Not a page heading style, so
+ * other section titles stay as they are.
+ */
+export const SpotlightHeading = ({ title }) => (
+  <SpotlightFrame>
+    <SpotlightHeadingTitle>{title}</SpotlightHeadingTitle>
+  </SpotlightFrame>
+)
+
 /**
  * PDF in a scrollable frame; `badge` labels it (e.g. "Primary vertical").
  * Until the PDF exists, `cover` (its title page, AVIF) stands in for it in
@@ -211,6 +245,7 @@ const ScaledFigure = ({ href, title, dark, logical, open, frameRef }) => {
 
 export const embedComponents = {
   Dropdown,
+  SpotlightHeading,
   Photos,
   InteractiveEmbed,
   PdfEmbed,

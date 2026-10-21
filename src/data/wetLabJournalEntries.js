@@ -60,7 +60,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     id: "2026-06-11",
     date: "2026-06-11",
     label: "Jun 11",
-    goal: "Make competent cells and settle the selection assay design.",
+    goal: "Make competent cells and settle the Selection assay design.",
     workCompleted:
       "Picked up cells from Thomas, grew liquid cultures and prepared Mix&Go and BL21 competent cells (OD600 read in flat 96-well plates). The Selection subgroup met to compare trimethoprim (TMP) vs sulfonamide selection, dfrA1 vs dfrB10 markers, inducer and promoter options, media and controls.",
     result:
@@ -140,7 +140,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     workCompleted:
       "Passed the first round of Lawson safety interviews (all leads and half the team). Made copper phthalate, stained fabric with copper, ran day 1–2 of BL21 competent cells, and transformed pUC19 into our own DH5α competent cells as a positive control. Received the AS plasmid sequencing.",
     result:
-      "Scope sharpened to the copper-based biosensor and selection assays, with an August 1 checkpoint to show at least one assay is likely to work. Only the 20 mL culture's miniprep gave a full AS plasmid assembly.",
+      "Scope sharpened to the copper-based Biosensor and Selection assays, with an August 1 checkpoint to show at least one assay is likely to work. Only the 20 mL culture's miniprep gave a full AS plasmid assembly.",
     nextStep: "Purify the AS plasmid and test copper toxicity.",
   },
   {
@@ -152,7 +152,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
       "Glycerol-stocked and miniprepped the AS plasmid, finished BL21 competent cells, made serial-dilution OD vials for Hardware's OD sensor testing, and began copper toxicity and copper-release-from-fabric tests. Placed Twist and IDT orders. Second Lawson interview held for the rest of the team.",
     result:
       "AS plasmid purified, competent cells made, and the miniprep protocol that had been failing is now solved. Copper phthalate made (blue precipitate; IR confirmation pending).",
-    nextStep: "Golden Gate the selection and biosensor inserts into the AS plasmid.",
+    nextStep: "Golden Gate the Selection and Biosensor inserts into the AS plasmid.",
     images: [
       {
         src: WL_IMG("copper-phthalate-jul30.avif"),
@@ -170,7 +170,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     id: "2026-08-04",
     date: "2026-08-04",
     label: "Aug 4",
-    goal: "Clone the selection and biosensor variants of the AS plasmid.",
+    goal: "Clone the Selection and Biosensor variants of the AS plasmid.",
     workCompleted:
       "Ran GGA of the post-KLD AS plasmid with the sul1, sul2, dfr and msGFP2 inserts and transformed them into DH5α. Made Mueller Hinton plates across a range of CuSO₄ concentrations, ran copper toxicity spot plates and copper strip tests, and measured crystal violet absorbance at 590 nm after 5–40 min staining.",
     result:
@@ -192,8 +192,8 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     workCompleted:
       "Miniprepped sul1, sul2, dfr and msGFP2 (mixing kit columns when one ran out) and sent them for sequencing. Ran the dye-release protocol and 24 h copper strip tests on PET mesh. Explored measuring copper sorption by comparing CuSO₄ concentration before and after adding mesh.",
     result:
-      "First sequencing runs had few reads and genomic DNA contamination; sul2 and msGFP2 were usable, sul1 needed a fresh miniprep. The 5-minute stained mesh released noticeably more crystal violet than the longer stains. Copper test strips read falsely when NaOH is present, so neutralization is needed first. Four assays now in development: copper biosensor, selection, dye release and an in-house halo assay; a dead PETase arrived as a negative control.",
-    nextStep: "Re-sequence the variants and test the biosensor strain on copper plates.",
+      "First sequencing runs had few reads and genomic DNA contamination; sul2 and msGFP2 were usable, sul1 needed a fresh miniprep. The 5-minute stained mesh released noticeably more crystal violet than the longer stains. Copper test strips read falsely when NaOH is present, so neutralization is needed first. Four assays now in development: copper Biosensor, Selection, dye release and an in-house halo assay; a dead PETase arrived as a negative control.",
+    nextStep: "Re-sequence the variants and test the Biosensor strain on copper plates.",
     images: [
       {
         src: WL_IMG("miniprep-nanodrop-aug12.avif"),
@@ -221,7 +221,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
       {
         src: WL_IMG("selection-plates-aug14.avif"),
         alt: "Selection test plate with colonies",
-        caption: "Copper + antibiotic test plate from the selection trials (Aug 14).",
+        caption: "Copper + antibiotic test plate from the Selection trials (Aug 14).",
       },
     ],
   },
@@ -229,7 +229,7 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     id: "2026-08-17",
     date: "2026-08-17",
     label: "Aug 17",
-    goal: "Test the copper biosensor and check copper leaching from PET mesh.",
+    goal: "Test the copper Biosensor and check copper leaching from PET mesh.",
     workCompleted:
       "Imaged BL21 AS-msGFP2 on kan + CuSO₄ plates under UV and blue light. Grew AS-msGFP2 with copper-stained PET mesh placed on the plates (mesh washed once, twice or three times) to test leaching. Re-sequenced AS-sul2 and AS-dfr, and set up a new GGA of AS + pCusC-RBS + dfrB10.",
     result:
@@ -247,21 +247,21 @@ const WET_LAB_JOURNAL_ENTRIES_RAW = [
     id: "2026-08-24",
     date: "2026-08-24",
     label: "Aug 24",
-    goal: "Collect selection data and start the PD (display) plasmid.",
+    goal: "Collect Selection data and start the PD (display) plasmid.",
     workCompleted:
       "Photographed copper plates under blue light, tested AS-sul1 on kan + 32 µg/mL sulfonamide with varying copper and AS-sul2 on varying sulfonamide at 4 mM copper (10⁸–10² dilutions, empty AS control), glycerol-stocked and sequenced AS-empty and AS-dfr, and redid the empty PD transformation. Submitted all outstanding safety forms; Prof. Lawson signed the RRFs.",
     result:
-      "AS-sul1 grows at higher sulfadiazine concentrations than the negative control: early evidence that the selection assay works. Copper loads reliably onto the PET test plates. PD fragment 1 PCR gave a clean band.",
+      "AS-sul1 grows at higher sulfadiazine concentrations than the negative control: early evidence that the Selection assay works. Copper loads reliably onto the PET test plates. PD fragment 1 PCR gave a clean band.",
     nextStep: "Assemble the PD plasmid from fragments 1 and 2 and move into BioZone.",
     images: [
       {
         src: WL_IMG("msgfp-blue-light-aug24.avif"),
         alt: "Copper plates under blue light",
-        caption: "Copper plates under blue light: only the biosensor colonies glow (Aug 24).",
+        caption: "Copper plates under blue light: only the Biosensor colonies glow (Aug 24).",
       },
       {
         src: WL_IMG("selection-series-aug24.avif"),
-        alt: "Row of selection test plates",
+        alt: "Row of Selection test plates",
         caption: "Sulfonamide and copper plate series for AS-sul1 and AS-sul2 (Aug 24).",
       },
       {

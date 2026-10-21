@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { graphql } from "gatsby"
-import styled, { css } from "styled-components"
+import styled from "styled-components"
 import WikiLayout from "../../components/layout.js"
 
 /*
@@ -35,6 +35,21 @@ const MUTED = "#4d6d69"
  */
 const SUBTEAM_ICON_BASE =
   "https://static.igem.wiki/teams/6187/wiki/team/icons/"
+
+/**
+ * Circle colour of each icon (sampled from the artwork). A selected pill
+ * mixes this with white, so Hardware and Wet Lab don't share one red.
+ */
+const SWATCH = {
+  hardware: "#bb5851",
+  "wet-lab": "#e79267",
+  "dry-lab": "#f0b275",
+  web: "#ebd087",
+  outreach: "#abbc89",
+  entrepreneurship: "#669481",
+  "human-practices": "#56848b",
+}
+
 const SUBTEAMS = [
   { slug: "hardware", label: "Hardware", match: ["hardware"] },
   { slug: "wet-lab", label: "Wet Lab", match: ["wet lab", "wetlab"] },
@@ -123,17 +138,16 @@ const MailIcon = () => (
 )
 
 function MemberLinks({ m }) {
-  const stop = (e) => e.stopPropagation()
   if (!m.linkedIn && !m.email) return null
   return (
     <Links>
       {m.linkedIn && (
-        <IconLink href={m.linkedIn} target="_blank" rel="noopener noreferrer" onClick={stop} aria-label={`${m.Name} on LinkedIn`}>
+        <IconLink href={m.linkedIn} target="_blank" rel="noopener noreferrer" aria-label={`${m.Name} on LinkedIn`}>
           <LinkedInIcon />
         </IconLink>
       )}
       {m.email && (
-        <IconLink href={`mailto:${m.email}`} target="_blank" rel="noopener noreferrer" onClick={stop} aria-label={`Email ${m.Name}`}>
+        <IconLink href={`mailto:${m.email}`} target="_blank" rel="noopener noreferrer" aria-label={`Email ${m.Name}`}>
           <MailIcon />
         </IconLink>
       )}
@@ -141,10 +155,33 @@ function MemberLinks({ m }) {
   )
 }
 
+/** One legend. Scroll moves these same buttons from the header row to the left edge. */
+function SubteamLegend({ active, onToggle, legendRef }) {
+  return (
+    <Legend ref={legendRef} aria-label="Subteam icons">
+      {SUBTEAMS.map((type) => (
+        <li key={type.slug}>
+          <LegendButton
+            type="button"
+            data-subteam={type.slug}
+            aria-pressed={active.has(type.slug)}
+            onClick={() => onToggle(type.slug)}
+          >
+            <img src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`} alt="" />
+            <span>{type.label}</span>
+          </LegendButton>
+        </li>
+      ))}
+    </Legend>
+  )
+}
+
 const TeamPage = ({ data }) => {
-  const sections = groupByLevel(data.allTeamCsv.nodes)
-  const [flipped, setFlipped] = useState(() => new Set())
+  const members = data.allTeamCsv.nodes
+  const [filter, setFilter] = useState(() => new Set())
   const backdropRef = useRef(null)
+  const contentRef = useRef(null)
+  const headerLegendRef = useRef(null)
 
   useEffect(() => {
     const box = backdropRef.current
@@ -173,21 +210,121 @@ const TeamPage = ({ data }) => {
     }
   }, [])
 
-  const toggle = useCallback((id) => {
-    setFlipped((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
+  /*
+   * One legend stays in the header flow. Over a short scroll (the row
+   * reaching the site bar), each button's translate moves it to the
+   * left-hand stack. Progress is the scroll position, not a timed tween.
+   * A linear mix would still be moving when it hits the side slot, and
+   * would change direction the instant the move starts. Smoothstep keeps
+   * the same short range but matches scroll speed at both ends.
+   * Reduced motion snaps to the row or the stack.
+   */
+  useLayoutEffect(() => {
+    const legend = headerLegendRef.current
+    const content = contentRef.current
+    if (!legend || !content) return undefined
+    const travel = 140
+    let frame = 0
+    let home = []
+    const buttons = () => [...legend.querySelectorAll("button")]
+    const measure = () => {
+      buttons().forEach((b) => {
+        b.style.transform = "none"
+        b.style.clipPath = ""
+        const span = b.querySelector("span")
+        if (span) span.style.opacity = ""
+      })
+      const lr = legend.getBoundingClientRect()
+      home = buttons().map((b) => {
+        const r = b.getBoundingClientRect()
+        return { x: r.left - lr.left, y: r.top - lr.top, w: r.width, h: r.height }
+      })
+    }
+    const place = () => {
+      frame = 0
+      const list = buttons()
+      if (home.length !== list.length) measure()
+      const bar = document.querySelector("header")
+      const cover = bar ? bar.getBoundingClientRect().bottom : 0
+      const lr = legend.getBoundingClientRect()
+      const raw = (cover - lr.top) / travel
+      const p = Math.min(1, Math.max(0, raw))
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      const t = reduce ? (p >= 0.5 ? 1 : 0) : p * p * (3 - 2 * p)
+      const narrow = window.matchMedia("(max-width: 900px)").matches
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      const gap = 0.4 * root
+      const sideLeft = 0.75 * root
+      const total = home.reduce((sum, slot, i) => sum + slot.h + (i ? gap : 0), 0)
+      let cursor = (window.innerHeight - total) / 2
+      list.forEach((b, i) => {
+        const slot = home[i]
+        if (!slot) return
+        const naturalX = lr.left + slot.x
+        const naturalY = lr.top + slot.y
+        const sideY = cursor
+        cursor += slot.h + gap
+        const dx = (sideLeft - naturalX) * t
+        const dy = (sideY - naturalY) * t
+        b.style.transform =
+          t === 0 ? "" : `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0)`
+        const span = b.querySelector("span")
+        if (!narrow) {
+          b.style.clipPath = ""
+          if (span) span.style.opacity = ""
+          return
+        }
+        const img = b.querySelector("img")
+        const pad = parseFloat(getComputedStyle(b).paddingLeft) || 0
+        const iconPill = pad + (img ? img.offsetWidth : 0) + pad
+        const clip = Math.max(0, slot.w - iconPill) * t
+        b.style.clipPath = clip > 0.4 ? `inset(0 ${clip.toFixed(1)}px 0 0 round 999px)` : ""
+        if (span) span.style.opacity = String(1 - t)
+      })
+      content.style.setProperty("--legend-p", t.toFixed(3))
+    }
+    const queue = () => {
+      if (!frame) frame = requestAnimationFrame(place)
+    }
+    const onResize = () => {
+      measure()
+      place()
+    }
+    measure()
+    place()
+    window.addEventListener("scroll", queue, { passive: true })
+    window.addEventListener("resize", onResize)
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
+    motion.addEventListener?.("change", queue)
+    let cancelFonts = false
+    document.fonts?.ready.then(() => {
+      if (cancelFonts) return
+      measure()
+      place()
     })
+    return () => {
+      cancelFonts = true
+      cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", queue)
+      window.removeEventListener("resize", onResize)
+      motion.removeEventListener?.("change", queue)
+    }
   }, [])
 
-  const keyToggle = (id) => (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault()
-      toggle(id)
-    }
-  }
+  const toggleFilter = (slug) =>
+    setFilter((current) => {
+      const next = new Set(current)
+      if (next.has(slug)) next.delete(slug)
+      else next.add(slug)
+      return next
+    })
+
+  const shown = filter.size
+    ? members.filter((m) =>
+        subteamsOf(m).some((type) => filter.has(type.slug))
+      )
+    : members
+  const sections = groupByLevel(shown)
 
   return (
     <WikiLayout pagePath="/team/">
@@ -195,107 +332,67 @@ const TeamPage = ({ data }) => {
         <img src={BG_SRC} alt="" />
       </Backdrop>
 
-      <Content>
+      <Content ref={contentRef}>
         <Title>Meet the Team</Title>
-        <TeamSubtitle>The team behind PetaBite.</TeamSubtitle>
-        <Legend aria-label="Subteam icons">
-          {SUBTEAMS.map((type) => (
-            <LegendItem key={type.slug}>
-              <img
-                src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
-                alt=""
-              />
-              {type.label}
-            </LegendItem>
-          ))}
-        </Legend>
+        <Intro>
+          The team behind PetaBite.
+          Choose a subteam to see who is on it.
+        </Intro>
+        <SubteamLegend
+          active={filter}
+          onToggle={toggleFilter}
+          legendRef={headerLegendRef}
+        />
 
-        {sections.map(([level, title, members]) => (
-          <Section key={level} aria-labelledby={`team-${level}`}>
-            <SectionTitle id={`team-${level}`}>{title}</SectionTitle>
-            <Cards>
-              {members.map((m) => {
-                const isFlipped = flipped.has(m.id)
-                const frame = LEAD_LEVELS.has(level) ? LEAD_FRAME : TEAM_FRAME
-                const types = subteamsOf(m)
-                const label = cardLabel(m)
-                const about = [m.major, m.year, m.school].filter(Boolean)
-                return (
-                  <Card key={m.id} style={{ "--frame": frame }}>
-                    <FlipInner $flipped={isFlipped}>
-                      <Front
-                        role="button"
-                        tabIndex={isFlipped ? -1 : 0}
-                        aria-hidden={isFlipped}
-                        aria-expanded={isFlipped}
-                        aria-label={`${m.Name}${label ? `, ${label}` : ""}. Show more.`}
-                        onClick={() => toggle(m.id)}
-                        onKeyDown={keyToggle(m.id)}
-                      >
-                        <Photo>
-                          {photoSrc(m) ? (
-                            <img src={photoSrc(m)} alt="" loading="lazy" />
-                          ) : (
-                            <Initials aria-hidden>{initials(m.Name)}</Initials>
-                          )}
-                          <Top>
-                            <Caption>
-                              <Name>{m.Name}</Name>
-                              {label && <Role>{label}</Role>}
-                            </Caption>
-                            {types.length > 0 && (
-                              <TypeBadges>
-                                {types.map((type) => (
-                                  <TypeBadge
-                                    key={type.slug}
-                                    src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
-                                    alt={`${type.label} subteam`}
-                                    title={type.label}
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                ))}
-                              </TypeBadges>
-                            )}
-                          </Top>
-                          <MemberLinks m={m} />
-                        </Photo>
-                      </Front>
-
-                      <Back
-                        role="button"
-                        tabIndex={isFlipped ? 0 : -1}
-                        aria-hidden={!isFlipped}
-                        aria-expanded={isFlipped}
-                        aria-label={`More about ${m.Name}. Click to flip back.`}
-                        onClick={() => toggle(m.id)}
-                        onKeyDown={keyToggle(m.id)}
-                      >
-                        <BackInner>
-                          <BackName>{m.Name}</BackName>
-                          {label && <BackRole>{label}</BackRole>}
-                          {about.length > 0 && (
-                            <About>
-                              {about.map((line) => (
-                                <li key={line}>{line}</li>
+        <Roster>
+          {sections.map(([level, title, group]) => (
+            <Section key={level} aria-labelledby={`team-${level}`}>
+              <SectionTitle id={`team-${level}`}>{title}</SectionTitle>
+              <Cards>
+                {group.map((m) => {
+                  const frame = LEAD_LEVELS.has(level) ? LEAD_FRAME : TEAM_FRAME
+                  const types = subteamsOf(m)
+                  const label = cardLabel(m)
+                  return (
+                    <Card key={m.id} style={{ "--frame": frame }}>
+                      <Photo>
+                        {photoSrc(m) ? (
+                          <img src={photoSrc(m)} alt="" loading="lazy" />
+                        ) : (
+                          <Initials aria-hidden>{initials(m.Name)}</Initials>
+                        )}
+                        <Top>
+                          <Caption>
+                            <Name>{m.Name}</Name>
+                            {label && <Role>{label}</Role>}
+                          </Caption>
+                          {types.length > 0 && (
+                            <TypeBadges>
+                              {types.map((type) => (
+                                <TypeBadge
+                                  key={type.slug}
+                                  src={`${SUBTEAM_ICON_BASE}${type.slug}.avif`}
+                                  alt={`${type.label} subteam`}
+                                  title={type.label}
+                                  loading="lazy"
+                                  decoding="async"
+                                />
                               ))}
-                            </About>
+                            </TypeBadges>
                           )}
-                          <Bio>{m.description}</Bio>
-                          {m.website && (
-                            <TextLink href={m.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                              Website
-                            </TextLink>
-                          )}
-                        </BackInner>
-                      </Back>
-                    </FlipInner>
-                  </Card>
-                )
-              })}
-            </Cards>
-          </Section>
-        ))}
+                        </Top>
+                        <MemberLinks m={m} />
+                      </Photo>
+                    </Card>
+                  )
+                })}
+              </Cards>
+            </Section>
+          ))}
+          {sections.length === 0 && (
+            <Empty>No one on this subteam is listed.</Empty>
+          )}
+        </Roster>
       </Content>
     </WikiLayout>
   )
@@ -308,15 +405,9 @@ export const query = graphql`
         id
         Name
         level
-        role
         subteams
-        major
-        year
-        school
-        description
         linkedIn
         email
-        website
         photo
       }
     }
@@ -350,7 +441,7 @@ const Content = styled.div`
 `
 
 const Title = styled.h1`
-  margin: clamp(2rem, 6vw, 4rem) 0 0.5rem;
+  margin: clamp(2rem, 6vw, 4rem) 0 0.65rem;
   text-align: center;
   color: ${HEADING};
   font-family: var(--font-display);
@@ -359,31 +450,103 @@ const Title = styled.h1`
   letter-spacing: -0.01em;
 `
 
-const Legend = styled.ul`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem 0.75rem;
-  max-width: 46rem;
-  margin: -1.25rem auto clamp(2.5rem, 6vw, 4rem);
-  padding: 0;
-  list-style: none;
+const Intro = styled.p`
+  max-width: 36rem;
+  margin: 0 auto clamp(1.1rem, 2.5vw, 1.55rem);
+  text-align: center;
+  color: ${MUTED};
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
 `
 
-const LegendItem = styled.li`
+const Empty = styled.p`
+  margin: 1.5rem 0 3rem;
+  text-align: center;
+  color: ${MUTED};
+  font-size: 1rem;
+`
+
+/** Clears the left edge in step with the legend's scroll progress, only as far as the icons would cover the cards. */
+const Roster = styled.div`
+  --legend-reach: 13.25rem;
+  padding-left: calc(
+    var(--legend-p, 0) *
+      max(
+        0px,
+        var(--legend-reach) - max(0px, (100vw - var(--max-width)) / 2) -
+          var(--page-padding)
+      )
+  );
+
+  @media (max-width: 900px) {
+    --legend-reach: 3.6rem;
+  }
+`
+
+const LegendButton = styled.button`
+  appearance: none;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
   padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.9);
   color: ${HEADING};
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+
+  ${Object.entries(SWATCH)
+    .map(([slug, color]) => `&[data-subteam="${slug}"] { --swatch: ${color}; }`)
+    .join("\n")}
 
   img {
     width: 1.7rem;
     height: 1.7rem;
+    flex: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${HEADING};
+    outline-offset: 3px;
+  }
+
+  &[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--swatch) 30%, #fff);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--swatch) 58%, #fff);
+  }
+`
+
+const Legend = styled.ul`
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  margin: 0 0 clamp(1.75rem, 4vw, 2.75rem);
+  padding: 0;
+  overflow: visible;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex: 0 0 auto;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
 `
 
@@ -416,51 +579,16 @@ const Cards = styled.div`
   margin: 0 auto;
 `
 
-const Card = styled.div`
+const Card = styled.article`
+  position: relative;
   width: var(--card-w);
   aspect-ratio: 156 / 218;
-  perspective: 1000px;
-  /* 1em is 16px on a 10rem card. */
-  font-size: max(0.85rem, calc(var(--card-w) / 10));
-`
-
-const FlipInner = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.55s ease;
-  transform: rotateY(${({ $flipped }) => ($flipped ? 180 : 0)}deg);
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`
-
-const face = css`
-  position: absolute;
-  inset: 0;
   box-sizing: border-box;
   padding: 0.44em;
   border-radius: 0.5em;
   background: var(--frame);
-  cursor: pointer;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-
-  &:focus-visible {
-    outline: 2px solid ${HEADING};
-    outline-offset: 3px;
-  }
-`
-
-const Front = styled.div`
-  ${face}
-`
-
-const Back = styled.div`
-  ${face}
-  transform: rotateY(180deg);
+  /* 1em is 16px on a 10rem card. */
+  font-size: max(0.85rem, calc(var(--card-w) / 10));
 `
 
 const Photo = styled.div`
@@ -595,61 +723,3 @@ const IconLink = styled.a`
     background: rgba(255, 255, 255, 0.25);
   }
 `
-
-const BackInner = styled.div`
-  height: 100%;
-  box-sizing: border-box;
-  padding: 0.6em;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.7);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-`
-
-const BackName = styled.div`
-  font-weight: 700;
-  font-size: 1.05em;
-`
-
-const BackRole = styled.div`
-  color: ${MUTED};
-  font-size: 0.72em;
-  margin-bottom: 0.4em;
-`
-
-/** Major, year and school, one to a line. */
-const About = styled.ul`
-  margin: 0 0 0.5em;
-  padding: 0;
-  list-style: none;
-  font-size: 0.68em;
-  line-height: 1.4;
-
-  li + li {
-    margin-top: 0.2em;
-  }
-`
-
-const Bio = styled.p`
-  flex: 1;
-  margin: 0 0 0.4em;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font-size: 0.72em;
-  line-height: 1.45;
-`
-
-const TextLink = styled.a`
-  color: ${HEADING};
-  font-size: 0.72em;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-`
-
-const TeamSubtitle = styled.p`
-  text-align: center;
-  color: ${HEADING};
-  margin: 0 0 clamp(2.5rem, 7vw, 5rem);
-  font-size: 1.2rem;
-`;
