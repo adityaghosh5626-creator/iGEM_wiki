@@ -23,6 +23,13 @@ export function onCreateWebpackConfig({ getConfig, actions }) {
     }
   }
   visit(config.module?.rules)
+  // Mol* (the structure viewer on the Software page) reaches for Node's fs,
+  // path and crypto; webpack 5 stops polyfilling those, so they are stubbed
+  // out the way petadex.io's frontend stubs them.
+  config.resolve = {
+    ...config.resolve,
+    fallback: { ...config.resolve?.fallback, fs: false, path: false, crypto: false },
+  }
   actions.replaceWebpackConfig(config)
 }
 

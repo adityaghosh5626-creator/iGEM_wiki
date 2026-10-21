@@ -2231,7 +2231,21 @@ function sceneVars(scene, plate) {
   }
 }
 
-export function SubpageScene({ scene, title, description, children }) {
+/**
+ * `opening`: the page's intro line. The first screen becomes a hero of exactly
+ * the window under the site header: the title in its sky, the line centred in
+ * its sand (OpeningSand), the boxes starting below the fold. The section
+ * subtitle is left off, so the header is the title alone.
+ * `hideHeaderSub`: leave the section subtitle off without an opening line.
+ */
+export function SubpageScene({
+  scene,
+  title,
+  description,
+  opening,
+  hideHeaderSub,
+  children,
+}) {
   const whiteFilterId = `scene-white-${useId().replace(/:/g, "")}`
   const plate = plateOf(scene)
   const { side, text } = scene
@@ -2882,13 +2896,20 @@ export function SubpageScene({ scene, title, description, children }) {
       </BgTrack>
 
       {scene.header && (
-        <SectionHeader>
+        <SectionHeader $opening={!!opening}>
           <SectionTitle>{scene.header}</SectionTitle>
-          {scene.headerSub && <SectionSub>{scene.headerSub}</SectionSub>}
+          {!opening && !hideHeaderSub && scene.headerSub && (
+            <SectionSub>{scene.headerSub}</SectionSub>
+          )}
         </SectionHeader>
       )}
+      {opening && (
+        <OpeningSand>
+          <OpeningLine>{opening}</OpeningLine>
+        </OpeningSand>
+      )}
 
-      <Content>
+      <Content $opening={!!opening}>
         {side && (
           <SideColumn ref={sideColumnRef} data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
@@ -3167,6 +3188,13 @@ export function SubpageScene({ scene, title, description, children }) {
 export default SubpageScene
 
 const Scene = styled.div`
+  /* The first screen under the site header, and the sky's share of it (an
+     opening page's hero): the art's horizon, so the line below lands on sand,
+     but never past 80% of the screen, so a very short window keeps a strip of
+     sand for it. */
+  --hero-h: calc(100svh - var(--dl-header, 0px));
+  --hero-sky: min(var(--sky-h), calc(var(--hero-h) * 0.8));
+
   position: relative;
   width: 100%;
   min-height: calc(100vh - var(--dl-header, 0px));
@@ -4168,6 +4196,16 @@ const SectionHeader = styled.div`
   ${NARROW} {
     height: max(4.5rem, var(--sky-h));
   }
+
+  /* With an opening line the header is the hero's sky: never more than its
+     share of the first screen, so the sand below keeps room for the line. */
+  ${({ $opening }) =>
+    $opening &&
+    css`
+      &&& {
+        height: var(--hero-sky);
+      }
+    `}
 `
 
 /** Big and heavy, with a light top edge and a soft drop so it sits on the art. */
@@ -4193,6 +4231,43 @@ const SectionSub = styled.p`
   line-height: 1.15;
   text-wrap: balance;
   text-shadow: var(--header-shadow);
+`
+
+/**
+ * The first screen's sand: from the bottom of the hero's sky down to the fold
+ * (where Content's boxes begin). The line is centred in it and its type is
+ * capped by the box's height (cqh) as well as the art's width, so a wide, short
+ * window shrinks it instead of pushing it up into the title.
+ */
+const OpeningSand = styled.div`
+  position: absolute;
+  z-index: 1;
+  top: var(--hero-sky);
+  left: 0;
+  right: 0;
+  height: calc(var(--hero-h) - var(--hero-sky));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  pointer-events: none;
+`
+
+const OpeningLine = styled.p`
+  width: min(80%, 60rem);
+  margin: 0;
+  color: var(--header-color);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: max(0.95rem, min(${ax(28)}, 11cqh));
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  text-shadow: var(--header-shadow);
+
+  ${NARROW} {
+    width: 88%;
+  }
 `
 
 const scuttleKeyframes = sign => keyframes`
@@ -4256,6 +4331,15 @@ const Content = styled.div`
   ${NARROW} {
     grid-template-columns: 5% 90% 5%;
     padding-top: max(1.5rem, var(--pad-top));
+  }
+
+  /* One screen of art under the site header before the boxes. */
+  &&& {
+    ${({ $opening }) =>
+      $opening &&
+      css`
+        padding-top: max(var(--pad-top), var(--hero-h));
+      `}
   }
 `
 

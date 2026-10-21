@@ -8,6 +8,7 @@ import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
 import { DryLabCalendar } from "../dryLabCalendar/DryLabCalendar.js"
 import { DryLabIterations } from "../dryLabCalendar/IterationLedger.js"
+import { DryLabSeasonRibbon } from "../dryLabCalendar/DryLabSeasonRibbon.js"
 import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
 import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
 import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
@@ -18,6 +19,7 @@ import AtlasMap from "../AtlasMap.js"
 import PetadexGame from "../PetadexGame.js"
 import { FeatureCard, FeatureCards } from "./FeatureCards.js"
 import { Expandable } from "./ExpandWindow.js"
+import { useFigureViewer, ViewableImage } from "./FigureViewer.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import {
@@ -30,7 +32,9 @@ import {
   MethodsLink,
 } from "./interactive/DiamondSearch.js"
 import { DiamondSearchDemo } from "./interactive/DiamondSearchDemo.js"
+import { RecordCardDemo } from "./interactive/RecordCardDemo.js"
 import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
+import { BiosampleViewer, ProfileShares, ProfileStack, ProfileSteps } from "./interactive/BiosampleProfiles.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
@@ -70,18 +74,41 @@ export const Placeholder = ({ label = "Placeholder text", children }) => (
 
 // Root-relative srcs point into static/; withPrefix adds the /toronto path
 // prefix the iGEM build is served under.
-export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
-  <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
-    {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
-    {children}
-    {(caption || credit) && (
-      <figcaption>
-        {caption && <span>{caption}</span>}
-        {credit && <small>{credit}</small>}
-      </figcaption>
-    )}
-  </FigureWrap>
-)
+const figureSrc = src => (src.startsWith("/") ? withPrefix(src) : src)
+
+// On the Dry Lab pages the image opens into the figure viewer with its
+// caption; `expandable` overrides that either way for one figure, and
+// `title` names it in the viewer's bar.
+export const Figure = ({
+  id,
+  src,
+  alt = "",
+  title,
+  caption,
+  credit,
+  width = "32rem",
+  expandable,
+  children,
+}) => {
+  const viewer = useFigureViewer(expandable)
+  return (
+    <FigureWrap id={id} $width={typeof width === "number" ? `${width}px` : width}>
+      {src &&
+        (viewer ? (
+          <ViewableImage src={figureSrc(src)} alt={alt} title={title} caption={caption} credit={credit} />
+        ) : (
+          <img src={figureSrc(src)} alt={alt} />
+        ))}
+      {children}
+      {(caption || credit) && (
+        <figcaption>
+          {caption && <span>{caption}</span>}
+          {credit && <small>{credit}</small>}
+        </figcaption>
+      )}
+    </FigureWrap>
+  )
+}
 
 // Markdown links to other wiki pages are root-relative too, so they need the
 // same prefix. Protocol-relative (//) and hash-only links are left alone.
@@ -100,20 +127,37 @@ export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
  * scales down to fit inside it, so the figure never runs past the text.
  * Stacks on narrow screens.
  */
-export const SideFigure = ({ src, alt = "", caption, width = "40%", side = "right", children }) => (
-  <SideFigureWrap
-    $width={typeof width === "number" ? `${width}px` : width}
-    $left={side === "left"}
-  >
-    <SideFigureText>{children}</SideFigureText>
-    <SideFigureFrame>
-      <SideFigureImage>
-        {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
-      </SideFigureImage>
-      {caption && <figcaption>{caption}</figcaption>}
-    </SideFigureFrame>
-  </SideFigureWrap>
-)
+export const SideFigure = ({
+  src,
+  alt = "",
+  title,
+  caption,
+  width = "40%",
+  side = "right",
+  expandable,
+  children,
+}) => {
+  const viewer = useFigureViewer(expandable)
+  return (
+    <SideFigureWrap
+      $width={typeof width === "number" ? `${width}px` : width}
+      $left={side === "left"}
+    >
+      <SideFigureText>{children}</SideFigureText>
+      <SideFigureFrame>
+        <SideFigureImage>
+          {src &&
+            (viewer ? (
+              <ViewableImage src={figureSrc(src)} alt={alt} title={title} caption={caption} />
+            ) : (
+              <img src={figureSrc(src)} alt={alt} />
+            ))}
+        </SideFigureImage>
+        {caption && <figcaption>{caption}</figcaption>}
+      </SideFigureFrame>
+    </SideFigureWrap>
+  )
+}
 
 export const DataTable = ({ caption, children }) => (
   <DataTableWrap>
@@ -146,6 +190,7 @@ export const mdxComponents = {
   ContributionTimeline,
   DryLabCalendar,
   DryLabIterations,
+  DryLabSeasonRibbon,
   DesignSketchbook,
   HardwareNotebookSandbox,
   HardwareJournal,
@@ -162,9 +207,14 @@ export const mdxComponents = {
   ArchitectureFigure,
   DiamondSearchHero,
   DiamondSearchDemo,
+  RecordCardDemo,
   MethodsLink,
   ModelDatasets,
   DatasetLoop,
+  ProfileSteps,
+  ProfileShares,
+  ProfileStack,
+  BiosampleViewer,
   AntibioticSelectionAnimation,
   GfpBiosensorAnimation,
   CodeDropdown,
@@ -279,6 +329,8 @@ const FigureWrap = styled.figure`
   width: 100%;
   max-width: ${({ $width }) => $width};
   margin: var(--space-lg) auto;
+  /* Clears the sticky header when a link lands on the figure's id. */
+  scroll-margin-top: 6rem;
 
   img {
     width: 100%;
@@ -371,6 +423,13 @@ const SideFigureImage = styled.div`
   flex: 1;
   min-height: 12rem;
 
+  /* The viewer's opener stands in for the box, so the image inside it
+     still fills the same area. */
+  > button {
+    position: absolute;
+    inset: 0;
+  }
+
   img {
     position: absolute;
     inset: 0;
@@ -383,6 +442,10 @@ const SideFigureImage = styled.div`
   @media (max-width: 720px) {
     position: static;
     min-height: 0;
+
+    > button {
+      position: relative;
+    }
 
     img {
       position: static;
