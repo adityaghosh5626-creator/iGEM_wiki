@@ -356,7 +356,7 @@ const SECTION4_STORY = [
     // Fades as the protein slides to the middle, at the hold's end.
     phone: { in: [1, 0.5], out: [1, 0.9] },
     phoneAt: [SECTION4_PHONE_STORY_ROW, 4, 60],
-    text: "We also designed a novel algorithm to optimize the DNA library to order to capture more constellations of proteins.",
+    text: "We also designed a novel algorithm to optimize the DNA library in order to capture more constellations of proteins.",
   },
   // The Wet Lab shelf: on the wall right of it, centred between the top of
   // the dark window behind the axolotl and the bench's bottom edge (`mid`:

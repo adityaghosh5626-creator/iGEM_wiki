@@ -5,7 +5,7 @@ export const GENERATED_META = {
   "coveredThrough": "2026-10-17",
   "latestWeekId": "week-2026-10-11",
   "quietBefore": "2026-10-18",
-  "sourceSha1": "4305f9bf87e2",
+  "sourceSha1": "6cf399ca1370",
   "eventsParsed": 3479
 }
 

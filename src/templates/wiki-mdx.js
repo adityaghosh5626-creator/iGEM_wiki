@@ -440,6 +440,19 @@ const Article = styled.article`
   }
 
   .priority-comparison-table th:nth-child(1) { width: 30%; }
+  .hardware-requirements-table th:nth-child(1) { width: 14%; }
+  .hardware-requirements-table th:nth-child(2) { width: 23%; }
+  .hardware-requirements-table th:nth-child(3) { width: 23%; }
+  .hardware-requirements-table th:nth-child(4) { width: 12%; }
+  .hardware-requirements-table th:nth-child(5) { width: 28%; }
+
+  .hardware-requirements-table th:nth-child(1),
+  .hardware-requirements-table td:nth-child(1),
+  .hardware-requirements-table th:nth-child(4),
+  .hardware-requirements-table td:nth-child(4) {
+    padding-inline: 0.35rem;
+  }
+
   .priority-comparison-table th:nth-child(2),
   .priority-comparison-table th:nth-child(3) { width: 15%; }
   .priority-comparison-table th:nth-child(4) { width: 40%; }
