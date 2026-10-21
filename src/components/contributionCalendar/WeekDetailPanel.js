@@ -7,11 +7,14 @@ import {
   trackColor,
 } from "../../data/subteamTracks.js"
 import { formatDayShort } from "../../data/contributionCalendar/calendarUtils.js"
-import { useLinkTarget } from "../mdx/linkTarget.js"
+import { NEW_TAB } from "../mdx/linkTarget.js"
+
+/* Every link in the calendar opens in a new tab, so following one never loses
+   the reader's week, thread or Expand window. */
+const linkTarget = NEW_TAB
 
 /** Links to the wiki sections an entry is written up in: `see` is [label, href] pairs. */
 function SeeLinks({ see, lead = "Read more:" }) {
-  const linkTarget = useLinkTarget()
   if (!see?.length) return null
   return (
     <SeeRow>
@@ -35,7 +38,6 @@ export function WeekDetailPanel({
   /** Shown after the milestones (the Dry Lab calendar's iterations this week). */
   extra = null,
 }) {
-  const linkTarget = useLinkTarget()
   if (!week) {
     return (
       <PanelRoot>
@@ -91,9 +93,13 @@ export function WeekDetailPanel({
       {extra}
 
       <SubteamList>
-        {tracks.filter((t) => activeIds.has(t.id)).map((track) => {
+        {/* Tracks with something this week first, the quiet ones ("not started",
+            "no update") after; each keeps the tracks' order (sort is stable). */}
+        {tracks
+          .filter((t) => activeIds.has(t.id) && week.subteams[t.id])
+          .sort((a, b) => Number(!!week.subteams[a.id].quiet) - Number(!!week.subteams[b.id].quiet))
+          .map((track) => {
           const content = week.subteams[track.id]
-          if (!content) return null
           const href = content.link || track.href
           if (content.quiet) {
             return (

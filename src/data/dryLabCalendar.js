@@ -64,7 +64,8 @@ export const S = {
   record: ["Sequence record card", `${SW}#sequence-record-card`],
   atlas: ["ESM Atlas", `${SW}#esm-atlas`],
   availability: ["Availability", `${SW}#availability-and-licensing`],
-  overview: ["Dry Lab overview", "/dry-lab/overview/#petadex-model-landscape"],
+  overview: ["Dry Lab overview", "/dry-lab/overview/"],
+  landscape: ["PETadex Model Landscape", "/dry-lab/overview/#petadex-model-landscape"],
   wetLab: ["Wet Lab", "/wet-lab/overview/"],
   hpInterviews: ["Database interviews", "/human-practices/#global-consolidated-database-interviews"],
   hpConference: ["Microplastics Conference", "/human-practices/#education-and-multi-directional-feedback"],
@@ -131,10 +132,10 @@ export const DRY_LAB_TRACK_BY_ID = Object.fromEntries(
 )
 
 /** The calendar opens on the latest week on the record. */
-const LATEST_WEEK_ID = "week-2026-10-11"
+const LATEST_WEEK_ID = "week-2026-10-18"
 
 /** Weeks starting on or after this are still to come. */
-const UPCOMING_FROM = "2026-10-18"
+const UPCOMING_FROM = "2026-10-25"
 
 /** Start of the week each workstream first shows up; earlier weeks say "Not started yet". */
 const TRACK_FIRST_WEEK = {
@@ -147,6 +148,10 @@ const TRACK_FIRST_WEEK = {
 }
 
 const minutes = (name) => `From the minutes of ${name}.`
+const COMMITS =
+  "No Dry Lab meeting this week: pieced together from the wiki's commit history and the wiki team's meeting (Oct 11)."
+const COMMITS_AND_LM30 =
+  "No Dry Lab meeting this week: pieced together from the wiki's commit history and the leads' meeting (Oct 19)."
 const RECONSTRUCTED =
   "No meeting minutes this week: pieced together from the team's announcements and the leads' updates."
 
@@ -863,7 +868,7 @@ const WEEKS = {
     },
   },
   "week-2026-09-27": {
-    see: [S.overview],
+    see: [S.landscape],
     overview:
       "Write-ups due October 3 for the PETadex preprint. The search of Logan's latest release finished, and the Dry Lab wiki story was set: islands of known activity in a desert, narrowed by layers of annotation.",
     source: minutes("the wrap-up meeting (Oct 3)"),
@@ -916,22 +921,59 @@ const WEEKS = {
     },
   },
   "week-2026-10-11": {
-    see: [S.whatModel],
+    see: [S.whatModel, S.diamond],
     overview:
-      "Getting the wiki to a complete first version (checked October 13): a short summary and figure for every item on Model, and demos on Software, before any polish.",
-    source: "From the plan set at Meeting #20 (Oct 10).",
+      "Getting the wiki to a complete first version (checked October 13): a short summary and figure for every item on Model, and demos on Software, before any polish. The wiki team's review asked for the overview to let readers explore rather than read, and the first full builds for iGEM's servers ran into its upload limit.",
+    source: COMMITS,
     milestones: [{ date: "2026-10-13", label: "Wiki MVP check", subteamId: "all", see: S.whatModel }],
     tracks: {
+      dataset: {
+        summary: "Dataset generation charted on the Model page.",
+        see: [S.cath],
+        detail:
+          "A two-tier pipeline chart pins under the header and lights the subsection being read; CATH assignment got its own subsection.",
+      },
+      annotation: {
+        summary: "Model page figures fixed.",
+        see: [S.signal, S.structures],
+        detail: "Three embedded figures had all been showing the SignalP figure; each is now its own file.",
+      },
       software: {
         summary: "Sharded DIAMOND search on the wiki.",
         see: [S.diamond, S.diamondMethods],
-        detail: "The search's overview and methods went up on the Software page.",
+        detail:
+          "The search's overview went up on the Software page with an architecture diagram you can click into, and its full methods on their own page.",
       },
     },
   },
   "week-2026-10-18": {
-    overview: "Coming up: the wiki freeze on October 21.",
-    milestones: [{ date: "2026-10-21", label: "Wiki freeze", subteamId: "all", see: S.overview }],
+    see: [S.overview, S.datasets],
+    overview:
+      "The Dry Lab pages came together for the wiki freeze on October 21. The overview now leads with three interactives, the Model page gained its Datasets section, and the preprint is set to go on bioRxiv before the freeze so the wiki can cite it.",
+    source: COMMITS_AND_LM30,
+    milestones: [
+      { date: "2026-10-19", label: "Overview interactives live", subteamId: "all", see: S.overview },
+      { date: "2026-10-21", label: "Wiki freeze", subteamId: "all", see: S.overview },
+    ],
+    tracks: {
+      ml: {
+        summary: "Datasets section written; landscape on the overview.",
+        see: [S.datasets, S.landscape],
+        detail:
+          "The Datasets section is written against the published releases, with its numbers matched to the release cards. The embedding landscape from the conference talk is on the overview, rendered at its design size.",
+      },
+      annotation: {
+        summary: "Structure and controls sections corrected.",
+        see: [S.structures, S.controls],
+        detail: "A count that had lost its magnitude, a leftover placeholder, a stale figure number and mismatched alt text were fixed.",
+      },
+      software: {
+        summary: "Search demo: ten real searches, replayed.",
+        see: [S.diamond],
+        detail:
+          "The Software page replays ten searches really run on the live tool, shipped with the page so the demo works without the live site.",
+      },
+    },
   },
   "week-2026-10-25": { overview: "Coming up: preparing for the Grand Jamboree." },
 }

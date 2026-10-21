@@ -3,6 +3,7 @@ import { Link } from "gatsby"
 import styled from "styled-components"
 import { formatDayShort } from "../../data/contributionCalendar/calendarUtils.js"
 import { trackColor, trackTextColor } from "../../data/subteamTracks.js"
+import { NEW_TAB } from "../mdx/linkTarget.js"
 
 /*
  * Pieces shared by the iteration ledger (<DryLabIterations />) and the
@@ -103,7 +104,7 @@ export function EvidenceLinks({ see, source }) {
     <Evidence>
       <span>Evidence:</span>
       {see.map(([label, href]) => (
-        <EvidenceLink key={href} to={href}>
+        <EvidenceLink key={href} to={href} {...NEW_TAB}>
           {label} →
         </EvidenceLink>
       ))}

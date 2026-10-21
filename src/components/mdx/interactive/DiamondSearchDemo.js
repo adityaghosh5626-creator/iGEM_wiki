@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import styled, { css, keyframes } from "styled-components"
 import DEMO from "../../../data/diamondSearchDemo.json"
+import { ExpandWindow } from "../ExpandWindow.js"
 
 /**
  * Demo D2: replays of ten real sharded DIAMOND searches.
@@ -181,7 +182,10 @@ export const DiamondSearchDemo = () => {
   const best = (exactSelf && others.length ? others : query.hits)[0]
 
   return (
-    <Demo ref={rootRef}>
+    <Wrap>
+      <ExpandWindow title="DIAMOND search demo" inlineTitle={false} ground={PAPER}>
+        {(open) => (
+    <Demo ref={rootRef} $open={open}>
       <Head>
         <div>
           <Kicker>Demo · replays of real searches</Kicker>
@@ -356,6 +360,9 @@ export const DiamondSearchDemo = () => {
         </Foot>
       </Results>
     </Demo>
+        )}
+      </ExpandWindow>
+    </Wrap>
   )
 }
 
@@ -631,8 +638,11 @@ const Mono = styled.span`
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 `
 
-const Demo = styled.section`
+const Wrap = styled.div`
   margin: var(--space-lg) 0;
+`
+
+const Demo = styled.section`
   padding: 1.25rem;
   border: 1px solid ${FRAME};
   border-radius: 14px;
@@ -655,6 +665,19 @@ const Demo = styled.section`
   ${PHONE} {
     padding: 1rem;
   }
+
+  /* In the window the window is the frame, so the demo's own border goes and
+     its content is held to a readable width. */
+  ${({ $open }) =>
+    $open &&
+    css`
+      width: 100%;
+      max-width: 76rem;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 2rem;
+      border: 0;
+      border-radius: 0;
+    `}
 `
 
 const Head = styled.div`

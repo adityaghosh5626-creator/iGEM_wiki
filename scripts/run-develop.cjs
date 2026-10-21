@@ -22,6 +22,11 @@ child.on('error', err => {
   process.exit(1)
 })
 
-child.on('exit', code => {
+child.on('exit', (code, signal) => {
+  if (signal) {
+    console.error(`Gatsby development server stopped by ${signal}.`)
+  } else if (code) {
+    console.error(`Gatsby development server exited with code ${code}.`)
+  }
   process.exit(code ?? 1)
 })

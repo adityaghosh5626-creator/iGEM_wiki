@@ -15,16 +15,16 @@ stability and safety purposes, all component housings should be able to support
 the component weight without any hint of buckling.
 <br />
 
-| Component                                   | Requirement/Functionality                                                                 | Why?                                                                                                                                                                                               |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Vial<br />Bioreactor configuration          | Refer to below relationships                                                              | Determines where other subsystems must lie.                                                                                                                                                        |
-| Reference sensor + LED<br />OD              | Must be located across the collecting sensor and on the side of the vial.                 | The angle between the collecting sensor and the LED needs to be 180 degrees, while the reference sensor needs to sit directly on the LED to account for environmental factors (such as LED drift). |
-| Collecting sensor<br />OD                   | Must be located across the LED and on the side of the vial.                               | 180 degree required. See above.                                                                                                                                                                    |
-| Breadboard/protoboard<br />All subsystems   | Can be located anywhere                                                                   | Should be a minimal distance away from electrical sensors/components so that wires do not need to extend a long distance. Other than that, there are no location constraints.                      |
-| Heater<br />Temp control                    | Must be located below the vial but cannot sit directly on the vial                        | Thank you James                                                                                                                                                                                    |
-| Fan<br />Stirring                           | Must be located below the vial                                                            | The stir bar sits on the vial floor, thus the fan stirring it must be able to affect the vial floor.                                                                                               |
-| 3 x peristaltic pumps and tubing<br />Pumps | Can be located anywhere, with a separate compartment for each peristaltic pump preferred. | No locational relationship between the pumps and the rest of the bioreactor, however should be minimal distance from the vial to prevent long tubing.                                              |
-| Cap<br />Bioreactor configuration           | On top of vial                                                                            | Minimal cap tolerance with the vial holder for maximum darkness, which equals minimal light contamination with OD.                                                                                 |
+| Component                                   | Requirement/Functionality                                                                                                         | Why?                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vial<br />Bioreactor configuration          | Refer to below relationships                                                                                                      | Determines where other subsystems must lie.                                                                                                                                                                                                                                                    |
+| Reference sensor + LED<br />OD              | Must be located across the collecting sensor and on the side of the vial.                                                         | The angle between the collecting sensor and the LED needs to be 180 degrees, while the reference sensor needs to sit directly on the LED to account for environmental factors (such as LED drift).                                                                                             |
+| Collecting sensor<br />OD                   | Must be located across the LED and on the side of the vial.                                                                       | 180 degree required. See above.                                                                                                                                                                                                                                                                |
+| Breadboard/protoboard<br />All subsystems   | Can be located anywhere                                                                                                           | Should be a minimal distance away from electrical sensors/components so that wires do not need to extend a long distance. Other than that, there are no location constraints.                                                                                                                  |
+| Heater<br />Temp control                    | Must maximise surface area contact with the vial but should be isolated from other components less tolerant to high temperatures. | In order to minimise the power and time required to heat the vial, the surface area contact with it should be maximised. <br/>We do not want the high temperature of the heater (up to 40C - 60C) to interfere with the performance of other components by coming into direct contact with it. |
+| Fan<br />Stirring                           | Must be located below the vial                                                                                                    | The stir bar sits on the vial floor, thus the fan stirring it must be able to affect the vial floor.                                                                                                                                                                                           |
+| 3 x peristaltic pumps and tubing<br />Pumps | Can be located anywhere, with a separate compartment for each peristaltic pump preferred.                                         | No locational relationship between the pumps and the rest of the bioreactor, however should be minimal distance from the vial to prevent long tubing.                                                                                                                                          |
+| Cap<br />Bioreactor configuration           | On top of vial                                                                                                                    | Minimal cap tolerance with the vial holder for maximum darkness, which equals minimal light contamination with OD.                                                                                                                                                                             |
 
 ### BoM
 
@@ -88,12 +88,23 @@ the component weight without any hint of buckling.
         $1.45
         <br />
         <br />
-        <em>Printed using Markforged Onyx</em>
+        <em>
+          <a href="https://shop.markforged.com/shop/s/product/detail/01t1600000HG2aOAAT">
+            *Printed using Markforged Onyx
+          </a>
+        </em>
       </td>
       <td>
         <Figure
           src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad2.avif"
           alt="Heater mount CAD model"
+          caption={
+            <>
+              <a href="https://drive.google.com/file/d/1TnkOEXw89yfTy0WheFroourj8LvHD8_V/view?usp=drive_link">
+                embedded cad file
+              </a>
+            </>
+          }
         />
       </td>
     </tr>
@@ -109,17 +120,51 @@ the component weight without any hint of buckling.
     <col style={{ width: "20%" }} />
     <col style={{ width: "30%" }} />
   </colgroup>
-  <thead><tr><th scope="col">CAD for…</th><th scope="col">Subsystem</th><th scope="col">Filament (g) → Cost ($)</th><th scope="col">Visual</th></tr></thead>
+  <thead>
+    <tr>
+      <th scope="col">CAD for…</th>
+      <th scope="col">Subsystem</th>
+      <th scope="col">Filament (g) → Cost ($)</th>
+      <th scope="col">Visual</th>
+    </tr>
+  </thead>
   <tbody>
     <tr>
       <td>Reference sensor</td>
       <td rowSpan={3}>OD</td>
-      <td rowSpan={4}>~2hr<br /><br />55.7g PLA<br /><br />$1.39</td>
-      <td rowSpan={4}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif" alt="Vial holder and OD sensor compartments" /></td>
+      <td rowSpan={4}>
+        ~2hr
+        <br />
+        <br />
+        55.7g PLA
+        <br />
+        <br />
+        $1.39
+      </td>
+      <td rowSpan={4}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif"
+          alt="Vial holder and OD sensor compartments"
+          caption={
+            <>
+              <a href="https://drive.google.com/file/d/12FGGWOBGIoJr-jLdDqurbQ1lozV1I6yQ/view?usp=drive_link">
+                embedded cad file
+              </a>
+            </>
+          }
+        />
+      </td>
     </tr>
-    <tr><td>Collecting sensor</td></tr>
-    <tr><td>LED</td></tr>
-    <tr><td>Vial</td><td>Bioreactor</td></tr>
+    <tr>
+      <td>Collecting sensor</td>
+    </tr>
+    <tr>
+      <td>LED</td>
+    </tr>
+    <tr>
+      <td>Vial</td>
+      <td>Bioreactor</td>
+    </tr>
   </tbody>
 </table>
 
@@ -132,23 +177,74 @@ the component weight without any hint of buckling.
     <col style={{ width: "20%" }} />
     <col style={{ width: "30%" }} />
   </colgroup>
-  <thead><tr><th scope="col">CAD for…</th><th scope="col">Subsystem</th><th scope="col">Filament (g) → Cost ($)</th><th scope="col">Visual</th></tr></thead>
+  <thead>
+    <tr>
+      <th scope="col">CAD for…</th>
+      <th scope="col">Subsystem</th>
+      <th scope="col">Filament (g) → Cost ($)</th>
+      <th scope="col">Visual</th>
+    </tr>
+  </thead>
   <tbody>
     <tr>
       <td>Reference sensor</td>
       <td rowSpan={3}>OD</td>
-      <td rowSpan={4}>~1.5hr<br /><br />45.5g PLA<br /><br />$1.07</td>
-      <td rowSpan={4}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif" alt="Vial holder and OD sensor compartments" /></td>
+      <td rowSpan={4}>
+        ~1.5hr
+        <br />
+        <br />
+        45.5g PLA
+        <br />
+        <br />
+        $1.07
+      </td>
+      <td rowSpan={4}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif"
+          alt="Vial holder and OD sensor compartments"
+          caption={
+            <>
+              <a href="https://drive.google.com/file/d/1HV0DcoDeFZDYiioaa8pho3ODYNUfT3c7/view?usp=drive_link">
+                embedded cad file
+              </a>
+            </>
+          }
+        />
+      </td>
     </tr>
-    <tr><td>Collecting sensor</td></tr>
-    <tr><td>LED</td></tr>
-    <tr><td>Vial</td><td>Bioreactor</td></tr>
     <tr>
-      <td>3 x peristaltic</td><td>Pumps</td>
-      <td rowSpan={2}>~1hr<br /><br />37.9g PLA<br /><br />$0.96</td>
-      <td rowSpan={2}><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad5.avif" alt="Peristaltic pump and protoboard housing" /></td>
+      <td>Collecting sensor</td>
     </tr>
-    <tr><td>Protoboard</td><td>Bioreactor</td></tr>
+    <tr>
+      <td>LED</td>
+    </tr>
+    <tr>
+      <td>Vial</td>
+      <td>Bioreactor</td>
+    </tr>
+    <tr>
+      <td>3 x peristaltic</td>
+      <td>Pumps</td>
+      <td rowSpan={2}>
+        ~1hr
+        <br />
+        <br />
+        37.9g PLA
+        <br />
+        <br />
+        $0.96
+      </td>
+      <td rowSpan={2}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad5.avif"
+          alt="Peristaltic pump and protoboard housing"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Protoboard</td>
+      <td>Bioreactor</td>
+    </tr>
   </tbody>
 </table>
 
@@ -160,10 +256,69 @@ the component weight without any hint of buckling.
     <col style={{ width: "55%" }} />
     <col />
   </colgroup>
-  <thead><tr><th scope="col">V#</th><th scope="col">Notes</th><th scope="col">Photo</th></tr></thead>
+  <thead>
+    <tr>
+      <th scope="col">V#</th>
+      <th scope="col">Notes</th>
+      <th scope="col">Photo</th>
+    </tr>
+  </thead>
   <tbody>
-    <tr><td>V0</td><td>Simple holder for only the vial, no dedicated compartment for OD yet (taped inside), allowing high amount of light contamination. No dedicated compartment for any subsystem either. The vial cap does not perfectly sink into the vial holder, resulting in light contamination at the top.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad1-6.avif" alt="cad6"/></td></tr>
-    <tr><td>V1.0</td><td>Vial holder with dedicated OD compartment. However, without full encasing there is still a high amount of light contamination. The set-up however allows placing the OD sensors at different heights, avoiding interference caused by stirring.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif" alt="cad7"/></td></tr>
-    <tr><td>V1.1</td><td>Dedicated OD sensors with full enclosure to mitigate light contamination.</td><td><Figure src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif" alt="cad8"/></td></tr>
+    <tr>
+      <td>V0</td>
+      <td>
+        Simple holder for only the vial, no dedicated compartment for OD yet
+        (taped inside), allowing high amount of light contamination. No
+        dedicated compartment for any subsystem either. The vial cap does not
+        perfectly sink into the vial holder, resulting in light contamination at
+        the top.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad1-6.avif"
+          alt="cad6"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>V1.0</td>
+      <td>
+        Vial holder with dedicated OD compartment. However, without full
+        encasing there is still a high amount of light contamination. The set-up
+        however allows placing the OD sensors at different heights, avoiding
+        interference caused by stirring.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad3-7.avif"
+          alt="cad7"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cada.avif"
+          alt="cada"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cadb.avif"
+          alt="cadb"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>V1.1</td>
+      <td>
+        Dedicated OD sensors with full enclosure to mitigate light
+        contamination.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad4-8.avif"
+          alt="cad8"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v1/cad5.avif"
+          alt="Peristaltic pump and protoboard housing"
+        />
+      </td>
+    </tr>
   </tbody>
 </table>
