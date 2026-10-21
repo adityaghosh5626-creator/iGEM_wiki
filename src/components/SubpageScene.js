@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react"
-import styled, { css, keyframes } from "styled-components"
+import styled, { createGlobalStyle, css, keyframes } from "styled-components"
 import { NeedlemanCactus } from "./NeedlemanCactus.js"
 
 /**
@@ -34,7 +34,18 @@ const NARROW = "@media (max-width: 860px)"
 const WIDE = "@media (min-width: 861px)"
 // The minimised section menu: its width and the gap to the text box.
 const RAIL_W = "12.75rem"
+/** Labels hidden: the slim dot track. The text column takes the difference. */
+const RAIL_DOT_W = "3.25rem"
 const RAIL_GAP = "1rem"
+
+/** Lets `--rail-w` ease, so the text box widens with the collapsing menu. */
+const RailWidthProp = createGlobalStyle`
+  @property --rail-w {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 12.75rem;
+  }
+`
 
 /**
  * The section box starts sized to its list, capped at about half the window
@@ -2145,16 +2156,19 @@ export function readingLine(root, headerH) {
     : normal
 }
 
-/** The grid with the section menu as a rail: the text box takes its width. */
+/** The grid with the section menu as a rail. The text box is whatever is
+    left of the painted text's right edge after the rail and its gap, so a
+    slimmer rail (the dot track) widens the text box by the same amount. */
 function railCols(scene, plate) {
   const pct = n => `${((n / plate.W) * 100).toFixed(4)}%`
   const [side, text] = [scene.side.box, scene.text.box]
+  const rail = "var(--rail-w)"
   return {
     "--grid-cols": [
       pct(side[0]),
-      RAIL_W,
+      rail,
       RAIL_GAP,
-      `calc(${pct(text[2] - side[0])} - ${RAIL_W} - ${RAIL_GAP})`,
+      `calc(${pct(text[2] - side[0])} - ${rail} - ${RAIL_GAP})`,
       "1fr",
     ].join(" "),
   }
@@ -2329,6 +2343,16 @@ export function SubpageScene({
   const [sideOpen, setSideOpen] = useState(false)
   const [sideMore, setSideMore] = useState(false)
   const sideToggle = sideOpen || sideMore
+  // Labels hidden: a slim track of one dot per section. The X toggles it.
+  const [railDots, setRailDots] = useState(false)
+  // Half the window, or the viewport under the header when the list is longer.
+  const [railTall, setRailTall] = useState(false)
+  const [railClipped, setRailClipped] = useState(false)
+  // Headings with subsections start shut so the half-height rail can hold them.
+  const [openSubs, setOpenSubs] = useState({})
+  const railListRef = useRef(null)
+  const railNavRef = useRef(null)
+  const [dotIconTop, setDotIconTop] = useState(null)
   /**
    * The box's crab sits under the list, so it's left off while the shut box
    * is too short for every section; opening the box brings it back.
@@ -2647,6 +2671,62 @@ export function SubpageScene({
     toggledRef.current = false
     ;(compact ? expandRef : minimiseRef).current?.focus()
   }, [compact])
+
+  // Hidden scrollport: the wheel over the rail moves the headings and the
+  // page stays put. On the short menu the fade follows that scroll — solid
+  // at the top until the first heading moves up, solid at the bottom once
+  // the last heading is in view.
+  useEffect(() => {
+    const nav = railNavRef.current
+    const list = railListRef.current
+    if (!nav || !list) return undefined
+    const sync = () => {
+      const overflow = list.scrollHeight > list.clientHeight + 2
+      setRailClipped(prev => (prev === overflow ? prev : overflow))
+      let edge = ""
+      if (overflow) {
+        if (railDots || railTall) edge = "both"
+        else {
+          const above = list.scrollTop > 0
+          const below =
+            list.scrollTop + list.clientHeight < list.scrollHeight - 2
+          edge = above && below ? "both" : above ? "above" : below ? "below" : ""
+        }
+      }
+      if (list.dataset.edge !== edge) list.dataset.edge = edge
+    }
+    const onWheel = event => {
+      let dy = event.deltaY
+      if (event.deltaMode === 1) dy *= 16
+      else if (event.deltaMode === 2) dy *= list.clientHeight || 0
+      if (dy === 0) return
+      const max = list.scrollHeight - list.clientHeight
+      if (max > 1)
+        list.scrollTop = Math.min(max, Math.max(0, list.scrollTop + dy))
+      event.preventDefault()
+    }
+    sync()
+    list.addEventListener("scroll", sync, { passive: true })
+    nav.addEventListener("wheel", onWheel, { passive: false })
+    const ro = new ResizeObserver(sync)
+    ro.observe(list)
+    return () => {
+      list.removeEventListener("scroll", sync)
+      nav.removeEventListener("wheel", onWheel)
+      ro.disconnect()
+    }
+  }, [compact, sections, railDots, railTall, openSubs])
+
+  useLayoutEffect(() => {
+    const list = railListRef.current
+    if (!list || !railDots) {
+      setDotIconTop(null)
+      return undefined
+    }
+    const item = list.querySelector("[aria-current]")
+    setDotIconTop(item ? item.offsetTop + item.offsetHeight / 2 : null)
+    return undefined
+  }, [railDots, activeId, activeSubId, sections, railTall, railClipped])
   const [ix0, iy0, ix1, iy1] = side?.indicator.box ?? []
   const icon = side?.indicatorIcon
   const iconBg = !icon
@@ -2663,6 +2743,20 @@ export function SubpageScene({
     ? canvasBg(plate.asset(icon.name), icon.canvas)
     : // `from`: painted elsewhere on its plate than `box`.
       plate.bg(icon.name, icon.from || icon.box)
+  const railIconStyle = !icon
+    ? null
+    : {
+        ...iconBg,
+        aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
+        filter: icon.glow ? `drop-shadow(0 0 4px ${icon.glow})` : undefined,
+        transform:
+          [
+            icon.rotate && `rotate(${icon.rotate}deg)`,
+            icon.railScale && `scale(${icon.railScale})`,
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined,
+      }
   const sideW = side ? side.box[2] - side.box[0] : 0
   // Narrow strip: plain colour, or the side box's stretchy middle on top of it.
   const stripCss = side?.stripTexture
@@ -2677,12 +2771,15 @@ export function SubpageScene({
     : ""
 
   return (
+    <>
+    <RailWidthProp />
     <Scene
       ref={sceneRef}
       style={{
         "--dl-header": `${headerH}px`,
         ...sceneVars(scene, plate),
         ...(side && compact ? railCols(scene, plate) : null),
+        "--rail-w": railDots ? RAIL_DOT_W : RAIL_W,
       }}
     >
       {scene.layers.some(layer => layer.removeWhite) && <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
@@ -2874,6 +2971,15 @@ export function SubpageScene({
                   >
                     {img}
                   </HangWindow>
+                ) : layer.glitter ? (
+                  // `glitter`: a slow drift and twinkle on this layer only.
+                  <CropWindow
+                    key={layer.name}
+                    data-layer={layer.name}
+                    style={plate.windowStyle(layer.box)}
+                  >
+                    <GlitterDrift>{img}</GlitterDrift>
+                  </CropWindow>
                 ) : (
                   <CropWindow
                     key={layer.name}
@@ -2914,54 +3020,156 @@ export function SubpageScene({
           <SideColumn ref={sideColumnRef} data-scene-strip>
             {/* A page with no sections yet has nothing to list. */}
             {compact && sections.length > 0 && (
-              <SideRail aria-label="Sections on this page">
-                <RailHead>
-                  <RailTag>Compact</RailTag>
-                  <RailExpand
+              <SideRail
+                ref={railNavRef}
+                $dots={railDots}
+                $tall={railTall}
+                aria-label="Sections on this page"
+              >
+                <RailHead $dots={railDots}>
+                  <RailClose
                     ref={expandRef}
                     type="button"
-                    aria-label="Expand the section menu"
-                    title="Expand the section menu"
-                    onClick={() => toggleSide(false)}
+                    aria-pressed={railDots}
+                    aria-label={
+                      railDots ? "Expand sections" : "Collapse sections"
+                    }
+                    title={railDots ? "Expand sections" : "Collapse sections"}
+                    onClick={() => setRailDots(dots => !dots)}
                   >
-                    <Chevron aria-hidden viewBox="0 0 16 16">
+                    {railDots ? (
+                      <Chevron aria-hidden viewBox="0 0 16 16">
+                        <path d="M6 3l5 5-5 5" />
+                      </Chevron>
+                    ) : (
+                      <RailX aria-hidden viewBox="0 0 16 16">
+                        <path d="M4 4l8 8M12 4L4 12" />
+                      </RailX>
+                    )}
+                  </RailClose>
+                </RailHead>
+                {!railDots && <RailRule aria-hidden />}
+                <RailList ref={railListRef} $dots={railDots}>
+                  {sections.map(s => {
+                    const hasSubs = s.subs.length > 0
+                    const open = Boolean(openSubs[s.id])
+                    const subOn = s.subs.some(
+                      sub => sub.id === activeSubId || sub.id === activeId,
+                    )
+                    const sectionOn = s.id === activeId && !subOn
+                    const dotOn = s.id === activeId || subOn
+                    return (
+                      <React.Fragment key={s.id}>
+                        <RailRow $dots={railDots}>
+                          <RailLink
+                            href={`#${s.id}`}
+                            $dots={railDots}
+                            aria-current={
+                              railDots
+                                ? dotOn
+                                  ? "location"
+                                  : undefined
+                                : sectionOn || (subOn && !open)
+                                  ? "location"
+                                  : undefined
+                            }
+                            aria-label={railDots ? s.label : undefined}
+                            title={railDots ? s.label : undefined}
+                            onClick={e => goTo(e, s.id)}
+                          >
+                            {icon && !railDots && (sectionOn || (subOn && !open)) ? (
+                              <RailIcon aria-hidden style={railIconStyle} />
+                            ) : (
+                              <RailDot aria-hidden $on={railDots && dotOn} />
+                            )}
+                            {!railDots && <RailLabel>{s.label}</RailLabel>}
+                          </RailLink>
+                          {!railDots && hasSubs && (
+                            <RailDisclosure
+                              type="button"
+                              $open={open}
+                              aria-expanded={open}
+                              aria-label={
+                                open
+                                  ? `Hide subsections of ${s.label}`
+                                  : `Show subsections of ${s.label}`
+                              }
+                              onClick={() =>
+                                setOpenSubs(prev => ({
+                                  ...prev,
+                                  [s.id]: !prev[s.id],
+                                }))
+                              }
+                            >
+                              <Chevron aria-hidden viewBox="0 0 16 16">
+                                <path d="M6 3l5 5-5 5" />
+                              </Chevron>
+                            </RailDisclosure>
+                          )}
+                        </RailRow>
+                        {!railDots &&
+                          open &&
+                          s.subs.map(sub => {
+                            const on =
+                              sub.id === activeSubId || sub.id === activeId
+                            return (
+                              <RailLink
+                                key={sub.id}
+                                href={`#${sub.id}`}
+                                $sub
+                                aria-current={on ? "location" : undefined}
+                                onClick={e => goTo(e, sub.id)}
+                              >
+                                {icon && on ? (
+                                  <RailIcon aria-hidden style={railIconStyle} />
+                                ) : (
+                                  <RailDot aria-hidden />
+                                )}
+                                <RailLabel>{sub.label}</RailLabel>
+                              </RailLink>
+                            )
+                          })}
+                      </React.Fragment>
+                    )
+                  })}
+                  {railDots && icon && dotIconTop != null && (
+                    <RailTraveler
+                      aria-hidden
+                      style={{
+                        ...railIconStyle,
+                        top: dotIconTop,
+                        transform: `translate(-50%, -50%)${
+                          railIconStyle.transform
+                            ? ` ${railIconStyle.transform}`
+                            : ""
+                        }`,
+                      }}
+                    />
+                  )}
+                </RailList>
+                {(railClipped || railTall) && (
+                  <RailExtend
+                    type="button"
+                    aria-expanded={railTall}
+                    aria-label={
+                      railTall
+                        ? "Collapse the section menu"
+                        : "Extend the section menu"
+                    }
+                    title={railTall ? "Show less" : "Show more"}
+                    onClick={() => setRailTall(tall => !tall)}
+                  >
+                    <Chevron
+                      aria-hidden
+                      viewBox="0 0 16 16"
+                      style={{
+                        transform: railTall ? "rotate(-90deg)" : "rotate(90deg)",
+                      }}
+                    >
                       <path d="M6 3l5 5-5 5" />
                     </Chevron>
-                  </RailExpand>
-                </RailHead>
-                <RailRule aria-hidden />
-                {sections.map(s => (
-                  <RailLink
-                    key={s.id}
-                    href={`#${s.id}`}
-                    aria-current={s.id === activeId ? "location" : undefined}
-                    onClick={e => goTo(e, s.id)}
-                  >
-                    {/* The open menu's highlight icon marks the current one. */}
-                    {icon && s.id === activeId ? (
-                      <RailIcon
-                        aria-hidden
-                        style={{
-                          ...iconBg,
-                          aspectRatio: `${icon.box[2] - icon.box[0]} / ${icon.box[3] - icon.box[1]}`,
-                          filter: icon.glow
-                            ? `drop-shadow(0 0 4px ${icon.glow})`
-                            : undefined,
-                          transform:
-                            [
-                              icon.rotate && `rotate(${icon.rotate}deg)`,
-                              icon.railScale && `scale(${icon.railScale})`,
-                            ]
-                              .filter(Boolean)
-                              .join(" ") || undefined,
-                        }}
-                      />
-                    ) : (
-                      <RailDot aria-hidden />
-                    )}
-                    <RailLabel>{s.label}</RailLabel>
-                  </RailLink>
-                ))}
+                  </RailExtend>
+                )}
               </SideRail>
             )}
             <SideBox
@@ -3027,10 +3235,12 @@ export function SubpageScene({
                           filter: icon.glow
                             ? `drop-shadow(0 0 calc(var(--px) * 5) ${icon.glow})`
                             : undefined,
-                          // `rotate` (deg): turned from how it's painted.
-                          transform: icon.rotate
-                            ? `translateY(-50%) rotate(${icon.rotate}deg)`
-                            : undefined,
+                          // Shared hang: the icon's outer edge meets the
+                          // highlight's outside border (the wiki rock). Plate
+                          // boxes put the coin and feather too far inside.
+                          transform: `translate(-0.85rem, -50%)${
+                            icon.rotate ? ` rotate(${icon.rotate}deg)` : ""
+                          }`,
                           // Centre offset from the highlight's, as drawn.
                           marginTop: pp(
                             (icon.box[1] + icon.box[3]) / 2 - (iy0 + iy1) / 2,
@@ -3121,7 +3331,7 @@ export function SubpageScene({
             <StretchBox
               plate={plate}
               name={text.name}
-              box={text.box}
+              box={text.artBox || text.box}
               caps={text.caps}
             />
           )}
@@ -3182,6 +3392,7 @@ export function SubpageScene({
         </TextBox>
       </Content>
     </Scene>
+    </>
   )
 }
 
@@ -3202,6 +3413,13 @@ const Scene = styled.div`
   /* Art over the box (text.front) reaches the window's edges; a tremble
      mustn't widen the page. Clip, unlike hidden, keeps the menu sticky. */
   overflow-x: clip;
+  /* The rail column and the text box both read --rail-w, so the text box
+     eases into the space the menu gives up. */
+  transition: --rail-w 0.4s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `
 
 /** Spans the scene; the art inside is shifted by the scroll handler. */
@@ -3279,6 +3497,36 @@ const HangWindow = styled(CropWindow)`
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
+  }
+`
+
+/** A few plate-pixels of drift, with a soft opacity twinkle. */
+const glitterDrift = keyframes`
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: translate3d(0, 0, 0);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(calc(var(--px) * 8), calc(var(--px) * -6), 0);
+  }
+  72% {
+    opacity: 0.9;
+    transform: translate3d(calc(var(--px) * -5), calc(var(--px) * 4), 0);
+  }
+`
+
+const GlitterDrift = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: ${glitterDrift} 9s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 `
 
@@ -4456,24 +4704,27 @@ const SideMinimise = styled(SideToggle)`
   }
 `
 
-/** The minimised menu: a labelled row per section under the button that
-    restores it. */
+/** The section menu. Half the window by default; the list clips instead of
+    scrolling. The X is the only control in its header. */
 const SideRail = styled.nav`
   pointer-events: auto;
   position: sticky;
-  top: calc(var(--dl-header, 0px) + 1.25rem);
+  top: calc(var(--dl-header, 0px) + 0.75rem);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 3px;
-  width: ${RAIL_W};
-  max-height: calc(100vh - var(--dl-header, 0px) - 2.5rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  width: 100%;
+  max-height: ${({ $tall }) =>
+    $tall
+      ? "calc(100vh - var(--dl-header, 0px) - 1.5rem)"
+      : "min(50vh, calc(100vh - var(--dl-header, 0px) - 1.5rem))"};
+  /* Clip the panel itself so a long list never grows a scrollbar. The icon
+     hangs inside the padding, so this does not cut it off. */
+  overflow: hidden;
   box-sizing: border-box;
-  padding: 12px 12px 15px;
+  padding: ${({ $dots }) => ($dots ? "8px 6px 8px" : "12px 10px 10px")};
   text-align: left;
-  border-radius: 1.25rem;
+  border-radius: ${({ $dots }) => ($dots ? "1rem" : "1.25rem")};
   background-color: var(--strip-color);
   box-shadow: 0 2px 10px rgba(30, 30, 40, 0.25);
 
@@ -4484,42 +4735,131 @@ const SideRail = styled.nav`
 
 const RailHead = styled.div`
   display: flex;
+  flex: none;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 3px 9px;
+  justify-content: ${({ $dots }) => ($dots ? "center" : "flex-start")};
+  padding: 0 2px 8px;
 `
 
-const RailTag = styled.span`
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--rail-tag-text, var(--link-active));
-  background: var(--rail-tag-bg, var(--rail-active, #9c6e56));
-  padding: 4px 10px;
+/** Same control: an X collapses the menu, a right arrow opens it again. */
+const RailClose = styled.button`
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
-`
+  background: var(--rail-active, #9c6e56);
+  color: var(--link-active, #fff);
+  cursor: pointer;
 
-const RailExpand = styled(SideToggle)`
-  width: 2.6rem;
-  height: 2.6rem;
-  background: color-mix(in srgb, var(--link-color) 16%, transparent);
-  opacity: 1;
+  svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
 
   &:hover {
-    background: color-mix(in srgb, var(--link-color) 30%, transparent);
+    filter: brightness(1.08);
   }
-  ${Chevron} {
-    width: 1.5rem;
-    height: 1.5rem;
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
   }
+`
+
+const RailX = styled.svg`
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
 `
 
 const RailRule = styled.div`
+  flex: none;
   height: 1px;
   margin: 0 6px 6px;
   background: color-mix(in srgb, var(--link-color) 28%, transparent);
+`
+
+const RailList = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 3px;
+  min-height: 0;
+  /* Scrolls under the pointer; the bar stays hidden, no gutter. */
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  ${({ $dots }) =>
+    $dots &&
+    css`
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0 2px;
+    `}
+
+  ${({ $dots }) =>
+    !$dots &&
+    css`
+      padding-left: 10px;
+    `}
+
+  &[data-edge="below"] {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.15rem), transparent);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 calc(100% - 1.15rem),
+      transparent
+    );
+  }
+  &[data-edge="above"] {
+    mask-image: linear-gradient(to bottom, transparent, #000 1.15rem);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 1.15rem);
+  }
+  &[data-edge="both"] {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 1.15rem,
+      #000 calc(100% - 1.15rem),
+      transparent
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 1.15rem,
+      #000 calc(100% - 1.15rem),
+      transparent
+    );
+  }
+`
+
+const RailRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+
+  ${({ $dots }) =>
+    $dots &&
+    css`
+      width: auto;
+      justify-content: center;
+    `}
 `
 
 const RailDot = styled.span`
@@ -4529,17 +4869,35 @@ const RailDot = styled.span`
   margin: 0 4px;
   border-radius: 50%;
   background: var(--link-color);
-  opacity: 0.6;
+  opacity: ${({ $on }) => ($on ? 0 : 0.6)};
   transition:
     transform 0.2s ease,
     opacity 0.2s ease;
 `
 
-/** The open menu's highlight icon, standing in for the current row's dot. */
+/** Sits on the active title. Its left edge meets the pill's outside edge. */
 const RailIcon = styled.span`
+  position: relative;
+  z-index: 1;
   flex: none;
+  width: 34px;
+  margin: -10px -8px -10px -16px;
+  pointer-events: none;
+`
+
+/** The same icon, travelling along the dots when the labels are hidden. */
+const RailTraveler = styled.span`
+  position: absolute;
+  z-index: 1;
+  left: 50%;
   width: 30px;
-  margin: -6px -6px -6px -10px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: top 0.35s cubic-bezier(0.3, 0.9, 0.3, 1.1);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `
 
 const RailLabel = styled.span`
@@ -4554,14 +4912,38 @@ const RailLabel = styled.span`
 
 const RailLink = styled.a`
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 8px 12px 8px 9px;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 8px 8px 10px;
   border-radius: 12px;
   color: var(--link-color);
   text-decoration: none;
   transition: background-color 0.2s ease;
+
+  ${({ $dots }) =>
+    $dots &&
+    css`
+      flex: none;
+      gap: 0;
+      padding: 4px;
+      border-radius: 999px;
+      background: none !important;
+    `}
+
+  ${({ $sub }) =>
+    $sub &&
+    css`
+      margin-left: 1.15rem;
+      padding-top: 4px;
+      padding-bottom: 4px;
+
+      ${RailLabel} {
+        font-size: 14px;
+      }
+    `}
 
   &:hover {
     background: color-mix(in srgb, var(--rail-active, #9c6e56) 55%, transparent);
@@ -4580,9 +4962,96 @@ const RailLink = styled.a`
     font-weight: 700;
   }
 
+  ${({ $dots }) =>
+    $dots &&
+    css`
+      &[aria-current] {
+        background: none;
+      }
+      &[aria-current] ${RailDot} {
+        opacity: 0;
+        transform: none;
+      }
+    `}
+
   &:focus-visible {
     outline: 2px solid var(--link-color);
     outline-offset: -2px;
+  }
+`
+
+/** Opens or shuts the subsections under a heading. Flat lists have none. */
+const RailDisclosure = styled.button`
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--link-color);
+  cursor: pointer;
+  opacity: 0.8;
+
+  ${Chevron} {
+    width: 0.8rem;
+    height: 0.8rem;
+    transform: rotate(${({ $open }) => ($open ? 90 : 0)}deg);
+    transition: transform 0.2s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: color-mix(in srgb, var(--link-color) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 1px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ${Chevron} {
+      transition: none;
+    }
+  }
+`
+
+/** Bottom arrow: a taller rail, or back to half height. Never a scrollbar. */
+const RailExtend = styled.button`
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.35rem;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--link-color);
+  cursor: pointer;
+  opacity: 0.9;
+
+  ${Chevron} {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    background: color-mix(in srgb, var(--link-color) 14%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 1px;
   }
 `
 

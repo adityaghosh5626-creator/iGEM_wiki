@@ -134,6 +134,22 @@ for (const job of imageJobs) {
   }
 }
 
+// Preserve SVG geometry and labels; losslessly recompress embedded PNG pixels.
+await walk(publicRoot, async (filePath) => {
+  if (!filePath.endsWith(".svg")) return
+  const original = await fs.readFile(filePath, "utf8")
+  let optimized = original
+  for (const match of original.matchAll(/data:image\/png;base64,([A-Za-z0-9+/=]+)/g)) {
+    const png = Buffer.from(match[1], "base64")
+    const webp = await sharp(png).webp({ lossless: true }).toBuffer()
+    const replacement = `data:image/webp;base64,${webp.toString("base64")}`
+    if (replacement.length < match[0].length) {
+      optimized = optimized.replace(match[0], replacement)
+    }
+  }
+  if (optimized !== original) await fs.writeFile(filePath, optimized)
+})
+
 const afterArtifact = await artifactSize()
 const mib = (bytes) => (bytes / 1024 ** 2).toFixed(2)
 console.log(

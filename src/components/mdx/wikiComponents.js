@@ -38,6 +38,7 @@ import { BiosampleViewer, ProfileShares, ProfileStack, ProfileSteps } from "./in
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
+import { PhotoGallery } from "./PhotoGallery.js"
 import { Spreadsheet } from "./Spreadsheet.js"
 import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
@@ -86,7 +87,7 @@ export const Figure = ({
   title,
   caption,
   credit,
-  width = "32rem",
+  width = "100%",
   expandable,
   children,
 }) => {
@@ -132,7 +133,7 @@ export const SideFigure = ({
   alt = "",
   title,
   caption,
-  width = "40%",
+  width = "50%",
   side = "right",
   expandable,
   children,
@@ -222,6 +223,7 @@ export const mdxComponents = {
   Citation,
   References,
   ...embedComponents,
+  PhotoGallery,
   Spreadsheet,
   AtlasMap,
   PetadexGame,
@@ -359,7 +361,7 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   width: 100%;
   min-width: 0;
   gap: var(--space-md);

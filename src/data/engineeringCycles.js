@@ -52,7 +52,7 @@ export const ENGINEERING_TEAMS = [
   { centerImage: `${ART_BASE}hw.avif`, centerCrop: [278, 2023, 152, 138],
     centerBounds: [104, 129, 140, 110],
     links: ["https://2026.igem.wiki/toronto/hardware/"],
-    id: "hardware", label: "Hardware", color: "#9a7837", versionCount: 3,
+    id: "hardware", label: "Hardware", color: "#9a7837", versionCount: 2,
     barCrop: [162, 1259, 178, 55], petamonCrop: [174, 1137, 174, 135] },
   { centerImage: `${ART_BASE}dl.avif`, centerCrop: [286, 2032, 143, 111],
     centerBounds: [110, 132, 125, 90],

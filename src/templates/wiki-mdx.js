@@ -471,6 +471,25 @@ const Article = styled.article`
     min-width: 0;
   }
 
+  .priority-comparison-table th:nth-child(1) { width: 30%; }
+  .priority-comparison-table th:nth-child(2),
+  .priority-comparison-table th:nth-child(3) { width: 15%; }
+  .priority-comparison-table th:nth-child(4) { width: 40%; }
+
+  .priority-comparison-table th:nth-child(2),
+  .priority-comparison-table th:nth-child(3) {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+  }
+
+  .priority-comparison-table th:nth-child(2),
+  .priority-comparison-table th:nth-child(3),
+  .priority-comparison-table td:nth-child(2),
+  .priority-comparison-table td:nth-child(3) {
+    padding-inline: 0.35rem;
+  }
+
   /* Merged CAD cells share one photo and cost across their component rows. */
   .cad-components-table th,
   .cad-components-table td,
@@ -490,7 +509,6 @@ const Article = styled.article`
     width: 3.5rem;
   }
 
-  .cad-iteration-table td:first-child,
   .od-iteration-table td:first-child {
     white-space: nowrap;
   }

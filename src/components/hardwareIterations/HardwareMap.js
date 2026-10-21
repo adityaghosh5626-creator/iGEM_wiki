@@ -2,19 +2,20 @@ import React, { useId, useRef, useState } from "react"
 import { navigate, withPrefix } from "gatsby"
 import styled from "styled-components"
 import { HARDWARE_SUBSYSTEMS } from "../../data/hardwareIterations.js"
-import { HARDWARE_MAP, HARDWARE_MAP_SUBSYSTEMS } from "../../data/hardwareMap.js"
+import { HARDWARE_MAPS, HARDWARE_MAP_COLOURS } from "../../data/hardwareMap.js"
 
 const ITERATIONS_PATH = "/hardware/past-iterations/"
 
 /**
  * The prototype photo with each part outlined in its subsystem's colour and
  * labelled. Hovered (focused), a part tells what it does; clicked, it opens
- * that subsystem under Past Iterations. For now that is Version 1; pass
- * `version` (e.g. "version-2") to open another. On touch, the first tap
+ * that subsystem under Past Iterations. Pass `version` (`version-1`,
+ * `version-2`, or `version-3`) to use that photo. On touch, the first tap
  * shows what it does and the second opens it.
  */
 export function HardwareMap({ version = "version-1" }) {
-  const { src, size: [W, H], alt, parts } = HARDWARE_MAP
+  const map = HARDWARE_MAPS[version] || HARDWARE_MAPS["version-1"]
+  const { src, size: [W, H], alt, parts, summaries } = map
   const id = useId()
   // The part shown: its subsystem's parts all light up, its label says more.
   const [active, setActive] = useState(null)
@@ -69,7 +70,8 @@ export function HardwareMap({ version = "version-1" }) {
             </filter>
           </defs>
           {parts.map((part, i) => {
-            const { colour, about } = HARDWARE_MAP_SUBSYSTEMS[part.subsystem]
+            const colour = HARDWARE_MAP_COLOURS[part.subsystem]
+            const about = summaries[part.subsystem]
             const points = part.points.map(p => p.join(",")).join(" ")
             return (
               <PartLink
@@ -86,7 +88,8 @@ export function HardwareMap({ version = "version-1" }) {
           })}
         </svg>
         {parts.map((part, i) => {
-          const { colour, about } = HARDWARE_MAP_SUBSYSTEMS[part.subsystem]
+          const colour = HARDWARE_MAP_COLOURS[part.subsystem]
+          const about = summaries[part.subsystem]
           const [x, y] = part.label
           const right = part.align === "right"
           const on = active?.sub === part.subsystem

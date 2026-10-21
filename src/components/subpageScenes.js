@@ -446,9 +446,26 @@ export const HARDWARE_SCENE = {
     "0 0 0.4em rgba(135, 123, 199, 0.6), 0 0.08em 0.3em rgba(0, 0, 0, 0.5)",
   accent: "#6b5cb5",
   layers: [
-    { name: "new-bg", box: [0, 0, 1110, 4000] },
-    { name: "red", box: [0, 0, 1110, 4000], removeWhite: true },
-    { name: "sparkle", box: [0, 0, 1110, 4000], fadePulse: 4000, removeWhite: true },
+    { name: "bg", box: [0, 0, 1110, 4000] },
+    // The cave mouth above the boxes was empty. These three share the plate
+    // with `bg` (back to front): crystals, a red dusting, then sparkles.
+    {
+      name: "newtop-crystals",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/img-3853.avif",
+      box: [0, 0, 1110, 4000],
+    },
+    {
+      name: "newtop-red",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/red.avif",
+      box: [0, 0, 1110, 4000],
+    },
+    {
+      name: "newtop-sparkle",
+      src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/newtop/sparkle.avif",
+      box: [0, 0, 1110, 4000],
+      // A small drift and twinkle. Held still when motion is reduced.
+      glitter: true,
+    },
     // Extra lighting: glints down the walls and pillars into the pool.
     { name: "bottom-lightning-turtles", box: [127, 1985, 1088, 3942] },
     // Hover (tap on touch) the turtle: it shivers and the lightning on
@@ -1210,12 +1227,25 @@ export const PROJECT_SCENE = {
       },
     },
   ],
-  side: null,
-  /** No menu highlight to match: the planet's orange. */
+  side: {
+    fill: "#f1e6d4",
+    box: [63, 256, 265, 1000],
+    navTop: 24,
+    linkColor: "#111926",
+    activeLinkColor: "#111926",
+    linkSize: 12.5,
+    linkIndent: 14,
+    stripColor: "#f1e6d4",
+    highlightColor: "#e2662c",
+    indicator: { fill: "#e2662c", box: [73, 286, 255, 336] },
+  },
+  /** Match the section menu's planet-orange highlight. */
   footerButton: { bg: "#e2662c", text: "#111926" },
   text: {
     name: "project-box",
-    box: [63, 256, 864, 2001],
+    box: [285, 256, 864, 2001],
+    // Preserve the full painted border when the menu narrows the text column.
+    artBox: [63, 256, 864, 2001],
     // The speckled edges reach 68 (top) and 105 (bottom) plate px in, so
     // they stay out of the stretched middle.
     caps: [75, 110],

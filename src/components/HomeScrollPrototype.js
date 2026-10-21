@@ -692,22 +692,41 @@ const SECTION5_CDN =
 /** Hex field after the reef. Transparent top (~26%) fades into the honeycomb. */
 const HEX_FIELD_SRC =
   "https://static.igem.wiki/teams/6187/wiki/homepage-components/bg-new-use-this.avif"
+/** Full hex plate. The painted crop starts at row 981; the file is 1440×3831. */
+const HEX_PLATE = { w: 1440, h: 3831 }
 /** Plate % where the hex art starts, low enough to cover the bottom of the reef. */
 const HEX_FIELD_TOP_PCT = 70.6
 /**
- * Width-relative height of the hex image that sticks out past section 5.
- * hexH/W − (1 − topPct) × section5H/W
+ * "Discover more about PetaBite" ends near plate row 1512. The ending
+ * bottle sits just under that line, and the hex is cropped there: the
+ * rest of the plate is empty honeycomb and is not shown.
  */
-const HEX_FIELD_BELOW_ASPECT = "1 / 1.417"
-/** Hex art row (share of its height) where it turns fully opaque — below the reef. */
-const HEX_OPAQUE_FROM = 1202 / 3831
-/** Scroll (share of vh) the view holds on the ending bottle while petamons burst. */
-const ENDING_HOLD_VH = 1.1
+const HEX_CTA_END_ROW = 1580
+/** Gap between that line and the ending bottle, in the cropped frame. */
+const HEX_BELOW_CTA = "1.75rem"
+/** A little honeycomb left under the bottle before the crop. */
+const HEX_UNDER_BOTTLE = "2.25rem"
+/** Room under the crop for the bottle's hint, on the same dark field. */
+const HEX_HINT_ROOM = "14vh"
+/** Same cap as EndingBottleSlot, so the crop stays wrapped around the bottle. */
+const ENDING_BOTTLE_H = "min(calc(90vw * 1060 / 1340), 74vh)"
+/** Hex art through the bottle. Shares the plate's top, so the reef still lines up. */
+const HEX_ART_HEIGHT = `calc(${artPx(HEX_CTA_END_ROW)} + ${HEX_BELOW_CTA} + ${ENDING_BOTTLE_H} + ${HEX_UNDER_BOTTLE})`
+/** Cropped art plus the hint. This is the whole ending frame. */
+const HEX_BAND_HEIGHT = `calc(${HEX_ART_HEIGHT} + ${HEX_HINT_ROOM})`
 /**
- * While held, the bottle sits this share of the view below center, so the
- * descriptions that open above the top labels stay on screen.
+ * How much of section 5 is still below the hex's top, in widths.
+ * (1 − topPct) × section5H/W. The band past this is the only scroll left
+ * after the reef plate.
  */
-const ENDING_HOLD_DROP_VH = 0.05
+const HEX_SECTION5_TAIL =
+  (1 - HEX_FIELD_TOP_PCT / 100) * (4000 / 946)
+/** Hex art row (share of its height) where it turns fully opaque — below the reef. */
+const HEX_OPAQUE_FROM = 1202 / HEX_PLATE.h
+/** Scroll (share of vh) the view holds on the Discover-more frame while petamons burst. */
+const ENDING_HOLD_VH = 1.1
+/** While held, "Discover more about PetaBite" sits at this share of the view. */
+const ENDING_HOLD_CTA_VH = 0.34
 
 /**
  * The treatment plant and the sea under it, repainted as one picture on the
@@ -937,6 +956,96 @@ const SECTION5_FISHES = [
 ]
 
 /**
+ * Cut-out petamons. Each file is one creature (its own hover target).
+ * Upload the files in ~/Downloads/petamon-splits/ to this directory;
+ * the page points at them already, so a 404 until then is expected.
+ *
+ *   outreach-pink-rabbit-right.avif  forest, right branch
+ *   outreach-pink-rabbit-left.avif   forest, left edge
+ *   section5-tan-fox.avif             plant, upper left sky
+ *   section5-kangaroo.avif            plant, sand right of the pipe (coins ride with it)
+ *   section5-snail.avif               waterline, right of the pour
+ *   section5-turtle.avif              open water, left of the pink axolotl
+ *   section5-pink-axolotl.avif        open water
+ *   section5-yellow-axolotl.avif      reef, lower middle
+ *   section5-green-axolotl.avif       reef, lower right
+ */
+const BOTTOM_PETAMON_CDN =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/bottompetamon"
+
+/**
+ * Outreach rabbits. The source sheet is the 2360×1640 frame of the pinned
+ * forest (nav and browser chrome included, same aspect as that screenshot).
+ * Boxes below are that frame mapped onto the forest band (front-plate rows
+ * 2660–3503) so the rabbits stay locked to the painting.
+ */
+const FOREST_PETAMONS = [
+  {
+    id: "pink-rabbit-right",
+    src: `${BOTTOM_PETAMON_CDN}/outreach-pink-rabbit-right.avif`,
+    box: { left: 84.07, top: 58.9, width: 9.53, height: 6.88 },
+  },
+  {
+    id: "pink-rabbit-left",
+    src: `${BOTTOM_PETAMON_CDN}/outreach-pink-rabbit-left.avif`,
+    box: { left: 3.22, top: 67.76, width: 3.14, height: 6.48 },
+  },
+]
+
+/**
+ * Section 5 creatures. The sheet is 1004×4000 with the 946×4000 plate
+ * centred in it (29px of empty margin each side); boxes are % of that plate.
+ * `aboveHex` creatures sit in the reef, under the hex field's solid backing,
+ * so they paint above that backing and under the copy.
+ */
+const SECTION5_PETAMONS = [
+  {
+    id: "tan-fox",
+    src: `${BOTTOM_PETAMON_CDN}/section5-tan-fox.avif`,
+    box: { left: 4.12, top: 6.6, width: 12.26, height: 3 },
+  },
+  {
+    id: "kangaroo",
+    src: `${BOTTOM_PETAMON_CDN}/section5-kangaroo.avif`,
+    box: { left: 66.81, top: 32.45, width: 24.63, height: 7.08 },
+  },
+  {
+    id: "snail",
+    src: `${BOTTOM_PETAMON_CDN}/section5-snail.avif`,
+    box: { left: 79.39, top: 41.28, width: 18.39, height: 2.63 },
+  },
+  {
+    id: "turtle",
+    src: `${BOTTOM_PETAMON_CDN}/section5-turtle.avif`,
+    box: { left: 7.19, top: 57.33, width: 13.85, height: 2.55 },
+  },
+  {
+    id: "pink-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-pink-axolotl.avif`,
+    box: { left: 14.17, top: 55.53, width: 24.95, height: 6.48 },
+  },
+  {
+    id: "yellow-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-yellow-axolotl.avif`,
+    aboveHex: true,
+    box: { left: 52.54, top: 78.6, width: 20.51, height: 4.5 },
+  },
+  {
+    id: "green-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-green-axolotl.avif`,
+    aboveHex: true,
+    box: { left: 73.78, top: 75.65, width: 18.18, height: 4.93 },
+  },
+]
+
+const petamonSpotStyle = ({ left, top, width, height }) => ({
+  left: `${left}%`,
+  top: `${top}%`,
+  width: `${width}%`,
+  height: `${height}%`,
+})
+
+/**
  * Floating bottle: the stage-0 bottle above the waterline, and the painted
  * ripples (bottom of bottle-w-ripples, whose bottle is a later stage) below
  * it. Both share the stage canvas (1065 × 1640).
@@ -955,17 +1064,17 @@ const CONDITION_CARD_HREF = "/dry-lab/model/biosample-profiles/#biosample-profil
 
 const CONDITION_CARD_IMAGES = [
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/ph.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/ph.avif",
     alt: "pH",
     href: CONDITION_CARD_HREF,
   },
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/temp.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/temp.avif",
     alt: "Temperature",
     href: CONDITION_CARD_HREF,
   },
   {
-    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/condition-cards/surrounding-env.avif",
+    src: "https://static.igem.wiki/teams/6187/wiki/homepage-components/newcards/surrounding-env.avif",
     alt: "Environment",
     href: CONDITION_CARD_HREF,
   },
@@ -1645,6 +1754,7 @@ export function HomeScrollPrototype() {
   const hexOverlapRef = useRef(null)
   const endingSlotRef = useRef(null)
   const endingBottleRef = useRef(null)
+  const section5CtaRef = useRef(null)
   const endingReleasedRef = useRef(false)
   const section5FoamRef = useRef(null)
   const section5SplashLayerRef = useRef(null)
@@ -3073,7 +3183,7 @@ export function HomeScrollPrototype() {
       }
 
       // Ending bottle: pieces fly in as the hex field scrolls up, then the
-      // sticky track holds the view (bottle centered) while petamons burst out.
+      // sticky track holds the Discover-more frame while petamons burst out.
       const holdTrack = endingHoldTrackRef.current
       const holdSticky = endingHoldStickyRef.current
       const holdSpacer = endingHoldSpacerRef.current
@@ -3088,11 +3198,12 @@ export function HomeScrollPrototype() {
         const released = endingReleasedRef.current
         const holdPx = reduce || released ? 0 : Math.round(vh * ENDING_HOLD_VH)
         const hexOff = hexOverlap.offsetTop
-        const bottleOff =
-          hexOff + endingSlot.offsetTop + endingSlot.offsetHeight / 2
-        const stickyTop = Math.round(
-          vh * (0.5 + ENDING_HOLD_DROP_VH) - bottleOff,
-        )
+        const cta = section5CtaRef.current
+        const ctaWithin = cta
+          ? cta.getBoundingClientRect().top -
+            holdSticky.getBoundingClientRect().top
+          : hexOff
+        const stickyTop = Math.round(vh * ENDING_HOLD_CTA_VH - ctaWithin)
         if (holdSticky.style.top !== `${stickyTop}px`) {
           holdSticky.style.top = `${stickyTop}px`
         }
@@ -3101,9 +3212,11 @@ export function HomeScrollPrototype() {
         }
         // Track top (un-stuck flow position): assembly runs from the reef
         // leaving the top of the view (hex art fully opaque there) to the
-        // bottle reaching center.
+        // Discover-more line reaching its hold.
         const trackTop = holdTrack.getBoundingClientRect().top
-        const flyFrom = -(hexOff + HEX_OPAQUE_FROM * hexOverlap.offsetHeight)
+        const plateH =
+          hexOverlap.offsetWidth * (HEX_PLATE.h / HEX_PLATE.w)
+        const flyFrom = -(hexOff + HEX_OPAQUE_FROM * plateH)
         const assemble = reduce
           ? 1
           : clamp01((flyFrom - trackTop) / Math.max(1, flyFrom - stickyTop))
@@ -4157,6 +4270,23 @@ export function HomeScrollPrototype() {
               <ArtBand
                 $top={FOREST_BAND_TOP}
                 $height={FOREST_BAND_HEIGHT}
+                $z={6}
+              >
+                {FOREST_PETAMONS.map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
+                ))}
+              </ArtBand>
+
+              <ArtBand
+                $top={FOREST_BAND_TOP}
+                $height={FOREST_BAND_HEIGHT}
                 $z={20}
               >
                 <HumanWalkLayer ref={humanWalkRef} aria-hidden="true">
@@ -4361,7 +4491,9 @@ export function HomeScrollPrototype() {
                   ref={hexOverlapRef}
                   $topPct={HEX_FIELD_TOP_PCT}
                 >
-                  <HexFieldImg src={HEX_FIELD_SRC} alt="" />
+                  <HexFieldClip>
+                    <HexFieldImg src={HEX_FIELD_SRC} alt="" />
+                  </HexFieldClip>
                   <EndingBottleSlot ref={endingSlotRef}>
                     <EndingPetamonBottle ref={endingBottleRef} />
                   </EndingBottleSlot>
@@ -4376,6 +4508,17 @@ export function HomeScrollPrototype() {
                     style={layer.fade ? section5Fade(layer.fade) : undefined}
                     alt=""
                   />
+                ))}
+                {SECTION5_PETAMONS.filter(pet => !pet.aboveHex).map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    $z={7}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
                 ))}
                 <Section5ChuteBottleLayer aria-hidden="true">
                   <ChuteBottleMount ref={chuteBottleMountRef}>
@@ -4533,6 +4676,17 @@ export function HomeScrollPrototype() {
                     </Section5SplashDrop>
                   ))}
                 </Section5SplashLayer>
+                {SECTION5_PETAMONS.filter(pet => pet.aboveHex).map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    $z={11}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
+                ))}
                 <Section5RampPatch aria-hidden="true" />
                 <Section5TextStack aria-hidden="false">
                   {/* Where the ramp bottle parks under (the bottom of the
@@ -4569,7 +4723,7 @@ export function HomeScrollPrototype() {
                     and to champion the idea of plastic-degrading enzymes for
                     microplastic cleanup.
                   </Section5OceanLine>
-                  <Section5Cta>
+                  <Section5Cta ref={section5CtaRef}>
                     Discover more about{" "}
                     <Link to="/project/description/">PetaBite</Link>.
                   </Section5Cta>
@@ -4655,10 +4809,10 @@ const EndingHoldSpacer = styled.div`
 const EndingBottleSlot = styled.div`
   position: absolute;
   left: 50%;
-  /* Raised off the bottom of the hex art: some room below it before the footer. */
-  bottom: 30vh;
+  /* Just under "Discover more", inside the cropped hex — not at the bottom of the full plate. */
+  top: calc(${artPx(HEX_CTA_END_ROW)} + ${HEX_BELOW_CTA});
   z-index: 2;
-  /* As big as the view allows while held mid-screen (frame is 1340×1060),
+  /* As big as the view allows while held (frame is 1340×1060),
      leaving room for the hint under it. */
   width: min(90vw, calc(74vh * 1340 / 1060));
   width: min(90vw, calc(74svh * 1340 / 1060));
@@ -4676,33 +4830,54 @@ const Section5Root = styled.div`
   background: transparent;
 `
 
-/** Above the chute bottle (z 8) and bubbles (z 10) so they scroll underneath. */
+/**
+ * Above the chute bottle (z 8) and bubbles (z 10) so they scroll underneath.
+ * Height is the cropped frame (through the bottle and its hint), not the
+ * full 3831-row plate.
+ */
 const HexFieldOverlap = styled.div`
   position: absolute;
   left: 0;
   top: ${({ $topPct }) => `${$topPct}%`};
   z-index: 11;
   width: 100%;
+  height: ${HEX_BAND_HEIGHT};
+  background: #101133;
+  pointer-events: none;
+`
+
+/** Clips the hex plate to the cropped frame. The image stays top-aligned. */
+const HexFieldClip = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
 `
 
 const HexFieldImg = styled(PlateImg)`
+  position: absolute;
+  left: 0;
+  top: 0;
   display: block;
   width: 100%;
+  max-width: none;
   height: auto;
-  max-width: 100%;
   pointer-events: none;
   user-select: none;
 `
 
-/** Scroll space for the hex image that extends past the reef plate. */
+/** Scroll space for the cropped hex that still sticks out past the reef plate. */
 const HexFieldRoot = styled.div`
   position: relative;
   z-index: 0;
   width: 100%;
   min-width: 0;
-  aspect-ratio: ${HEX_FIELD_BELOW_ASPECT};
-  padding-bottom: 22vh;
+  height: max(
+    0px,
+    calc(
+      ${HEX_BAND_HEIGHT} - var(${ART_WIDTH_VAR}, 100vw) * ${HEX_SECTION5_TAIL}
+    )
+  );
   background: #101133;
 `
 
@@ -4882,6 +5057,54 @@ const fishHoverBobStrong = keyframes`
   }
   50% {
     transform: translate3d(0, -14px, 0);
+  }
+`
+
+/**
+ * One cut-out petamon. The box is its plate slot; the button is the hover
+ * target (inset so neighbours that share a corner, the turtle and the pink
+ * axolotl, don't steal each other). Hover lifts just that creature.
+ */
+const PetamonSpot = styled.div`
+  position: absolute;
+  z-index: ${({ $z }) => $z ?? 1};
+  pointer-events: none;
+
+  button {
+    position: absolute;
+    inset: 18%;
+    z-index: 1;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    transform: translate3d(0, 0, 0);
+    transition: transform 240ms ease;
+  }
+
+  button:hover ~ img {
+    transform: translate3d(0, -10%, 0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    img,
+    button:hover ~ img {
+      transition: none;
+      transform: none;
+    }
   }
 `
 

@@ -1,11 +1,336 @@
-#### Design
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad1.avif"
+  alt="cad1"
+/>
 
-Placeholder: describe the CAD design used in Version 2.
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad2.avif"
+  alt="cad2"
+/>
 
-#### Design decisions and changes
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad3.avif"
+  alt="cad3"
+/>
 
-Placeholder: explain what changed in CAD from Version 1 to Version 2 and why.
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad4.avif"
+  alt="cad4"
+/>
 
-#### Testing and lessons
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad5.avif"
+  alt="cad5"
+/>
 
-Placeholder: add Version 2 test results, limitations, and lessons for CAD.
+### Main Function(s) + Requirements
+
+The only changes made to the requirements are adjustments to minimizing the print time and tolerances. Changes are highlighted in pink.
+
+| Requirement                                        | Priority | Why (are we considering this)?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Minimize tolerance**<br /><br />Goal: < 0.3 mm   | Medium   | To ensure components do not slide or shake when using the bioreactor, the general tolerance should be low. <span style={{ backgroundColor: "#f8c8dc", padding: "0 0.2em" }}>However, having one larger dimension (width, for example) for holes in snap fits ensures an easier assembly process, thus the tolerance requirement is less relevant to **one dimension** of snapping components.</span><br /><br />For specific components like the vial cap or OD sensor holders—where light contamination will drastically alter results—the tolerance **must** be low. As printer accuracy is 0.1–0.5 mm, 0.3 mm is between the tolerance thresholds. |
+| **Minimize printing time**<br /><br />Goal: < 6 hr | Low      | The average 3D print time for a small to medium CAD model ranges from 2–10 hours. As the bioreactor CAD leans towards the larger side of this range, being below 6 hr is a reasonable goal. This is dependent on the infill and print speed.<br /><br /><span style={{ backgroundColor: "#f8c8dc", padding: "0 0.2em" }}>**Note:** Goal is 15% infill and 115% print speed. A denser CAD model does not affect the bioreactor, while the print speed can go to an absolute safe maximum of 120%. </span>                                                                                                                                              |
+
+### BoM
+
+#### v2.1
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad6.avif"
+  alt="cad6"
+/>
+
+### add photo
+
+<table className="cad-components-table">
+  <colgroup>
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "20%" }} />
+    <col style={{ width: "25%" }} />
+    <col style={{ width: "30%" }} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th>CAD for…</th>
+      <th>Subsystem</th>
+      <th>Filament (g) → Cost ($ CAD)</th>
+      <th>Visual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Reference sensor</td>
+      <td rowSpan={3}>OD</td>
+      <td rowSpan={4}>
+        ~1.5 hr
+        <br />
+        <br />
+        43.5 g PLA
+        <br />
+        <br />
+        $1.09
+      </td>
+      <td rowSpan={4}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad7.avif"
+          alt="cad7"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Collecting sensor</td>
+    </tr>
+    <tr>
+      <td>LED</td>
+    </tr>
+    <tr>
+      <td>Vial holder</td>
+      <td>Bioreactor</td>
+    </tr>
+    <tr>
+      <td>Fan</td>
+      <td>Stirring</td>
+      <td rowSpan={2}>
+        ~3.5 hr
+        <br />
+        <br />
+        ~29.38 g PLA
+        <br />
+        <br />
+        $0.74
+      </td>
+      <td rowSpan={2}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad8.avif"
+          alt="cad8"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad9.avif"
+          alt="cad9"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Heater
+        <br />
+        <br />
+        The previous CAD from V0 is still present. Printing estimates do not
+        include the PTC holder shown in grey.
+      </td>
+      <td>Temp control</td>
+    </tr>
+    <tr>
+      <td>3 × peristaltic pumps</td>
+      <td>Pumps</td>
+      <td rowSpan={2}>
+        ~100 g PLA
+        <br />
+        <br />
+        $2.50
+      </td>
+      <td rowSpan={2}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad10.avif"
+          alt="cad10"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Protoboard</td>
+      <td>Bioreactor</td>
+    </tr>
+  </tbody>
+</table>
+
+### BoM v2.2
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad11.avif"
+  alt="cad11"
+/>
+
+### add photo
+
+<table className="cad-components-table">
+  <thead>
+    <tr>
+      <th>CAD for…</th>
+      <th>Subsystem</th>
+      <th>Filament (g) → Cost ($ CAD)</th>
+      <th>Visual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fan</td>
+      <td>Stirring</td>
+      <td rowSpan={4}>
+        ~3 hr
+        <br />
+        <br />
+        121.4 g PLA
+        <br />
+        <br />
+        $3.04
+      </td>
+      <td rowSpan={4}>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad12-20.avif"
+          alt="cad12"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad13.avif"
+          alt="cad13"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>Heater</td>
+      <td>Temp control</td>
+    </tr>
+    <tr>
+      <td>3 × peristaltic pumps</td>
+      <td>Pumps</td>
+    </tr>
+    <tr>
+      <td>Protoboard</td>
+      <td>Bioreactor</td>
+    </tr>
+  </tbody>
+</table>
+
+### Build, Assembly, Code
+
+<table className="cad-iteration-table">
+  <colgroup>
+    <col style={{ width: "12%" }} />
+    <col style={{ width: "48%" }} />
+    <col style={{ width: "40%" }} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>Notes</th>
+      <th>Visual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowSpan={2}>V2.0</td>
+      <td>
+        Horizontal proposition, with a vial that resembles a mason jar. This
+        results in a wider setup. General compartments are now present for full
+        subsystem integration.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad14.avif"
+          alt="cad14"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Vertical proposition for a traditional vial found in a lab. Compartments
+        are present, and dedicated OD compartments allow minimal light
+        contamination. Refinement of vial tolerance is needed to ensure the cap
+        slots perfectly in and no light is able to seep through the top.
+        <br />
+        <br />
+        <strong>Not printed.</strong>
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad15.avif"
+          alt="cad15"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad16.avif"
+          alt="cad16"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td rowSpan={2}>V2.1</td>
+      <td>
+        Separate reference sensor, collecting sensor, and cap slot compartments
+        from the vial, saving filament for current and future designs. Changes
+        to OD and cap tolerances do not require reprinting the whole vial
+        holder.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad17.avif"
+          alt="cad17"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Two layers for the remaining components: one for components needed close
+        to the vial and another for components under the vial.
+        <ol>
+          <li>
+            <strong>Top layer for protoboard and peristaltic pumps.</strong> The
+            protoboard should be as close to the vial as possible to reduce the
+            wire length needed for the OD sensors on the vial. The peristaltic
+            pumps should be close to the protoboard for the same reason, so both
+            belong on the top layer, where the vial is.
+          </li>
+          <li>
+            <strong>Bottom layer for heater and fan.</strong> As the heater and
+            fan need to be below the vial, a bottom layer was designed.
+          </li>
+        </ol>
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad18.avif"
+          alt="cad18"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td rowSpan={2}>V2.2</td>
+      <td>
+        Shifted the reference and collecting sensor configuration lower on the
+        vial holder to account for experiments where the vial is filled less
+        than halfway with media.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad19.avif"
+          alt="cad19"
+        />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Breadboard and peristaltic pumps moved under the vial holder instead of
+        next to it. This saves filament because a bottom layer is already
+        required for the fan and heater. Expanding the bottom rather than the
+        top—which would require a larger bottom anyway for stability—is more
+        cost-effective.
+      </td>
+      <td>
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad12-20.avif"
+          alt="cad20"
+        />
+        <Figure
+          src="https://static.igem.wiki/teams/6187/wiki/hardware-v2/cad21.avif"
+          alt="cad21"
+        />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Equipment used:
+
+1. Prusa MK4
+2. Prusa slicer (online website)
+3. Tweezers
+4. PLA filament
