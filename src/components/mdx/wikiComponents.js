@@ -17,6 +17,7 @@ import { PageTab, PageTabs } from "../PageTabs.js"
 import AtlasMap from "../AtlasMap.js"
 import PetadexGame from "../PetadexGame.js"
 import { FeatureCard, FeatureCards } from "./FeatureCards.js"
+import { Expandable } from "./ExpandWindow.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import {
@@ -33,6 +34,7 @@ import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
+import { PhotoGallery } from "./PhotoGallery.js"
 import { Spreadsheet } from "./Spreadsheet.js"
 import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
@@ -69,7 +71,7 @@ export const Placeholder = ({ label = "Placeholder text", children }) => (
 
 // Root-relative srcs point into static/; withPrefix adds the /toronto path
 // prefix the iGEM build is served under.
-export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
+export const Figure = ({ src, alt = "", caption, credit, width = "100%", children }) => (
   <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
     {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
@@ -99,7 +101,7 @@ export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
  * scales down to fit inside it, so the figure never runs past the text.
  * Stacks on narrow screens.
  */
-export const SideFigure = ({ src, alt = "", caption, width = "40%", side = "right", children }) => (
+export const SideFigure = ({ src, alt = "", caption, width = "50%", side = "right", children }) => (
   <SideFigureWrap
     $width={typeof width === "number" ? `${width}px` : width}
     $left={side === "left"}
@@ -171,11 +173,13 @@ export const mdxComponents = {
   Citation,
   References,
   ...embedComponents,
+  PhotoGallery,
   Spreadsheet,
   AtlasMap,
   PetadexGame,
   FeatureCards,
   FeatureCard,
+  Expandable,
 }
 
 const toneStyles = {
@@ -305,7 +309,7 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   width: 100%;
   min-width: 0;
   gap: var(--space-md);

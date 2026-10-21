@@ -22,6 +22,11 @@ const bottomColors = {
   "/": "#296270",
 }
 
+const buttonColors = {
+  "/": "#1BB4A8",
+  "/project/description/": "#162568",
+}
+
 export function footerTheme(pagePath = "") {
   const path = pagePath ? `${pagePath.replace(/\/+$/, "")}/` : ""
   const bottom = path.startsWith("/hardware/") ? "#A39DCC"
@@ -29,9 +34,11 @@ export function footerTheme(pagePath = "") {
     : path.startsWith("/wet-lab/") ? "#98CC80"
     : bottomColors[path]
   const lightText = ["#296270", "#000000", "#805340"].includes(bottom)
+  const button = buttonColors[path]
   return {
     bottom,
     text: bottom ? (lightText ? "#FFFFFF" : "#06202B") : undefined,
-    button: path === "/" ? "#1BB4A8" : undefined,
+    button,
+    buttonText: button ? (button === "#162568" ? "#FFFFFF" : "#06202B") : undefined,
   }
 }

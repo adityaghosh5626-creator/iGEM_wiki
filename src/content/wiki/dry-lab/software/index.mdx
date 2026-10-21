@@ -144,12 +144,16 @@ We can tell what it is by looking at the enzymes that are similar to it using th
 
 Nothing runs between searches, so the tool costs almost nothing while it waits for a query. When one arrives, a coordinator starts one worker per shard, and a final step merges their hits.
 
+<Dropdown title="One search over time, step by step">
+
 <Figure
   src="/figures/diamond-search/diamond-search-temporal.svg"
   alt="Sequence diagram of one search over time. The web app sends the search to the orchestrator, which reads the database version and manifest from S3, starts Step Functions and returns a job ID within about a second, after which the web app starts polling. Step Functions then invokes all 32 workers in parallel; each downloads its shard, runs diamond blastp and writes its hits to S3, taking about 40 seconds. Once every part has landed, the aggregator reads all 32 parts, merges, sorts and enriches them, and writes the result and index, which the web app's poll finds."
-  caption="One search over time. The page gets a job ID within a second and shows results when the fan-out and merge finish, usually in under a minute."
+  caption="The page gets a job ID within a second and shows results when the fan-out and merge finish, usually in under a minute."
   width="100%"
 />
+
+</Dropdown>
 
 Below is what comes back. Each of these ten searches was really run on the live tool, and the replay shows the shards finishing and merging the way the real pipeline does, sped up from about 45 seconds to two.
 

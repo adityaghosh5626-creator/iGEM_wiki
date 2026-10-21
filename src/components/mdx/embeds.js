@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { withPrefix } from "gatsby"
-import styled, { css } from "styled-components"
+import styled, { css, keyframes } from "styled-components"
+import { ExpandWindow } from "./ExpandWindow.js"
 
 /**
  * Dropdowns and file embeds for MDX pages. Every embed shows a "coming soon"
@@ -13,11 +14,45 @@ import styled, { css } from "styled-components"
  */
 
 /** Click to open/close; built on <details>, so it works without JS too. */
-export const Dropdown = ({ title, open = false, children }) => (
+export const Dropdown = ({ title, open = false, spotlight = false, children }) => (
   <DropdownBox open={open}>
-    <DropdownSummary>{title}</DropdownSummary>
+    <DropdownSummary>{spotlight ? <SpotlightTitle>{title}</SpotlightTitle> : title}</DropdownSummary>
     <DropdownBody>{children}</DropdownBody>
   </DropdownBox>
+)
+
+/* No green token in global styles (accent is red). Deep green stays
+   readable on the light text box. */
+const SPOTLIGHT_GREEN = "#2c4f43"
+
+const SpotlightFrame = styled.div`
+  container-type: inline-size;
+  margin: var(--space-lg) 0;
+`
+
+const SpotlightHeadingTitle = styled.p`
+  && {
+    max-width: none;
+    margin: 0;
+    color: ${SPOTLIGHT_GREEN};
+    /* Larger than section titles (those top out near 2.6rem). The floor
+       keeps it a heading when the column is narrow; balance wraps on words. */
+    font-size: clamp(2.35rem, 8.4cqi, 3.35rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+`
+
+/**
+ * One flagship title on the Outreach page. Not a page heading style, so
+ * other section titles stay as they are.
+ */
+export const SpotlightHeading = ({ title }) => (
+  <SpotlightFrame>
+    <SpotlightHeadingTitle>{title}</SpotlightHeadingTitle>
+  </SpotlightFrame>
 )
 
 /**
@@ -136,7 +171,7 @@ function Photo({ src, alt }) {
 
 /**
  * A self-contained HTML figure from static/ (e.g. a three.js scene) in a 16:9
- * frame that expands to full screen in place. `dark` matches the frame to a
+ * frame that opens into a large in-page window. `dark` matches the frame to a
  * figure that draws on a dark ground, so the page doesn't flash light around it
  * while the iframe loads.
  *
@@ -145,16 +180,36 @@ function Photo({ src, alt }) {
  * off the viewport but lay out their chrome — step lists, view tabs, callouts —
  * in fixed pixels, so at a prose-width box the chrome keeps its pixel size while
  * the art shrinks around it and the two collide. Scaling a design-size render
- * keeps that proportion fixed, whatever the column is. Full screen has the room
+ * keeps that proportion fixed, whatever the column is. The window has the room
  * to render at its true size instead, which keeps the canvas and the type crisp.
  */
 const LOGICAL = [1600, 900]
 
 export const InteractiveEmbed = ({ src, title, caption, dark = false, logical = LOGICAL }) => {
   const href = src.startsWith("/") ? withPrefix(src) : src
-  const boxRef = useRef(null)
   const frameRef = useRef(null)
-  const [full, setFull] = useState(false)
+
+  return (
+    <EmbedFigure>
+      <ExpandWindow title={title} dark={dark} focusRef={frameRef}>
+        {open => (
+          <ScaledFigure
+            href={href}
+            title={title || "Interactive figure"}
+            dark={dark}
+            logical={logical}
+            open={open}
+            frameRef={frameRef}
+          />
+        )}
+      </ExpandWindow>
+      {caption && <EmbedCaption>{caption}</EmbedCaption>}
+    </EmbedFigure>
+  )
+}
+
+const ScaledFigure = ({ href, title, dark, logical, open, frameRef }) => {
+  const boxRef = useRef(null)
   const [logicalW, logicalH] = logical
 
   useEffect(() => {
@@ -163,10 +218,8 @@ export const InteractiveEmbed = ({ src, title, caption, dark = false, logical = 
     if (!box || !frame) return undefined
 
     const layout = () => {
-      const isFull = document.fullscreenElement === box
       const { clientWidth: w, clientHeight: h } = box
-      setFull(isFull)
-      if (isFull) {
+      if (open) {
         Object.assign(frame.style, { width: `${w}px`, height: `${h}px`, transform: "none" })
       } else {
         Object.assign(frame.style, {
@@ -180,61 +233,54 @@ export const InteractiveEmbed = ({ src, title, caption, dark = false, logical = 
     layout()
     const observer = new ResizeObserver(layout)
     observer.observe(box)
-    document.addEventListener("fullscreenchange", layout)
-    return () => {
-      observer.disconnect()
-      document.removeEventListener("fullscreenchange", layout)
-    }
-  }, [logicalW, logicalH])
-
-  const toggleFull = useCallback(() => {
-    const box = boxRef.current
-    if (!box) return
-    if (document.fullscreenElement === box) {
-      document.exitFullscreen?.()
-      return
-    }
-    const request = box.requestFullscreen || box.webkitRequestFullscreen
-    // Where full screen is refused (an older browser, or a policy that blocks it)
-    // the figure still has its own page to fall back to.
-    if (!request) {
-      window.open(href, "_blank", "noopener")
-      return
-    }
-    Promise.resolve(request.call(box)).catch(() => {
-      window.open(href, "_blank", "noopener")
-    })
-  }, [href])
+    return () => observer.disconnect()
+  }, [logicalW, logicalH, open, frameRef])
 
   return (
-    <EmbedFigure>
-      <EmbedHead>
-        {title && <EmbedTitle>{title}</EmbedTitle>}
-        <FrameButton type="button" onClick={toggleFull} aria-pressed={full}>
-          {full ? "Exit full screen" : "Full screen ⤢"}
-        </FrameButton>
-      </EmbedHead>
-      <FrameBox ref={boxRef} $dark={dark}>
-        <ScaledFrame
-          ref={frameRef}
-          src={href}
-          title={title || "Interactive figure"}
-          loading="lazy"
-        />
-      </FrameBox>
-      {caption && <EmbedCaption>{caption}</EmbedCaption>}
-    </EmbedFigure>
+    <FrameBox ref={boxRef} $dark={dark} $open={open} $aspect={`${logicalW} / ${logicalH}`}>
+      <ScaledFrame ref={frameRef} src={href} title={title} loading="lazy" />
+    </FrameBox>
   )
 }
 
 export const embedComponents = {
   Dropdown,
+  SpotlightHeading,
   Photos,
   InteractiveEmbed,
   PdfEmbed,
   SheetEmbed,
   VideoEmbed,
 }
+
+const spotlightShimmer = keyframes`
+  from { background-position: 200% center; }
+  to { background-position: -200% center; }
+`
+
+const SpotlightTitle = styled.span`
+  display: block;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  color: #553273;
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    background: linear-gradient(110deg, #553273 20%, #80502a 40%, #ffe694 50%, #80502a 60%, #553273 80%);
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: ${spotlightShimmer} 5s linear infinite;
+    filter: drop-shadow(0 1px 1px #fff7d9);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-position: 0 center;
+  }
+`
 
 const DropdownBox = styled.details`
   max-width: none;
@@ -365,27 +411,14 @@ const VideoFrame = styled.iframe`
   height: auto;
 `
 
-const FrameButton = styled.button`
-  margin-left: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-link, inherit);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-`
-
 const FrameBox = styled.div`
   position: relative;
   width: 100%;
   /* The scaled frame fills this box exactly, so the box carries the aspect and
      nothing forces it taller -- a min-height would letterbox the figure in dark
-     dead space on a narrow column. */
-  aspect-ratio: 16 / 9;
+     dead space on a narrow column. The aspect follows the logical size, so a square
+     figure gets a square box (16 / 9 by default). */
+  aspect-ratio: ${({ $aspect }) => $aspect};
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -397,13 +430,16 @@ const FrameBox = styled.div`
       border-color: #0b1220;
     `}
 
-  /* Full screen is sized by the browser, so the 16:9 box and its chrome go. */
-  &:fullscreen {
-    aspect-ratio: auto;
-    height: 100%;
-    border: 0;
-    border-radius: 0;
-  }
+  /* In the window the box fills whatever the window leaves below its bar. */
+  ${({ $open }) =>
+    $open &&
+    css`
+      flex: 1;
+      aspect-ratio: auto;
+      min-height: 0;
+      border: 0;
+      border-radius: 0 0 12px 12px;
+    `}
 `
 
 /* Width, height and scale are set from JS, which knows the box's real size.
