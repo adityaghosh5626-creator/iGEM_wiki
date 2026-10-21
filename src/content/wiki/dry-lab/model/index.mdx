@@ -411,11 +411,49 @@ Human extractors worked through the papers in replicate without language-model a
 
 #### Literature Ingestion Pipeline
 
-To populate the PETra database and overcome manual curation bottlenecks an automated literature ingestion pipeline was engineered. Over 11,000 initial document identifiers were gathered using the PAZy API, PETadex sequence accessions and targeted keyword searches. These were filtered into 900 highly relevant seed papers through an automated primary screen. By mapping forward and backward citations a pool of 50,000 new candidate articles was generated. This expanded pool was filtered down to roughly 4,600 critical papers during a secondary screening. Full texts were then retrieved and converted into structured JSON formats using Docling, Grobid and PyMuPDF. A preliminary extraction was run to identify tested substrates alongside metadata like country of origin and publication date. An analysis of this data spread is presented in the figure below. Moving forward the pipeline will be executed again using 3,700 newly captured papers as seeds and supplementary file scraping will be incorporated for exhaustive coverage. 
 
+To populate the PETra database and overcome manual curation bottlenecks an automated literature ingestion pipeline was engineered. Over 11,000 initial document identifiers were gathered using the PAZy API, PETadex sequence accessions and targeted keyword searches. These were filtered into 900 highly relevant seed papers through an automated primary screen. By mapping forward and backward citations a pool of 50,000 new candidate articles was generated. This expanded pool was filtered down to roughly 4,600 critical papers during a secondary screening. Full texts were then retrieved and converted into structured JSON formats using Docling, Grobid and PyMuPDF. A preliminary extraction was run to identify tested substrates alongside metadata like country of origin and publication date. An analysis of this data spread is presented in the figure below. Moving forward the pipeline will be executed again using 3,700 newly captured papers as seeds and supplementary file scraping will be incorporated for exhaustive coverage.
+
+<iframe
+  src="/figures/dry-lab-model/pipeline-animation.html"
+  title="Sequential Pipeline Crab Animation"
+  width="100%"
+  scrolling="no"
+  style={{
+    aspectRatio: "3/4",
+    border: "none",
+    borderRadius: "0.5rem",
+    overflow: "hidden",
+    backgroundColor: "transparent",
+    display: "block",
+    margin: "var(--space-lg) 0"
+  }}
+/>
+
+<Figure
+  src="/figures/dry-lab-model/The spread of plastic degrading enzyme literature enzyme literature over time.svg"
+  alt="The Spread of Plastic Degrading Enzyme Literature Over Time"
+  caption="How papers on plastic degrading enzymes have been split up throughout the years"
+  width="100%"
+/>
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/adi-figure-stuff/plasticome-country-density-flat-styled.avif"
+  alt="Global Distribution of Plastic-Degrading Enzyme Research map"
+  caption="Global Distribution of Plastic-Degrading Enzyme Research."
+  width="100%"
+/>
 #### Automated LLM Based Literature Extraction Pipeline Development
 
-To isolate experimentally validated enzymes, wet lab assays and plastic degradation activity metrics from the existing literature, an automated large language model extraction pipeline was developed. A 0% false positive rate and a 99.3% true positive capture rate were achieved during optimization against synthetic controls. In cross model benchmarking the strongest performance was delivered by Claude Sonnet (95.0% precision, 87.1% recall) outperforming Opus and Haiku. When evaluated against 32 double scraped papers zero hallucinated enzymes were reported. Key degradation activity metrics were successfully matched with human curators alongside assay conditions like temperature (90%) and plasmid construction (95%). Applied across roughly 4,000 papers a database was produced containing 51,455 cleaned measurement entries across 31,441 enzymes. Diverse plastics are covered including PET, PCL, PLA, PHA, PBS, PUR and PS. Moving forward the data will be integrated into PETadex for free public use while the pipeline is optimized to ingest supplementary files and benchmarked on a larger dataset. 
+
+To isolate experimentally validated enzymes, wet lab assays and plastic degradation activity metrics from the existing literature, an automated large language model extraction pipeline was developed. A 0% false positive rate and a 99.3% true positive capture rate were achieved during optimization against synthetic controls. In cross model benchmarking the strongest performance was delivered by Claude Sonnet (95.0% precision, 87.1% recall) outperforming Opus and Haiku. When evaluated against 32 double scraped papers zero hallucinated enzymes were reported. Key degradation activity metrics were successfully matched with human curators alongside assay conditions like temperature (90%) and plasmid construction (95%). Applied across roughly 4,000 papers a database was produced containing 51,455 cleaned measurement entries across 31,441 enzymes. Diverse plastics are covered including PET, PCL, PLA, PHA, PBS, PUR and PS. Moving forward the data will be integrated into PETadex for free public use while the pipeline is optimized to ingest supplementary files and benchmarked on a larger dataset.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/adi-figure-stuff/automated-llm-pipeline-summary-figure-1.avif"
+  alt="Pipeline Validation and Extracted Activity Data Analysis"
+  caption="Pipeline Validation showing extraction accuracy metrics evolution across prompt upgrades and consensus performance benchmarks against the core truth pool. Extracted Activity Data Analysis displaying top enzymes by polymer family, pH vs. temperature condition clusters, and enzyme activity outcomes."
+  width="100%"
+/>
 
 
 ### Schema Design and Extraction Protocol
