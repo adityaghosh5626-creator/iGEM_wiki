@@ -14,10 +14,47 @@ import styled from "styled-components"
  *   - the catalytic triad is drawn as ball-and-stick, the way that file's
  *     annotation overlay draws a group of residues.
  *
- * Mol* is imported on mount rather than at the top of the module, so its
- * bundle only reaches a reader who opens the structure layer, and so the SSR
- * build never touches it.
+ * Mol* is not bundled. Its chunks came to about 0.9 MB of the compressed
+ * Pages archive, and the iGEM build fails over 5 MB, so the prebuilt viewer
+ * from the molstar package (build/viewer/molstar.js and molstar.css, with the
+ * sourceMappingURL line removed) is served from static.igem.wiki and loaded
+ * with a script tag on mount. It still only reaches a reader who opens the
+ * structure layer, and the SSR build never touches it. A Mol* upgrade means
+ * uploading the new pair under a new name and changing MOLSTAR below.
  */
+
+const MOLSTAR = "https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/molstar-5-6-1"
+
+let molstarReady = null
+
+/** The global the prebuilt viewer defines, loaded once per page. */
+const loadMolstar = () => {
+  if (window.molstar?.Viewer) return Promise.resolve(window.molstar)
+  if (!molstarReady) {
+    molstarReady = new Promise((resolve, reject) => {
+      const style = document.createElement("link")
+      style.rel = "stylesheet"
+      style.href = `${MOLSTAR}.css`
+      document.head.appendChild(style)
+
+      const script = document.createElement("script")
+      script.src = `${MOLSTAR}.js`
+      script.async = true
+      script.onload = () =>
+        window.molstar?.Viewer
+          ? resolve(window.molstar)
+          : reject(new Error("Mol* loaded but defined nothing"))
+      script.onerror = () => {
+        // Let the next mount try again rather than reuse the failure.
+        molstarReady = null
+        script.remove()
+        reject(new Error(`could not load ${script.src}`))
+      }
+      document.head.appendChild(script)
+    })
+  }
+  return molstarReady
+}
 
 /**
  * The catalytic triad, in the magenta petadex.net marks an annotated residue
@@ -110,14 +147,7 @@ export const StructureViewer = ({ src, triad, mode = "chain", spin = false, labe
     const start = async () => {
       try {
         setState("loading")
-        const [{ createPluginUI }, { renderReact18 }, { DefaultPluginUISpec }] = await Promise.all([
-          import("molstar/lib/mol-plugin-ui"),
-          import("molstar/lib/mol-plugin-ui/react18"),
-          import("molstar/lib/mol-plugin-ui/spec"),
-          // The viewport's own stylesheet, loaded with it rather than with
-          // the page, since every other page has no use for it.
-          import("molstar/build/viewer/molstar.css"),
-        ])
+        const molstar = await loadMolstar()
         if (!live || !hostRef.current) return
 
         // Mol* measures its target on creation and will not start inside a
@@ -126,29 +156,28 @@ export const StructureViewer = ({ src, triad, mode = "chain", spin = false, labe
         await waitForBox(hostRef.current)
         if (!live) return
 
-        const spec = DefaultPluginUISpec()
-        spec.layout = {
-          initial: { isExpanded: false, showControls: false, controlsDisplay: "none" },
-        }
-        spec.components = {
-          ...spec.components,
-          controls: { left: "none", right: "none", top: "none", bottom: "none" },
-        }
-        spec.canvas3d = {
-          renderer: { backgroundColor: PAPER },
-          camera: { helper: { axes: { name: "off", params: {} } } },
-        }
-
-        const plugin = await createPluginUI({
-          target: hostRef.current,
-          spec,
-          render: renderReact18,
+        // No extensions: the demo needs none, and several of them fetch
+        // from other servers.
+        const viewer = await molstar.Viewer.create(hostRef.current, {
+          extensions: [],
+          layoutIsExpanded: false,
+          layoutShowControls: false,
+          layoutShowSequence: false,
+          layoutShowLog: false,
+          layoutShowLeftPanel: false,
+          viewportShowControls: false,
+          viewportShowExpand: false,
+          viewportBackgroundColor: cssColor(PAPER),
         })
+        const plugin = viewer.plugin
         if (!live) {
           plugin.dispose()
           return
         }
         pluginRef.current = plugin
+        plugin.canvas3d?.setProps({
+          camera: { helper: { axes: { name: "off", params: {} } } },
+        })
 
         const text = await fetch(src).then((res) => {
           if (!res.ok) throw new Error(`structure file: HTTP ${res.status}`)
@@ -177,9 +206,9 @@ export const StructureViewer = ({ src, triad, mode = "chain", spin = false, labe
           )
         }
 
-        await addTriad(plugin, structure, triad)
+        await addTriad(plugin, structure, triad, molstar.lib)
 
-        const { Structure } = await import("molstar/lib/mol-model/structure")
+        const { Structure } = molstar.lib.structure
         await plugin.managers.camera.focusLoci(
           Structure.toStructureElementLoci(structure.cell.obj.data)
         )
@@ -219,7 +248,8 @@ export const StructureViewer = ({ src, triad, mode = "chain", spin = false, labe
     if (!plugin || !polymer || state !== "ready") return
     let cancelled = false
     const recolour = async () => {
-      const { StateTransforms } = await import("molstar/lib/mol-plugin-state/transforms")
+      // Mol* is on the page by now: the plugin it built is.
+      const { StateTransforms } = window.molstar.lib.plugin
       if (cancelled || !pluginRef.current) return
       await plugin
         .build()
@@ -268,10 +298,9 @@ export const StructureViewer = ({ src, triad, mode = "chain", spin = false, labe
  * cartoon. Mol*'s addRepresentation ignores a loci, so the residues become a
  * sub-component first, the way the petadex annotation overlay does it.
  */
-const addTriad = async (plugin, structure, triad) => {
+const addTriad = async (plugin, structure, triad, lib) => {
   if (!triad?.length) return
-  const { Schema } = await import("molstar/lib/mol-model/structure/structure/element/schema")
-  const { Color } = await import("molstar/lib/mol-util/color")
+  const { Schema } = lib.structure.StructureElement
   const expression = Schema.toExpression({
     items: triad.map(([pos]) => ({ label_seq_id: pos })),
   })
@@ -286,7 +315,8 @@ const addTriad = async (plugin, structure, triad) => {
     type: "ball-and-stick",
     typeParams: { sizeFactor: 0.3 },
     color: "uniform",
-    colorParams: { value: Color(TRIAD_COLOR) },
+    // Mol*'s Color() returns the number it is given.
+    colorParams: { value: TRIAD_COLOR },
   })
 }
 

@@ -200,9 +200,10 @@ Check out the demo below to see how this looks on two reference enzymes, and see
   The structure layer runs Mol*, the same viewer petadex.net uses, ported
   from petadex.io/frontend/src/components/protein/ProteinViewer.js into
   src/components/mdx/interactive/StructureViewer.js. molstar is pinned to
-  5.6.1, the version that frontend runs. It loads on mount, so its bundle
-  only reaches a reader who opens this layer and the SSR build never sees
-  it. The structures are served from static/figures/record-card/*.pdb
+  5.6.1, the version that frontend runs. Mol* is not bundled (it was ~0.9 MB
+  of the 5 MB iGEM archive): its prebuilt viewer is served from
+  static.igem.wiki/.../drylab-page/figures/ and loaded with a script tag on
+  mount, so it only reaches a reader who opens this layer. The structures are served from static/figures/record-card/*.pdb
   (~95 KB each: backbone plus the triad's side chains, no hydrogens), which
   the build script writes.
 
