@@ -955,6 +955,96 @@ const SECTION5_FISHES = [
 ]
 
 /**
+ * Cut-out petamons. Each file is one creature (its own hover target).
+ * Upload the files in ~/Downloads/petamon-splits/ to this directory;
+ * the page points at them already, so a 404 until then is expected.
+ *
+ *   outreach-pink-rabbit-right.avif  forest, right branch
+ *   outreach-pink-rabbit-left.avif   forest, left edge
+ *   section5-tan-fox.avif             plant, upper left sky
+ *   section5-kangaroo.avif            plant, sand right of the pipe (coins ride with it)
+ *   section5-snail.avif               waterline, right of the pour
+ *   section5-turtle.avif              open water, left of the pink axolotl
+ *   section5-pink-axolotl.avif        open water
+ *   section5-yellow-axolotl.avif      reef, lower middle
+ *   section5-green-axolotl.avif       reef, lower right
+ */
+const BOTTOM_PETAMON_CDN =
+  "https://static.igem.wiki/teams/6187/wiki/homepage-components/bottompetamon"
+
+/**
+ * Outreach rabbits. The source sheet is the 2360×1640 frame of the pinned
+ * forest (nav and browser chrome included, same aspect as that screenshot).
+ * Boxes below are that frame mapped onto the forest band (front-plate rows
+ * 2660–3503) so the rabbits stay locked to the painting.
+ */
+const FOREST_PETAMONS = [
+  {
+    id: "pink-rabbit-right",
+    src: `${BOTTOM_PETAMON_CDN}/outreach-pink-rabbit-right.avif`,
+    box: { left: 84.07, top: 58.9, width: 9.53, height: 6.88 },
+  },
+  {
+    id: "pink-rabbit-left",
+    src: `${BOTTOM_PETAMON_CDN}/outreach-pink-rabbit-left.avif`,
+    box: { left: 3.22, top: 67.76, width: 3.14, height: 6.48 },
+  },
+]
+
+/**
+ * Section 5 creatures. The sheet is 1004×4000 with the 946×4000 plate
+ * centred in it (29px of empty margin each side); boxes are % of that plate.
+ * `aboveHex` creatures sit in the reef, under the hex field's solid backing,
+ * so they paint above that backing and under the copy.
+ */
+const SECTION5_PETAMONS = [
+  {
+    id: "tan-fox",
+    src: `${BOTTOM_PETAMON_CDN}/section5-tan-fox.avif`,
+    box: { left: 4.12, top: 6.6, width: 12.26, height: 3 },
+  },
+  {
+    id: "kangaroo",
+    src: `${BOTTOM_PETAMON_CDN}/section5-kangaroo.avif`,
+    box: { left: 66.81, top: 32.45, width: 24.63, height: 7.08 },
+  },
+  {
+    id: "snail",
+    src: `${BOTTOM_PETAMON_CDN}/section5-snail.avif`,
+    box: { left: 79.39, top: 41.28, width: 18.39, height: 2.63 },
+  },
+  {
+    id: "turtle",
+    src: `${BOTTOM_PETAMON_CDN}/section5-turtle.avif`,
+    box: { left: 7.19, top: 57.33, width: 13.85, height: 2.55 },
+  },
+  {
+    id: "pink-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-pink-axolotl.avif`,
+    box: { left: 14.17, top: 55.53, width: 24.95, height: 6.48 },
+  },
+  {
+    id: "yellow-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-yellow-axolotl.avif`,
+    aboveHex: true,
+    box: { left: 52.54, top: 78.6, width: 20.51, height: 4.5 },
+  },
+  {
+    id: "green-axolotl",
+    src: `${BOTTOM_PETAMON_CDN}/section5-green-axolotl.avif`,
+    aboveHex: true,
+    box: { left: 73.78, top: 75.65, width: 18.18, height: 4.93 },
+  },
+]
+
+const petamonSpotStyle = ({ left, top, width, height }) => ({
+  left: `${left}%`,
+  top: `${top}%`,
+  width: `${width}%`,
+  height: `${height}%`,
+})
+
+/**
  * Floating bottle: the stage-0 bottle above the waterline, and the painted
  * ripples (bottom of bottle-w-ripples, whose bottle is a later stage) below
  * it. Both share the stage canvas (1065 × 1640).
@@ -4004,6 +4094,23 @@ export function HomeScrollPrototype() {
               <ArtBand
                 $top={FOREST_BAND_TOP}
                 $height={FOREST_BAND_HEIGHT}
+                $z={6}
+              >
+                {FOREST_PETAMONS.map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
+                ))}
+              </ArtBand>
+
+              <ArtBand
+                $top={FOREST_BAND_TOP}
+                $height={FOREST_BAND_HEIGHT}
                 $z={20}
               >
                 <HumanWalkLayer ref={humanWalkRef} aria-hidden="true">
@@ -4226,6 +4333,17 @@ export function HomeScrollPrototype() {
                     alt=""
                   />
                 ))}
+                {SECTION5_PETAMONS.filter(pet => !pet.aboveHex).map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    $z={7}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
+                ))}
                 <Section5ChuteBottleLayer aria-hidden="true">
                   <ChuteBottleMount ref={chuteBottleMountRef}>
                     <ChuteBottleIdle>
@@ -4382,6 +4500,17 @@ export function HomeScrollPrototype() {
                     </Section5SplashDrop>
                   ))}
                 </Section5SplashLayer>
+                {SECTION5_PETAMONS.filter(pet => pet.aboveHex).map(pet => (
+                  <PetamonSpot
+                    key={pet.id}
+                    $z={11}
+                    style={petamonSpotStyle(pet.box)}
+                    aria-hidden="true"
+                  >
+                    <button type="button" tabIndex={-1} />
+                    <img src={pet.src} alt="" draggable={false} />
+                  </PetamonSpot>
+                ))}
                 <Section5RampPatch aria-hidden="true" />
                 <Section5TextStack aria-hidden="false">
                   {/* Where the ramp bottle parks under (the bottom of the
@@ -4747,6 +4876,54 @@ const fishHoverBobStrong = keyframes`
   }
   50% {
     transform: translate3d(0, -14px, 0);
+  }
+`
+
+/**
+ * One cut-out petamon. The box is its plate slot; the button is the hover
+ * target (inset so neighbours that share a corner, the turtle and the pink
+ * axolotl, don't steal each other). Hover lifts just that creature.
+ */
+const PetamonSpot = styled.div`
+  position: absolute;
+  z-index: ${({ $z }) => $z ?? 1};
+  pointer-events: none;
+
+  button {
+    position: absolute;
+    inset: 18%;
+    z-index: 1;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    transform: translate3d(0, 0, 0);
+    transition: transform 240ms ease;
+  }
+
+  button:hover ~ img {
+    transform: translate3d(0, -10%, 0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    img,
+    button:hover ~ img {
+      transition: none;
+      transform: none;
+    }
   }
 `
 
