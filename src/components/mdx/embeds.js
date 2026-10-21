@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import { withPrefix } from "gatsby"
-import styled, { css } from "styled-components"
+import styled, { css, keyframes } from "styled-components"
 import { ExpandWindow } from "./ExpandWindow.js"
 
 /**
@@ -14,9 +14,9 @@ import { ExpandWindow } from "./ExpandWindow.js"
  */
 
 /** Click to open/close; built on <details>, so it works without JS too. */
-export const Dropdown = ({ title, open = false, children }) => (
+export const Dropdown = ({ title, open = false, spotlight = false, children }) => (
   <DropdownBox open={open}>
-    <DropdownSummary>{title}</DropdownSummary>
+    <DropdownSummary>{spotlight ? <SpotlightTitle>{title}</SpotlightTitle> : title}</DropdownSummary>
     <DropdownBody>{children}</DropdownBody>
   </DropdownBox>
 )
@@ -203,7 +203,7 @@ const ScaledFigure = ({ href, title, dark, logical, open, frameRef }) => {
   }, [logicalW, logicalH, open, frameRef])
 
   return (
-    <FrameBox ref={boxRef} $dark={dark} $open={open}>
+    <FrameBox ref={boxRef} $dark={dark} $open={open} $aspect={`${logicalW} / ${logicalH}`}>
       <ScaledFrame ref={frameRef} src={href} title={title} loading="lazy" />
     </FrameBox>
   )
@@ -217,6 +217,35 @@ export const embedComponents = {
   SheetEmbed,
   VideoEmbed,
 }
+
+const spotlightShimmer = keyframes`
+  from { background-position: 200% center; }
+  to { background-position: -200% center; }
+`
+
+const SpotlightTitle = styled.span`
+  display: block;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  color: #553273;
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    background: linear-gradient(110deg, #553273 20%, #80502a 40%, #ffe694 50%, #80502a 60%, #553273 80%);
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: ${spotlightShimmer} 5s linear infinite;
+    filter: drop-shadow(0 1px 1px #fff7d9);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-position: 0 center;
+  }
+`
 
 const DropdownBox = styled.details`
   max-width: none;
@@ -352,8 +381,9 @@ const FrameBox = styled.div`
   width: 100%;
   /* The scaled frame fills this box exactly, so the box carries the aspect and
      nothing forces it taller -- a min-height would letterbox the figure in dark
-     dead space on a narrow column. */
-  aspect-ratio: 16 / 9;
+     dead space on a narrow column. The aspect follows the logical size, so a square
+     figure gets a square box (16 / 9 by default). */
+  aspect-ratio: ${({ $aspect }) => $aspect};
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 8px;

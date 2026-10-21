@@ -70,7 +70,7 @@ export const Placeholder = ({ label = "Placeholder text", children }) => (
 
 // Root-relative srcs point into static/; withPrefix adds the /toronto path
 // prefix the iGEM build is served under.
-export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
+export const Figure = ({ src, alt = "", caption, credit, width = "100%", children }) => (
   <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
     {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
@@ -100,7 +100,7 @@ export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
  * scales down to fit inside it, so the figure never runs past the text.
  * Stacks on narrow screens.
  */
-export const SideFigure = ({ src, alt = "", caption, width = "40%", side = "right", children }) => (
+export const SideFigure = ({ src, alt = "", caption, width = "50%", side = "right", children }) => (
   <SideFigureWrap
     $width={typeof width === "number" ? `${width}px` : width}
     $left={side === "left"}
@@ -307,7 +307,7 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   width: 100%;
   min-width: 0;
   gap: var(--space-md);
