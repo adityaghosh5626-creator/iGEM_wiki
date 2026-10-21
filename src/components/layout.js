@@ -79,7 +79,7 @@ const WikiLayout = ({
         <Footer
           style={{
             "--footer-button-bg": theme.button || footerButton?.bg,
-            "--footer-button-text": theme.button ? "#06202B" : footerButton?.text,
+            "--footer-button-text": theme.button ? theme.buttonText : footerButton?.text,
             "--footer-bottom-bg": theme.bottom,
             "--footer-bottom-text": theme.text,
           }}
