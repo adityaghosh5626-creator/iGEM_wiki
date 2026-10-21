@@ -35,6 +35,7 @@ const assets = [
   ["figures/dry-lab-model/PETadex_workflow_overview.svg", "drylab-page/figures/petadex-workflow-overview.svg"],
   ["figures/dry-lab-model/TED_workflow_styled.svg", "drylab-page/figures/ted-workflow-styled.svg"],
   ["figures/dry-lab-model/biosample-metadata-profiles.svg", "drylab-page/figures/biosample-metadata-profiles.svg"],
+  ["figures/dry-lab-model/The spread of plastic degrading enzyme literature enzyme literature over time.svg", "drylab-page/figures/plastic-enzyme-literature-over-time.svg"],
   ["figures/diamond-search/diamond-search-architecture.svg", "drylab-page/figures/diamond-search-architecture.svg"],
   ["figures/diamond-search/diamond-search-architecture-simple.svg", "drylab-page/figures/diamond-search-architecture-simple.svg"],
   ["figures/diamond-search/diamond-search-temporal.svg", "drylab-page/figures/diamond-search-temporal.svg"],
@@ -77,16 +78,23 @@ async function isLive(url) {
 }
 
 async function stage() {
+  // Only stage what still has a local copy and is not on the CDN yet.
+  const pending = []
+  for (const asset of assets) {
+    if (!(await exists(path.join(root, "static", asset[0])))) continue
+    if (await isLive(`${CDN}/${asset[1]}`)) continue
+    pending.push(asset)
+  }
   await fs.rm(stageRoot, { recursive: true, force: true })
-  for (const [local, cdn] of assets) {
+  for (const [local, cdn] of pending) {
     const dest = path.join(stageRoot, cdn)
     await fs.mkdir(path.dirname(dest), { recursive: true })
     await fs.copyFile(path.join(root, "static", local), dest)
   }
-  const folders = [...new Set(assets.map(([, cdn]) => path.dirname(cdn)))]
-  console.log(`Staged ${assets.length} files in ${path.relative(root, stageRoot)}/`)
+  const folders = [...new Set(pending.map(([, cdn]) => path.dirname(cdn)))]
+  console.log(`Staged ${pending.length} files in ${path.relative(root, stageRoot)}/`)
   for (const folder of folders) {
-    const count = assets.filter(([, cdn]) => path.dirname(cdn) === folder).length
+    const count = pending.filter(([, cdn]) => path.dirname(cdn) === folder).length
     console.log(`  ${folder}/  (${count} files) → upload into ${folder}/`)
   }
 }
