@@ -389,7 +389,7 @@ To-Do: Repeat the pipeline on the updated database.
 
 <Figure src="https://static.igem.wiki/teams/6187/wiki/drylab-page/figures/biochemical-properties-composite.avif" alt="Biochemical properties composite figure" width="100%" />
 
-**Figure X.** (A) Box-and-whisker distributions of the biochemical properties by catalytic fold family; dashed line = database median. (B) GRAVY vs instability index for 90% identity cluster representatives (top, all ORFs) and for secreted 90% Cluster representatives specifically (bottom, mature sequences). (C) Property Distributions of PETadex and NCBI; medians written as PETadex | NCBI.
+(A) Box-and-whisker distributions of the biochemical properties by catalytic fold family; dashed line = database median. (B) GRAVY vs instability index for 90% identity cluster representatives (top, all ORFs) and for secreted 90% Cluster representatives specifically (bottom, mature sequences). (C) Property Distributions of PETadex and NCBI; medians written as PETadex | NCBI.
 
 ## Activity Data Extraction
 
@@ -401,13 +401,7 @@ To-Do: Repeat the pipeline on the updated database.
   Should cover: LLM extraction pipeline; kinetics dataset.
 */}
 
-<Placeholder>
-
-Labels tell the model which enzymes are known to work. Measured activity is scattered across the published literature in inconsistent formats, so we designed an extraction schema and a protocol for pulling it out of papers.
-
-Human extractors worked through the papers in replicate without language-model assistance, and a language-model pipeline extracted the same fields independently. We measured how often the two agree, and that agreement is what tells us whether automated extraction can be trusted at a scale people cannot reach.
-
-</Placeholder>
+Most data on plastic-degrading enzyme activity is locked inside individual published papers, in free-form text and figures that machine learning cannot directly use for activity prediction or enzyme engineering. Reading papers one by one also limits the breadth and depth of research and makes synthesis across papers laborious. PETadex's literature scraping project aims to bridge this gap with an automated pipeline: using keywords and graph traversal to sample all interconnected plastic literature, then training LLMs to extract each paper's data on enzymes, experimental conditions, and activity measurements. To assess and improve the accuracy of the pipeline, human data scrapers are enlisted to manually extract data from a subset of plastic literature using a standardized organizational schema, forming a ground truth for benchmarking LLM results.
 
 ### LLM Extraction Pipeline
 
