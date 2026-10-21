@@ -398,7 +398,7 @@ with open("af_misses/true_genbankrefseq_af_misses.txt", "w") as f:
 
 Iterate through the rows of the original file. 
 
-We only want to disclude rows that let to an AF structure, that is, rows with a Uniprot match and that are not in the af_misses.
+We only want to disclude rows that led to an AF structure, that is, rows with a Uniprot match and that are not in the af_misses.
 
 set(unfolded) = set(accessions) - set(accessions with a uniprot mapping) + set(af_misses).
 

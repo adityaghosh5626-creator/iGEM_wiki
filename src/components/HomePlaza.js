@@ -125,7 +125,7 @@ const HP_PETAMON = {
   team: "Human Practices",
   to: "/human-practices/",
   below: true,
-  say: "Can’t wait to meet the other petamons, we will be a large happy family of enzymes",
+  say: "Can’t wait to meet the other PETamons, we will be a large happy family of enzymes",
 }
 
 const xPct = x => `${((x / PLATE_W) * 100).toFixed(3)}%`

@@ -10,8 +10,19 @@ updated: "2026-05-16"
 status: "draft"
 ---
 
-This page will present wet lab results with enough context for readers to understand what was tested, how it was measured, and what the result means for the project.
+## Copper leakage and background fluorescence
 
-<Callout title="Results standard">
-For each result, include the experimental question, controls, method, observation, and interpretation.
-</Callout>
+We conducted a leakage test to ensure that the PET mesh won’t leach out copper. If the mesh released copper without requiring any PETase activity, this would result in false positives. Thus, we transformed our E. Coli cells with only the biosensor AS plasmid and placed the PET mesh on top of the agar to see if any cells would fluoresce without PETase activity. As seen below, copper was not detected in the cells, indicating that copper leakage from the PET mesh did not occur. Additionally, background fluorescence was insignificant.
+
+<Figure
+  src="https://static.igem.wiki/teams/6187/wiki/wetlab/result/result1.avif"
+  alt="result1"
+/>
+
+## Copper-induced GFP expression
+
+To ensure that our AS plasmid expresses GFP in the presence of copper, we conducted a serial dilution experiment to determine which concentrations of copper colonies would fluoresce at. To observe the fluorescence, a UV light was shone onto the colonies. In the images below, it can be seen that the reporting plasmid functions within an approximate range of [INSERT RANGE]. [INSERT IMAGES OF PLATES WITH SERIAL DILUTIONS FOR GFP]
+
+## Testing assay with known PETase
+
+Lastly, we wanted to conduct a positive control to see if the biosensor would perform as expected with a working PETase. Thus, we transformed our cells with a PD plasmid containing a known PETase (INSERT PETASE NAME) and the reporting plasmid. We then placed the copper mesh onto our agar and let it grow overnight to see if the colonies would glow green. As seen below, the copper biosensor assay works as intended and gave us a positive readout when there was PETase activity.

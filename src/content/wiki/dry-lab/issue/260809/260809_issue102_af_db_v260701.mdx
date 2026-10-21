@@ -31,7 +31,7 @@ I've made this a unique issue as it turned out to be significantly different tha
 
 
 1. Input format: 
-\>genbank_accession:genbank_accession:ect|e_value|pid|bitscore|query_petadex_id|component_id
+\>genbank_accession:genbank_accession:etc|e_value|pid|bitscore|query_petadex_id|component_id
 
     This means that there are multiple accessions per sequence, so the mapping script must search all of the possible accessions for each row in the original fasta, and download if any of them have a hit in the AFDB.
 
@@ -60,7 +60,7 @@ aws s3api get-object --bucket petadex \
 >WP_335046055.1,MEH1974844.1,MEH2021907.1|1.48e-12|29.2|82.8|PL47|C026
 ```
 
-This structure informs the development of new scripts that map their accessions to Uniprot Accessions, as they are stored in AFDB.
+This structure informs the development of new scripts that map their accessions to UniProt Accessions, as they are stored in AFDB.
 
 ## Step 1: Setup the Downloader RM.
 
@@ -97,7 +97,7 @@ python $SCRIPTS/parse_nr_headers.py \
     $WORK/petadex-nr.v260701.significant-hits.fastaa --outdir $OUT
 ```
 
-This script classifies the accessions into their accession types using regex, so that they can be properly mapped to Uniprot in the next step.
+This script classifies the accessions into their accession types using regex, so that they can be properly mapped to UniProt in the next step.
 
 ```bash
 python $SCRIPTS/split_accession_types.py \
@@ -106,7 +106,7 @@ python $SCRIPTS/split_accession_types.py \
 
 ## Step 3: Map to UniProt Accessions
 
-This script maps the accessions to Uniprot using the provided mapping. This is the same mapping used in the original AFDB download, but this was redownloaded on August 9th, 2026.
+This script maps the accessions to UniProt using the provided mapping. This is the same mapping used in the original AFDB download, but this was redownloaded on August 9th, 2026.
 
 ```bash
 for T in refseq genbank pdb; do
@@ -128,11 +128,11 @@ done
   }
 ```
 
-Note that there are 0 PDBs, this is likely a parsing bug. However, this was ignored as the other types occupied the vast majority of the previous AFDB search, and these number of mapped pairs seemed to be more than sufficient for the QC purpose of this experiment.
+Note that there are 0 PDBs, this is likely a parsing bug. However, this was ignored as the other types occupied the vast majority of the previous AFDB search, and this number of mapped pairs seemed to be more than sufficient for the QC purpose of this experiment.
 
 ## Step 4: Build the Manifest and Check for Existence
 
-This is a notable difference from the first AFDB Download. Instead of retroactively determining which structures exist on the AFDB by searching every possible manifest, this script references the `gs://public-datasets-deepmind-alphafold-v4/accession_ids.csv` file. This contains the name of every uniprot accession that's in the DB allowing the manifest to only contain filenames that exist. This leads to 0 miss requests to GCP.
+This is a notable difference from the first AFDB Download. Instead of retroactively determining which structures exist on the AFDB by searching every possible manifest, this script references the `gs://public-datasets-deepmind-alphafold-v4/accession_ids.csv` file. This contains the name of every UniProt accession that's in the DB, allowing the manifest to only contain filenames that exist. This leads to 0 miss requests to GCP.
 
 
 ```bash

@@ -1,4 +1,5 @@
 import path from "path"
+import TerserPlugin from "terser-webpack-plugin"
 import { USE_PAYLOAD_EXPORTS } from "./content-source.config.mjs"
 import { STANDARD_ROUTE_ALIASES } from "./src/data/standardRoutes.mjs"
 
@@ -6,8 +7,21 @@ const wikiTemplate = path.resolve(`./src/templates/wiki-mdx.js`)
 
 // Gatsby inlines small fonts into CSS, then repeats that CSS in every HTML
 // page. Emit shared font files instead to keep the Pages archive small.
-export function onCreateWebpackConfig({ getConfig, actions }) {
+export function onCreateWebpackConfig({ stage, getConfig, actions }) {
   const config = getConfig()
+  // Production source maps are removed from the Pages artifact anyway. Avoid
+  // generating them during both webpack compilations on the limited runner.
+  if (stage === "build-javascript" || stage === "build-html") config.devtool = false
+  if (stage === "build-javascript") {
+    // Keep CSS optimization; replace only JavaScript minification with esbuild.
+    config.optimization.minimizer = config.optimization.minimizer.map(plugin =>
+      plugin instanceof TerserPlugin ? new TerserPlugin({
+        minify: TerserPlugin.esbuildMinify,
+        parallel: false,
+        terserOptions: { target: "es2017" },
+      }) : plugin,
+    )
+  }
   const visit = (rules = []) => {
     for (const rule of rules) {
       if (!rule || typeof rule !== "object") continue

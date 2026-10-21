@@ -127,6 +127,9 @@ const WikiLayout = ({
                   </MetaLink>
                 </span>
               </FooterMeta>
+              <LandAcknowledgement>
+                iGEM Toronto respectfully acknowledges that we work and learn on the traditional territory of the Mississaugas of the Credit, the Anishinaabe, the Chippewa, the Haudenosaunee, and the Wendat Peoples. As a team working to address plastic pollution, an environmental challenge affecting waterways, ecosystems, and communities across Canada, we recognize our responsibility to advance solutions that reflect responsible stewardship of the land and waters we share.
+              </LandAcknowledgement>
               </FooterInner>
             </FooterBottom>
         </Footer>
@@ -422,6 +425,18 @@ const FooterMeta = styled.div`
     justify-content: center;
     font-size: 0.75rem;
     text-align: center;
+  }
+`
+
+const LandAcknowledgement = styled.p`
+  margin: var(--space-md) 0 0;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+
+  @media (max-width: 720px) {
+    font-size: 0.75rem;
   }
 `
 

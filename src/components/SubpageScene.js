@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -2245,6 +2246,7 @@ function sceneVars(scene, plate) {
 }
 
 export function SubpageScene({ scene, title, description, children }) {
+  const whiteFilterId = `scene-white-${useId().replace(/:/g, "")}`
   const plate = plateOf(scene)
   const { side, text } = scene
   // A dragon partly drawn over the text box (text.front.dragon): the line
@@ -2350,22 +2352,31 @@ export function SubpageScene({ scene, title, description, children }) {
 
   // Sections = the h2s in the text box, each with its h3 subsections.
   useEffect(() => {
-    const heads = Array.from(
-      bodyRef.current?.querySelectorAll("h2, h3") || [],
-    ).filter(el => !el.closest("details, [data-nav-skip]"))
-    const list = []
-    heads.forEach((el, i) => {
-      if (!el.id) el.id = `section-${i + 1}`
-      // A heading can name itself shorter for the menu (journal dates).
-      const item = {
-        id: el.id,
-        label: (el.dataset.navLabel || el.textContent).trim(),
-      }
-      if (el.tagName === "H2") list.push({ ...item, subs: [] })
-      else list[list.length - 1]?.subs.push(item)
-    })
-    scannedRef.current = true
-    setSections(list)
+    const body = bodyRef.current
+    if (!body) return undefined
+    const scan = () => {
+      const heads = Array.from(
+        bodyRef.current?.querySelectorAll("h2, h3") || [],
+      ).filter(el => !el.closest("details, [data-nav-skip]"))
+      const list = []
+      heads.forEach((el, i) => {
+        if (!el.id) el.id = `section-${i + 1}`
+        // A heading can name itself shorter for the menu (journal dates).
+        const item = {
+          id: el.id,
+          label: (el.dataset.navLabel || el.textContent).trim(),
+        }
+        if (el.tagName === "H2") list.push({ ...item, subs: [] })
+        else list[list.length - 1]?.subs.push(item)
+      })
+      scannedRef.current = true
+      setSections(previous => JSON.stringify(previous) === JSON.stringify(list) ? previous : list)
+    }
+    scan()
+    // Gatsby navigation and embedded MDX can render headings after mount.
+    const observer = new MutationObserver(scan)
+    observer.observe(body, { childList: true, subtree: true, characterData: true })
+    return () => observer.disconnect()
   }, [children])
 
   // Scroll-linked background + active subsection.
@@ -2757,6 +2768,14 @@ export function SubpageScene({ scene, title, description, children }) {
         "--rail-w": railDots ? RAIL_DOT_W : RAIL_W,
       }}
     >
+      {scene.layers.some(layer => layer.removeWhite) && <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
+        <defs>
+          <filter id={whiteFilterId} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            {/* Remove the white canvas without darkening the coloured lights. */}
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 9" />
+          </filter>
+        </defs>
+      </svg>}
       <BgTrack aria-hidden>
         <BgFrame ref={frameRef}>
           <Art ref={artRef} style={{ aspectRatio: `${plate.W} / ${plate.H}` }}>
@@ -2778,6 +2797,7 @@ export function SubpageScene({ scene, title, description, children }) {
                     style={{
                       ...plate.imgStyle(layer.from || layer.box),
                       ...plate.clip(layer.clip),
+                      filter: layer.removeWhite ? `url(#${whiteFilterId})` : undefined,
                     }}
                   />
                 )
@@ -2950,6 +2970,7 @@ export function SubpageScene({ scene, title, description, children }) {
                   <CropWindow
                     key={layer.name}
                     data-layer={layer.name}
+                    $fadePulse={layer.fadePulse}
                     style={{
                       ...plate.windowStyle(layer.box),
                       ...plate.fadeY(layer.box, layer.fadeY),
@@ -3289,7 +3310,7 @@ export function SubpageScene({ scene, title, description, children }) {
             <StretchBox
               plate={plate}
               name={text.name}
-              box={text.box}
+              box={text.artBox || text.box}
               caps={text.caps}
             />
           )}
@@ -3408,9 +3429,21 @@ const PatrolWindow = styled.div`
   }
 `
 
+const layerFadePulse = keyframes`
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+`
+
 const CropWindow = styled.div`
   position: absolute;
   overflow: hidden;
+  ${({ $fadePulse }) => $fadePulse && css`
+    animation: ${layerFadePulse} ${$fadePulse}ms ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+      opacity: 0.65;
+    }
+  `}
 `
 
 const hangSway = keyframes`

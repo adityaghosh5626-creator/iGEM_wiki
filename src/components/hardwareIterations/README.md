@@ -4,7 +4,7 @@ Each version/subsystem has its own MDX file under:
 
 `src/content/wiki/hardware/past-iterations/`
 
-- `version-1/_cad.mdx`, `version-2/_cad.mdx`, `version-3/_cad.mdx`
+- `version-1/_cad.mdx`, `version-2/_cad.mdx`
 - Each version also has `_temperature.mdx`, `_power.mdx`, `_pumps.mdx`,
   `_od.mdx`, `_data.mdx`, and `_stirring.mdx`.
 

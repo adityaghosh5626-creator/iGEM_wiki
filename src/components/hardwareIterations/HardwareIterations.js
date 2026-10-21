@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react"
 import { HARDWARE_ITERATIONS, HARDWARE_SUBSYSTEMS } from "../../data/hardwareIterations.js"
 import { IterationTimeline } from "./IterationTimeline.js"
 import { SubsystemTabs } from "./SubsystemTabs.js"
+import V1Overview from "../../content/wiki/hardware/past-iterations/version-1/_overview.mdx"
+import V2Overview from "../../content/wiki/hardware/past-iterations/version-2/_overview.mdx"
+
+const OVERVIEW_CONTENT = { "version-1": V1Overview, "version-2": V2Overview }
 
 /**
  * A link can open a subsystem: #pumps, or on a version, #version-2-pumps
@@ -19,6 +23,7 @@ export function HardwareIterations() {
   const [version, setVersion] = useState(0)
   const [subsystem, setSubsystem] = useState("cad")
   const iteration = HARDWARE_ITERATIONS[version]
+  const Overview = OVERVIEW_CONTENT[iteration.id]
 
   useEffect(() => {
     const open = () => {
@@ -42,7 +47,7 @@ export function HardwareIterations() {
       <section aria-labelledby="iteration-overview">
         <h2 id="iteration-overview">Overview</h2>
         <h3>{iteration.label}</h3>
-        <p>{iteration.overview}</p>
+        {Overview ? <Overview key={iteration.id} /> : <p>{iteration.overview}</p>}
       </section>
       <h2 id="iteration-subsystems">Subsystems</h2>
       <SubsystemTabs iteration={iteration} selected={subsystem} onSelect={setSubsystem} />

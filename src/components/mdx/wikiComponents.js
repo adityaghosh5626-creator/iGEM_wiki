@@ -7,6 +7,7 @@ import { BioreactorRequirements } from "../bioreactorRequirements/BioreactorRequ
 import { BioreactorSimulator } from "../bioreactorSim/BioreactorSimulator.js"
 import { ContributionTimeline } from "../contributionCalendar/ContributionTimeline.js"
 import { DryLabCalendar } from "../dryLabCalendar/DryLabCalendar.js"
+import { DryLabIterations } from "../dryLabCalendar/IterationLedger.js"
 import { DesignSketchbook } from "../designSketchbook/DesignSketchbook.js"
 import { HardwareJournal } from "../hardwareJournal/HardwareJournal.js"
 import { WetLabJournal } from "../wetLabJournal/WetLabJournal.js"
@@ -15,6 +16,8 @@ import { HardwareArchitectureDiagram } from "../hardwareArchitecture/HardwareArc
 import { PageTab, PageTabs } from "../PageTabs.js"
 import AtlasMap from "../AtlasMap.js"
 import PetadexGame from "../PetadexGame.js"
+import { FeatureCard, FeatureCards } from "./FeatureCards.js"
+import { Expandable } from "./ExpandWindow.js"
 import { InteractiveGizmo } from "./interactive/InteractiveGizmo.js"
 import { PetAssayAnimation } from "./interactive/PetAssayAnimation.js"
 import {
@@ -26,6 +29,7 @@ import {
   DiamondSearchHero,
   MethodsLink,
 } from "./interactive/DiamondSearch.js"
+import { DiamondSearchDemo } from "./interactive/DiamondSearchDemo.js"
 import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
@@ -67,7 +71,7 @@ export const Placeholder = ({ label = "Placeholder text", children }) => (
 
 // Root-relative srcs point into static/; withPrefix adds the /toronto path
 // prefix the iGEM build is served under.
-export const Figure = ({ src, alt = "", caption, credit, width = "32rem", children }) => (
+export const Figure = ({ src, alt = "", caption, credit, width = "100%", children }) => (
   <FigureWrap $width={typeof width === "number" ? `${width}px` : width}>
     {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
     {children}
@@ -91,6 +95,26 @@ const MdxLink = ({ href = "", ...props }) => (
 )
 
 export const ImageGrid = ({ children }) => <GridWrap>{children}</GridWrap>
+
+/**
+ * Text with a figure beside it. The text sets the row height and the image
+ * scales down to fit inside it, so the figure never runs past the text.
+ * Stacks on narrow screens.
+ */
+export const SideFigure = ({ src, alt = "", caption, width = "50%", side = "right", children }) => (
+  <SideFigureWrap
+    $width={typeof width === "number" ? `${width}px` : width}
+    $left={side === "left"}
+  >
+    <SideFigureText>{children}</SideFigureText>
+    <SideFigureFrame>
+      <SideFigureImage>
+        {src && <img src={src.startsWith("/") ? withPrefix(src) : src} alt={alt} />}
+      </SideFigureImage>
+      {caption && <figcaption>{caption}</figcaption>}
+    </SideFigureFrame>
+  </SideFigureWrap>
+)
 
 export const DataTable = ({ caption, children }) => (
   <DataTableWrap>
@@ -117,10 +141,12 @@ export const mdxComponents = {
   Placeholder,
   Figure,
   ImageGrid,
+  SideFigure,
   DataTable,
   ContributionCalendar,
   ContributionTimeline,
   DryLabCalendar,
+  DryLabIterations,
   DesignSketchbook,
   HardwareNotebookSandbox,
   HardwareJournal,
@@ -136,6 +162,7 @@ export const mdxComponents = {
   DatasetFlowchartFigure,
   ArchitectureFigure,
   DiamondSearchHero,
+  DiamondSearchDemo,
   MethodsLink,
   ModelDatasets,
   DatasetLoop,
@@ -150,6 +177,9 @@ export const mdxComponents = {
   Spreadsheet,
   AtlasMap,
   PetadexGame,
+  FeatureCards,
+  FeatureCard,
+  Expandable,
 }
 
 const toneStyles = {
@@ -279,7 +309,7 @@ const FigureWrap = styled.figure`
 
 const GridWrap = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   width: 100%;
   min-width: 0;
   gap: var(--space-md);
@@ -289,6 +319,77 @@ const GridWrap = styled.div`
   figure {
     min-width: 0;
     margin: 0 auto;
+  }
+`
+
+const SideFigureWrap = styled.div`
+  display: grid;
+  grid-template-columns: ${({ $left, $width }) =>
+    $left ? `${$width} minmax(0, 1fr)` : `minmax(0, 1fr) ${$width}`};
+  gap: var(--space-lg);
+  max-width: var(--wiki-block-max, 54rem);
+  margin: var(--space-lg) 0;
+
+  ${({ $left }) =>
+    $left &&
+    css`
+      > figure {
+        order: -1;
+      }
+    `}
+
+  @media (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
+
+    > figure {
+      order: 0;
+    }
+  }
+`
+
+const SideFigureText = styled.div`
+  > * + * {
+    margin-top: var(--space-sm);
+  }
+`
+
+const SideFigureFrame = styled.figure`
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+
+  figcaption {
+    margin-top: var(--space-sm);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+  }
+`
+
+// The absolutely placed image adds nothing to the row height, so the text
+// alone sets it; object-fit then shrinks the image to fit the box.
+const SideFigureImage = styled.div`
+  position: relative;
+  flex: 1;
+  min-height: 12rem;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: top center;
+  }
+
+  @media (max-width: 720px) {
+    position: static;
+    min-height: 0;
+
+    img {
+      position: static;
+      height: auto;
+    }
   }
 `
 

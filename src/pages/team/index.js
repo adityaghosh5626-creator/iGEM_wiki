@@ -335,7 +335,7 @@ const TeamPage = ({ data }) => {
       <Content ref={contentRef}>
         <Title>Meet the Team</Title>
         <Intro>
-          About 70 members at the University of Toronto, in different subteams.
+          The team behind PetaBite.
           Choose a subteam to see who is on it.
         </Intro>
         <SubteamLegend

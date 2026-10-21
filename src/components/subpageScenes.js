@@ -79,6 +79,7 @@ const DRY_LAB_CACTUS = {
 
 export const DRY_LAB_SCENE = {
   header: "Dry Lab",
+  headerSub: "Building a computational framework to identify, characterize, and design enzymes that are optimized for specific metadata criteria.",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/drylab-page/",
   plate: [918, 4000],
   /** Shown behind the art while it loads. */
@@ -213,6 +214,7 @@ export const DRY_LAB_SCENE = {
 
 export const VENTURE_SCENE = {
   header: "Entrepreneurship",
+  headerSub: "Developing a go-to-market strategy roadmap for post-iGEM season commercialization.",
   /** The header already names the page, so the text box opens with this. */
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/venture/",
@@ -352,6 +354,7 @@ function bird(name, sprite, x, y, width, opts = {}) {
 
 export const HP_SCENE = {
   header: "Human Practices",
+  headerSub: "Navigating real-world challenges and constraints using stakeholder feedback and ethical guiding principles to inform our technical pipeline.",
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/hp-page/",
   plate: [1110, 4000],
@@ -432,6 +435,7 @@ export const HP_SCENE = {
 /** Every Hardware page; each box is titled with its page's short name. */
 export const HARDWARE_SCENE = {
   header: "Hardware",
+  headerSub: "Engineering parallel bioreactor systems that can quantify enzymatic degradation in various conditions.",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/",
   plate: [1110, 4000],
   background: "#20222e",
@@ -519,6 +523,7 @@ export const HARDWARE_SCENE = {
  */
 export const WET_LAB_SCENE = {
   header: "Wet Lab",
+  headerSub: "Creating high-throughput, scalable assays to test candidate enzymes retrieved by Dry Lab.",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/wetlab/",
   plate: [1110, 4000],
   background: "#0b8fa6",
@@ -656,6 +661,7 @@ const CONTRIBUTION_HQ =
 
 export const CONTRIBUTION_SCENE = {
   header: "Contribution",
+  headerSub: "Reusable outputs and lessons from PetaBite that can contribute to future teams and microplastics research.",
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/contributions/",
   plate: [1110, 4000],
@@ -822,6 +828,7 @@ export const CONTRIBUTION_SCENE = {
  */
 export const ATTRIBUTIONS_SCENE = {
   header: "Attributions",
+  headerSub: "The specific tasks each member was responsible for, entirely documented.",
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/attributions/",
   plate: [1110, 4000],
@@ -850,6 +857,7 @@ export const ATTRIBUTIONS_SCENE = {
 /** Finance: one painting of snowy peaks with a mine cart of gold coins. */
 export const FINANCE_SCENE = {
   header: "Finance",
+  headerSub: "Securing sponsorships and funding from industry, academic, and community partners to advance our scientific innovation.",
   hideIntro: true,
   assetBase: "https://static.igem.wiki/teams/6187/wiki/finance/",
   plate: [1216, 4000],
@@ -884,6 +892,7 @@ export const FINANCE_SCENE = {
 /** Safety and Security: a murky swamp, caution tape strung through the trees. */
 export const SAFETY_SCENE = {
   header: "Safety",
+  headerSub: "Technical challenges and security considerations that informed the development of PetaBite, and how we mitigated risk.",
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/safety/",
   plate: [1110, 4000],
@@ -942,6 +951,7 @@ const around = ([x, y], r) => [x - r, y - r, x + r, y + r]
 /** Engineering: a sunset quarry, a bucket hung on a rope from a gear. */
 export const ENGINEERING_SCENE = {
   header: "Engineering",
+  headerSub: "How we’ve integrated the Design, Build, Test, and Learn pipeline into every stage of PetaBite.",
   boxTitle: "Overview",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/engineering/",
   plate: [1110, 4000],
@@ -1008,6 +1018,7 @@ export const ENGINEERING_SCENE = {
  */
 export const OUTREACH_SCENE = {
   header: "Outreach",
+  headerSub: "Publicizing PetaBite to audiences beyond the scientific community, while perfecting the project’s internal and external identity.",
   hideIntro: true,
   assetBase: "https://static.igem.wiki/teams/6187/wiki/outreach/",
   plate: [1110, 4000],
@@ -1167,7 +1178,7 @@ export const OUTREACH_SCENE = {
 export const PROJECT_SCENE = {
   header: "Project",
   headerSub:
-    "PetaBite: Accelerating the Discovery of Scalable Plastic-Degrading Enzymes",
+    "PetaBite: Mapping Earth's Biodiversity to Discover Room-Temperature Plastic-Degrading Enzymes",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/project/",
   plate: [918, 4000],
   background: "#111926",
@@ -1216,12 +1227,25 @@ export const PROJECT_SCENE = {
       },
     },
   ],
-  side: null,
-  /** No menu highlight to match: the planet's orange. */
+  side: {
+    fill: "#f1e6d4",
+    box: [63, 256, 265, 1000],
+    navTop: 24,
+    linkColor: "#111926",
+    activeLinkColor: "#111926",
+    linkSize: 12.5,
+    linkIndent: 14,
+    stripColor: "#f1e6d4",
+    highlightColor: "#e2662c",
+    indicator: { fill: "#e2662c", box: [73, 286, 255, 336] },
+  },
+  /** Match the section menu's planet-orange highlight. */
   footerButton: { bg: "#e2662c", text: "#111926" },
   text: {
     name: "project-box",
-    box: [63, 256, 864, 2001],
+    box: [285, 256, 864, 2001],
+    // Preserve the full painted border when the menu narrows the text column.
+    artBox: [63, 256, 864, 2001],
     // The speckled edges reach 68 (top) and 105 (bottom) plate px in, so
     // they stay out of the stretched middle.
     caps: [75, 110],
@@ -1244,6 +1268,7 @@ const WIKI_HQ = "https://static.igem.wiki/teams/6187/wiki/wiki/higher-qual/"
 
 export const WIKI_SCENE = {
   header: "Wiki",
+  headerSub: "The journey behind building the PetaBite Wiki for the iGEM 2026 cycle.",
   assetBase: "https://static.igem.wiki/teams/6187/wiki/wiki/",
   plate: [451, 1476],
   /**

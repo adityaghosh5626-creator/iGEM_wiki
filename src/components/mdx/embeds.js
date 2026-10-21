@@ -1,19 +1,22 @@
-import React, { useState } from "react"
-import styled, { css } from "styled-components"
+import React, { useEffect, useRef, useState } from "react"
+import { withPrefix } from "gatsby"
+import styled, { css, keyframes } from "styled-components"
+import { ExpandWindow } from "./ExpandWindow.js"
 
 /**
  * Dropdowns and file embeds for MDX pages. Every embed shows a "coming soon"
  * box until it's given a `src`, so a page's layout can go in before its files.
  *
  * iGEM rule: files must live on iGEM's servers. PDFs go on static.igem.wiki
- * and videos on video.igem.wiki; Google Docs/Sheets/Slides and YouTube
+ * and videos on video.igem.org (PeerTube; it streams HLS only, so a raw
+ * <video src> cannot play from it); Google Docs/Sheets/Slides and YouTube
  * links can't be embedded.
  */
 
 /** Click to open/close; built on <details>, so it works without JS too. */
-export const Dropdown = ({ title, open = false, children }) => (
+export const Dropdown = ({ title, open = false, spotlight = false, children }) => (
   <DropdownBox open={open}>
-    <DropdownSummary>{title}</DropdownSummary>
+    <DropdownSummary>{spotlight ? <SpotlightTitle>{title}</SpotlightTitle> : title}</DropdownSummary>
     <DropdownBody>{children}</DropdownBody>
   </DropdownBox>
 )
@@ -27,7 +30,7 @@ const SpotlightFrame = styled.div`
   margin: var(--space-lg) 0;
 `
 
-const SpotlightTitle = styled.p`
+const SpotlightHeadingTitle = styled.p`
   && {
     max-width: none;
     margin: 0;
@@ -48,7 +51,7 @@ const SpotlightTitle = styled.p`
  */
 export const SpotlightHeading = ({ title }) => (
   <SpotlightFrame>
-    <SpotlightTitle>{title}</SpotlightTitle>
+    <SpotlightHeadingTitle>{title}</SpotlightHeadingTitle>
   </SpotlightFrame>
 )
 
@@ -105,7 +108,7 @@ export const SheetEmbed = ({ src, title }) => (
   </EmbedFigure>
 )
 
-/** 16:9 video from video.igem.wiki. */
+/** 16:9 video from video.igem.org, as its PeerTube embed URL. */
 export const VideoEmbed = ({ src, title }) => (
   <EmbedFigure>
     {title && (
@@ -166,14 +169,118 @@ function Photo({ src, alt }) {
   )
 }
 
+/**
+ * A self-contained HTML figure from static/ (e.g. a three.js scene) in a 16:9
+ * frame that opens into a large in-page window. `dark` matches the frame to a
+ * figure that draws on a dark ground, so the page doesn't flash light around it
+ * while the iframe loads.
+ *
+ * The frame renders the figure at `logical` size and scales the result to fit,
+ * rather than handing it the box's own dimensions. These figures size their type
+ * off the viewport but lay out their chrome — step lists, view tabs, callouts —
+ * in fixed pixels, so at a prose-width box the chrome keeps its pixel size while
+ * the art shrinks around it and the two collide. Scaling a design-size render
+ * keeps that proportion fixed, whatever the column is. The window has the room
+ * to render at its true size instead, which keeps the canvas and the type crisp.
+ */
+const LOGICAL = [1600, 900]
+
+export const InteractiveEmbed = ({ src, title, caption, dark = false, logical = LOGICAL }) => {
+  const href = src.startsWith("/") ? withPrefix(src) : src
+  const frameRef = useRef(null)
+
+  return (
+    <EmbedFigure>
+      <ExpandWindow title={title} dark={dark} focusRef={frameRef}>
+        {open => (
+          <ScaledFigure
+            href={href}
+            title={title || "Interactive figure"}
+            dark={dark}
+            logical={logical}
+            open={open}
+            frameRef={frameRef}
+          />
+        )}
+      </ExpandWindow>
+      {caption && <EmbedCaption>{caption}</EmbedCaption>}
+    </EmbedFigure>
+  )
+}
+
+const ScaledFigure = ({ href, title, dark, logical, open, frameRef }) => {
+  const boxRef = useRef(null)
+  const [logicalW, logicalH] = logical
+
+  useEffect(() => {
+    const box = boxRef.current
+    const frame = frameRef.current
+    if (!box || !frame) return undefined
+
+    const layout = () => {
+      const { clientWidth: w, clientHeight: h } = box
+      if (open) {
+        Object.assign(frame.style, { width: `${w}px`, height: `${h}px`, transform: "none" })
+      } else {
+        Object.assign(frame.style, {
+          width: `${logicalW}px`,
+          height: `${logicalH}px`,
+          transform: `scale(${w / logicalW})`,
+        })
+      }
+    }
+
+    layout()
+    const observer = new ResizeObserver(layout)
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [logicalW, logicalH, open, frameRef])
+
+  return (
+    <FrameBox ref={boxRef} $dark={dark} $open={open} $aspect={`${logicalW} / ${logicalH}`}>
+      <ScaledFrame ref={frameRef} src={href} title={title} loading="lazy" />
+    </FrameBox>
+  )
+}
+
 export const embedComponents = {
   Dropdown,
   SpotlightHeading,
   Photos,
+  InteractiveEmbed,
   PdfEmbed,
   SheetEmbed,
   VideoEmbed,
 }
+
+const spotlightShimmer = keyframes`
+  from { background-position: 200% center; }
+  to { background-position: -200% center; }
+`
+
+const SpotlightTitle = styled.span`
+  display: block;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  color: #553273;
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    background: linear-gradient(110deg, #553273 20%, #80502a 40%, #ffe694 50%, #80502a 60%, #553273 80%);
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: ${spotlightShimmer} 5s linear infinite;
+    filter: drop-shadow(0 1px 1px #fff7d9);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-position: 0 center;
+  }
+`
 
 const DropdownBox = styled.details`
   max-width: none;
@@ -302,6 +409,56 @@ const VideoFrame = styled.iframe`
   ${frameBox}
   aspect-ratio: 16 / 9;
   height: auto;
+`
+
+const FrameBox = styled.div`
+  position: relative;
+  width: 100%;
+  /* The scaled frame fills this box exactly, so the box carries the aspect and
+     nothing forces it taller -- a min-height would letterbox the figure in dark
+     dead space on a narrow column. The aspect follows the logical size, so a square
+     figure gets a square box (16 / 9 by default). */
+  aspect-ratio: ${({ $aspect }) => $aspect};
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: ${({ $dark }) => ($dark ? "#0b1220" : "#f8fafc")};
+
+  ${({ $dark }) =>
+    $dark &&
+    css`
+      border-color: #0b1220;
+    `}
+
+  /* In the window the box fills whatever the window leaves below its bar. */
+  ${({ $open }) =>
+    $open &&
+    css`
+      flex: 1;
+      aspect-ratio: auto;
+      min-height: 0;
+      border: 0;
+      border-radius: 0 0 12px 12px;
+    `}
+`
+
+/* Width, height and scale are set from JS, which knows the box's real size.
+   Without JS these keep the frame usable at the box's own dimensions. */
+const ScaledFrame = styled.iframe`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  transform-origin: top left;
+`
+
+const EmbedCaption = styled.figcaption`
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 `
 
 const Pending = styled.div`

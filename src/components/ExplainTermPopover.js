@@ -464,7 +464,7 @@ export function ExplainTerm({
             ref={popoverRef}
             id={popoverId}
             role="tooltip"
-            aria-label={explanation || undefined}
+            aria-label={typeof explanation === "string" ? explanation : `${term} explanation`}
             style={
               pos
                 ? {
@@ -568,6 +568,8 @@ const TermRoot = styled.span`
  */
 const TermButton = styled.span`
   display: inline;
+  /* Terms remain interactive inside decorative layers that ignore pointers. */
+  pointer-events: auto;
   margin: 0;
   padding: 0 0.12em;
   border: none;
@@ -661,7 +663,8 @@ const PlainBox = styled.div`
   position: relative;
   width: ${PLAIN_BOX_W * 100}%;
   box-sizing: border-box;
-  padding: 3.4cqi 6cqi 4.2cqi 5cqi;
+  /* The sticker overlaps the box at every viewport size, including desktop. */
+  padding: 10cqi 6cqi 4.2cqi 5cqi;
   background: #000;
   transform: skewY(-${PLAIN_TILT_DEG}deg);
   transform-origin: 0 0;
@@ -670,6 +673,7 @@ const PlainBox = styled.div`
 /** Its text: straightened from the skew, then turned to the same tilt. */
 const PlainText = styled.p`
   margin: 0;
+  a { pointer-events: auto; color: inherit; text-decoration: underline; }
   color: #fff;
   font-family: var(--font-body);
   font-size: clamp(12px, 3.05cqi, 21px);

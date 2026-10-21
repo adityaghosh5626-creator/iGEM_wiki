@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
 import {
   CONTRIBUTION_WEEK_BY_ID,
@@ -6,7 +6,10 @@ import {
   getDefaultWeekId,
   parseWeekHash,
 } from "../../data/contributionCalendar/weeks.js"
-import { CONTRIBUTION_MONTHS } from "../../data/contributionCalendar/calendarUtils.js"
+import {
+  CONTRIBUTION_MONTHS,
+  weekIdForDate,
+} from "../../data/contributionCalendar/calendarUtils.js"
 import {
   MILESTONE_TRACK_BY_ID,
   SUBTEAM_TRACKS,
@@ -16,8 +19,10 @@ import { WeekNav } from "./WeekNav.js"
 import { PanelChrome, RestorePanelBar } from "./PanelChrome.js"
 import { SubteamFilterBar } from "./SubteamFilterBar.js"
 import { useSplitPane } from "./useSplitPane.js"
+import { ExpandContext } from "../mdx/ExpandWindow.js"
 import { VintageMonthGrid } from "./VintageMonthGrid.js"
 import { WeekDetailPanel } from "./WeekDetailPanel.js"
+import { IterationThread, WeekIterations } from "./IterationThread.js"
 
 /** @typedef {null | 'detail' | 'calendar'} HiddenPanel */
 
@@ -39,6 +44,11 @@ export const TEAM_CALENDAR = {
   initialActiveIds: [],
   /** True: the whole calendar fits in one screen under the site header. */
   fit: false,
+  /**
+   * Optional iteration threads (failures and what changed): { byId, byWeek,
+   * parseHash, meta, criteria, trackById }. See dryLabIterations.js.
+   */
+  iterations: null,
   labels: {
     tracks: "Subteams",
     overview: "Team overview",
@@ -69,7 +79,10 @@ function firstWeekIdForMonth(weeks, monthKey, fallbackId) {
 
 export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDAR }) {
   const { weeks, weekById, months, tracks, trackById, parseHash, labels } = calendar
-  const fit = Boolean(calendar.fit)
+  // In an Expand window, fit mode fills the window instead of the screen.
+  const windowed = useContext(ExpandContext)
+  const fit = Boolean(calendar.fit) || windowed
+  const iter = calendar.iterations
   const initialWeekId = calendar.defaultWeekId
   const initialMonth =
     weekById[initialWeekId]?.monthKeys[0] ?? months[0]?.key
@@ -81,6 +94,11 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
   )
   /** @type {[HiddenPanel, function]} */
   const [hiddenPanel, setHiddenPanel] = useState(null)
+  // The iteration thread open in the details panel, if any. A ref too, so
+  // hash syncing (in stable callbacks) knows a thread owns the URL.
+  const [openIterId, setOpenIterId] = useState(null)
+  const openIterRef = useRef(null)
+  const rootRef = useRef(null)
 
   const { splitPct, nudgeSplit, containerRef, onDividerPointerDown } = useSplitPane()
 
@@ -95,7 +113,7 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
   const showDivider = showDetail && showCalendar
 
   const syncHash = useCallback((weekId) => {
-    if (typeof window === "undefined" || !weekId) return
+    if (typeof window === "undefined" || !weekId || openIterRef.current) return
     const next = `#${weekId}`
     if (window.location.hash !== next) {
       window.history.replaceState(null, "", next)
@@ -128,6 +146,44 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
     [syncHash, weeks, initialWeekId]
   )
 
+  const openIteration = useCallback(
+    (id, { jump = false, scroll = false } = {}) => {
+      const it = iter?.byId[id]
+      if (!it) return
+      openIterRef.current = id
+      setOpenIterId(id)
+      if (typeof window !== "undefined") window.history.replaceState(null, "", `#iter-${id}`)
+      if (jump) {
+        const weekId = weekIdForDate(it.steps[0].date)
+        const week = weekById[weekId]
+        if (week) {
+          setSelectedWeekId(weekId)
+          setMonthKey(week.monthKeys[0])
+        }
+      }
+      if (scroll) rootRef.current?.scrollIntoView({ block: "start" })
+    },
+    [iter, weekById]
+  )
+
+  const closeIteration = useCallback(() => {
+    openIterRef.current = null
+    setOpenIterId(null)
+    syncHash(selectedWeekId)
+  }, [syncHash, selectedWeekId])
+
+  /** A thread's step date: show its week, keeping the thread open. */
+  const pickStepDate = useCallback(
+    (date) => selectWeek(weekIdForDate(date)),
+    [selectWeek]
+  )
+
+  const openIt = openIterId ? iter?.byId[openIterId] : null
+  const markedDates = useMemo(
+    () => new Set(openIt ? openIt.steps.map((s) => s.date) : []),
+    [openIt]
+  )
+
   const toggleSubteam = useCallback((id) => {
     setActiveSubteams((prev) => {
       const next = new Set(prev)
@@ -149,6 +205,11 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
   // or month navigation gets snapped back to the hash week's monthKeys[0].
   useEffect(() => {
     if (typeof window === "undefined") return undefined
+    const iterId = iter?.parseHash(window.location.hash)
+    if (iterId) {
+      openIteration(iterId, { jump: true })
+      return undefined
+    }
     const initialHashId = parseHash(window.location.hash)
     if (initialHashId) {
       const initialHashWeek = weekById[initialHashId]
@@ -163,15 +224,17 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
   useEffect(() => {
     if (typeof window === "undefined") return undefined
     const onHash = () => {
+      const iterId = iter?.parseHash(window.location.hash)
+      if (iterId) return openIteration(iterId, { jump: true, scroll: true })
       const id = parseHash(window.location.hash)
       if (id) selectWeek(id)
     }
     window.addEventListener("hashchange", onHash)
     return () => window.removeEventListener("hashchange", onHash)
-  }, [parseHash, selectWeek])
+  }, [iter, openIteration, parseHash, selectWeek])
 
   return (
-    <TimelineRoot $embedded={embedded} $fit={fit}>
+    <TimelineRoot ref={rootRef} $embedded={embedded} $fit={fit} $windowed={windowed}>
       <SubteamNavRow>
         <SubteamFilterBar
           layout="navbar"
@@ -207,15 +270,37 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
             <WeekNavBar>
               <WeekNav weeks={weeks} selectedWeekId={selectedWeekId} onSelect={selectWeek} />
             </WeekNavBar>
-            <DetailScroll $fit={fit}>
-              <WeekDetailPanel
-                week={selectedWeek}
-                activeIds={activeSubteams}
-                tracks={tracks}
-                trackById={trackById}
-                overviewLabel={labels.overview}
-                hint={labels.hint}
-              />
+            <DetailScroll $fit={fit} key={openIt ? `iter-${openIt.id}` : "week"}>
+              {openIt ? (
+                <IterationThread
+                  it={openIt}
+                  track={iter.trackById[openIt.track]}
+                  meta={iter.meta}
+                  criteria={iter.criteria}
+                  week={selectedWeek}
+                  onClose={closeIteration}
+                  onPickDate={pickStepDate}
+                />
+              ) : (
+                <WeekDetailPanel
+                  week={selectedWeek}
+                  activeIds={activeSubteams}
+                  tracks={tracks}
+                  trackById={trackById}
+                  overviewLabel={labels.overview}
+                  hint={labels.hint}
+                  extra={
+                    iter ? (
+                      <WeekIterations
+                        entries={iter.byWeek[selectedWeekId]}
+                        meta={iter.meta}
+                        trackById={iter.trackById}
+                        onOpen={openIteration}
+                      />
+                    ) : null
+                  }
+                />
+              )}
             </DetailScroll>
           </DetailHalf>
         )}
@@ -260,6 +345,7 @@ export function ContributionTimeline({ embedded = false, calendar = TEAM_CALENDA
                 months={months}
                 trackById={trackById}
                 fit={fit}
+                markedDates={markedDates}
               />
             </CalendarPanel>
           </CalendarHalf>
@@ -304,6 +390,18 @@ const TimelineRoot = styled.div`
     /* Narrow pages pin the section strip under the header too. */
     @media (max-width: 860px) {
       height: clamp(24rem, calc(100svh - var(--dl-header, 4.75rem) - 5rem), 52rem);
+    }
+  `}
+
+  /* In an Expand window: whatever height the window leaves it. Below 20rem
+     the month no longer reads, so the window scrolls instead. */
+  ${({ $windowed }) =>
+    $windowed &&
+    `
+    &&& {
+      flex: 1 1 auto;
+      height: auto;
+      min-height: 20rem;
     }
   `}
 `

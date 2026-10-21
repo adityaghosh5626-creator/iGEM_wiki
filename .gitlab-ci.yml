@@ -1,34 +1,58 @@
 image: node:20.19.0
 
+stages:
+  - prepare
+  - build
+
 variables:
   GATSBY_TELEMETRY_DISABLED: "1"
   GATSBY_PATH_PREFIX: "/toronto"
   XDG_CONFIG_HOME: "$CI_PROJECT_DIR/.config"
   FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fastest"
   ARTIFACT_COMPRESSION_LEVEL: "slowest"
 
-pages:
-  stage: build
-  # Allow cold installs and production compilation to finish on shared runners.
-  # A runner-level maximum timeout still takes precedence over this value.
-  timeout: 30 minutes
-  cache:
+.main_only:
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+
+.installed_dependencies:
+  cache: &installed_dependencies
+    # New key: never restore the old .npm download cache.
     key:
-      prefix: npm-node-20
+      prefix: installed-node-20.19.0-v1
       files:
         - package-lock.json
+        - package.json
     paths:
-      - .npm/
-  before_script:
-    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+      - node_modules/
+
+prepare_dependencies:
+  extends: .main_only
+  stage: prepare
+  timeout: 10 minutes
+  cache:
+    <<: *installed_dependencies
+    policy: pull-push
   script:
+    - node scripts/ci-dependencies.mjs prepare
+
+pages:
+  extends: .main_only
+  stage: build
+  needs: [prepare_dependencies]
+  # Install and build each have their own ten-minute job budget.
+  timeout: 10 minutes
+  cache:
+    <<: *installed_dependencies
+    policy: pull
+  script:
+    - node scripts/ci-dependencies.mjs check
     - npm run build:igem
     - node scripts/trim-pages-artifact.mjs
   artifacts:
     paths:
       - public
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-      when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: always
