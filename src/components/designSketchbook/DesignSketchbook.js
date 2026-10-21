@@ -1214,7 +1214,7 @@ export function DesignSketchbook() {
             aria-selected={selected}
             title={section.progress}
             $color={section.color}
-            $crop={section.tabCrop}
+            $image={section.tabImage}
             $active={selected && mode === "open"}
             $mode={mode}
             $compact={false}
@@ -1250,7 +1250,7 @@ export function DesignSketchbook() {
             aria-label={`Go back to ${section.label}`}
             title={`${section.label}: ${section.progress}`}
             $color={section.color}
-            $crop={section.tabCrop}
+            $image={section.tabImage}
             $active={false}
             $mode="open"
             $compact
@@ -1549,13 +1549,11 @@ const SectionTab = styled.button`
   appearance: none;
   border: 0;
   background-color: transparent;
-  background-image: url("https://static.igem.wiki/teams/6187/wiki/outreach/sketchbook/tabs.avif");
+  background-image: url("${({ $image }) => $image}");
   background-repeat: no-repeat;
-  ${({ $crop }) => {
-    const [x0, y0, x1, y1] = $crop
-    return `background-size: ${2360 / (x1 - x0) * 100}% ${1640 / (y1 - y0) * 100}%;
-      background-position: ${x0 / (2360 - (x1 - x0)) * 100}% ${y0 / (1640 - (y1 - y0)) * 100}%;`
-  }}
+  /* Each file is already one tab. Fill the button with the whole brush. */
+  background-size: 100% 100%;
+  background-position: center;
   color: #1a1a1a;
   cursor: pointer;
   text-align: left;

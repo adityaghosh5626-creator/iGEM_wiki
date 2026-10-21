@@ -1,83 +1,215 @@
 /**
- * The bioreactor prototype photo in the Hardware Notebook. Each part is
- * outlined in the photo's own px (546 × 550) and belongs to a subsystem (ids
- * from HARDWARE_SUBSYSTEMS); its label sits at `label`, its left edge there,
- * or its right edge with `align: "right"`. What it does opens under the
- * label, or over it with `tip: "up"` (low on the photo, it always does).
+ * Photos in Past Iterations. Each part is a polygon in that photo's own
+ * pixels and belongs to a subsystem (ids from HARDWARE_SUBSYSTEMS). Its
+ * label sits at `label`, at the left edge, or at the right edge with
+ * `align: "right"`. The summary opens under the label, or over it with
+ * `tip: "up"` (low on the photo, it always does).
+ *
+ * The visible file is the clean photo. Polygons follow the highlighted
+ * regions on the matching *ref* image.
  */
-export const HARDWARE_MAP = {
-  src: "https://static.igem.wiki/teams/6187/wiki/hardware-notebook/screenshot-2026-10-19-at-8-56-26-am.avif",
-  size: [546, 550],
-  alt: "The bioreactor prototype on a desk: a tablet, the blue vessel holder over a breadboard, a power module, the stirring fan box with a heater plate on top, and a pump, all wired together.",
-  parts: [
-    {
-      subsystem: "data",
-      // Round the vessel in front of it, clear of its glow.
-      points: [[102, 0], [327, 0], [327, 141], [321, 147], [300, 147], [300, 138], [293, 128], [276, 124], [250, 124], [231, 128], [222, 138], [222, 147], [108, 147], [102, 141]],
-      label: [112, 14],
-    },
-    {
-      subsystem: "cad",
-      points: [[227, 145], [234, 137], [250, 132], [275, 132], [290, 137], [295, 146], [295, 195], [227, 195]],
-      label: [221, 160],
-      align: "right",
-    },
-    {
-      subsystem: "power",
-      points: [[231, 195], [312, 195], [312, 301], [231, 301]],
-      label: [318, 266],
-    },
-    {
-      subsystem: "power",
-      points: [[0, 270], [33, 272], [38, 279], [44, 280], [57, 276], [70, 274], [84, 290], [70, 319], [42, 317], [42, 300], [34, 298], [0, 297]],
-      label: [4, 248],
-      tip: "up",
-    },
-    {
-      subsystem: "stirring",
-      points: [[97, 395], [112, 397], [158, 415], [165, 440], [166, 470], [150, 500], [123, 520], [105, 516], [70, 495], [48, 460], [50, 447], [60, 440], [88, 410]],
-      label: [174, 476],
-    },
-    // The heater plate on the stirring box: after it, so it's on top.
-    {
-      subsystem: "temperature",
-      points: [[89, 412], [136, 430], [115, 461], [65, 444]],
-      label: [28, 372],
-    },
-    {
-      subsystem: "pumps",
-      points: [[428, 397], [446, 388], [450, 376], [503, 368], [506, 343], [520, 345], [546, 357], [546, 436], [535, 438], [528, 424], [470, 428], [452, 423], [447, 412], [428, 407]],
-      label: [540, 318],
-      align: "right",
-      tip: "up",
-    },
-  ],
+const COLOUR = {
+  data: "#3d9df2",
+  cad: "#9b6bff",
+  power: "#f5a300",
+  temperature: "#f2552c",
+  stirring: "#e8509b",
+  pumps: "#1bb39a",
+  od: "#1aa6c4",
 }
 
-/** Each subsystem's colour on the photo and what it does, for its tooltip. */
-export const HARDWARE_MAP_SUBSYSTEMS = {
-  data: {
-    colour: "#3d9df2",
-    about: "Sends data from the bioreactor to our software, and controls from the software back, through an easy-to-use interface.",
+export const HARDWARE_MAPS = {
+  "version-1": {
+    src: "https://static.igem.wiki/teams/6187/wiki/team/hardwarev1.avif",
+    size: [860, 1136],
+    alt: "Version 1 of the bioreactor on a desk: a tablet, a blue vial holder, a breadboard with the optical-density sensors, a small power board, a stirring fan with a heater plate, and a peristaltic pump.",
+    summaries: {
+      data: "Sends data from the bioreactor to our software, and controls from the software back, through an easy-to-use interface.",
+      cad: "The 3D-printed holder for the culture vial, with ports in its lid for tubing and sensors.",
+      power: "Powers every component, including the 5 W heater and the 2.5 W pumps, from a power module shared with the Arduino.",
+      temperature: "Heats the culture above room temperature and holds it there, so microorganisms that need the warmth can thrive.",
+      stirring: "A low-cost brushless fan with magnets on its hub spins a magnetic stir bar inside the vial.",
+      pumps: "Peristaltic pumps that dose liquid into and out of the bioreactor, at different speeds for different volumes.",
+      od: "An LED shines through the vial onto two photodiodes: one reads the culture, and one watches the LED so drift in the light can be subtracted.",
+    },
+    parts: [
+      {
+        subsystem: "data",
+        points: [[162, 192], [505, 192], [505, 441], [162, 441]],
+        label: [175, 170],
+      },
+      {
+        subsystem: "cad",
+        points: [[351, 442], [373, 424], [430, 416], [449, 436], [489, 551], [445, 599], [340, 599]],
+        label: [500, 470],
+      },
+      {
+        subsystem: "od",
+        points: [[363, 517], [477, 519], [470, 681], [365, 681]],
+        label: [490, 590],
+      },
+      {
+        subsystem: "power",
+        points: [[8, 625], [70, 615], [148, 640], [140, 712], [60, 718], [8, 690]],
+        label: [160, 660],
+      },
+      {
+        subsystem: "stirring",
+        points: [[80, 916], [155, 821], [223, 844], [259, 872], [197, 1007], [111, 971]],
+        label: [275, 950],
+        tip: "up",
+      },
+      {
+        subsystem: "temperature",
+        points: [[96, 872], [149, 822], [253, 825], [252, 856], [177, 921]],
+        label: [20, 800],
+        tip: "up",
+      },
+      {
+        subsystem: "pumps",
+        points: [[710, 755], [790, 728], [852, 755], [845, 855], [770, 875], [715, 820]],
+        label: [845, 700],
+        align: "right",
+        tip: "up",
+      },
+    ],
   },
-  cad: {
-    colour: "#9b6bff",
-    about: "The 3D-printed holder for the culture vial, with ports in its lid for tubing and sensors.",
+  "version-2": {
+    src: "https://static.igem.wiki/teams/6187/wiki/team/hardwarev2.avif",
+    size: [1250, 956],
+    alt: "Version 2 hardware: a 3D-printed base and vial, an optical-density sensor, a heater on its housing, a laptop running the controls, peristaltic pump heads, a power and relay board, and a stirring fan with magnets.",
+    summaries: {
+      data: "A clearer on-screen interface, with colour, tabs, and more room, so readings and controls are easier to use than the Version 1 command line.",
+      cad: "The revised 3D-printed base and vial housing, shaped to hold the culture and keep stray light off the OD sensors.",
+      od: "A photodiode on the vial housing. Stemma QT connectors replace the loose jumper wires, and normalized OD can be turned into OD600 automatically.",
+      temperature: "Holds the set point with less overshoot: proportional heat while it warms up, then PID once the culture is close.",
+      power: "A separate 9 V feed into the Arduino VIN pin, so the Nano stays up when the heater and pumps switch.",
+      pumps: "Peristaltic pump heads that squeeze tubing to move liquid into and out of the vial.",
+      stirring: "A brushless fan with two magnets on its hub, which spins the stir bar inside the vial.",
+    },
+    parts: [
+      {
+        subsystem: "cad",
+        points: [[51, 504], [90, 426], [161, 365], [288, 348], [399, 393], [455, 479], [417, 609], [324, 685], [178, 704], [63, 617]],
+        label: [40, 730],
+        tip: "up",
+      },
+      {
+        subsystem: "od",
+        points: [[142, 556], [245, 539], [260, 608], [150, 623]],
+        label: [270, 570],
+      },
+      {
+        subsystem: "data",
+        points: [[712, 331], [822, 33], [1066, 27], [1149, 305]],
+        label: [900, 360],
+      },
+      {
+        subsystem: "temperature",
+        points: [[430, 795], [531, 666], [659, 694], [671, 710], [588, 873], [443, 826]],
+        label: [450, 640],
+        tip: "up",
+      },
+      {
+        subsystem: "pumps",
+        points: [[817, 631], [858, 583], [902, 599], [919, 636], [908, 672], [881, 693], [819, 676]],
+        label: [700, 640],
+      },
+      {
+        subsystem: "pumps",
+        points: [[992, 558], [1021, 475], [1115, 488], [1118, 568], [1071, 588]],
+        label: [1120, 450],
+        align: "right",
+      },
+      {
+        subsystem: "power",
+        points: [[726, 749], [878, 724], [940, 876], [775, 920]],
+        label: [620, 830],
+        tip: "up",
+      },
+      {
+        subsystem: "stirring",
+        points: [[1040, 822], [1119, 787], [1170, 876], [1086, 916]],
+        label: [1030, 760],
+        align: "right",
+        tip: "up",
+      },
+    ],
   },
-  power: {
-    colour: "#f5a300",
-    about: "Powers every component, including the 5 W heater and the 2.5 W pumps, from a power module shared with the Arduino.",
-  },
-  temperature: {
-    colour: "#f2552c",
-    about: "Heats the culture above room temperature and holds it there, so microorganisms that need the warmth can thrive.",
-  },
-  stirring: {
-    colour: "#e8509b",
-    about: "A low-cost brushless fan with magnets on its hub spins a magnetic stir bar inside the vial.",
-  },
-  pumps: {
-    colour: "#1bb39a",
-    about: "Peristaltic pumps that dose liquid into and out of the bioreactor, at different speeds for different volumes.",
+  "version-3": {
+    src: "https://static.igem.wiki/teams/6187/wiki/team/hardwarefinal.avif",
+    size: [676, 732],
+    alt: "The final bioreactor in use: a laptop, a culture vial with a temperature probe, a power module, a detail of the heater assembly, the 3D-printed stand, and a close-up of the optical-density sensor.",
+    summaries: {
+      data: "The laptop screen that shows bioreactor readings and sends controls back to the hardware.",
+      cad: "The 3D-printed stand that holds the vial, the sensors, and the rest of the assembly.",
+      power: "The bench supply for the bioreactor, with a small readout so the rail can be checked while it runs.",
+      temperature: "A probe in the culture, and the heater in the detail photo, holding the vial above room temperature.",
+      pumps: "The peristaltic pump beside the stand, dosing liquid into and out of the vial.",
+      od: "Photodiodes on the housing that read how much light the culture lets through.",
+      stirring: "The magnetic stirrer on the stand, which turns a stir bar inside the vial.",
+    },
+    parts: [
+      {
+        subsystem: "cad",
+        points: [[253, 546], [293, 459], [457, 477], [489, 559], [490, 682], [253, 687]],
+        label: [160, 640],
+        tip: "up",
+      },
+      {
+        subsystem: "data",
+        points: [[466, 62], [560, 37], [626, 120], [636, 257], [466, 254]],
+        label: [660, 40],
+        align: "right",
+      },
+      {
+        subsystem: "power",
+        points: [[525, 382], [597, 295], [660, 310], [660, 341], [607, 410]],
+        label: [530, 270],
+      },
+      {
+        subsystem: "temperature",
+        points: [[65, 421], [218, 418], [220, 554], [66, 554]],
+        label: [20, 400],
+      },
+      {
+        subsystem: "temperature",
+        points: [[370, 300], [455, 295], [460, 420], [375, 425]],
+        label: [300, 310],
+      },
+      {
+        subsystem: "od",
+        points: [[539, 461], [675, 461], [675, 614], [540, 614]],
+        label: [660, 440],
+        align: "right",
+      },
+      {
+        subsystem: "pumps",
+        points: [[377, 479], [407, 476], [424, 507], [419, 524], [382, 524]],
+        label: [430, 470],
+      },
+      {
+        subsystem: "stirring",
+        points: [[320, 582], [323, 563], [361, 568], [357, 592]],
+        label: [240, 575],
+        tip: "up",
+      },
+      {
+        subsystem: "od",
+        points: [[276, 538], [316, 548], [325, 577], [310, 588], [280, 590]],
+        label: [230, 510],
+      },
+      {
+        subsystem: "od",
+        points: [[371, 534], [388, 536], [385, 578], [371, 577]],
+        label: [400, 560],
+      },
+    ],
   },
 }
+
+/** Version 1, for anything still expecting a single map. */
+export const HARDWARE_MAP = HARDWARE_MAPS["version-1"]
+
+/** Each subsystem's colour on the photos. Summaries live on each version. */
+export const HARDWARE_MAP_COLOURS = COLOUR

@@ -34,6 +34,7 @@ import { DatasetLoop, ModelDatasets } from "./interactive/ModelDatasets.js"
 import { AntibioticSelectionAnimation, GfpBiosensorAnimation } from "./interactive/CopperReleaseAnimation.js"
 import Dropdown, { CodeDropdown } from "../Dropdown.js";
 import { embedComponents } from "./embeds.js"
+import { PhotoGallery } from "./PhotoGallery.js"
 import { Spreadsheet } from "./Spreadsheet.js"
 import { useLinkTarget } from "./linkTarget.js"
 import Citation from "../Citation"
@@ -172,6 +173,7 @@ export const mdxComponents = {
   Citation,
   References,
   ...embedComponents,
+  PhotoGallery,
   Spreadsheet,
   AtlasMap,
   PetadexGame,
